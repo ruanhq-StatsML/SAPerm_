@@ -1,0 +1,31 @@
+\begin{table}[t]
+\centering
+\caption{Uplift monitor. Early is batches 4--7, after the burn-in and before the change. Late is batches 8--15. Concept flips the sign of $\tau(x)$ and leaves $P(X)$ alone. Covariate shifts the first coordinate and leaves $\tau(x)$ alone. MMD is the covariate score. Calibration is the mean absolute gap between predicted uplift and the transformed outcome on the randomized slice. Sign accuracy uses the true $\tau$ and is a diagnostic. Cells are means over four replicates.}
+\label{tab:uplift-monitor}
+\begin{tabular}{llrrrrr}
+\toprule
+Scenario & Phase & MMD & Calib.\ stale & Calib.\ fresh & Sign stale & Sign fresh \\
+\midrule
+concept & early & 0.0007 & 0.215 & 0.243 & 0.975 & 0.916 \\
+concept & late & 0.0012 & 0.516 & 0.252 & 0.025 & 0.767 \\
+covariate & early & 0.0009 & 0.200 & 0.197 & 0.969 & 0.919 \\
+covariate & late & 0.1040 & 0.266 & 0.262 & 0.990 & 0.946 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Thompson sampling traffic. Each arm is a policy. The reward is the binary outcome. The Beta posterior is discounted by $0.85$ each batch, so a regime change can move traffic. Early and late match the monitor table. Cells are the mean share of exploit traffic.}
+\label{tab:uplift-thompson}
+\begin{tabular}{llrrrr}
+\toprule
+Scenario & Phase & Control & Treat all & Stale uplift & Fresh uplift \\
+\midrule
+concept & early & 0.069 & 0.089 & 0.273 & 0.569 \\
+concept & late & 0.106 & 0.051 & 0.085 & 0.758 \\
+covariate & early & 0.082 & 0.071 & 0.265 & 0.582 \\
+covariate & late & 0.003 & 0.001 & 0.866 & 0.130 \\
+\bottomrule
+\end{tabular}
+\end{table}
