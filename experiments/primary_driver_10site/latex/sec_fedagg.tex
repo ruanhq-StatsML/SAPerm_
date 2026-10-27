@@ -1294,116 +1294,39 @@ maximum, has concordance \(0.433\).
 \subsection{Summary}
 \label{sec:fed-summary}
 
-Each site uploads one simplex vector, once.
-Four questions fix the procedure.
-When the weight on a site changes, and to what.
-How the aggregate responds when individual sites are corrupted.
-How a shift driver is justified across sites that need not share one concept.
-What the Matrix Bernstein bound supports.
-The four answers follow.
-
-\paragraph{When and how to aggregate.}
-Use \(w_k=1/K\) when the sites are noisy copies of one shift and have
-similar size.
-On TabReD the largest site fraction is \(0.24\) and the gain of \(n|S|\)
-over the uniform average is about \(0.01\).
-Change the weight only as in Table~\ref{tab:weight-rule}.
-Under high size mismatch, set \(w_k\propto n_k\) or use \(n|S|\): Spearman
-with the mixed pool rises from \(0.620\) to \(0.905\), and the gain grows
-from \(+0.24\) to \(+0.37\) as heterogeneity goes from \(0\) to \(1\).
-When one or two vectors are replaced, use the coordinate-wise median or
-client-agreement Shapley.
-Two random replacements leave the uniform Spearman at \(0.055\) and the
-median at \(0.741\).
-When the variance estimates are bounded below and the wrapper is a
-covariate score, use inverse-variance weights: the WhyShift domain
-classifier moves from \(0.848\) on one fold to \(0.918\).
-When the wrapper is a concept score, set
-\(w_k\propto\Delta^{\mathrm{cf}}_k\).
-Sample-size weights lower WhyShift pseudo-outcome risk from \(0.410\) to
-\(0.185\), while \(\Delta^{\mathrm{cf}}\) weights raise Income
-shift-recovery AUC from \(0.869\) to \(0.917\).
-When every weight returns the same Spearman and that Spearman misses the
-whole batch, leave the weights alone.
-Cooking-time \texttt{num\_105} is this case: pairwise concordance
-\(0.884\), site-to-whole correlation \(-0.198\), and aggregator headroom
-about zero.
-
-\paragraph{How robust the aggregate is.}
-On the product grid of Table~\ref{tab:Product_HighDimResults}, precision
-at \(K\) can remain \(1\) after Spearman of the mean has fallen to
-\(0.719\), which is the cell with all twelve sites corrupted, full local
-support, and SNR \(=0.5\).
-The selection itself fails at SNR \(=0\) with twelve corrupted sites,
-where the mean AUC is \(0.479\) and precision is \(0\).
-One clean site preserves the mean (precision \(0.92\)) and not the median
-(precision \(0.14\)).
-Thin support weakens the median before any corruption: at
-\(\alpha=0.25\) and \(n_{\mathrm{bad}}=0\), median precision is \(0.29\)
-against \(1\) for the mean.
-A corrupted site that reports variance ratio \(0.44\) takes
-inverse-variance mass \(0.17\), and Assumption~(A6) is the floor that
-stops this.
-Uniform weights and the median keep Spearman \(1\) with the clean
-covariate aggregate under Dirichlet imbalance down to concentration
-\(0.05\).
-Five covariate-shift sites pooled with five concept-drift sites correlate
-about \(0.30\) with that clean aggregate.
-Five corrupted centers on SECOM, Diabetes130, TEP, and TCGA leave the
-selected set largely intact; at ten corrupted centers the mean-share AUC
-is \(0.708\), \(0.920\), \(0.580\), and \(0.977\) on those four sets.
-Equal FEMNIST blocks recover the pooled predictive ranking at Spearman
-\(0.996\).
-Deleting one site moves a TabReD aggregate by about \(0.05\) whether the
-aggregate agrees with the whole batch or not.
-
-\paragraph{How a primary driver is found.}
-Name the driver before aggregating.
-The score \(\Delta^{\mathrm{cf}}\) in
-\eqref{eq:delta-region-fed}--\eqref{eq:delta-cf-fed} is a size-matched
-Brier gap times local skill, maximized over the recent window and the two
-sides of the burn-in median of \(X_1\).
-On ten sites that share the ACS empirical \(P(X)\), with four clean sites,
-five structured concept shifts, and one \(\mathrm{Bernoulli}(1/2)\) site,
-this concordance equals \(1\) at full rewrite and abrupt activation, on
-both tasks and in every seed, including against the noise site.
-The Income noise site has ungated contrast \(\tau^2=0.096\) and
-\(\Delta^{\mathrm{cf}}=0.001\), because its skill is \(0.008\).
-Mean Pareto ranks on Income are \(1.875\) (nonlinear), \(3.250\) (linear),
-\(6.625\) (clean), and \(6.750\) (noise).
-The \(0.8\) target holds at rewrite probabilities \(0.7\) and \(1\) down to a
-linear tail of about \(17\%\) of rows.
-It is \(0.783\) at rewrite probability \(0.4\), and \(0.683\) on an \(8\%\)
-tail with a four-batch ramp at rewrite probability \(0.7\).
-Leave-one-site-out influence stays near \(0.01\)--\(0.03\) and does not
-separate the drivers.
-
-\paragraph{Theoretical support.}
-A simplex upload satisfies \(\|V_k\|_2\le 1\).
-For the uniform aggregate, \eqref{eq:matrix_bernstein_main} gives, with
-probability at least \(1-\delta\),
-\[
-\bigl\|\bar V-\mathbb{E}\bar V\bigr\|_2
-\le
-\sqrt{\frac{2\log(2p/\delta)}{K}}
-+\frac{2\log(2p/\delta)}{3K}.
-\]
-Assumptions~(A1)--(A4) carry the same bound to a weighted aggregate
-through \(K_{\mathrm{eff}}\) and \(R_{\star}\).
-The scalar bound \eqref{eq:scalar} controls one contrast, and the
-coordinate-wise bound \eqref{eq:linf} controls all \(p\) coordinates, with
-dimension entering only as \(\log(2p/\delta)\).
-Under the margin condition~(A5), an \(\ell_\infty\) deviation below half
-the margin makes the empirical Top-\(K\) set equal the population Top-\(K\)
-set.
-Inverse-variance weights additionally require the variance floor~(A6);
-truncated or equal weights restore \eqref{eq:linf} when the floor fails.
-Sites are independent across \(k\), coordinate dependence inside a site is
-unrestricted, and the \(p\times p\) covariance is not estimated.
-Communication is \(O(Kp)\) floats, one upload per site.
+Covariate-shift rankings and predictive rankings aggregate.
+A uniform weight is enough when sites are similar in size.
+A size weight is the change when they are not: the high-mismatch gain is
+\(+0.285\), and it grows with heterogeneity.
+A median or a client-agreement Shapley weight is the change when one or
+two uploads are replaced.
+Inverse-variance weights are the change when the variance estimate is
+bounded below and the wrapper is a covariate score.
+They inflate a corrupted site that reports a small variance, and they do
+not repair pseudo-outcome risk.
+Concept rankings are weaker under aggregation because the sites are not
+noisy copies of one concept: WhyShift PO-risk falls from \(0.410\) to
+\(0.185\) under sample-size weights, FEMNIST PO-risk on a pure noise
+treatment correlates at about zero, and a five-plus-five mixture of
+covariate and concept sites correlates about \(0.30\) with the clean
+aggregate.
+The justification for a driver is the skill-gated, size-matched excess
+\(\Delta^{\mathrm{cf}}\).
+At full intensity it places every structured site ahead of every clean
+site and ahead of the noise site, on both ACS tasks, in every seed.
+Leave-one-site-out influence does not.
+Where every aggregator returns the same wrong Spearman correlation, as in
+cooking \texttt{num\_105}, the split is the defect and the weight is not.
+The finite-sample bound is \eqref{eq:matrix_bernstein_main}.
+Assumptions~(A1)--(A4) extend it to a weighted aggregate, (A5) gives the
+Top-\(K\) corollary, and (A6) is the variance floor for inverse-variance
+weights.
 The bound concentrates \(\bar V\) around its expectation.
-The driver score decides which sites enter that expectation.
+\(\Delta^{\mathrm{cf}}\) decides which sites enter that expectation.
 
-Streaming updates, modality-wise pseudo-outcome contributions, and a
-differentially private upload that preserves the same concentration remain
-open.
+The construction is not a full federated optimization.
+It attributes shift at the feature level from one upload per site, with
+the per-site rule in Table~\ref{tab:weight-rule}.
+Open directions are streaming updates, modality-wise pseudo-outcome
+contributions, and a differentially private upload that preserves the same
+concentration.
