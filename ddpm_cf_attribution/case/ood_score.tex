@@ -1,0 +1,168 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,booktabs,array}
+
+\title{How the OOD score gates the conditional counterfactual}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The attribution score and the OOD score answer different questions.
+Random-Fourier MMD\textsuperscript{2}, and the squared shift read off that kernel, say whether today's purchase law moved.
+The OOD score says whether the counterfactual conditioner was inside the training support of the diffusion model.
+A cell that fails the score does not get to speak as a headline effect.
+This note writes that gate down as three numbers, one action, and an eight-row evaluation.
+It is not a sixth frozen layer, and it does not retouch the five-layer calls from the landing case.
+\end{abstract}
+
+\section{What the score is allowed to do}
+
+The conditional DDPM estimates $p(Y\mid x)$ on the $x$ it was trained on.
+The counterfactual replaces the spiked IP block and rebuilds the lag vector.
+That new $x^{\mathrm{cf}}$ can leave the training marginal even when the intervention itself is the one the query asked for.
+Scoring $Y$ there measures the model's extrapolation, not the conditional law the query named.
+
+So the OOD score sits in front of the attribution, not inside it.
+
+\begin{center}
+\begin{tabular}{@{}llp{7.2cm}@{}}
+\toprule
+Object & Question & Allowed to change \\
+\midrule
+$\Delta^{\mathrm{cf}}$, $\delta^{2}$ & Did the purchase law move, and by how much? & The reported effect \\
+Support score $s_{\infty}$ & Is this conditioner inside the training box? & Whether the cell enters the headline \\
+Localizer $\mathrm{FSDS}_{j}$ & Which coordinate pushed it out? & Clamp that coordinate, or drop the cell \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The OOD score is not an effect size.
+A large $\mathrm{FSDS}_{j}$ does not mean cohort $j$ drove purchases.
+It means coordinate $j$ is why this question left the support.
+
+\section{Three numbers}
+
+The conditioner is the length-21 vector used by the denoiser: 14 IP lags, 3 covariates, overlap, and the 3 distractor blocks at lag 10.
+The reference cloud is the training design matrix, with coordinate mean $\mu$ and coordinate scale $\sigma$.
+
+\paragraph{Support.}
+\[
+s_{\infty}(x)
+=
+\max_{j\le 21}
+\left|
+\frac{x_{j}-\mu_{j}}{\sigma_{j}}
+\right|.
+\]
+The cell is in support when $s_{\infty}(x)\le 4$.
+The threshold is a coordinate box, not a joint density.
+A vector that is typical on every margin and unusual as a combination can pass.
+That is a stated limit of this score, not a hidden one.
+
+\paragraph{Severity.}
+On the standardized cloud, let $d_{5}(x)$ be the Euclidean distance from $x$ to its 5th nearest training neighbor.
+This is the number a clamp has to reduce.
+It is not compared with 4.
+The box score and the neighbor score are two different geometries.
+
+\paragraph{Driver.}
+\[
+\mathrm{FSDS}_{j}(x)
+=
+d_{5}(x)
+-
+d_{5}(x^{(j)}),
+\]
+where $x^{(j)}$ replaces coordinate $j$ by the cloud mean and leaves the rest alone.
+The largest coordinate is the one the fallback is allowed to touch.
+On a one-coordinate spike the identity $d_{5}(x)-d_{5}(x^{(j_{\star})})=\mathrm{FSDS}_{j_{\star}}$ is exact, and the run uses that identity as a check.
+
+\section{The chain, in order}
+
+The score empowers the attribution only by walking this list.
+Skipping a step is how an extrapolation gets quoted as an effect.
+
+\begin{enumerate}
+\item Build $x^{\mathrm{cf}}$ by putting the spike day back on the reference path.
+Later innovations, covariates, and distractors stay at their observed values.
+\item Score $s_{\infty}(x^{\mathrm{cf}})$ against the training marginal.
+Do this before any MMD.
+\item If $s_{\infty}\le 4$, the cell may enter $\Delta^{\mathrm{cf}}$ and $\delta^{2}$.
+The OOD score has nothing more to say.
+\item If $s_{\infty}>4$, compute $\mathrm{FSDS}_{j}$ on the standardized cloud.
+\item One coordinate carries the distance: clamp that coordinate to the training mean, rescore, and label the cell clamped.
+The clamped value is a fallback, not the headline.
+\item Several coordinates share the distance: drop the cell.
+Do not clamp a handful of them and keep the MMD.
+\item The headline window is eligible only if its own conditioner passed step 3.
+A high support rate on other cells does not vouch for it.
+\item $\delta^{2}$ stays the size that gets quoted.
+$s_{\infty}$ and $\mathrm{FSDS}_{j}$ never replace it.
+\end{enumerate}
+
+\section{What this run actually did}
+
+The validation grid is 10 sites, 16 horizons, 12 windows: 1920 conditioners.
+1918 passed $s_{\infty}\le 4$, which is a rate of 0.999.
+Site 7 at lag 10 passed 11 of 12 windows.
+Site 7 is the isolated copy, and its raw score is already 0.019, so the one missed window does not move the driver call.
+The dose-1 headline window is inside the box.
+Its $\Delta^{\mathrm{cf}}=0.674$ and its $\delta^{2}=1.192$ were not produced by an out-of-support conditioner.
+
+The dose-response construction is the one place the code drops out-of-support rows before a concordance is computed.
+The site-mean $\Delta^{\mathrm{cf}}$ still averages every window, including the one site-7 miss.
+On this panel that is one cell.
+The declaration is stricter than that average: step 7 above says the headline cell must pass on its own, and a site mean that will be read as an effect should use the same mask.
+That mask is not yet applied to the site table.
+
+The localizer was not run on those 1920 real conditioners.
+It was run on a planted spike: lag-10 distractor $b_{2}$, coordinate 19, set to 4.5 training standard deviations, with every other standardized coordinate at 0.
+$\mathrm{FSDS}$ named $b_{2}$ at lag 10, score 1.42, and the next two coordinates scored 0.
+Neighbor distance fell from 4.05 to 2.63 after clamping that coordinate.
+The difference is 1.42, which matches the score.
+The residual 2.63 is the 5th-neighbor distance of the cloud mean; clamping does not make a point identical to a training row.
+The real attribution path never entered this branch.
+
+\section{Evaluation list}
+
+Each row is a check on the gate.
+``This run'' is the linear ten-site validation, not a new experiment.
+A fail here does not rewrite L1--L5.
+L5 still fails on the raw ratio, and L3 still fails on Wasserstein.
+
+\begin{center}
+\small
+\begin{tabular}{@{}clp{5.6cm}p{3.4cm}c@{}}
+\toprule
+& Check & Pass condition & This run & Call \\
+\midrule
+1 & Coverage & Share of real $x^{\mathrm{cf}}$ with $s_{\infty}\le 4$ is reported, and the headline cell is among them & 1918/1920; headline in support & pass \\
+2 & Gate binds & Out-of-support cells are counted, and the dose construction ignores them & 2 cells out; dose uses the mask & pass \\
+3 & Site means & Any $\Delta$ that is read as an effect uses the same mask & Site table still averages the site-7 miss & gap \\
+4 & Planted driver & Argmax of $\mathrm{FSDS}$ is the planted coordinate & $b_{2}$ at lag 10, score 1.42 & pass \\
+5 & Clamp identity & $d_{5}$ falls by $\mathrm{FSDS}_{j_{\star}}$ and by nothing else & $4.05-2.63=1.42$ & pass \\
+6 & Real-path localizer & $\mathrm{FSDS}$ is computed on real out-of-support cells, not only on a plant & Not run; the two real misses were not localized & gap \\
+7 & Separation & $\delta^{2}$ is the quoted size; $s_{\infty}$ is not & $\delta^{2}$ grid $0.808,0.798,0.787$; oracle mean of squares $0.754$ & pass \\
+8 & Joint hole & State that $s_{\infty}$ is a box. A joint OOD point with small margins is a known miss & Stated. Not probed on this panel & open \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Rows 3 and 6 are the two places the written chain is ahead of the code.
+Neither one changes the driver on this panel: the missed cell is a negative control, and the headline did not need a clamp.
+They are still listed, because a later panel with a real excursion would otherwise quote an extrapolated MMD as a site effect and would have no coordinate to clamp.
+
+\section{What stays put}
+
+The five-layer card is unchanged.
+Primary driver: site 0, lag 10, IP block, weekly scale.
+Headline $\Delta^{\mathrm{cf}}=0.674$ with interval $[0.442,0.906]$.
+Squared shift across the bandwidth grid: coefficient of variation $0.01$.
+Raw ratio across that grid: $8.9$ to $46.4$, and that clause still fails.
+Feature-only Wasserstein floor: $0.166$, model $0.245$, and the $0.10$ line still sits under the floor.
+
+\end{document}
