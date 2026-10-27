@@ -1,0 +1,303 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs}
+\usepackage{natbib}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\title{Landing case: conditional DDPM attribution\\
+of a ten-day IP-block shock}
+\author{Ten-site linear conditional panel}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The product answers one query.
+Ten days ago the IP-block feature of cohort~A spiked.
+If that day is put back on its reference path, what is today's purchase distribution for cohort~B, at which lag does the discrepancy peak, and which block carries it?
+The shipped object is a conditional-distribution counterfactual \citep{chernozhukov2013inference}, scored by random-Fourier MMD\textsuperscript{2} \citep{gretton2012kernel,rahimi2007random} under a conditional DDPM \citep{ho2020denoising}.
+On a ten-site linear panel with a known kernel, the validation path peaks at day~10 on the weekly site, the intervened block is the IP feature, and the isolated copy of the same site stays on the floor.
+The ratio of that score to the no-intervention baseline is not a stable effect size: it moves from $7.7$ to $31.6$ as the kernel width changes.
+\end{abstract}
+
+\section{The query}
+\label{sec:query}
+
+Cohorts are sites.
+On a shared calendar, site $s$ has an IP-block series $B_{s,t}\in\mathbb{R}$ and a purchase index $Y_{s,t}$.
+The business query fixes a spike day $t_0$ and a horizon $h=10$:
+\begin{quote}
+If $B_{s,t_0}$ had followed the reference path, what would the conditional law of $Y_{s,t_0+10}$ be?
+\end{quote}
+The product returns five objects for that query:
+a point estimate of the distributional discrepancy and a bootstrap interval;
+the path $\{\Delta_h\}$ over horizons;
+the scale weights of the conditioner;
+the fraction of counterfactual states inside the reference support;
+and the five-layer falsification report of Section~\ref{sec:protocol}.
+
+\section{What the product claims}
+\label{sec:contract}
+
+The intervention replaces the lagged IP block with the reference draw and keeps covariates at their observed values.
+The target is the conditional law
+\[
+P_\theta\bigl(Y_{s,t}\mid B^{\mathrm{cf}}_{s,t-1:t-K},X_{s,t}\bigr),
+\]
+the ceteris paribus conditional counterfactual of \citet{chernozhukov2013inference}.
+A structural effect along a named channel is a different target \citep{pearl2009causality}.
+Risk control, recommendation, and social transmission are represented by one site-specific distributed lag.
+They are not separately identified, and the product does not label a channel.
+MMD has no physical unit.
+The number that may be shown next to a decision is the raw random-Fourier score together with its interval; the ratio to the no-intervention baseline is a calibration diagnostic.
+A conditioning vector outside the reference support does not enter the headline.
+
+\section{Score}
+\label{sec:score}
+
+Let $P_{\mathrm{obs}}$ be the frozen sample of purchases on the query day, and let $P_\theta(\,\cdot\mid\mathrm{cf})$ be the DDPM sample under the reference history.
+With $D=100$ random Fourier features of the Gaussian kernel \citep{rahimi2007random,gretton2012kernel},
+\begin{equation}
+\label{eq:delta}
+\Delta^{\mathrm{cf}}
+=
+\mathrm{MMD}^{2}_{\mathrm{RFF}}
+\bigl(
+P_{\mathrm{obs}}(Y_{s,t_0+h}),\,
+P_\theta(Y_{s,t_0+h}\mid\mathrm{cf})
+\bigr).
+\end{equation}
+The no-intervention baseline $\Delta^{\mathrm{base}}$ uses the same sampler on the observed history.
+The normalized diagnostic is $\widetilde\Delta^{\mathrm{cf}}=\Delta^{\mathrm{cf}}/\max(\Delta^{\mathrm{base}},10^{-3})$.
+The interval is the percentile interval of~\eqref{eq:delta} under $400$ resamples of the two finite samples, with the Fourier features held fixed.
+Bandwidth is the median pairwise distance, unless a sensitivity setting scales it.
+
+\section{Landing panel}
+\label{sec:panel}
+
+The landing test is a ten-site linear conditional distribution.
+Forty-eight windows, forty days each, spike day $t_0=18$, additive spike of size $\mathrm{dose}\times 1$.
+The last twelve windows are the validation slice.
+The conditional mean is linear in a fourteen-day lag, a social term at lag~$2$, and three covariates:
+\begin{align}
+\label{eq:mu}
+\mu_{s,t}
+&=
+\alpha_s
++\sum_{k=1}^{14}\omega_s(k)\,B_{s,t-k}
++\beta^{\mathrm{soc}}_s\cdot\mathrm{overlap}_{s}\cdot B_{s,t-2} \nonumber\\
+&\quad
++\gamma^\top X_{s,t}
++0.15\,U_s .
+\end{align}
+The conditional standard deviation is $0.48\,\sigma_s\bigl(1+0.15\,|\mathrm{signal}_{s,t}|\bigr)$.
+$U_s$ is unobserved.
+A bump kernel has its peak at a site-specific lag; a decay kernel puts its mass on recent lags.
+Isolation multiplies $\omega_s$ by zero after the kernel is recorded, so the IP spike is still seen.
+
+\begin{table}[t]
+\centering
+\caption{Effective kernels. The lag-10 query has a unique primary site.}
+\label{tab:sites}
+\begin{tabular}{@{}clllc@{}}
+\toprule
+Site & Name & Kernel & Role at lag 10 \\
+\midrule
+0 & weekly primary & bump at day 10, weight $0.95$ & primary driver \\
+1 & weekly secondary & same center, weight $0.50$ & secondary \\
+2 & daily driver & bump at day 3, weight $0.85$ & other query \\
+3 & immediate driver & bump at day 1, weight $0.80$ & other query \\
+4 & weekly weak & bump at day 10, weight $0.28$ & weak weekly \\
+5 & decay, recent & exponential, weight $0.55$ at lag 1 & L1 temporal construction \\
+6 & social overlap & no lag kernel; overlap $\times$ lag 2 & L1 overlap construction \\
+7 & isolated & potential copy of site 0, transmission off & L1 isolation \\
+8 & null & flat & negative control \\
+9 & null, noisy & flat, scale $1.55$ & negative control \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At unit dose the population mean shift of site~0 at lag~10 is $0.95$.
+Doses on the validation windows cycle through $\{0.40,0.70,1.00,1.30\}$, so the average oracle shift on those windows is $0.807$.
+Site~6 is the only social transmitter, and its overlap grid is $\{0.20,0.45,0.70,0.92\}$ at a fixed dose of~$1$.
+Site~0 also has a varying overlap, and $\beta^{\mathrm{soc}}_0=0$, so overlap is a negative control there.
+
+The same conditioner shape accepts a live retail panel.
+A store is a site, a promo or a competitor shock is $B_t$, and the daily sales distribution is $Y_t$ \citep{makridakis2022m5}.
+The landing test keeps the kernel known so that a wrong peak can be seen.
+A live panel does not have that oracle; the five layers below are the acceptance test that remains.
+
+\section{Model that ships}
+\label{sec:model}
+
+The diffused variable is the scalar purchase index.
+A length-one series has no spatial U-Net, so the denoiser is a two-block MLP with adaptive layer normalisation, the scalar analogue of the adaptive group normalisation used by \citet{dhariwal2021diffusion}.
+History reaches the denoiser only after a three-way softmax gate over lags $1$--$2$ (hourly), $3$--$5$ (daily), and $6$--$14$ (weekly).
+The training loss is the noise-prediction loss of \citet{ho2020denoising}, with the lag block dropped on ten percent of steps.
+The noise schedule is the cosine schedule of \citet{nichol2021improved}, sixty steps on the shipped retry.
+Site identity enters as an embedding.
+The isolation flag does not.
+The acceptance weight for a scale is the normalised change in the predictive mean when that lag bucket is reset to its training mean.
+The softmax is logged and is not the acceptance statistic, because a gate and a downstream weight are not separately identified.
+On site~0 the softmax was $(0.066,0.045,0.889)$ and the ablation weight was $(0.17,0.15,0.68)$.
+Both put the mass on the weekly bucket.
+
+Before diffusion, a quantile-regression MVP \citep{koenker2005quantile} must clear a dose-response concordance of $0.70$.
+On the validation windows the gradient-boosting quantiles scored $0.85$, and the run entered Stage~2.
+The first diffusion fit failed the Wasserstein clause of Section~\ref{sec:protocol}.
+One pre-registered retry, one hundred and twenty epochs at width $192$, is the fit reported below.
+Its best validation noise loss was $0.397$.
+
+The counterfactual path replaces $B_{s,t_0}$ with the pre-spike latent and leaves later innovations as observed.
+In this panel the block has no autoregressive feedback, so that replacement is the rollout.
+Each future day is then scored by~\eqref{eq:delta}.
+
+\section{What the validation windows showed}
+\label{sec:results}
+
+\paragraph{Headline window.}
+One validation window with dose~$1$, site~0, horizon~$10$:
+\begin{equation}
+\label{eq:headline}
+\Delta^{\mathrm{cf}}=0.631,
+\qquad
+95\%\ \mathrm{CI}\ [0.426,\,0.852],
+\qquad
+\Delta^{\mathrm{base}}=0.021,
+\qquad
+\widetilde\Delta^{\mathrm{cf}}=30.3 .
+\end{equation}
+The counterfactual mean sits $1.009$ below the observed mean.
+The reference-history support rate on the whole validation grid is $1.00$ at a coordinate $z$-score of~$4$.
+A stress path that pushes the lag-10 distractor $b_2$ out by $4.5$ standard deviations is localised by a leave-one-coordinate nearest-neighbour score on that coordinate; clamping it cuts the neighbour distance from $4.05$ to $2.63$.
+The real attribution path did not need that clamp.
+
+\paragraph{Who moves today's purchases.}
+Table~\ref{tab:path} averages the twelve validation windows.
+The primary site is site~0.
+Its path rises and then falls, with the peak on day~$10$.
+Sites whose kernels sit on other lags peak on those lags and are flat at lag~$10$.
+The isolated copy of the weekly primary, site~7, has mean $\Delta^{\mathrm{cf}}=0.028$ against $0.412$ for site~0.
+
+\begin{table}[t]
+\centering
+\caption{Validation path under the reference intervention.
+Oracle is the mean shift at lag~10, averaged over the dose cycle.
+$\Delta^{\mathrm{cf}}$ is raw random-Fourier MMD\textsuperscript{2}.}
+\label{tab:path}
+\begin{tabular}{@{}lrrrl@{}}
+\toprule
+Site & Oracle & $\Delta^{\mathrm{cf}}$ & Peak day & Shape \\
+\midrule
+0 weekly primary & $0.807$ & $0.412$ & 10 & peak, then decline \\
+1 weekly secondary & $0.425$ & $0.143$ & 10 & peak, then decline \\
+4 weekly weak & $0.238$ & $0.165$ & 11 & peak, then decline \\
+5 decay & $0.008$ & $0.046$ & 1 & irregular \\
+3 immediate & $0.000$ & $0.034$ & 1 & irregular \\
+6 social overlap & $0.000$ & $0.028$ & 2 & peak, then decline \\
+7 isolated & $0.000$ & $0.028$ & 15 & no lag-10 mass \\
+8 null & $0.000$ & $0.026$ & 4 & on the floor \\
+9 null, noisy & $0.000$ & $0.024$ & 7 & on the floor \\
+2 daily driver & $0.000$ & $0.020$ & 3 & peak, then decline \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The top three sites by raw $\Delta^{\mathrm{cf}}$ are $0$, $4$, and $1$, the same three sites as the oracle.
+Sites $4$ and $1$ swap order ($0.165$ against $0.143$; oracle $0.238$ against $0.425$).
+Normalising by $\Delta^{\mathrm{base}}$ lifts null sites whose baseline is nearly zero.
+The driver call uses the raw score and the peak day together.
+Across windows, the signed mean gap on site~0 averages $0.794$, against the oracle average $0.807$.
+
+\paragraph{Which block.}
+Replacing the IP lag gives $\Delta=0.412$.
+Resetting the three lag-10 distractors to their training means gives $0.043$.
+Resetting the covariates gives $0.112$.
+The block that carries the query is the IP feature.
+
+\paragraph{Where the past information sits.}
+Placebo horizons $3$, $5$, $15$, and $20$ score $0.058$, $0.071$, $0.049$, and $0.072$, against $0.412$ at the true lag and $0.078$ for the no-intervention baseline.
+The precision scan over days $1$ through $15$ peaks at day~$10$.
+Daily site~2 peaks at day~$3$, immediate site~3 and the decay site peak at day~$1$, and the overlap site peaks at day~$2$, which is the only lag in its structural term.
+
+\section{Five-layer readout}
+\label{sec:protocol}
+
+Thresholds were fixed before the run.
+A layer fails closed.
+
+\begin{table}[t]
+\centering
+\caption{Frozen acceptance versus the validation run.}
+\label{tab:layers}
+\begin{tabular}{@{}llp{6.6cm}c@{}}
+\toprule
+Layer & Rule & Measured & Call \\
+\midrule
+L1 & $\ge 3$ of 4 constructions & temporal $-0.76$; overlap concordance $0.87$; isolation $d=-1.48$, $p<0.001$; dose Spearman $0.67$ & pass \\
+L2 & placebo, peak in $\{9,10,11\}$, scale match & placebos $<0.35\times\Delta_{10}$; peak at 10; weekly, daily, hourly sites match & pass \\
+L3 & PIT $p>0.05$, $W<0.1\,\mathrm{sd}$, HSIC in $[0.8,1.2]$ & $p=0.445$; $W/\mathrm{sd}=0.245$; HSIC $1.009$ & fail \\
+L4 & $\ge 3$ proxies agree & CATE $+1.005$, mask gap $+0.369$, business peak on day 10, weekly gate & pass \\
+L5 & three CVs and E-value $>2$ & baseline CV $0.13$; architecture CV $0.16$; E-value $4.06$; kernel CV $0.70$ & fail \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Relative rank.}
+Dose concordance on site~0 is $0.80$ and the Spearman correlation with dose is $0.67$, short of the $0.70$ clause, so that construction fails on its own.
+The decay site ranks horizons with Spearman $-0.76$.
+The same statistic on the weekly site is $+0.74$: a monotone-lag story is the wrong assumption for a day-10 kernel, and that failure is charged to the construction.
+Overlap concordance on the social site is $0.87$; on the risk site the overlap Spearman is $-0.13$.
+Isolation of the matched weekly site has paired Cohen's $d=-1.48$.
+Three constructions pass.
+
+\paragraph{Observational calibration.}
+The probability integral transform \citep{dawid1984present} has Kolmogorov--Smirnov $p=0.445$.
+The Hilbert--Schmidt dependence ratio \citep{gretton2005measuring} between generated outcomes and the conditioner, over the same ratio for observed outcomes, is $1.009$.
+Mean per-cell Wasserstein distance is $0.245$ standard deviations of $Y$, above the clause of $0.10$.
+A Gaussian oracle that sees only the features, putting the realised $U$ into the variance, sits at $0.180$ on the same comparison.
+Two samples from one conditional sit at $0.080$.
+The $0.10$ clause lies under the feature-only floor of this panel.
+The DDPM is $0.065$ above that floor.
+PIT and HSIC pass.
+The layer still fails closed.
+
+\paragraph{Proxies.}
+An R-learner \citep{nie2021quasi} with the lag-10 IP feature as the continuous treatment estimates a site-0 coefficient of $+1.005$.
+The rollout's mean gap has the same sign.
+The mask gap $\Delta^{\mathrm{cf}}-\Delta_{\mathrm{mask}}=0.369$.
+The excess of the purchase index over the spike day peaks on day~$10$, the same day as $\Delta_h$.
+Four proxies agree.
+
+\paragraph{Fragility.}
+Four reference replacements of the spike day, residual, mean, resample, and zero, give raw scores $0.412$, $0.413$, $0.533$, and $0.416$ (coefficient of variation $0.13$).
+The DDPM, the site-interacted linear Gaussian, and the quantile MVP score $0.412$, $0.408$, and $0.308$ (coefficient of variation $0.16$).
+The E-value \citep{vanderweele2017sensitivity} at Cohen's $d=0.92$ is $4.06$.
+Bandwidth multipliers $1/2$, $1$, and $2$ move the normalized diagnostic through $7.7$, $13.9$, and $31.6$ (coefficient of variation $0.70$).
+That clause fails.
+The stable objects are the ranking and the peak day.
+
+\section{Label on the decision}
+\label{sec:label}
+
+Ship the identity of the driver, not a unitless multiple.
+In this landing the driver is site~0, lag~$10$, IP block $B$, weekly scale.
+The purchase distribution moves with that cell: the dose-$1$ window scores $0.631$ with interval $[0.426,0.852]$, and the mean gap is about one purchase-index unit.
+The path is a rise into day~$10$ and a decline after it.
+Sites with the same spike and a closed kernel, including the isolated twin, do not move.
+
+Put three labels on the card.
+The normalized ratio is a calibration check; at the default bandwidth it is about $30$, and across the three protocol bandwidths it runs from $7.7$ to $31.6$.
+The Wasserstein clause of the observational layer fails against a threshold that sits below the unobserved-confounder floor; PIT and the dependence ratio pass, and the conditional mean gap ($0.794$ against an oracle of $0.807$) is the calibration fact the card should quote.
+The E-value is $4.06$.
+A randomised confirmation is still the next measurement if the decision isolates a live IP range.
+The product does not name a risk, recommendation, or social channel.
+
+\bibliographystyle{plainnat}
+\bibliography{landing_case}
+
+\end{document}

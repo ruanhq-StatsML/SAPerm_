@@ -9,6 +9,11 @@ This is a conditional counterfactual: the lagged IP feature is set to a
 reference draw and the purchase index is regenerated. It is not a structural
 effect, and the risk / recommendation / social channels are not separated.
 
+## Landing case
+
+`case/landing_case.tex` with `case/landing_case.bib` is the product write-up of the validation run.
+From that directory: `pdflatex landing_case && bibtex landing_case && pdflatex landing_case && pdflatex landing_case`.
+
 ## Run
 
 ```bash
