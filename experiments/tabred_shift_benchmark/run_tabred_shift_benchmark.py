@@ -426,9 +426,15 @@ def run_cell(X, y, columns, split_name, kind, seed) -> list[dict]:
     b0, b1 = feature_rank_indices(X[:, j])
     X0, y0 = X[b0], y[b0]
     X1, y1 = X[b1], y[b1]
-    rng = np.random.default_rng(seed)
+    # Separate streams so the permutation count cannot move the other scores.
+    rng_plant = np.random.default_rng(seed + 1)
+    rng_rf = np.random.default_rng(seed + 2)
+    rng_shap = np.random.default_rng(seed + 3)
+    rng_mmd = np.random.default_rng(seed + 4)
+    rng_causal = np.random.default_rng(seed + 5)
+    rng_linear = np.random.default_rng(seed + 6)
     support = choose_support(X0, y0, banned=j, k=K_SUPPORT, seed=seed)
-    X1, y1 = plant_shift(X0, y0, X1, y1, support, kind, rng)
+    X1, y1 = plant_shift(X0, y0, X1, y1, support, kind, rng_plant)
     p = X.shape[1]
     timed: dict[str, np.ndarray] = {}
     timings: dict[str, float] = {}
@@ -445,11 +451,11 @@ def run_cell(X, y, columns, split_name, kind, seed) -> list[dict]:
             timed[label] = out
             timings[label] = elapsed
 
-    take("RF-domain", lambda: score_rf_domain(X0, X1, seed, rng))
-    take("Delta-SH", lambda: score_delta_shap(X0, y0, X1, y1, seed, rng))
-    take("LOCO-MMD", lambda: score_loco_mmd(X0, X1, rng))
-    take("causal", lambda: score_causal_block(X0, y0, X1, y1, seed, rng))
-    take("linear", lambda: score_linear_family(X0, y0, X1, y1, rng))
+    take("RF-domain", lambda: score_rf_domain(X0, X1, seed, rng_rf))
+    take("Delta-SH", lambda: score_delta_shap(X0, y0, X1, y1, seed, rng_shap))
+    take("LOCO-MMD", lambda: score_loco_mmd(X0, X1, rng_mmd))
+    take("causal", lambda: score_causal_block(X0, y0, X1, y1, seed, rng_causal))
+    take("linear", lambda: score_linear_family(X0, y0, X1, y1, rng_linear))
 
     rows = []
     for method in METHODS:
