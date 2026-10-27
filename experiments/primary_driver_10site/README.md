@@ -6,7 +6,11 @@ The headline site score, `delta_cf`, is a size-matched Brier gap between a burn-
 
 ```bash
 python3 -m experiments.primary_driver_10site.test_dgp
+python3 -m experiments.primary_driver_10site.test_kernel_drivers
 python3 -m experiments.primary_driver_10site.run_benchmark --suite all --seeds 4
+python3 -m experiments.primary_driver_10site.synthetic_drivers --seeds 4
 ```
+
+`synthetic_drivers` scores MMD, HSIC, and R-risk on every site of the synthetic federations, stacks the same windows for the pooled statistics, and names the principal covariate driver and the principal concept driver. The write-up is `results/KERNEL_DRIVERS.md`.
 
 Tables and figures land in `experiments/primary_driver_10site/results/`. The narrative write-up is `RESULTS.md` in that folder. ACS extracts are cached under `cache/` and are not part of the source tree.
