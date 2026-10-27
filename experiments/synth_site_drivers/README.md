@@ -8,7 +8,7 @@ Covariate shift, linear and nonlinear, is named by MMD and HSIC. Concept drift, 
 
 | File | Role |
 | --- | --- |
-| `dgp.py` | Linear and nonlinear covariate and concept generators |
+| `dgp.py` | Re-exports the four site-batch generators from `experiments/dgps.py` |
 | `mmd_hsic_rrisk.py` | Leave-one-covariate MMD, HSIC, and ridge R-risk |
 | `site_principal_drivers.py` | Site split, aggregate, pooled score, LaTeX table |
 | `results/site_scores.csv` | Per-site, aggregate, and pooled rows, five replicates |
