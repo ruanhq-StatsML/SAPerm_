@@ -1,15 +1,14 @@
-"""PermuCATE on the biasfinder split, pooled across ten meta-learners.
+"""FSDS on the biasfinder split.
 
-The ten learners are the first ten arms of ``model_pool`` (RF1–RF6,
-XGB1–XGB4). Each arm is both the outcome regression and the
-pseudo-outcome regression inside PermuCATE. The propensity model stays the
-logistic classifier. The ten importance vectors are pooled by the ready
-rules: uniform average, sample-size weights, coordinate-wise median,
-agreement Shapley, top-3 and top-5 masks, and inverse-variance weights.
-Inverse-variance is the headline, because PermuCATE returns a permutation
-standard deviation.
+Each score is PermuCATE. The outcome regression, the pseudo-outcome
+regression, and the conditional feature model are the same entry of
+``model_registry_class``. The propensity model is ``logistic_classifier``
+from that registry. The registry regressors are rf, xgb, ridge, lm, and mlp.
+Their importance vectors are pooled by uniform average, sample-size weights,
+coordinate-wise median, agreement Shapley, top-3, top-5, and inverse-variance.
+Inverse-variance is the headline.
 
-Thompson sampling then spends holdout windows on those ten learners. The
+Thompson sampling spends holdout windows on those registry regressors. The
 reward is how far a learner's pseudo-outcome risk sits below the window mean.
 """
 
@@ -32,7 +31,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from ddpm_cf_attribution.model_pool import model_pool
+from ddpm_cf_attribution.permucate import OUTCOME_MODELS, fsds_registry, permuCATE_vimp
 from ddpm_cf_attribution.uplift_monitor import _update
 
 
@@ -279,8 +278,8 @@ def plot_aggregate(names: list[str], ivw: np.ndarray, pulls: list[int], learner_
     ax.set_xticks(np.arange(len(order)))
     ax.set_xticklabels([names[j] for j in order], rotation=45, ha="right")
     ax.axhline(0, color="0.5", lw=0.6)
-    ax.set_ylabel("Inverse-variance PermuCATE")
-    ax.set_title("Pooled across ten learners")
+    ax.set_ylabel("PermuCATE")
+    ax.set_title("FSDS with rf_regressor")
     ax = axes[1]
     ax.barh(np.arange(len(pulls)), pulls, color="0.35")
     ax.set_yticks(np.arange(len(pulls)))
@@ -305,26 +304,41 @@ def run_real(
     out_dir = Path(out_dir) if out_dir is not None else Path(__file__).resolve().parent / "outputs"
     root = Path(__file__).resolve().parents[1]
     data = load_biasfinder(root, n_ref, n_new, n_components, seed)
+    registry = fsds_registry()
     fits = []
-    for i, (name, estimator) in enumerate(model_pool(n_arms=10)):
-        fit = permucate_vimp(data["x"], data["y"], data["w"], estimator, n_perm=n_perm, seed=seed + i)
-        fit["name"] = name
+    for i, name in enumerate(OUTCOME_MODELS):
+        fit = permuCATE_vimp(
+            data["x"], data["y"], data["w"], registry,
+            model_m=name, model_tau=name, model_nu=name,
+            model_e="logistic_classifier",
+            n_perm=n_perm, seed=seed + i,
+        )
         fits.append(fit)
-    stack = np.vstack([fit["vimp"] for fit in fits])
-    std = np.vstack([fit["sd"] for fit in fits])
-    sizes = np.full(len(fits), data["n_ref"] + data["n_new"], dtype=float)
+    rf_risk = next(fit["po_risk"] for fit in fits if fit["name"] == "rf_regressor")
+    for fit in fits:
+        fit["kept"] = bool(fit["po_risk"] <= 5.0 * rf_risk)
+    pooled_fits = [fit for fit in fits if fit["kept"]]
+    stack = np.vstack([fit["vimp"] for fit in pooled_fits])
+    std = np.vstack([fit["sd"] for fit in pooled_fits])
+    # Pseudo-outcome risk is not on one scale across the registry. Scale each
+    # learner by its own median absolute importance before pooling.
+    scale = np.maximum(np.median(np.abs(stack), axis=1, keepdims=True), 1e-8)
+    stack = stack / scale
+    std = std / scale
+    sizes = np.full(len(pooled_fits), data["n_ref"] + data["n_new"], dtype=float)
     pooled = pool_rankings(stack, sizes, std)
     ivw = np.asarray(pooled["vectors"]["ivw"])
     names = [f"PC{j + 1}" for j in range(n_components)]
-    rewards = learner_rewards(fits, n_windows, seed)
+    rf_vimp = next(fit["vimp"] for fit in fits if fit["name"] == "rf_regressor")
+    rewards = learner_rewards(pooled_fits, n_windows, seed)
     mu = rewards.mean(axis=0)
     var = np.maximum(rewards.var(axis=0) / n_windows, 1e-6)
     valid = list(range(n_windows))
     deployed = thompson_over_learners(rewards, mu, var, valid, seed)
     cold = thompson_over_learners(
-        rewards, np.zeros(len(fits)), np.full(len(fits), 0.25), valid * 4, seed + 1,
+        rewards, np.zeros(rewards.shape[1]), np.full(rewards.shape[1], 0.25), valid * 4, seed + 1,
     )
-    learner_names = [fit["name"] for fit in fits]
+    learner_names = [fit["name"] for fit in pooled_fits]
     spearman = []
     for fit in fits:
         rho = spearmanr(fit["vimp"], ivw).statistic
@@ -332,6 +346,9 @@ def run_real(
     payload = {
         "data": {
             "source": "biasfinder bert embedding, train batch versus test batch",
+            "method": "PermuCATE via model_registry_class",
+            "outcome_models": list(OUTCOME_MODELS),
+            "propensity": "logistic_classifier",
             "n_ref": data["n_ref"],
             "n_new": data["n_new"],
             "n_components": n_components,
@@ -345,6 +362,7 @@ def run_real(
                 "vimp": fit["vimp"].tolist(),
                 "sd": fit["sd"].tolist(),
                 "po_risk": fit["po_risk"],
+                "kept": fit["kept"],
                 "spearman_with_ivw": spearman[i],
                 "top_feature": names[int(np.argmax(fit["vimp"]))],
             }
@@ -352,14 +370,26 @@ def run_real(
         ],
         "aggregate": pooled,
         "feature_names": names,
-        "primary_feature": names[int(np.argmax(ivw))],
-        "primary_ivw": float(np.max(ivw)),
+        "scale": scale.ravel().tolist(),
+        "primary_feature": names[int(np.argmax(rf_vimp))],
+        "primary_vimp": float(np.max(rf_vimp)),
+        "kept": [fit["name"] for fit in pooled_fits],
+        "dropped": [fit["name"] for fit in fits if not fit["kept"]],
+        "fsds_rf": {
+            "model_m": "rf_regressor",
+            "model_e": "logistic_classifier",
+            "model_tau": "rf_regressor",
+            "model_nu": "rf_regressor",
+            "top_feature": names[int(np.argmax(next(fit["vimp"] for fit in fits if fit["name"] == "rf_regressor")))],
+            "vimp": next(fit["vimp"] for fit in fits if fit["name"] == "rf_regressor").tolist(),
+            "po_risk": rf_risk,
+        },
         "thompson": deployed,
         "cold_start": cold,
         "most_pulled": learner_names[int(np.argmax(deployed["pulls"]))],
         "cold_most_pulled": learner_names[int(np.argmax(cold["pulls"]))],
     }
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "permucate_real.json").write_text(json.dumps(payload, indent=2))
-    plot_aggregate(names, ivw, cold["pulls"], learner_names, out_dir / "figures" / "permucate_real.png")
+    (out_dir / "fsds_permucate.json").write_text(json.dumps(payload, indent=2))
+    plot_aggregate(names, rf_vimp, cold["pulls"], learner_names, out_dir / "figures" / "fsds_permucate.png")
     return payload

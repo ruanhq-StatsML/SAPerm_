@@ -39,12 +39,17 @@ python -m ddpm_cf_attribution.experiments.monitor_uplift
 ```
 
 The real-data application is the biasfinder embedding split: the training file
-is the reference batch and the test file is the new batch. Importance is
-PermuCATE. The model pool lives in `model_pool.py`: nineteen arms, the
-default call returns the first twelve, and PermuCATE uses the first ten.
-Those ten importance vectors are pooled by uniform average, sample-size
-weights, median, agreement Shapley, top-3, top-5, and inverse-variance.
-Thompson sampling spends holdout windows on those ten learners.
+is the reference batch and the test file is the new batch. FSDS importance is
+PermuCATE, and every nuisance model is an entry of `model_registry_class`.
+The outcome regression, the pseudo-outcome regression, and the conditional
+feature model are one of `rf_regressor`, `xgb_regressor`, `ridge_regressor`,
+`lm_regressor`, `mlp_regressor`. The propensity model is
+`logistic_classifier`. The headline score is the random-forest specification. The five vectors are
+scaled by their own median absolute entry and pooled by uniform average,
+sample-size weights, median, agreement Shapley, top-3, top-5, and
+inverse-variance. A regressor whose holdout pseudo-outcome risk is more than
+five times the random-forest risk stays in the table and stays out of the
+pool. Thompson sampling spends holdout windows on the regressors that remain.
 
 The delivery archive is `ddpm_cf_attribution_delivery.zip`. It contains this
 package and the two biasfinder batches.
