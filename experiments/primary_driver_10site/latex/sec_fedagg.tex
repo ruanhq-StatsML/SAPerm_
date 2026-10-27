@@ -1044,7 +1044,7 @@ Relative to iterative synchronization of a high-dimensional model, the
 communication is smaller by a factor of order \(1/K\), and no raw row is
 sent.
 
-\paragraph{Claim.}
+\par\noindent\textbf{Claim.}
 \label{sec:fed-ood-vimp-tight}
 Under Assumptions~(A1)--(A4), the one-shot aggregate obeys the scalar and
 coordinate-wise bounds \eqref{eq:scalar}--\eqref{eq:linf}.
@@ -1060,7 +1060,7 @@ The inequalities are not asserted to dominate the spectral bound for every
 \(\Sigma\), and they are not asserted to be minimax.
 They are enough for coordinate-wise control and for a Top-\(K\) corollary.
 
-\paragraph{Assumptions.}
+\par\noindent\textbf{Assumptions.}
 \begin{itemize}
 \item[(A1)] \(V_k\in[0,1]^p\) with \(\mathbf{1}^{\top}V_k=1\);
   the sites are independent;
@@ -1083,7 +1083,7 @@ is not estimated.
 No condition is imposed on \(\mathrm{rank}(\Sigma)\).
 In particular,~(A1) and~(A2) hold for every FSDS share.
 
-\paragraph{Spectral baseline.}
+\par\noindent\textbf{Spectral baseline.}
 Under~(A1)--(A3) and a bound \(R\) on
 \(\|w_k(V_k-\mathbb{E}V_k)\|_2\), Matrix Bernstein
 \cite{tropp2012user,mackey2014matrix} yields, with probability at least
@@ -1099,7 +1099,7 @@ R\frac{\log(2p/\delta)}{K_{\mathrm{eff}}}
 \]
 The substitution used below is \(R\leftarrow R_{\star}\) from~(A2).
 
-\paragraph{Scalar and \(\ell_\infty\) bounds.}
+\par\noindent\textbf{Scalar and \(\ell_\infty\) bounds.}
 Under~(A1)--(A4), with probability at least \(1-\delta\),
 \begin{equation}
 \label{eq:scalar}
@@ -1126,7 +1126,7 @@ Equation~\eqref{eq:linf} is the deviation that enters the Top-\(K\) event.
 It is not presented as a strict improvement of the spectral-norm
 inequality for every covariance.
 
-\paragraph{Top-\(K\) corollary.}
+\par\noindent\textbf{Top-\(K\) corollary.}
 Under~(A1)--(A5), the event
 \(\{\|\bar V-\mathbb{E}\bar V\|_{\infty}<\mathrm{margin}/2\}\) implies
 equality of the empirical and population Top-\(K\) sets.
@@ -1145,7 +1145,7 @@ insufficient separation of the population shares, not from the choice
 among the mean, the median, and inverse-variance weights.
 Concordance of the full Spearman ranking is not claimed.
 
-\paragraph{Empirical Bernstein.}
+\par\noindent\textbf{Empirical Bernstein.}
 Under~(A1)--(A4) and~(A6), empirical Bernstein
 \cite{wainwright2019high,vershynin2018high} replaces the leading factor
 \(R_{\star}\) in~\eqref{eq:linf} by a consistent variance proxy, up to a
@@ -1317,16 +1317,11 @@ site and ahead of the noise site, on both ACS tasks, in every seed.
 Leave-one-site-out influence does not.
 Where every aggregator returns the same wrong Spearman correlation, as in
 cooking \texttt{num\_105}, the split is the defect and the weight is not.
-The finite-sample bound is \eqref{eq:matrix_bernstein_main}.
-Assumptions~(A1)--(A4) extend it to a weighted aggregate, (A5) gives the
-Top-\(K\) corollary, and (A6) is the variance floor for inverse-variance
-weights.
-The bound concentrates \(\bar V\) around its expectation.
-\(\Delta^{\mathrm{cf}}\) decides which sites enter that expectation.
 
 The construction is not a full federated optimization.
 It attributes shift at the feature level from one upload per site, with
-the per-site rule in Table~\ref{tab:weight-rule}.
+the finite-sample bound \eqref{eq:matrix_bernstein_main} and the per-site
+rule in Table~\ref{tab:weight-rule}.
 Open directions are streaming updates, modality-wise pseudo-outcome
 contributions, and a differentially private upload that preserves the same
 concentration.
