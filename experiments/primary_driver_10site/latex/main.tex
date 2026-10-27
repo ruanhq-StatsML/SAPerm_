@@ -1,24 +1,24 @@
 \documentclass[11pt]{article}
-\usepackage{amsmath,amssymb,booktabs,graphicx,geometry}
+\usepackage{amsmath,amssymb,booktabs,graphicx,geometry,longtable,pdflscape}
 \geometry{margin=0.95in}
 \graphicspath{{../results/figures/}}
 \setlength{\tabcolsep}{4pt}
 
-\title{Primary-source identification under heterogeneous concept drift}
-\author{Ten-site benchmark on ACS covariates}
+\title{Aggregation of shift importance, and primary sources}
+\author{Federated FSDS and the ten-site concept-drift benchmark}
 \date{}
 
 \begin{document}
 \maketitle
 \noindent
-This note is the experiment section for the manuscript.
-It can be read on its own.
-The file \texttt{sec\_primary\_driver.tex} is written to be input after
-the federated-aggregation appendix.
-The section defines its own notation.
-The split used throughout is the manuscript's:
-covariate shift is a change in $P(X)$, and concept drift is a change in
-$P(Y\mid X)$ between $D_{\mathrm{exist}}$ and $D_{\mathrm{new}}$.
+This note joins two designs that share one upload.
+Appendix~11 of the manuscript aggregates a simplex variable-importance
+vector across sites.
+The ten-site benchmark asks which sites carry a new concept before that
+aggregate is formed.
+Covariate shift is a change in $P(X)$.
+Concept drift is a change in $P(Y\mid X)$ between $D_{\mathrm{exist}}$
+and $D_{\mathrm{new}}$.
 
-\input{sec_primary_driver}
+\input{sec_combined}
 \end{document}
