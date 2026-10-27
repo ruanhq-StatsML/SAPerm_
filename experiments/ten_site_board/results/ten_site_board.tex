@@ -1,0 +1,37 @@
+\begin{table}[t]
+\centering
+\caption{Ten sites, scored inside each site: burn-in against the post-change window. MMD and HSIC are covariate scores. R-risk is excess test MSE of the burn-in model. The forest column refits that gap with a random forest. Cells are means over five replicates. The label rules are the ten-site plan. Covariates are a synthetic correlated table, and the base label does not use the planted coordinates.}
+\label{tab:ten-site-board}
+\begin{tabular}{lrrrr}
+\toprule
+Site type & MMD & HSIC & R-risk (ridge) & R-risk (forest) \\
+\midrule
+clean & 0.0007 & 0.0005 & -0.0075 & -0.0051 \\
+linear & 0.0008 & 0.0005 & 0.0423 & 0.0691 \\
+nonlinear & 0.0007 & 0.0006 & 0.0746 & 0.1466 \\
+noise & 0.0013 & 0.0005 & 0.0461 & 0.0319 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{The same scores site by site. S4--S6 are the three halfspaces, S7 is the product, S8 is the sine-square, S9 is the coin flip. A ranking read off one column is not stable across the other column.}
+\label{tab:ten-site-board-sites}
+\begin{tabular}{llrrrr}
+\toprule
+Site & Type & MMD & HSIC & R-risk (ridge) & R-risk (forest) \\
+\midrule
+S0 & clean & 0.0003 & 0.0005 & 0.0117 & -0.0111 \\
+S1 & clean & 0.0003 & 0.0005 & -0.0203 & -0.0043 \\
+S2 & clean & 0.0016 & 0.0006 & -0.0158 & -0.0048 \\
+S3 & clean & 0.0005 & 0.0005 & -0.0056 & -0.0001 \\
+S4 & linear & 0.0009 & 0.0006 & 0.0196 & 0.0607 \\
+S5 & linear & 0.0008 & 0.0005 & 0.0580 & 0.0859 \\
+S6 & linear & 0.0006 & 0.0005 & 0.0492 & 0.0606 \\
+S7 & nonlinear & 0.0010 & 0.0006 & 0.0141 & 0.1128 \\
+S8 & nonlinear & 0.0003 & 0.0005 & 0.1351 & 0.1804 \\
+S9 & noise & 0.0013 & 0.0005 & 0.0461 & 0.0319 \\
+\bottomrule
+\end{tabular}
+\end{table}

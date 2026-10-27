@@ -1,0 +1,133 @@
+{
+  "n_rep": 5,
+  "by_type": {
+    "clean": {
+      "mmd": 0.000661,
+      "hsic": 0.000549,
+      "rrisk": -0.007507,
+      "rrisk_rf": -0.005095
+    },
+    "linear": {
+      "mmd": 0.000756,
+      "hsic": 0.000549,
+      "rrisk": 0.042275,
+      "rrisk_rf": 0.069069
+    },
+    "nonlinear": {
+      "mmd": 0.000665,
+      "hsic": 0.000551,
+      "rrisk": 0.074602,
+      "rrisk_rf": 0.146621
+    },
+    "noise": {
+      "mmd": 0.001282,
+      "hsic": 0.00055,
+      "rrisk": 0.046112,
+      "rrisk_rf": 0.031899
+    }
+  },
+  "pair_rate": {
+    "mmd": {
+      "primary_gt_clean": 0.49000000000000005,
+      "primary_gt_noise": 0.44000000000000006,
+      "noise_gt_clean": 0.5,
+      "linear_gt_nonlinear": 0.4666666666666666
+    },
+    "hsic": {
+      "primary_gt_clean": 0.55,
+      "primary_gt_noise": 0.64,
+      "noise_gt_clean": 0.55,
+      "linear_gt_nonlinear": 0.4333333333333333
+    },
+    "rrisk": {
+      "primary_gt_clean": 0.85,
+      "primary_gt_noise": 0.56,
+      "noise_gt_clean": 1.0,
+      "linear_gt_nonlinear": 0.36666666666666664
+    },
+    "rrisk_rf": {
+      "primary_gt_clean": 1.0,
+      "primary_gt_noise": 0.96,
+      "noise_gt_clean": 1.0,
+      "linear_gt_nonlinear": 0.03333333333333333
+    }
+  },
+  "kendall_tau": {
+    "mmd": {
+      "mmd": 0.9999999999999998,
+      "hsic": 0.06666666666666665,
+      "rrisk": -0.03111111111111111,
+      "rrisk_rf": -0.013333333333333336
+    },
+    "hsic": {
+      "mmd": 0.06666666666666665,
+      "hsic": 0.9999999999999998,
+      "rrisk": 0.031111111111111117,
+      "rrisk_rf": 0.048888888888888885
+    },
+    "rrisk": {
+      "mmd": -0.03111111111111111,
+      "hsic": 0.031111111111111117,
+      "rrisk": 0.9999999999999998,
+      "rrisk_rf": 0.5377777777777777
+    },
+    "rrisk_rf": {
+      "mmd": -0.013333333333333336,
+      "hsic": 0.048888888888888885,
+      "rrisk": 0.5377777777777777,
+      "rrisk_rf": 0.9999999999999998
+    }
+  },
+  "top1_type_counts": {
+    "mmd": {
+      "linear": 3,
+      "clean": 1,
+      "nonlinear": 1
+    },
+    "hsic": {
+      "nonlinear": 2,
+      "noise": 1,
+      "clean": 1,
+      "linear": 1
+    },
+    "rrisk": {
+      "nonlinear": 4,
+      "linear": 1
+    },
+    "rrisk_rf": {
+      "nonlinear": 5
+    }
+  },
+  "pareto_front_types": [
+    [
+      "linear"
+    ],
+    [
+      "clean",
+      "linear",
+      "nonlinear",
+      "noise"
+    ],
+    [
+      "nonlinear",
+      "nonlinear"
+    ],
+    [
+      "clean",
+      "linear",
+      "linear",
+      "nonlinear"
+    ],
+    [
+      "linear",
+      "nonlinear",
+      "noise"
+    ]
+  ],
+  "feature_auc": {
+    "rrisk_auc_on_planted": 0.716,
+    "mmd_auc_on_planted": 0.5219999999999999,
+    "hsic_auc_on_planted": 0.564
+  },
+  "spearman_rrisk_vs_rf": 0.6703030303030303
+}

@@ -1,0 +1,31 @@
+\begin{table}[t]
+\centering
+\caption{Uplift monitor using the FSDS scores. MMD and HSIC are \texttt{MMD} and HSIC-LOCO on the randomized slice against the burn-in. R-learner is the FSDS loss with the deployed uplift plugged in as $\tau$. PO-risk is the PermuCATE pseudo-outcome risk. Early is batches 4--7. Late is batches 8--15. Cells are means over four replicates.}
+\label{tab:uplift-monitor}
+\begin{tabular}{llrrrrrr}
+\toprule
+Scenario & Phase & MMD & HSIC & R-learn stale & R-learn fresh & PO stale & PO fresh \\
+\midrule
+concept & early & 0.0011 & 0.0005 & 0.222 & 0.226 & 0.826 & 0.842 \\
+concept & late & 0.0008 & 0.0005 & 0.306 & 0.242 & 1.478 & 0.946 \\
+covariate & early & 0.0013 & 0.0006 & 0.220 & 0.222 & 0.821 & 0.840 \\
+covariate & late & 0.1055 & 0.0023 & 0.196 & 0.197 & 0.718 & 0.754 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Thompson sampling traffic. Each arm is a policy. The reward is the binary outcome. The Beta posterior is discounted by $0.85$ each batch, so a regime change can move traffic. Early and late match the monitor table. Cells are the mean share of exploit traffic.}
+\label{tab:uplift-thompson}
+\begin{tabular}{llrrrr}
+\toprule
+Scenario & Phase & Control & Treat all & Stale uplift & Fresh uplift \\
+\midrule
+concept & early & 0.069 & 0.089 & 0.273 & 0.569 \\
+concept & late & 0.106 & 0.051 & 0.085 & 0.758 \\
+covariate & early & 0.082 & 0.071 & 0.265 & 0.582 \\
+covariate & late & 0.003 & 0.001 & 0.866 & 0.130 \\
+\bottomrule
+\end{tabular}
+\end{table}
