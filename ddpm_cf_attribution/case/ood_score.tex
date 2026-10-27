@@ -104,14 +104,64 @@ A high support rate on other cells does not vouch for it.
 $s_{\infty}$ and $\mathrm{FSDS}_{j}$ never replace it.
 \end{enumerate}
 
+\section{Who is allowed into the headline}
+
+Passing $s_{\infty}(x^{\mathrm{cf}})\le 4$ is not the headline decision.
+The headline is one sentence: on this window, putting the IP block back on the reference path lowers today's purchases.
+That sentence uses both batches, so the conditioner has to clear the edit and the background separately.
+A coordinate the replacement does not touch is background.
+On a lag-10 query the replacement touches one coordinate, $b_{0}$ at lag 10.
+
+\begin{enumerate}
+\item Name the edit set $J=\{j:x^{\mathrm{cf}}_{j}\ne x^{\mathrm{obs}}_{j}\}$.
+Everything else is background and is held fixed on purpose.
+\item The edit is inside after the replacement: $\max_{j\in J}|z^{\mathrm{cf}}_{j}|\le 4$.
+If this fails, the reference path itself left the training box.
+The cell does not enter the headline.
+\item The edit was not already an excuse to extrapolate: report $\max_{j\in J}|z^{\mathrm{obs}}_{j}|$ next to it.
+Entering is the case where the spike coordinate moves toward the training center, not away from it.
+\item Background is inside on the shared coordinates: $\max_{j\notin J}|z_{j}|\le 4$.
+The same $z$ appears on $x^{\mathrm{obs}}$ and $x^{\mathrm{cf}}$, because those coordinates were not edited.
+If this fails, the observed batch is a real outcome at an unusual covariate and the counterfactual batch is a model draw at that same unusual covariate.
+The gap mixes the IP edit with extrapolation error.
+The cell is refused, and it is labeled background OOD, not ``the counterfactual left the support.''
+\item Do not clamp a background coordinate and then call the result the headline.
+Clamping $x$ or a distractor changes the facts the query said to hold fixed.
+A clamp is legal only for an edit coordinate that step 2 failed, and the clamped number is a fallback.
+\item The two-batch sign has to match the edit.
+Here the spike is a positive dose and the kernel weight is positive, so the headline requires $\overline{Y}_{\mathrm{obs}}-\overline{Y}_{\mathrm{cf}}>0$.
+A large MMD with the opposite sign, or with a near-zero mean gap, does not enter.
+The distance is not the direction.
+\item The factual pair has to stay small.
+$\Delta^{\mathrm{cf}}$ is the observed batch against the reference-path batch.
+$\Delta^{\mathrm{base}}$ is the observed batch against a model batch that still carries the spike.
+The headline requires $\Delta^{\mathrm{cf}}$ well above $\Delta^{\mathrm{base}}$, so the gap is the edit and not the sampler.
+\end{enumerate}
+
+The dose-1 window is episode 42, site 0, horizon 10.
+$J$ is only $b_{0}$ at lag 10.
+That coordinate moves from raw $1.063$ to $0.063$, and from $z=+2.53$ to $z=+0.09$.
+The box score of the whole vector stays $s_{\infty}=2.58$, and the maximizing coordinate is the demographic covariate, which the edit did not touch.
+Signed mean gap $+1.009$.
+$\Delta^{\mathrm{cf}}=0.674$ against $\Delta^{\mathrm{base}}=0.021$.
+Steps 2 through 7 all pass, so this conditioner enters the headline.
+The sentence that enters is the signed gap, not $s_{\infty}$.
+
+The two cells with $s_{\infty}>4$ fail step 4, not step 2.
+Episode 47, site 5, horizon 6: the demographic covariate is at $z=4.14$ on both the observed and the reference conditioner.
+Episode 43, site 7, horizon 10: distractor $b_{1}$ at lag 10 is at $z=4.18$ on both.
+The IP replacement did not move either coordinate.
+They are refused because the background is outside the box.
+They are not examples of the counterfactual path leaving the support, and they are not clamped.
+
 \section{What this run actually did}
 
 The validation grid is 10 sites, 16 horizons, 12 windows: 1920 conditioners.
 1918 passed $s_{\infty}\le 4$, which is a rate of 0.999.
-Site 7 at lag 10 passed 11 of 12 windows.
-Site 7 is the isolated copy, and its raw score is already 0.019, so the one missed window does not move the driver call.
-The dose-1 headline window is inside the box.
-Its $\Delta^{\mathrm{cf}}=0.674$ and its $\delta^{2}=1.192$ were not produced by an out-of-support conditioner.
+Both refusals are background OOD, computed above.
+Site 7 at lag 10 is the distractor cell, 11 of 12 windows inside the box.
+Its raw score is 0.019, and the missed window is not the headline.
+The dose-1 window entered under the seven-step rule, not under the box score alone.
 
 The dose-response construction is the one place the code drops out-of-support rows before a concordance is computed.
 The site-mean $\Delta^{\mathrm{cf}}$ still averages every window, including the one site-7 miss.
