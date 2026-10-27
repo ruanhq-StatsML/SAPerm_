@@ -1,24 +1,109 @@
 \documentclass[11pt]{article}
 \usepackage{amsmath,amssymb,booktabs,graphicx,geometry,longtable,pdflscape}
-\geometry{margin=0.95in}
-\graphicspath{{../results/figures/}}
+\geometry{margin=0.85in}
 \setlength{\tabcolsep}{4pt}
 
-\title{Aggregation of shift importance, and primary sources}
-\author{Federated FSDS and the ten-site concept-drift benchmark}
+\title{Federated aggregation of shift variable importance}
+\author{}
 \date{}
 
 \begin{document}
 \maketitle
-\noindent
-This note joins two designs that share one upload.
-Appendix~11 of the manuscript aggregates a simplex variable-importance
-vector across sites.
-The ten-site benchmark asks which sites carry a new concept before that
-aggregate is formed.
-Covariate shift is a change in $P(X)$.
-Concept drift is a change in $P(Y\mid X)$ between $D_{\mathrm{exist}}$
-and $D_{\mathrm{new}}$.
 
-\input{sec_combined}
+\input{sec_fedagg}
+
+\begin{thebibliography}{99}
+\bibitem{wang2019interpret}
+Guan Wang.
+Interpret federated learning with Shapley values.
+arXiv:1905.04519, 2019.
+
+\bibitem{ducange2026fedshap}
+Ducange et al.\ (2026).
+Row-free SHAP backgrounds via federated clustering and GANs.
+
+\bibitem{bonsignori2026iflash}
+Bonsignori et al.\ (2026).
+Client SHAP vectors aggregated by accuracy and faithfulness weights.
+
+\bibitem{fu2023feast}
+Fu et al.\ (2023).
+Vertical feature ranking by conditional mutual information on statistical summaries.
+
+\bibitem{li2023fedsdg}
+Li et al.\ (2023).
+Gini initialization and encrypted stochastic gates for vertical feature selection.
+
+\bibitem{khellaf2026fedforest}
+Khellaf et al.\ (2026).
+Federated forest from pooled split statistics; membership-weighted Fed-IPW and Fed-AIPW.
+
+\bibitem{xiong2023federated}
+Xiong et al.\ (2023).
+Propensity summaries for federated IPW and AIPW.
+
+\bibitem{vo2022bayesian}
+Vo et al.\ (2022).
+Gaussian-process posterior over potential outcomes across sites.
+
+\bibitem{khellaf2025federated}
+Khellaf et al.\ (2025).
+Meta-analysis and plug-in estimators for federated causal effects.
+
+\bibitem{almodovar2024pwfedavg}
+Almodovar et al.\ (2024).
+Propensity-weighted FedAvg.
+
+\bibitem{secom2008}
+SECOM.
+UCI Machine Learning Repository, 2008.
+
+\bibitem{clore2014diabetes130}
+B.~Strack, J.~P.~DeShazo, C.~Gennings, J.~L.~Olmo, S.~Ventura, K.~J.~Cios, and J.~N.~Clore.
+Impact of HbA1c measurement on hospital readmission rates: analysis of 70,000 clinical database patient records.
+\textit{BioMed Research International}, 2014.
+
+\bibitem{chiang2001fault}
+L.~H.~Chiang, E.~L.~Russell, and R.~D.~Braatz.
+\textit{Fault Detection and Diagnosis in Industrial Systems}.
+Springer, 2001.
+
+\bibitem{weinstein2013tcga}
+J.~N.~Weinstein et al.
+The Cancer Genome Atlas Pan-Cancer analysis project.
+\textit{Nature Genetics}, 45:1113--1120, 2013.
+
+\bibitem{leaf_federated_dataset}
+S.~Caldas, S.~M.~K.~Duddu, P.~Wu, T.~Li, J.~Kone{\v{c}}n{\'y}, H.~B.~McMahan, V.~Smith, and A.~Talwalkar.
+LEAF: A benchmark for federated settings.
+arXiv:1812.01097, 2018.
+
+\bibitem{WhyShift_Attribution}
+WhyShift attribution benchmark, as used for the ACS covariate tables.
+
+\bibitem{tropp2012user}
+J.~A.~Tropp.
+User-friendly tail bounds for sums of random matrices.
+\textit{Foundations of Computational Mathematics}, 12:389--434, 2012.
+
+\bibitem{mackey2014matrix}
+L.~Mackey, M.~I.~Jordan, R.~Y.~Chen, B.~Farrell, and J.~A.~Tropp.
+Matrix concentration inequalities via the method of exchangeable pairs.
+\textit{The Annals of Probability}, 42:906--945, 2014.
+
+\bibitem{wainwright2019high}
+M.~J.~Wainwright.
+\textit{High-Dimensional Statistics: A Non-Asymptotic Viewpoint}.
+Cambridge University Press, 2019.
+
+\bibitem{vershynin2018high}
+R.~Vershynin.
+\textit{High-Dimensional Probability}.
+Cambridge University Press, 2018.
+
+\bibitem{dersim}
+Inverse-variance weighting.
+The lower bound on the variance estimates is Assumption~(A6).
+\end{thebibliography}
+
 \end{document}
