@@ -1,7 +1,7 @@
 """PermuCATE on the biasfinder split, pooled across ten meta-learners.
 
-The ten learners are the first ten arms of the ready MAB model pool
-(RF1–RF6, XGB1–XGB4). Each arm is both the outcome regression and the
+The ten learners are the first ten arms of ``model_pool`` (RF1–RF6,
+XGB1–XGB4). Each arm is both the outcome regression and the
 pseudo-outcome regression inside PermuCATE. The propensity model stays the
 logistic classifier. The ten importance vectors are pooled by the ready
 rules: uniform average, sample-size weights, coordinate-wise median,
@@ -28,29 +28,12 @@ import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
 from sklearn.decomposition import PCA
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from xgboost import XGBRegressor
 
+from ddpm_cf_attribution.model_pool import model_pool
 from ddpm_cf_attribution.uplift_monitor import _update
-
-
-def model_pool() -> list[tuple[str, object]]:
-    """First ten arms of the MAB pool. Fresh estimators on every call."""
-    return [
-        ("RF1", RandomForestRegressor(n_estimators=50, max_features=0.25, max_depth=3, min_samples_leaf=50, random_state=2020, n_jobs=1)),
-        ("RF2", RandomForestRegressor(n_estimators=70, max_features=0.75, max_depth=4, min_samples_leaf=40, random_state=2021, n_jobs=1)),
-        ("RF3", RandomForestRegressor(n_estimators=90, max_features=0.25, max_depth=5, min_samples_leaf=30, random_state=2022, n_jobs=1)),
-        ("RF4", RandomForestRegressor(n_estimators=110, max_features=0.75, max_depth=6, min_samples_leaf=20, random_state=2023, n_jobs=1)),
-        ("RF5", RandomForestRegressor(n_estimators=130, max_features=0.25, max_depth=7, min_samples_leaf=10, random_state=2024, n_jobs=1)),
-        ("RF6", RandomForestRegressor(n_estimators=500, max_features=0.75, max_depth=8, min_samples_leaf=5, random_state=2025, n_jobs=1)),
-        ("XGB1", XGBRegressor(n_estimators=50, max_depth=3, colsample_bytree=0.33, subsample=0.2, random_state=2012, verbosity=0, n_jobs=1)),
-        ("XGB2", XGBRegressor(n_estimators=100, max_depth=5, colsample_bytree=0.4, subsample=0.3, random_state=2014, verbosity=0, n_jobs=1)),
-        ("XGB3", XGBRegressor(n_estimators=150, max_depth=7, colsample_bytree=0.5, subsample=0.4, random_state=2016, verbosity=0, n_jobs=1)),
-        ("XGB4", XGBRegressor(n_estimators=200, max_depth=9, colsample_bytree=0.6, subsample=0.5, random_state=2018, verbosity=0, n_jobs=1)),
-    ]
 
 
 def po_risk(tau, y, w, mu0, mu1, pi, clip: float = 1e-2) -> float:
@@ -323,7 +306,7 @@ def run_real(
     root = Path(__file__).resolve().parents[1]
     data = load_biasfinder(root, n_ref, n_new, n_components, seed)
     fits = []
-    for i, (name, estimator) in enumerate(model_pool()):
+    for i, (name, estimator) in enumerate(model_pool(n_arms=10)):
         fit = permucate_vimp(data["x"], data["y"], data["w"], estimator, n_perm=n_perm, seed=seed + i)
         fit["name"] = name
         fits.append(fit)

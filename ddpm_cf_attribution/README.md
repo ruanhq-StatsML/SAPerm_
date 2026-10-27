@@ -40,10 +40,14 @@ python -m ddpm_cf_attribution.experiments.monitor_uplift
 
 The real-data application is the biasfinder embedding split: the training file
 is the reference batch and the test file is the new batch. Importance is
-PermuCATE. The ten meta-learners are the first ten arms of the model pool,
-and their importance vectors are pooled by uniform average, sample-size
+PermuCATE. The model pool lives in `model_pool.py`: nineteen arms, the
+default call returns the first twelve, and PermuCATE uses the first ten.
+Those ten importance vectors are pooled by uniform average, sample-size
 weights, median, agreement Shapley, top-3, top-5, and inverse-variance.
 Thompson sampling spends holdout windows on those ten learners.
+
+The delivery archive is `ddpm_cf_attribution_delivery.zip`. It contains this
+package and the two biasfinder batches.
 
 ```bash
 python -m ddpm_cf_attribution.experiments.permucate_real
