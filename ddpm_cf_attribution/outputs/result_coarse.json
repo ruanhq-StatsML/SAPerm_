@@ -1,0 +1,161 @@
+{
+  "grain": "coarse",
+  "size": "one window",
+  "episode": 42,
+  "site": 0,
+  "site_name": "weekly_primary",
+  "horizon": 10,
+  "intervention": {
+    "edited_lags": [
+      10
+    ],
+    "edited_days": [
+      18
+    ],
+    "post_anomaly_lags": 9,
+    "post_anomaly_unchanged": true,
+    "lags": [
+      {
+        "lag": 1,
+        "day": 27,
+        "role": "after",
+        "obs": -0.05316860719687148,
+        "cf": -0.05316860719687148,
+        "delta": 0.0,
+        "edited": false
+      },
+      {
+        "lag": 2,
+        "day": 26,
+        "role": "after",
+        "obs": -0.07778909259395769,
+        "cf": -0.07778909259395769,
+        "delta": 0.0,
+        "edited": false
+      },
+      {
+        "lag": 3,
+        "day": 25,
+        "role": "after",
+        "obs": -0.15676285717686825,
+        "cf": -0.15676285717686825,
+        "delta": 0.0,
+        "edited": false
+      },
+      {
+        "lag": 4,
+        "day": 24,
+        "role": "after",
+        "obs": -0.08526770014603,
+        "cf": -0.08526770014603,
+        "delta": 0.0,
+        "edited": false
+      },
+      {
+        "lag": 5,
+        "day": 23,
+        "role": "after",
+        "obs": -0.061707773615373086,
+        "cf": -0.061707773615373086,
+        "delta": 0.0,
+        "edited": false
+      },
+      {
+        "lag": 6,
+        "day": 22,
+        "role": "after",
+        "obs": 0.003959372814610944,
+        "cf": 0.003959372814610944,
+        "delta": 0.0,
+        "edited": false
+      },
+      {
+        "lag": 7,
+        "day": 21,
+        "role": "after",
+        "obs": -0.3845663901978448,
+        "cf": -0.3845663901978448,
+        "delta": 0.0,
+        "edited": false
+      },
+      {
+        "lag": 8,
+        "day": 20,
+        "role": "after",
+        "obs": 0.1357651713679633,
+        "cf": 0.1357651713679633,
+        "delta": 0.0,
+        "edited": false
+      },
+      {
+        "lag": 9,
+        "day": 19,
+        "role": "after",
+        "obs": -0.13033223939091237,
+        "cf": -0.13033223939091237,
+        "delta": 0.0,
+        "edited": false
+      },
+      {
+        "lag": 10,
+        "day": 18,
+        "role": "anomaly",
+        "obs": 1.0630880301386774,
+        "cf": 0.06308803013867738,
+        "delta": -1.0,
+        "edited": true
+      },
+      {
+        "lag": 11,
+        "day": 17,
+        "role": "before",
+        "obs": -0.5038954943697326,
+        "cf": -0.5038954943697326,
+        "delta": 0.0,
+        "edited": false
+      },
+      {
+        "lag": 12,
+        "day": 16,
+        "role": "before",
+        "obs": -0.07061286003457248,
+        "cf": -0.07061286003457248,
+        "delta": 0.0,
+        "edited": false
+      },
+      {
+        "lag": 13,
+        "day": 15,
+        "role": "before",
+        "obs": 0.10380762978450225,
+        "cf": 0.10380762978450225,
+        "delta": 0.0,
+        "edited": false
+      },
+      {
+        "lag": 14,
+        "day": 14,
+        "role": "before",
+        "obs": 0.007811393087711331,
+        "cf": 0.007811393087711331,
+        "delta": 0.0,
+        "edited": false
+      }
+    ]
+  },
+  "replicates": {
+    "n_obs": 64,
+    "n_model": 48,
+    "obs_mean": 0.774168961815114,
+    "obs_std": 0.45983017548222976
+  },
+  "no_intervention_delta": 0.021114390508244128,
+  "with_intervention": {
+    "delta": 0.6736961445484908,
+    "signed": 1.0085806814389118,
+    "shift2": 1.1923030821178833,
+    "cell_signed": 1.1385464202009268,
+    "cell_oracle": 0.95
+  },
+  "admitted": true
+}

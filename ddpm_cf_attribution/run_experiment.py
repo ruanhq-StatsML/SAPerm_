@@ -327,7 +327,8 @@ def _credibility(layers: dict, accepted: bool) -> tuple[str, str, str]:
     return cred, bottleneck, rec
 
 
-def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None) -> dict:
+def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None,
+        return_details: bool = False):
     """Run the landing case. Defaults are the ten-site linear panel.
 
     ``ddpm_cf_attribution.run()`` is the product call.
@@ -605,6 +606,7 @@ def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None
         "oracle_effects_h10": [r["effect_h10"] for r in oracle["rows"]],
         "mvp": mvp_summary,
         "calibration": {**{k: cal[k] for k in ("pit_ks_p", "wasserstein_over_std", "hsic_ratio")}, "retried": retried},
+        "draw_size": {"obs_replicates": int(panel.Y.shape[-1]), "model_draws": int(n_samples)},
         "attribution_accepted": accepted,
         "support_rate": support_rate,
         "support_note": _fsds_note(x_train),
@@ -670,6 +672,8 @@ def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None
     slim = json_safe(result)
     (out_dir / "results.json").write_text(json.dumps(slim, indent=2))
     print(report)
+    if return_details:
+        return result, panel, ddpm_records
     return result
 
 

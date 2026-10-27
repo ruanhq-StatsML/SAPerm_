@@ -21,6 +21,16 @@ import ddpm_cf_attribution
 result = ddpm_cf_attribution.run()
 ```
 
+Two shorter experiments share that fit. Functions live in `functions.py`.
+Each experiment script only attributes.
+
+```bash
+python -m ddpm_cf_attribution.experiments.merge
+```
+
+`result_coarse.json` is one window. `result_fine.json` is site by horizon.
+`result_merged.json` checks that the coarse sign and the fine peak agree.
+
 ```bash
 pip install -r ddpm_cf_attribution/requirements.txt
 python -m ddpm_cf_attribution.example
