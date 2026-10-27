@@ -1,0 +1,8 @@
+{
+  "seeds": 4,
+  "n_per_window": 160,
+  "concept_hit_mean": 0.85,
+  "covariate_hit_mean": 0.9166666666666666,
+  "hetero_concept_hit": 1.0,
+  "hetero_covariate_hit": 1.0
+}
