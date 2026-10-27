@@ -38,6 +38,17 @@ to spend the next validation window on.
 python -m ddpm_cf_attribution.experiments.monitor_uplift
 ```
 
+The real-data application is the biasfinder embedding split: the training file
+is the reference batch and the test file is the new batch. Importance is
+PermuCATE. The ten meta-learners are the first ten arms of the model pool,
+and their importance vectors are pooled by uniform average, sample-size
+weights, median, agreement Shapley, top-3, top-5, and inverse-variance.
+Thompson sampling spends holdout windows on those ten learners.
+
+```bash
+python -m ddpm_cf_attribution.experiments.permucate_real
+```
+
 ```bash
 pip install -r ddpm_cf_attribution/requirements.txt
 python -m ddpm_cf_attribution.example
