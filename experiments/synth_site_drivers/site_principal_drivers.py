@@ -194,7 +194,9 @@ def write_latex(df: pd.DataFrame, path: Path) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Score six sites with MMD, HSIC, and R-risk, then name the principal driver."
+    )
     parser.add_argument("--out-dir", type=Path, default=Path("experiments/synth_site_drivers/results"))
     parser.add_argument("--reps", type=int, default=N_REP)
     args = parser.parse_args()
