@@ -3,7 +3,7 @@
 Loads the public TabReD mirror (cooking-time, ecom-offers, weather; every row
 in those files), splits each table by a feature-rank cut on the named column,
 plants a known support, and scores the feature-selection methods from the FSDS
-benchmark. PermuCATE's outcome model is sklearn's RandomForestRegressor.
+benchmark. PermuCATE fits a RandomForestRegressor outcome model on each batch and a RandomForestRegressor for the pseudo-outcome.
 
 The Kaggle release (hundreds of thousands of rows) needs an API token. This
 runner uses the complete public mirror tables: 40,000 train + 10,000 test
@@ -20,6 +20,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import shap
+from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import Lasso, LogisticRegression, Ridge
 from sklearn.metrics import roc_auc_score
@@ -262,6 +263,41 @@ def _po_risk(tau, y, t, mu0, mu1, pi) -> float:
     return float(np.mean((pseudo - tau) ** 2))
 
 
+def _permucate_vimp(
+    Xtr: np.ndarray,
+    Xte: np.ndarray,
+    yte: np.ndarray,
+    wte: np.ndarray,
+    mu0_te: np.ndarray,
+    mu1_te: np.ndarray,
+    pi_te: np.ndarray,
+    tau: RandomForestRegressor,
+    base_risk: float,
+    seed: int,
+) -> np.ndarray:
+    """Conditional permutation. The feature model is a random forest too."""
+    p = Xte.shape[1]
+
+    def one_feature(j: int) -> float:
+        others = [c for c in range(p) if c != j]
+        nu = _rf_regressor(len(Xtr), p - 1, seed + 100 + j, n_jobs=1)
+        nu.fit(Xtr[:, others], Xtr[:, j])
+        nu_hat = nu.predict(Xte[:, others])
+        residual = Xte[:, j] - nu_hat
+        rng_j = np.random.default_rng(seed + 10_000 + j)
+        gaps = np.empty(N_PERM, dtype=float)
+        X_perm = np.empty_like(Xte)
+        for k in range(N_PERM):
+            X_perm[:] = Xte
+            X_perm[:, j] = nu_hat + rng_j.permutation(residual)
+            pred = tau.predict(X_perm)
+            gaps[k] = _po_risk(pred, yte, wte, mu0_te, mu1_te, pi_te) - base_risk
+        return float(gaps.mean())
+
+    gaps = Parallel(n_jobs=4, backend="threading")(delayed(one_feature)(j) for j in range(p))
+    return np.asarray(gaps, dtype=float)
+
+
 def score_causal_block(
     X0: np.ndarray,
     y0: np.ndarray,
@@ -269,12 +305,15 @@ def score_causal_block(
     y1: np.ndarray,
     seed: int,
     rng: np.random.Generator,
+    *,
+    methods: tuple[str, ...] = ("PermuCATE", "LOCO", "GRF"),
 ) -> dict[str, np.ndarray]:
     """PermuCATE, LOCO R-risk, and a DR-forest GRF, sharing one nuisance fit.
 
-    The outcome regressions (batch 0 and batch 1) and the pseudo-outcome
-    regression are RandomForestRegressor. The conditional feature model used
-    to build permutation residuals is a ridge regression.
+    PermuCATE fits a separate RandomForestRegressor on each batch (the two
+    outcome models) and another RandomForestRegressor of the doubly robust
+    pseudo-outcome. The conditional feature model inside the permutation is
+    also a RandomForestRegressor.
     """
     i0 = _subsample(len(X0), N_CAUSAL, rng)
     i1 = _subsample(len(X1), N_CAUSAL, rng)
@@ -291,6 +330,8 @@ def score_causal_block(
 
     mu0 = _rf_regressor(int((wtr == 0).sum()), p, seed).fit(Xtr[wtr == 0], ytr[wtr == 0])
     mu1 = _rf_regressor(int((wtr == 1).sum()), p, seed + 1).fit(Xtr[wtr == 1], ytr[wtr == 1])
+    if not isinstance(mu0, RandomForestRegressor) or not isinstance(mu1, RandomForestRegressor):
+        raise TypeError("PermuCATE outcome models must be RandomForestRegressor")
     mu0_tr = mu0.predict(Xtr)
     mu1_tr = mu1.predict(Xtr)
     mu0_te = mu0.predict(Xte)
@@ -306,40 +347,34 @@ def score_causal_block(
         mu1_tr - mu0_tr
     )
     tau = _rf_regressor(len(tr), p, seed + 2).fit(Xtr, pseudo_tr)
+    if not isinstance(tau, RandomForestRegressor):
+        raise TypeError("PermuCATE pseudo-outcome regression must be RandomForestRegressor")
     # Many small permutation predictions; a job pool per call is slower than one thread.
     tau.set_params(n_jobs=1)
     tau_te = tau.predict(Xte)
     base_risk = _po_risk(tau_te, yte, wte, mu0_te, mu1_te, pi_te)
 
-    # GRF stand-in: split importance of a forest on the DR pseudo-outcome.
-    grf = tau.feature_importances_.astype(float)
-
-    # LOCO R-risk: refit a ridge R-learner without feature j.
-    mask = np.abs(wtr - pi_tr) > 1e-3
-    z = pseudo_tr[mask]
-    ridge_full = Ridge(alpha=1.0).fit(Xtr[mask], z)
-    pred_full = ridge_full.predict(Xte)
-    risk_full = _po_risk(pred_full, yte, wte, mu0_te, mu1_te, pi_te)
-    loco = np.zeros(p, dtype=float)
-    for j in range(p):
-        cols = [c for c in range(p) if c != j]
-        pred_j = Ridge(alpha=1.0).fit(Xtr[mask][:, cols], z).predict(Xte[:, cols])
-        loco[j] = _po_risk(pred_j, yte, wte, mu0_te, mu1_te, pi_te) - risk_full
-
-    # PermuCATE: conditional permutation of each feature, scored by the PO-risk gap.
-    vimp = np.zeros(p, dtype=float)
-    for j in range(p):
-        others = [c for c in range(p) if c != j]
-        nu = Ridge(alpha=1.0).fit(Xtr[:, others], Xtr[:, j])
-        nu_hat = nu.predict(Xte[:, others])
-        residual = Xte[:, j] - nu_hat
-        gaps = np.empty(N_PERM, dtype=float)
-        for k in range(N_PERM):
-            X_perm = Xte.copy()
-            X_perm[:, j] = nu_hat + rng.permutation(residual)
-            gaps[k] = _po_risk(tau.predict(X_perm), yte, wte, mu0_te, mu1_te, pi_te) - base_risk
-        vimp[j] = float(gaps.mean())
-    return {"PermuCATE": vimp, "LOCO": loco, "GRF": grf}
+    out: dict[str, np.ndarray] = {}
+    if "GRF" in methods:
+        out["GRF"] = tau.feature_importances_.astype(float)
+    if "LOCO" in methods:
+        # LOCO R-risk refits a ridge R-learner without feature j. This is not PermuCATE.
+        mask = np.abs(wtr - pi_tr) > 1e-3
+        z = pseudo_tr[mask]
+        ridge_full = Ridge(alpha=1.0).fit(Xtr[mask], z)
+        pred_full = ridge_full.predict(Xte)
+        risk_full = _po_risk(pred_full, yte, wte, mu0_te, mu1_te, pi_te)
+        loco = np.zeros(p, dtype=float)
+        for j in range(p):
+            cols = [c for c in range(p) if c != j]
+            pred_j = Ridge(alpha=1.0).fit(Xtr[mask][:, cols], z).predict(Xte[:, cols])
+            loco[j] = _po_risk(pred_j, yte, wte, mu0_te, mu1_te, pi_te) - risk_full
+        out["LOCO"] = loco
+    if "PermuCATE" in methods:
+        out["PermuCATE"] = _permucate_vimp(
+            Xtr, Xte, yte, wte, mu0_te, mu1_te, pi_te, tau, base_risk, seed
+        )
+    return out
 
 
 def _lasso_coef(X: np.ndarray, y: np.ndarray, alpha: float = 0.02) -> np.ndarray:
@@ -421,7 +456,7 @@ def selection_auc(scores: np.ndarray, truth: np.ndarray, p: int) -> float:
     return float(roc_auc_score(labels, s))
 
 
-def run_cell(X, y, columns, split_name, kind, seed) -> list[dict]:
+def run_cell(X, y, columns, split_name, kind, seed, only: str | None = None) -> list[dict]:
     j = columns.index(split_name)
     b0, b1 = feature_rank_indices(X[:, j])
     X0, y0 = X[b0], y[b0]
@@ -451,14 +486,21 @@ def run_cell(X, y, columns, split_name, kind, seed) -> list[dict]:
             timed[label] = out
             timings[label] = elapsed
 
-    take("RF-domain", lambda: score_rf_domain(X0, X1, seed, rng_rf))
-    take("Delta-SH", lambda: score_delta_shap(X0, y0, X1, y1, seed, rng_shap))
-    take("LOCO-MMD", lambda: score_loco_mmd(X0, X1, rng_mmd))
-    take("causal", lambda: score_causal_block(X0, y0, X1, y1, seed, rng_causal))
-    take("linear", lambda: score_linear_family(X0, y0, X1, y1, rng_linear))
+    if only in (None, "RF-domain"):
+        take("RF-domain", lambda: score_rf_domain(X0, X1, seed, rng_rf))
+    if only in (None, "Delta-SH"):
+        take("Delta-SH", lambda: score_delta_shap(X0, y0, X1, y1, seed, rng_shap))
+    if only in (None, "LOCO-MMD"):
+        take("LOCO-MMD", lambda: score_loco_mmd(X0, X1, rng_mmd))
+    causal_methods = ("PermuCATE", "LOCO", "GRF") if only is None else ((only,) if only in ("PermuCATE", "LOCO", "GRF") else ())
+    if causal_methods:
+        take("causal", lambda: score_causal_block(X0, y0, X1, y1, seed, rng_causal, methods=causal_methods))
+    if only in (None, "L1_m", "L1_s", "KO"):
+        take("linear", lambda: score_linear_family(X0, y0, X1, y1, rng_linear))
 
     rows = []
-    for method in METHODS:
+    wanted = METHODS if only is None else (only,)
+    for method in wanted:
         scores = timed[method]
         rows.append(
             {
@@ -519,8 +561,9 @@ def write_latex(df: pd.DataFrame, path: Path) -> str:
         r"Linear and nonlinear concept drift add a signal on the new batch. "
         r"Concept drift replaces the new-batch regression function. "
         r"Covariate shift moves those features by 1.5 batch-0 standard deviations and leaves $Y$ unchanged. "
-        r"PermuCATE uses $n_{\mathrm{perm}}=50$ and a random-forest regressor "
-        r"for the outcome model and the pseudo-outcome regression.}",
+        r"PermuCATE uses $n_{\mathrm{perm}}=50$. Each batch has its own "
+        r"random-forest outcome model, and the pseudo-outcome regression is a "
+        r"random forest as well.}",
         r"\label{tab:tabred-planted-shift}",
         rf"\begin{{tabular}}{{{colspec}}}",
         r"\toprule",
@@ -549,6 +592,7 @@ def main() -> None:
     parser.add_argument("--task", default="all")
     parser.add_argument("--split", default="all")
     parser.add_argument("--shift", default="all")
+    parser.add_argument("--only", default="", help="Rescore one method and splice it into the existing table.")
     args = parser.parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)
     ensure_tables(args.data_root)
@@ -557,6 +601,7 @@ def main() -> None:
     shifts = SHIFTS if args.shift == "all" else (args.shift,)
     rows: list[dict] = []
     out_csv = args.out_dir / "cell_scores.csv"
+    df_old = pd.read_csv(out_csv) if args.only and out_csv.exists() else None
     for task, splits in tasks.items():
         print(f"loading {task}", flush=True)
         X, y, columns = load_task(args.data_root, task)
@@ -566,11 +611,23 @@ def main() -> None:
             for shift_i, kind in enumerate(shifts):
                 seed = SEED + 100 * split_i + shift_i
                 t0 = time.perf_counter()
-                cell = run_cell(X, y, columns, split_name, kind, seed)
+                cell = run_cell(X, y, columns, split_name, kind, seed, only=args.only or None)
                 for row in cell:
                     row["task"] = task
-                rows.extend(cell)
-                pd.DataFrame(rows).to_csv(out_csv, index=False)
+                if df_old is not None:
+                    for row in cell:
+                        mask = (
+                            (df_old["task"] == row["task"])
+                            & (df_old["split"] == row["split"])
+                            & (df_old["shift"] == row["shift"])
+                            & (df_old["method"] == row["method"])
+                        )
+                        for key, value in row.items():
+                            df_old.loc[mask, key] = value
+                    df_old.to_csv(out_csv, index=False)
+                else:
+                    rows.extend(cell)
+                    pd.DataFrame(rows).to_csv(out_csv, index=False)
                 summary = ", ".join(
                     f"{r['method']} AUC {r['auc']:.2f}/F1 {r['f1']:.2f}" for r in cell
                 )
@@ -578,7 +635,7 @@ def main() -> None:
                     f"{task} {split_name} {kind} in {time.perf_counter() - t0:.1f}s | {summary}",
                     flush=True,
                 )
-    df = pd.DataFrame(rows)
+    df = df_old if df_old is not None else pd.DataFrame(rows)
     tex = write_latex(df, args.out_dir / "tabred_planted_shift.tex")
     print(tex)
 
