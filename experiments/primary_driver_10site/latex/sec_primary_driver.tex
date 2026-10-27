@@ -1,0 +1,814 @@
+% Standalone section on site-level primary-source identification.
+% Compile with: pdflatex main.tex
+% Drop into the manuscript with \input{sec_primary_driver}
+% after defining nothing: the section is self-contained.
+
+\section{Primary-source identification across heterogeneous sites}
+\label{sec:primary-source}
+
+The manuscript separates covariate shift, a change in $P(X)$, from concept
+drift, a change in $P(Y\mid X)$ between a reference batch
+$D_{\mathrm{exist}}$ and a new batch $D_{\mathrm{new}}$.
+Feature-level procedures in the paper, including the pseudo-outcome
+risk and conditional permutation importance, score coordinates inside one
+batch.
+The federated aggregation in Appendix~11 then asks whether those
+variable-importance vectors can be merged without moving raw rows.
+That merge treats every site as a noisy look at one common shift.
+A prior operational question is which sites are the primary sources of the
+shift, and which sites are either stable or actively destroying the
+consensus.
+This section constructs a ten-site benchmark in which the answer is known,
+and evaluates a counterfactual concept score against that answer.
+
+The design isolates concept drift.
+Every site is a random slice of one real covariate table, so the marginal
+distribution $P(X)$ is shared.
+The American Community Survey extracts below are cross-sections, not
+panels, so the batch index is a seeded random order rather than a clock.
+Stationarity of $P(X)$ is then a construction, and a covariate arm that
+fires is evidence of a bug in the generator rather than a feature of the
+task.
+Labels follow the real outcome through a burn-in and are then rewritten,
+on a known subset of sites, by a known rule.
+
+\subsection{Data and the ten-site generator}
+\label{sec:dgp}
+
+Two WhyShift tasks supply the base table $(X,y^{\mathrm{base}})$, both
+taken from the 2018 ACS one-year person file for California and both using
+the official \texttt{folktables} feature lists.
+ACS Income has $p=10$ covariates and the indicator that personal income
+exceeds $\$50{,}000$.
+ACS Public Coverage has $p=19$ covariates and the indicator of public
+health-insurance coverage.
+In each Monte Carlo replicate the analysis sample is winsorized at the
+first and ninety-ninth percentiles, standardized, and cut into $K=10$
+non-overlapping sites of $n_k=1600$ rows.
+Each site is then cut into $T=16$ batches of $100$ rows.
+The burn-in is the first four batches.
+The concept change, when it is switched on, begins at batch
+$t^\star=8$.
+
+The ten sites have four roles.
+Four clean sites keep $y=y^{\mathrm{base}}$ at every batch.
+Three linear sites rewrite labels inside an upper tail of a designated
+coordinate $X_1$.
+Two nonlinear sites rewrite every activated row.
+One noise site replaces activated labels with independent
+$\mathrm{Bernoulli}(1/2)$ draws.
+The noise site is a consensus breaker.
+It is not a primary source: there is no new concept for a local model to
+learn.
+Table~\ref{tab:roles} records which coordinates carry the rules.
+Income uses hours worked, educational attainment, and age.
+Public Coverage uses age, educational attainment, and personal income.
+These are the continuous or ordinal columns in each official feature list.
+The remaining columns stay in the table as nuisance covariates.
+
+\begin{table}[t]
+\centering
+\caption{Rule coordinates. $Z_j$ denotes the analysis-sample standardize
+of the named column. Linear sites rewrite only the upper tail of $Z_1$.
+Nonlinear sites rewrite every activated row.}
+\label{tab:roles}
+\begin{tabular}{llccc}
+\toprule
+Task & Role of $(X_1,X_2,X_3)$ & $X_1$ & $X_2$ & $X_3$ \\
+\midrule
+ACS Income & hours, schooling, age & WKHP & SCHL & AGEP \\
+ACS Public Coverage & age, schooling, income & AGEP & SCHL & PINCP \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Write $Z$ for the standardized covariates and let
+$M_k(q)=\{Z_1>Q_q(Z_1)\}$ be the upper tail at quantile $q$, computed on
+the pooled analysis sample.
+The main design uses $q=0.5$.
+On a linear site the candidate label is the halfspace
+\begin{equation}
+\label{eq:linear-rule}
+y^{\mathrm{rule}}
+=
+\mathbf{1}\!\left\{
+\sigma_k(\beta_{k1} Z_1+\beta_{k2} Z_2)>c_k
+\right\}
+\quad\text{on }M_k(q),
+\end{equation}
+and $y^{\mathrm{base}}$ off that tail.
+The three coefficient vectors are
+$(1,0.35)$, $(0.25,1)$, and $(-0.85,0.55)$.
+The threshold $c_k$ is the quantile of the linear score that matches the
+positive rate of $y^{\mathrm{base}}$ on $M_k(q)$, and the sign
+$\sigma_k\in\{\pm 1\}$ is the orientation whose matched labels agree less
+with $y^{\mathrm{base}}$.
+The sign choice is part of the generator.
+It keeps the planted concept from collapsing back onto the real outcome
+when hours or schooling already predict income.
+It is not estimated by the detector.
+
+On a nonlinear site the same rate match is applied to every row, not only
+the tail:
+\begin{equation}
+\label{eq:nonlinear-rule}
+y^{\mathrm{rule}}
+=
+\mathbf{1}\{Z_1 Z_2>c\}
+\qquad\text{or}\qquad
+y^{\mathrm{rule}}
+=
+\mathbf{1}\{\sin(Z_1)+Z_3^2>c\}.
+\end{equation}
+The first site uses the product and the second uses the sine-square rule.
+The planted feature support is $\{X_1,X_2\}$ for every linear site and for
+the product site, and $\{X_1,X_3\}$ for the sine-square site.
+
+Activation is a batch weight $w_t\in[0,1]$.
+Under abrupt activation, $w_t=\mathbf{1}\{t\ge t^\star\}$.
+Under gradual activation, $w_t=0$ before $t^\star$ and then rises linearly
+to one over four batches.
+Each post-burn-in row is rewritten with probability $\alpha w_t$, and
+otherwise keeps $y^{\mathrm{base}}$.
+The main grid uses $\alpha=1$.
+The noise site uses the same weights and then draws a fresh coin flip.
+Clean sites ignore the weight.
+
+Two consequences are worth stating before any score is computed.
+First, because the structured rules match the local positive rate, a
+marginal label discrepancy is not a substitute for concept drift.
+The largest average gap between the post-change positive rate and the
+baseline, among structured sites, is $2.4$ percentage points
+(Income, nonlinear).
+Second, hours worked in the ACS piles up at $40$.
+The empirical quantiles of WKHP at $0.5$ and at $0.7$ are both $40$, so
+$\{Z_1>Q_{0.5}\}$ and $\{Z_1>Q_{0.7}\}$ are the same set, about $23\%$ of
+Income rows.
+The median tail in the main Income design is therefore thinner than a
+continuous coordinate would suggest.
+Public Coverage uses age as $X_1$, and that tail is about half the sample.
+Table~\ref{tab:dgp-check} records the realized flip rates.
+Structured sites move roughly half the labels inside the region they
+rewrite, and they leave the marginal positive rate near the baseline.
+The noise site flips about half of all post-burn-in labels and shifts the
+positive rate to one half.
+
+\begin{table}[t]
+\centering
+\caption{Realized label changes after $t^\star$, averaged over four seeds
+at $\alpha=1$, abrupt activation, and $q=0.5$.
+Flip rate is the fraction of post-burn-in rows whose label differs from
+$y^{\mathrm{base}}$.
+Agreement is the fraction of the rewritten region on which the rate-matched
+rule reproduces $y^{\mathrm{base}}$.
+Clean sites are not rewritten, so agreement is one.
+The noise site has no rule, so agreement is left blank.}
+\label{tab:dgp-check}
+\begin{tabular}{llcccc}
+\toprule
+Task & Site type & Flip rate & Rule agreement & Post positive rate & Base positive rate \\
+\midrule
+Income & Clean & 0.000 & 1.000 & 0.406 & 0.406 \\
+Income & Linear & 0.131 & 0.427 & 0.400 & 0.414 \\
+Income & Nonlinear & 0.555 & 0.436 & 0.396 & 0.420 \\
+Income & Noise & 0.498 & --- & 0.491 & 0.410 \\
+Public Coverage & Clean & 0.000 & 1.000 & 0.369 & 0.367 \\
+Public Coverage & Linear & 0.259 & 0.476 & 0.378 & 0.372 \\
+Public Coverage & Nonlinear & 0.492 & 0.506 & 0.371 & 0.374 \\
+Public Coverage & Noise & 0.496 & --- & 0.495 & 0.362 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The counterfactual concept score}
+\label{sec:delta-cf}
+
+Let $\mathcal{D}_0$ be the pooled burn-in, eight thousand rows in the main
+design, still generated from $y^{\mathrm{base}}$ at every site.
+Let $\mathcal{D}_k$ be the most recent six batches at site $k$, six hundred
+rows, all of them inside the drift window when activation is abrupt.
+A random forest with $25$ trees, depth $8$, and minimum leaf size $5$ is
+the outcome model throughout, in line with the recommendation that the
+forest be used for distance estimation rather than for a causal reading of
+the meta-learner.
+Local predictions on $\mathcal{D}_k$ are three-fold cross-fit probabilities
+$\mu_k^{\mathrm{oof}}$.
+The reference probabilities $\mu_0^{\mathrm{sm}}$ are an average of two
+forests, each trained on a random subset of $\mathcal{D}_0$ whose size
+equals the local training set, two thirds of the current window.
+Matching the training size stops the larger reference sample from looking
+like a concept change.
+A third forest trained on all of $\mathcal{D}_0$ is retained only as the
+pooled excess defined below.
+It is not the headline score.
+
+On a region $\mathcal{R}$ that has both classes in the current window and
+in the reference, at least fifty current rows, and at least eighty
+reference rows, write $B(y,p)$ for the Brier score and
+\begin{equation}
+\label{eq:delta-region}
+\Delta_k(\mathcal{R})
+=
+\Big(B(\mu_0^{\mathrm{sm}})-B(\mu_k^{\mathrm{oof}})\Big)_+
+\cdot
+\Big(2\big(\mathrm{AUC}(\mu_k^{\mathrm{oof}})-{\textstyle\frac12}\big)\Big)_+.
+\end{equation}
+The first factor is the excess risk of the reference concept over a local
+concept of the same capacity.
+The second factor is zero when the local model does not beat a coin, and
+it equals one when the local AUC equals one.
+The headline score is the maximum over a dictionary that does not use
+labels,
+\begin{equation}
+\label{eq:delta-cf}
+\Delta_k^{\mathrm{cf}}
+=
+\max_{\mathcal{R}\in\{\mathrm{all},\,\mathrm{high},\,\mathrm{low}\}}
+\Delta_k(\mathcal{R}),
+\end{equation}
+where ``high'' and ``low'' are the two sides of the burn-in median of
+$X_1$.
+The median is computed on $\mathcal{D}_0$ only.
+The whole-window score $\Delta_k(\mathrm{all})$ is reported beside the
+maximum so that the cost of ignoring the tail is visible.
+
+The same two probability vectors define the concept contrast
+\begin{equation}
+\label{eq:tau}
+\tau_k^2
+=
+\frac{1}{|\mathcal{D}_k\cap\mathcal{R}_k^\star|}
+\sum_{i\in\mathcal{D}_k\cap\mathcal{R}_k^\star}
+\big(\mu_k^{\mathrm{oof}}(X_i)-\mu_0^{\mathrm{sm}}(X_i)\big)^2,
+\end{equation}
+with $\mathcal{R}_k^\star$ the region attaining the maximum in
+\eqref{eq:delta-cf}.
+This is the concept contrast that the pseudo-outcome decomposition isolates
+from the covariate arm once $P(X)$ is shared across $D_{\mathrm{exist}}$
+and $D_{\mathrm{new}}$.
+The benchmark does not re-estimate a propensity: under the common
+covariate table that weight is not where the signal sits.
+Gating by the same skill factor as in \eqref{eq:delta-region} produces
+$\tau_k^{2,\mathrm{g}}$.
+Raw $\tau_k^2$ is retained because a flat local predictor on a noise site
+can still sit far from a sharp reference predictor.
+The gate is the part of $\Delta_k^{\mathrm{cf}}$ that refuses to call that
+gap a primary source.
+
+For a score $s$ and two disjoint collections of sites $\mathcal{A}$ and
+$\mathcal{B}$, the pairwise concordance is
+\begin{equation}
+\label{eq:concordance}
+C(s;\mathcal{A},\mathcal{B})
+=
+\frac{1}{|\mathcal{A}|\,|\mathcal{B}|}
+\sum_{a\in\mathcal{A}}\sum_{b\in\mathcal{B}}
+\mathbf{1}\{s_a>s_b\}.
+\end{equation}
+Ties count as failures.
+The primary set $\mathcal{P}$ is the five structured sites.
+The target for the headline score is
+$C(\Delta^{\mathrm{cf}};\mathcal{P},\mathcal{C})>0.8$,
+where $\mathcal{C}$ is the set of four clean sites.
+The same functional is reported for $\mathcal{P}$ against the noise site,
+and separately for the linear and nonlinear subsets of $\mathcal{P}$.
+Every entry below is a mean over four seeds, with the worst seed in
+parentheses, unless a row is explicitly a per-type mean.
+
+Negative controls use the same windows and never see the label rule.
+The domain AUC is the cross-fit AUC of a classifier trained to separate
+burn-in rows from recent rows using $X$ alone, once with the forest and
+once with logistic regression.
+The covariate discrepancy is an RBF MMD on subsamples of size $250$, with
+bandwidth equal to the median of the squared Euclidean distances.
+A joint classifier two-sample test appends $y$ to $X$ before the same
+forest AUC is computed.
+Marginal label total variation is the absolute difference of positive rates
+between the recent window and the burn-in.
+
+\begin{table}[t]
+\centering
+\caption{Mean score by site type at $\alpha=1$, abrupt activation, and
+$q=0.5$. Four seeds. $\Delta^{\mathrm{cf}}$ is \eqref{eq:delta-cf}.
+$\Delta(\mathrm{all})$ is the whole-window score.
+$\Delta(\mathrm{high})$ is the upper tail of $X_1$.
+Domain AUC is the logistic classifier on $X$ only.}
+\label{tab:means}
+\small
+\begin{tabular}{llrrrrrr}
+\toprule
+Task & Type & $\Delta^{\mathrm{cf}}$ & $\Delta(\mathrm{all})$ & $\Delta(\mathrm{high})$ & $\tau^2$ & Skill & Domain AUC \\
+\midrule
+Income & Clean & 0.003 & 0.000 & 0.002 & 0.015 & 0.696 & 0.498 \\
+Income & Linear & 0.253 & 0.024 & 0.253 & 0.181 & 0.937 & 0.482 \\
+Income & Nonlinear & 0.336 & 0.298 & 0.316 & 0.313 & 0.897 & 0.494 \\
+Income & Noise & 0.001 & 0.000 & 0.000 & 0.096 & 0.008 & 0.494 \\
+Public Coverage & Clean & 0.001 & 0.000 & 0.001 & 0.014 & 0.364 & 0.503 \\
+Public Coverage & Linear & 0.200 & 0.052 & 0.200 & 0.132 & 0.943 & 0.493 \\
+Public Coverage & Nonlinear & 0.236 & 0.182 & 0.179 & 0.159 & 0.970 & 0.478 \\
+Public Coverage & Noise & 0.003 & 0.002 & 0.003 & 0.046 & 0.089 & 0.528 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:means} is the raw material of the concordance claim.
+On both tasks, and for every linear site, the maximum is exactly the
+upper-tail score: $\Delta^{\mathrm{cf}}=\Delta(\mathrm{high})$.
+On Income that tail score is $0.253$ against a whole-window score of
+$0.024$.
+The whole window is mostly unrewritten rows, and a single Brier average
+dilutes a real halfspace by about an order of magnitude.
+The noise skill is $0.008$ on Income and $0.089$ on Public Coverage, so
+the gate shuts even though the ungated contrast $\tau^2$ on Income noise
+($0.096$) exceeds the clean contrast ($0.015$).
+Logistic domain AUCs sit on $1/2$ for every type.
+The largest is $0.528$, on the Public Coverage noise site.
+The forest domain AUC, not shown column by column, has type means between
+$0.490$ and $0.514$, and equals $0.514$ on that same noise site.
+Neither is evidence of a covariate shift.
+
+\subsection{Concordance}
+\label{sec:concordance}
+
+\begin{table}[t]
+\centering
+\caption{Pairwise concordance \eqref{eq:concordance} at $\alpha=1$, abrupt
+activation, and $q=0.5$.
+Each cell is the mean over four seeds, with the worst seed in parentheses.
+$\mathcal{P}$ is the five structured sites and $\mathcal{C}$ is the four
+clean sites.}
+\label{tab:concordance}
+\small
+\begin{tabular}{llcccc}
+\toprule
+Task & Score & $\mathcal{P}>\mathcal{C}$ & $\mathcal{P}>\mathrm{noise}$ & Linear $>\mathcal{C}$ & Nonlinear $>\mathcal{C}$ \\
+\midrule
+Income & $\Delta^{\mathrm{cf}}$ & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} \\
+Income & $\Delta(\mathrm{all})$ & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} \\
+Income & $\tau^{2,\mathrm{g}}$ & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} \\
+Income & Pareto rank & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} \\
+Income & $\tau^2$ & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} \\
+Income & Pooled excess & 1.000 {\scriptsize(1.000)} & 0.400 {\scriptsize(0.400)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} \\
+Income & Label TV & 0.500 {\scriptsize(0.100)} & 0.050 {\scriptsize(0.000)} & 0.500 {\scriptsize(0.083)} & 0.500 {\scriptsize(0.125)} \\
+Income & Joint C2ST & 0.850 {\scriptsize(0.800)} & 0.350 {\scriptsize(0.200)} & 0.750 {\scriptsize(0.667)} & 1.000 {\scriptsize(1.000)} \\
+Income & RF domain AUC & 0.487 {\scriptsize(0.400)} & 0.500 {\scriptsize(0.000)} & 0.521 {\scriptsize(0.333)} & 0.438 {\scriptsize(0.250)} \\
+Income & RBF MMD & 0.412 {\scriptsize(0.300)} & 0.500 {\scriptsize(0.000)} & 0.375 {\scriptsize(0.167)} & 0.469 {\scriptsize(0.125)} \\
+\midrule
+Public Coverage & $\Delta^{\mathrm{cf}}$ & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} \\
+Public Coverage & $\Delta(\mathrm{all})$ & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} \\
+Public Coverage & $\tau^{2,\mathrm{g}}$ & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} \\
+Public Coverage & Pareto rank & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} \\
+Public Coverage & $\tau^2$ & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} \\
+Public Coverage & Pooled excess & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} \\
+Public Coverage & Label TV & 0.613 {\scriptsize(0.350)} & 0.000 {\scriptsize(0.000)} & 0.604 {\scriptsize(0.417)} & 0.625 {\scriptsize(0.250)} \\
+Public Coverage & Joint C2ST & 0.950 {\scriptsize(0.850)} & 0.450 {\scriptsize(0.200)} & 0.917 {\scriptsize(0.750)} & 1.000 {\scriptsize(1.000)} \\
+Public Coverage & RF domain AUC & 0.438 {\scriptsize(0.350)} & 0.200 {\scriptsize(0.000)} & 0.396 {\scriptsize(0.167)} & 0.500 {\scriptsize(0.250)} \\
+Public Coverage & RBF MMD & 0.600 {\scriptsize(0.500)} & 0.200 {\scriptsize(0.000)} & 0.562 {\scriptsize(0.417)} & 0.656 {\scriptsize(0.375)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:concordance} is the primary result.
+On both tasks and in every seed,
+$C(\Delta^{\mathrm{cf}};\mathcal{P},\mathcal{C})=1$,
+and the same equality holds for linear sites alone, for nonlinear sites
+alone, and for $\mathcal{P}$ against the noise site.
+The whole-window score and the skill-gated contrast $\tau^{2,\mathrm{g}}$
+match this ranking at full intensity.
+Figure~\ref{fig:concordance} plots the clean-site comparison.
+The covariate rows do not.
+Random-forest domain AUC and RBF MMD have concordances between $0.38$ and
+$0.66$, with worst seeds as low as $0.17$.
+Label total variation is consistent with a matched positive rate: its
+concordance against clean sites is $0.50$ on Income and $0.61$ on Public
+Coverage, and its concordance against the noise site is $0.05$ and $0.00$.
+The noise site is the unique marginal shift, and a marginal functional
+ranks it first.
+
+The joint classifier two-sample test sees any change in $(X,Y)$.
+It separates $\mathcal{P}$ from $\mathcal{C}$ at $0.85$ on Income and $0.95$
+on Public Coverage, which clears $0.8$ on average, but it ranks the noise
+site as the stronger departure: concordance of $\mathcal{P}$ against noise
+is $0.35$ and $0.45$.
+On Income the linear-only comparison for the joint test falls to $0.75$.
+A test of the joint distribution is not a test for a learnable new concept.
+
+Pooled excess makes the same mistake in a sharper way, and only on the
+task where the reference concept is easy.
+It is the Brier gap between the forest trained on the entire burn-in and
+the local cross-fit model, before size matching and before the skill gate.
+On Income its concordance against the noise site is $0.400$ in every seed.
+That fraction is exact: both nonlinear sites beat the noise site, and none
+of the three linear sites do.
+The pooled Income forest is a sharp predictor of $y^{\mathrm{base}}$.
+Evaluated on coin-flip labels its Brier rises by $0.084$ on average, while
+the same forest evaluated on a linear tail that covers $23\%$ of the window
+rises by only $0.033$.
+Size matching does not by itself fix the comparison.
+On the region that attains $\Delta^{\mathrm{cf}}$, the size-matched excess
+on Income noise remains $0.071$, against $0.002$ on clean sites.
+Multiplying by the skill factor is what sends the noise score from $0.071$
+to $0.001$.
+Public Coverage does not reproduce the $0.40$ figure.
+There the baseline concept is harder, the pooled excess on noise is
+$0.035$, and every structured site still outranks it.
+The failure mode is real on the task where the reference fit is strong,
+which is the task on which an ungated risk gap is most tempting.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{concordance_cd_vs_clean.png}
+\caption{Pairwise concordance against clean sites.
+The dashed line is the $0.8$ target.
+$\Delta^{\mathrm{cf}}$, the whole-window score, skill-gated $\tau^2$, raw
+$\tau^2$, and the Pareto rank clear the line on both tasks.
+The joint classifier two-sample test also clears it on average; its failure
+is the noise contrast in Table~\ref{tab:concordance}.
+Label total variation, the random-forest domain AUC, and RBF MMD do not
+clear the line.
+Source: abrupt activation, $\alpha=1$, $q=0.5$, four seeds.}
+\label{fig:concordance}
+\end{figure}
+
+The Pareto comparison uses three axes when the time curve below is
+available, and two otherwise.
+The axes are $\Delta^{\mathrm{cf}}$, $\tau^{2,\mathrm{g}}$, and the time
+jump, defined as the maximum of the curve on endpoints at or after
+$t^\star$ minus the maximum on endpoints before $t^\star$.
+A site's rank is one plus the number of sites that are at least as large
+on every axis and strictly larger on at least one.
+Concordance is computed on the negative rank, so a smaller rank is a
+higher score.
+Mean ranks on Income are $1.875$ for nonlinear sites, $3.250$ for linear
+sites, $6.625$ for clean sites, and $6.750$ for the noise site.
+On Public Coverage they are $1.375$, $2.667$, $7.188$, and $6.500$.
+The undominated front is mostly the nonlinear sites: half of them on
+Income and five eighths on Public Coverage.
+No clean site and no noise site is undominated.
+Linear sites are often dominated by a nonlinear site, because the
+nonlinear rewrite covers every row and the linear rewrite covers a tail,
+but they remain strictly ahead of every clean site.
+That is the sense in which the Pareto order puts primary sources first.
+It does not claim that every primary source lies on the front.
+
+\subsection{Time localization}
+\label{sec:time}
+
+The curve at site $k$ reuses the burn-in reference and recomputes
+\eqref{eq:delta-cf} on a sliding window of four batches, using only the
+whole window and the upper tail.
+The horizontal coordinate in Figure~\ref{fig:time} is the last batch
+included in the window.
+Drift begins at batch $8$.
+A window of length four is entirely inside the drift only when its last
+batch is at least $11$.
+The figure follows that arithmetic.
+Means for clean sites and for the noise site stay below $0.01$ on both
+sides of $t^\star$.
+Linear and nonlinear means leave zero between batches $9$ and $10$ and
+level off at batch $11$.
+On Income the nonlinear plateau is near $0.32$ and the linear plateau is
+near $0.22$.
+On Public Coverage the two plateaus sit together near $0.18$, which is
+consistent with the similar headline scores in Table~\ref{tab:means}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{time_profile_delta_cf.png}
+\caption{Mean $\Delta^{\mathrm{cf}}$ against the last batch in a window of
+length four.
+The vertical line is $t^\star=8$.
+The curve levels off at batch $11$, the first endpoint whose window lies
+entirely after the change.
+Clean and noise traces remain near zero.
+Source: abrupt activation, $\alpha=1$, $q=0.5$, four seeds.}
+\label{fig:time}
+\end{figure}
+
+Two detectors are applied to each curve without being told $t^\star$.
+The online rule calibrates on the first two evaluated endpoints, sets the
+threshold at that maximum plus $0.01$, and reports the first later endpoint
+that exceeds the threshold.
+A hit is an estimate within two batches of $t^\star$.
+The derivative rule reports the endpoint of the largest first difference.
+Table~\ref{tab:time} shows that the derivative is estimating the onset of
+the plateau rather than the onset of the drift.
+Its mean absolute error is about three batches on every structured type,
+which is one window length.
+The online rule is the onset estimator.
+It hits every nonlinear site on both tasks and every linear site on Public
+Coverage.
+Income linear sites, whose tail is the thin one, hit in $0.833$ of
+replicates, with mean absolute error $1.92$ batches.
+The cost is a false alarm rate of $0.375$ on Income clean sites and
+$0.125$ on Public Coverage clean sites: any crossing counts, whether or
+not it falls near $t^\star$.
+Among the Income clean curves that do cross, the mean absolute error is
+$4.17$ batches, so the typical alarm is not a call at the change.
+A threshold of $0.01$ above a two-point calibration is enough to rank
+sites when the window is the full recent block, and it is not enough to
+call a changepoint on a short window without a second screen.
+The noise site crosses the threshold in two of four Income replicates and
+in one of four Public Coverage replicates.
+One Income crossing lands on batch $10$, inside the two-batch window; the
+other is six batches later.
+The Public Coverage crossing is three batches after $t^\star$ and is not
+counted as a hit.
+
+\begin{table}[t]
+\centering
+\caption{Time localization over four seeds.
+Online hit rate is the fraction of sites whose first threshold crossing
+lies within two batches of $t^\star$.
+False-alarm rate is computed only for clean sites.
+Derivative MAE is the absolute error of the largest first difference.}
+\label{tab:time}
+\begin{tabular}{llcccc}
+\toprule
+Task & Type & Online hit & False alarm & Online MAE & Derivative MAE \\
+\midrule
+Income & Clean & 0.062 & 0.375 & 4.17 & 4.06 \\
+Income & Linear & 0.833 & --- & 1.92 & 2.83 \\
+Income & Nonlinear & 1.000 & --- & 1.62 & 3.00 \\
+Income & Noise & 0.250 & --- & 4.00 & 3.25 \\
+Public Coverage & Clean & 0.062 & 0.125 & 3.00 & 3.88 \\
+Public Coverage & Linear & 1.000 & --- & 1.42 & 3.00 \\
+Public Coverage & Nonlinear & 1.000 & --- & 1.50 & 3.00 \\
+Public Coverage & Noise & 0.000 & --- & 3.00 & 4.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Concept-group type resolution}
+\label{sec:type}
+
+Detecting a primary source does not say whether the new concept is the
+linear halfspace or one of the two nonlinear rules.
+The dictionary is fixed before looking at site labels.
+On a window with outcome $y$, three logistic regressions are cross-fit
+against an intercept-only Brier score:
+$(Z_1,Z_2)$, the scalar $Z_1 Z_2$, and $(\sin Z_1,\, Z_3^2)$.
+Group importance is the drop in Brier.
+The call is the maximizing group.
+One call uses every row in the recent window.
+The other uses only the upper tail of $X_1$, the region in which the
+linear rule was planted.
+Accuracy is computed on the five structured sites only.
+Top-five precision asks a different question: of the five sites with the
+largest $\Delta^{\mathrm{cf}}$, how many lie in $\mathcal{P}$.
+
+\begin{table}[t]
+\centering
+\caption{Type resolution at $\alpha=1$, abrupt activation, and $q=0.5$.
+Accuracy is the fraction of structured sites whose maximizing concept group
+equals the planted mechanism, averaged over four seeds.
+Recall is pooled over both tasks and all four seeds, hence over $24$ linear
+sites and $8$ sites of each nonlinear mechanism.
+Top-five precision of $\Delta^{\mathrm{cf}}$ is $1$ in every seed on both
+tasks.}
+\label{tab:type}
+\begin{tabular}{llcc}
+\toprule
+Call & Mechanism or task & Accuracy or recall \\
+\midrule
+All rows & Income, accuracy & 0.700 \\
+All rows & Public Coverage, accuracy & 0.700 \\
+Upper tail & Income, accuracy & 0.750 \\
+Upper tail & Public Coverage, accuracy & 0.900 \\
+\midrule
+All rows & Linear, recall & 0.500 \\
+All rows & Product, recall & 1.000 \\
+All rows & Sine-square, recall & 1.000 \\
+Upper tail & Linear, recall & 0.917 \\
+Upper tail & Product, recall & 0.375 \\
+Upper tail & Sine-square, recall & 1.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:type} separates detection from typing.
+Top-five precision is $1$ in every seed: the five largest values of
+$\Delta^{\mathrm{cf}}$ are exactly the five structured sites.
+Conditional on that detection, the full-window dictionary recovers both
+nonlinear mechanisms in every replicate and recovers the linear halfspace
+in half of the linear sites.
+The miss is structural.
+Outside the tail the linear site still carries $y^{\mathrm{base}}$, and on
+Income that baseline outcome is already monotone in hours and schooling.
+An additive logistic fit can look competitive with the product and
+sine-square groups even when the rewritten slice is a halfspace in
+$(Z_1,Z_2)$.
+Restricting the call to the upper tail raises linear recall from $0.500$
+to $0.917$ and raises Public Coverage accuracy from $0.700$ to $0.900$.
+The same restriction lowers product recall from $1$ to $0.375$.
+The product rule was planted on every row.
+Inside the upper tail the factors are truncated, and the additive group
+in $(Z_1,Z_2)$ is no longer dominated by the product scalar.
+The sine-square group remains separated on either window.
+Type resolution is therefore a property of the region on which the group
+is scored, not a single accuracy number.
+
+\subsection{Feature support and one-shot aggregation}
+\label{sec:features}
+
+Feature scores are computed on the recent window of each structured site
+and compared with that site's planted support by AUC.
+Four scores are used.
+Shift permutation importance is the drop in the squared concept contrast
+when a coordinate is permuted inside five quantile bins of the covariate
+it is most correlated with.
+Both the local forest and the reference forest are re-evaluated on that
+same permuted matrix.
+The local forest here is fit on the full recent window; the cross-fit in
+\eqref{eq:delta-cf} is not reused.
+Predictive permutation importance is the drop in held-out AUC for
+predicting the recent label.
+The difference of that importance between the recent window and the burn-in
+is the fourth score's companion; the fourth score itself is the absolute coefficient vector of an
+$\ell_1$-penalized logistic regression on the recent window, with
+$C=0.5$.
+
+\begin{table}[t]
+\centering
+\caption{Mean AUC of a feature score against the planted support.
+Linear and product supports are $\{X_1,X_2\}$.
+The sine-square support is $\{X_1,X_3\}$.
+Averages run over the structured sites of four seeds.}
+\label{tab:feature}
+\begin{tabular}{llccc}
+\toprule
+Task & Type & Shift permutation & Predictive permutation & $\ell_1$ coefficient \\
+\midrule
+Income & Linear & 0.906 & 0.927 & 0.786 \\
+Income & Nonlinear & 0.789 & 1.000 & 0.930 \\
+Public Coverage & Linear & 0.953 & 0.995 & 0.841 \\
+Public Coverage & Nonlinear & 0.985 & 1.000 & 0.879 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:feature} says that the planted coordinates are recoverable
+from a single drifted site.
+Predictive permutation AUC is at least $0.927$.
+Shift permutation AUC is at least $0.906$ on linear sites and falls to
+$0.789$ on Income nonlinear sites, where the product and the sine-square
+rule are functions of coordinates that also predict the baseline income
+label.
+The $\ell_1$ coefficient is weaker than the forest on linear Public
+Coverage ($0.841$) and stronger than shift permutation on Income nonlinear
+sites ($0.930$).
+None of these AUCs is a site-ranking result.
+They are the contents of the vector a site would upload.
+
+Aggregation treats each upload as a point on the simplex.
+Negative shift-permutation coordinates are truncated at zero and the vector
+is renormalized.
+The target vector puts mass on a coordinate proportional to the number of
+structured sites that plant it.
+Uniform averaging, the coordinate-wise median, inverse-variance weights
+with variance estimated from the permutation repeats and floored at
+$10^{-4}$, and weights proportional to $\Delta^{\mathrm{cf}}$ are compared
+by AUC, precision at the number of positive target coordinates, and
+Spearman correlation with the target.
+Leaving the noise site out of the uniform average, and averaging only the
+five structured sites, are oracles used as ceilings rather than as methods.
+
+On Public Coverage every shift aggregator has AUC at least $0.984$, and
+the $\Delta^{\mathrm{cf}}$-weighted average and the average that drops the
+noise site both have AUC $1$ and precision $1$.
+On Income the uniform shift average has AUC $0.869$ and precision $0.667$.
+Weighting by $\Delta^{\mathrm{cf}}$ raises those figures to $0.917$ and
+$0.750$.
+The predictive permutation upload and the $\ell_1$ upload, averaged
+uniformly, reach AUC $0.988$ on Income.
+That is not evidence against the concept score.
+On Income the planted coordinates are hours, schooling, and age, which are
+also the coordinates that predict $y^{\mathrm{base}}$ on a clean site.
+A clean site's predictive vector already points at the target.
+The shift vector is the one that is trying to upload the change rather than
+the baseline regression, and it is the vector that improves when clean and
+noise sites are down-weighted by $\Delta^{\mathrm{cf}}$.
+
+Leave-one-site-out influence, defined as one minus the Spearman
+correlation between the uniform aggregate and the aggregate with one site
+removed, does not identify primary sources.
+Mean influence on Income is $0.033$ for clean sites, $0.013$ for linear
+sites, $0.018$ for the noise site, and $0.021$ for nonlinear sites.
+On Public Coverage every type mean lies between $0.005$ and $0.008$.
+The uploaded vectors agree with each other closely enough that deleting one
+site barely moves the ranking.
+Site-level $\Delta^{\mathrm{cf}}$ is the functional that separates primary
+sources from clean sites.
+Influence on a simplex average is not.
+
+\subsection{Intensity, tail mass, and gradual activation}
+\label{sec:sensitivity}
+
+The main grid holds $\alpha=1$, abrupt activation, and $q=0.5$.
+The sensitivity grid varies those three levers on Income only, with three
+seeds and the same score, and it does not recompute feature uploads or the
+joint two-sample test.
+Because the $0.5$ and $0.7$ quantiles of hours worked are the same mass
+point at $40$ hours, $q=0.7$ selects the same tail as $q=0.5$ and is
+omitted.
+The quantile $0.8$ moves the threshold to $45$ hours and leaves about
+$17\%$ of rows in the linear tail.
+The quantile $0.9$ moves it to $50$ hours and leaves about $8\%$.
+Nonlinear sites continue to rewrite every activated row.
+Only the linear sites become thinner.
+
+\begin{table}[t]
+\centering
+\caption{Income concordance $C(\Delta^{\mathrm{cf}};\mathcal{P},\mathcal{C})$
+under weaker rewrites and thinner linear tails.
+Three seeds.
+The worst seed is in parentheses.
+Quantile $0.5$ is the main tail, about $23\%$ of rows because of the mass
+at $40$ hours.}
+\label{tab:sensitivity}
+\begin{tabular}{lcccccc}
+\toprule
+& \multicolumn{2}{c}{$q=0.5$} & \multicolumn{2}{c}{$q=0.8$} & \multicolumn{2}{c}{$q=0.9$} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+$\alpha$ & Abrupt & Gradual & Abrupt & Gradual & Abrupt & Gradual \\
+\midrule
+1.0 & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 0.850 {\scriptsize(0.750)} & 0.867 {\scriptsize(0.800)} \\
+0.7 & 1.000 {\scriptsize(1.000)} & 1.000 {\scriptsize(1.000)} & 0.967 {\scriptsize(0.950)} & 0.950 {\scriptsize(0.900)} & 0.817 {\scriptsize(0.750)} & 0.683 {\scriptsize(0.500)} \\
+0.4 & 0.783 {\scriptsize(0.650)} & 0.750 {\scriptsize(0.650)} & 0.617 {\scriptsize(0.450)} & 0.600 {\scriptsize(0.450)} & 0.550 {\scriptsize(0.450)} & 0.550 {\scriptsize(0.450)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{sensitivity_concordance.png}
+\caption{Income concordance of $\Delta^{\mathrm{cf}}$ against clean sites.
+Each panel is one linear-tail quantile.
+Cell entries are means over three seeds.
+Means stay at or above $0.8$ for $\alpha\in\{0.7,1\}$ down to a linear tail
+of about $17\%$ of rows.
+They fall below $0.8$ when $\alpha=0.4$, and when a tail of about $8\%$ is
+combined with $\alpha=0.7$ and a gradual ramp.
+Full intensity on that thin tail stays above $0.8$ on average and not in
+every seed; the worst seeds are in Table~\ref{tab:sensitivity}.}
+\label{fig:sensitivity}
+\end{figure}
+
+Table~\ref{tab:sensitivity} and Figure~\ref{fig:sensitivity} locate the
+boundary of the $0.8$ target.
+At full intensity the concordance remains $1$ down to a linear tail of
+about $17\%$ of rows, whether the change is abrupt or spread over four
+batches.
+At a tail of about $8\%$, full abrupt intensity falls to mean concordance
+$0.850$ with a worst seed of $0.750$, so the mean still clears $0.8$ and
+the guarantee across seeds does not.
+Gradual activation at that thin tail has the same character
+($0.867$, worst seed $0.800$).
+Lowering the rewrite probability to $0.7$ preserves the target on the main
+tail and on the $17\%$ tail.
+Combining $\alpha=0.7$ with the $8\%$ tail and a four-batch ramp drops the
+concordance to $0.683$, with a worst seed of $0.500$.
+At $\alpha=0.4$ every column is below $0.8$.
+The main-tail abrupt entry is $0.783$ with a worst seed of $0.650$.
+On that same $\alpha=0.4$ slice, the whole-window score without the tail
+scan has concordance $0.433$.
+The region maximum is what keeps a weak but structured rewrite near the
+target.
+It does not keep an arbitrarily weak rewrite above the target.
+
+\subsection{What the benchmark supports}
+\label{sec:support}
+
+The benchmark supports four claims, each tied to a table.
+First, when the rewrite is complete and the linear tail contains about a
+fifth of the rows or more, $\Delta^{\mathrm{cf}}$ orders every structured
+site ahead of every clean site and ahead of the noise site, on two real
+covariate tables, in every seed
+(Table~\ref{tab:concordance}).
+Second, the functionals that ignore either the existence of a local concept
+or the region in which that concept lives do not.
+Label total variation and the covariate arms are near chance against clean
+sites.
+The joint two-sample test and the pooled Brier excess promote the noise
+site, completely so for linear sites under the pooled excess on Income.
+Third, the time profile of the same score locates an abrupt change to
+within about two batches once the scoring window is taken into account,
+with a false-alarm rate on clean Income sites that a deployment threshold
+would still have to budget for
+(Table~\ref{tab:time}).
+Fourth, a pre-specified concept-group dictionary can name the nonlinear
+mechanisms from the full window and the linear mechanism from the tail, and
+it cannot do both from a single region
+(Table~\ref{tab:type}).
+
+The benchmark does not support a claim that leave-one-site-out influence
+on an averaged variable-importance vector identifies the primary site.
+Those vectors are too similar across sites for the deletion of one upload
+to move the rank correlation.
+It also does not support a claim at very small intensity.
+Below a rewrite probability of one half, or inside a linear tail that
+covers less than a tenth of the window, pairwise concordance falls through
+$0.8$ on at least one seed.
+Both limits are visible in the same design that produces the perfect
+separation at full intensity, which is the reason for reporting them beside
+the headline rather than as a separate simulation.
