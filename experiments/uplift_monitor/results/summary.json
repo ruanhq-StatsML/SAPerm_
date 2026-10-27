@@ -36,7 +36,9 @@
         "value_oracle": 0.6438693250824488,
         "value_treat": 0.49811844756101076,
         "value_control": 0.5268862080952804
-      }
+      },
+      "call": "uplift",
+      "loco_top0_late": 0.65625
     },
     "covariate": {
       "early": {
@@ -74,7 +76,9 @@
         "value_oracle": 0.8109645526769635,
         "value_treat": 0.8073897660724781,
         "value_control": 0.5264737041317653
-      }
+      },
+      "call": "covariate",
+      "loco_top0_late": 1.0
     }
   },
   "traffic": {
