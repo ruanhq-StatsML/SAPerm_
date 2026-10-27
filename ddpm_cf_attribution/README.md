@@ -31,6 +31,13 @@ python -m ddpm_cf_attribution.experiments.merge
 `result_coarse.json` is one window. `result_fine.json` is site by horizon.
 `result_merged.json` checks that the coarse sign and the fine peak agree.
 
+The uplift monitor fits the same R-learner, then Thompson-samples which site
+to spend the next validation window on.
+
+```bash
+python -m ddpm_cf_attribution.experiments.monitor_uplift
+```
+
 ```bash
 pip install -r ddpm_cf_attribution/requirements.txt
 python -m ddpm_cf_attribution.example
