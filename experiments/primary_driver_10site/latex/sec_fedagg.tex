@@ -315,7 +315,110 @@ The floor does not turn inverse-variance weighting into a detector of a
 bad concept.
 Table~\ref{tab:hidim-boundary} records the five rows that carry this
 reading.
-The full grid follows.
+Table~\ref{tab:federated_highdim} is the mean-share slice of the same
+grid at \(\mathrm{SNR}_{\mathrm{low}}=0.15\), read across local support
+\(\alpha\in\{1,0.75,0.5,0.25\}\).
+Table~\ref{tab:federated_shared_support} records how far \(n_{\mathrm{bad}}\)
+must rise before Spearman falls through \(0.95\), \(0.90\), and \(0.80\),
+and the SNR swap at a clean SNR of \(1.5\).
+Table~\ref{tab:federated_tipping} records the first corrupted-site count
+at which mean share and median share cross the same thresholds.
+The full product grid follows.
+
+\begin{table}[t]
+\centering
+\caption{High-dimensional robustness under varying local support \(\alpha\).
+Mean share at \(\mathrm{SNR}_{\mathrm{low}}=0.15\).
+Spearman \(\rho\), selection AUC, and precision at \(K\), as
+\(n_{\mathrm{bad}}\) runs from \(0\) to \(12\).}
+\label{tab:federated_highdim}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{c rrr rrr rrr rrr}
+\toprule
+ & \multicolumn{3}{c}{\(\alpha = 1\)} & \multicolumn{3}{c}{\(\alpha = 0.75\)} & \multicolumn{3}{c}{\(\alpha = 0.5\)} & \multicolumn{3}{c}{\(\alpha = 0.25\)} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13}
+\(n_{\mathrm{bad}}/12\) & \(\rho\) & AUC & \(P@K\) & \(\rho\) & AUC & \(P@K\) & \(\rho\) & AUC & \(P@K\) & \(\rho\) & AUC & \(P@K\) \\
+\midrule
+0  & 1.000 & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 \\
+1  & 0.938 & 1.000 & 1.00 & 0.942 & 1.000 & 1.00 & 0.954 & 1.000 & 1.00 & 0.973 & 0.991 & 0.98 \\
+2  & 0.890 & 1.000 & 1.00 & 0.898 & 1.000 & 1.00 & 0.915 & 1.000 & 1.00 & 0.949 & 0.990 & 0.98 \\
+3  & 0.852 & 1.000 & 1.00 & 0.858 & 1.000 & 1.00 & 0.885 & 1.000 & 1.00 & 0.929 & 0.984 & 0.97 \\
+4  & 0.818 & 1.000 & 1.00 & 0.827 & 1.000 & 1.00 & 0.857 & 1.000 & 1.00 & 0.909 & 0.979 & 0.95 \\
+5  & 0.791 & 1.000 & 1.00 & 0.795 & 1.000 & 1.00 & 0.833 & 1.000 & 0.99 & 0.888 & 0.968 & 0.92 \\
+6  & 0.767 & 1.000 & 1.00 & 0.770 & 1.000 & 1.00 & 0.811 & 1.000 & 0.99 & 0.874 & 0.953 & 0.86 \\
+7  & 0.746 & 1.000 & 1.00 & 0.748 & 1.000 & 1.00 & 0.795 & 0.999 & 0.97 & 0.856 & 0.930 & 0.79 \\
+8  & 0.730 & 1.000 & 1.00 & 0.729 & 1.000 & 1.00 & 0.777 & 0.985 & 0.94 & 0.837 & 0.905 & 0.72 \\
+9  & 0.713 & 1.000 & 1.00 & 0.716 & 0.999 & 0.98 & 0.760 & 0.980 & 0.90 & 0.819 & 0.880 & 0.65 \\
+10 & 0.699 & 1.000 & 1.00 & 0.701 & 0.997 & 0.94 & 0.741 & 0.962 & 0.80 & 0.801 & 0.857 & 0.52 \\
+11 & 0.686 & 1.000 & 1.00 & 0.688 & 0.985 & 0.86 & 0.724 & 0.936 & 0.64 & 0.785 & 0.799 & 0.37 \\
+12 & 0.675 & 0.988 & 0.75 & 0.672 & 0.945 & 0.60 & 0.706 & 0.890 & 0.37 & 0.768 & 0.744 & 0.19 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Shared support: dimensional scaling and an SNR swap.
+The top panel is the smallest \(n_{\mathrm{bad}}\) at which Spearman falls
+below the stated threshold.
+The bottom panel is AUC and precision at \(K\) when the clean SNR is \(1.5\).}
+\label{tab:federated_shared_support}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{c c rrr r}
+\toprule
+ & & \multicolumn{3}{c}{Tipping points (\(n_{\mathrm{bad}}\))} & \(n_{\mathrm{bad}}=10\) \\
+\cmidrule(lr){3-5}
+\(p\) & \(K\) & \(\rho<0.95\) & \(\rho<0.90\) & \(\rho<0.80\) & \((\rho,\ \mathrm{AUC},\ P@K)\) \\
+\midrule
+500  & 20 & 1 & 3 & 7 & (0.718, 0.987, 0.81) \\
+1000 & 25 & 1 & 2 & 4 & (0.655, 0.981, 0.69) \\
+2000 & 50 & 1 & 1 & 3 & (0.538, 0.959, 0.57) \\
+\midrule
+\multicolumn{6}{c}{SNR swap at fixed \(p\) (clean SNR \(=1.5\), AUC \(=1.0\))} \\
+\midrule
+ & & \multicolumn{2}{c}{\(n_{\mathrm{bad}}=5\)} & \multicolumn{2}{c}{\(n_{\mathrm{bad}}=10\)} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6}
+\(\mathrm{SNR}_{\mathrm{low}}\) & \(p\) & AUC & \(P@K\) & AUC & \(P@K\) \\
+\midrule
+0.5  & 1000 & 1.000 & 1.00 & 1.000 & 1.00 \\
+0.5  & 2000 & 1.000 & 1.00 & 1.000 & 1.00 \\
+0.25 & 1000 & 1.000 & 1.00 & 1.000 & 1.00 \\
+0.25 & 2000 & 1.000 & 1.00 & 1.000 & 0.97 \\
+0.05 & 1000 & 1.000 & 1.00 & 0.628 & 0.10 \\
+0.05 & 2000 & 1.000 & 1.00 & 0.605 & 0.06 \\
+0    & 1000 & 1.000 & 1.00 & 0.487 & 0.02 \\
+0    & 2000 & 1.000 & 1.00 & 0.497 & 0.04 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Contamination tipping points for mean share and median share.
+Entries are the smallest \(n_{\mathrm{bad}}\) at which the metric falls
+below the threshold.
+A dash means the threshold is not crossed on the reported grid.}
+\label{tab:federated_tipping}
+\small
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{l c rrr rrr}
+\toprule
+ & & \multicolumn{3}{c}{Mean share} & \multicolumn{3}{c}{Median share} \\
+\cmidrule(lr){3-5} \cmidrule(lr){6-8}
+Mode & \(\mathrm{SNR}_{\mathrm{low}}\) & \(\rho<0.90\) & AUC\(<0.95\) & \(J@K<0.7\) & \(\rho<0.90\) & AUC\(<0.95\) & \(J@K<0.7\) \\
+\midrule
+low SNR    & 0.5  & --- & --- & --- & --- & --- & --- \\
+low SNR    & 0.25 & --- & --- & --- & 3   & --- & --- \\
+low SNR    & 0.1  & 10  & 10  & 10  & 3   & 9   & 9   \\
+low SNR    & 0    & 7   & 9   & 9   & 3   & 8   & 7   \\
+null SNR   & ---  & 5   & 9   & 9   & 3   & 8   & 7   \\
+wrong plant & --- & 1   & 7   & 6   & 4   & 6   & 6   \\
+\(y\) scramble & --- & 4 & --- & --- & 2 & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{table}[t]
 \centering
@@ -357,31 +460,29 @@ Section~\ref{sec:drivers}.
 
 \begin{table}[t]
 \centering
-\small
-\caption{Sample-size imbalance.
-Spearman correlation with the clean aggregate.
-Dirichlet concentration \(\alpha_{\mathrm{Dir}}\), \(B=10\), \(p=80\),
-\(K=10\), \(N=4000\), five replicates.
-The mixed rows are five covariate-shift sites and five concept-drift
-sites.}
+\caption{Sample-size imbalance (Dirichlet \(\alpha\)) and mixed sites.
+Spearman \(\rho\) of the observed aggregate against the clean aggregate.
+\(B=10\), \(p=80\), \(K=10\), \(N=4000\), five replicates.}
 \label{tab:federated_imbalance}
-\begin{tabular}{llcccc}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l l rrrr}
 \toprule
-\(\alpha_{\mathrm{Dir}}\) & Regime & Uniform & \(n\)-weighted & IVW & Median \\
+\(\alpha\) & Regime & Uniform & \(n\)-weighted & IVW & Median \\
 \midrule
 0.05 & Covariate & 1.000 & 1.000 & 0.788 & 1.000 \\
-0.05 & Concept & 0.996 & 0.913 & 0.876 & 0.975 \\
-0.1 & Covariate & 1.000 & 1.000 & 0.754 & 1.000 \\
-0.1 & Concept & 0.996 & 0.921 & 0.888 & 0.985 \\
-1 & Covariate & 1.000 & 1.000 & 0.883 & 1.000 \\
-1 & Concept & 0.991 & 0.952 & 0.738 & 0.964 \\
-10 & Covariate & 1.000 & 1.000 & 0.971 & 1.000 \\
-10 & Concept & 0.984 & 0.965 & 0.610 & 0.961 \\
-20 & Covariate & 1.000 & 1.000 & 0.977 & 1.000 \\
-20 & Concept & 0.985 & 0.976 & 0.749 & 0.950 \\
+0.05 & Concept   & 0.996 & 0.913 & 0.876 & 0.975 \\
+0.1  & Covariate & 1.000 & 1.000 & 0.754 & 1.000 \\
+0.1  & Concept   & 0.996 & 0.921 & 0.888 & 0.985 \\
+1    & Covariate & 1.000 & 1.000 & 0.883 & 1.000 \\
+1    & Concept   & 0.991 & 0.952 & 0.738 & 0.964 \\
+10   & Covariate & 1.000 & 1.000 & 0.971 & 1.000 \\
+10   & Concept   & 0.984 & 0.965 & 0.610 & 0.961 \\
+20   & Covariate & 1.000 & 1.000 & 0.977 & 1.000 \\
+20   & Concept   & 0.985 & 0.976 & 0.749 & 0.950 \\
 \midrule
---- & 5 CS + 5 CD & 0.300 & 0.300 & --- & 0.295 \\
---- & vs.\ all-CD & 0.334 & 0.334 & --- & 0.372 \\
+\multicolumn{2}{l}{Mixed 5 CS + 5 CD} & 0.300 & 0.300 & ---   & 0.295 \\
+\multicolumn{2}{l}{Mixed (vs.\ all-CD)}  & 0.334 & 0.334 & ---   & 0.372 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -402,34 +503,82 @@ A moderate number of corrupted centers leaves the selected set intact when
 a clean signal remains.
 Which of the mean and the median wins the rank correlation depends on the
 design.
+On the same two data sets, a pooled comparison of the selectors themselves
+is Table~\ref{tab:pooled_comparison}.
+The FSDS row is marked in bold.
+Degree and the random forest dominate covariate AUC.
+Under concept drift the ordering changes: on Diabetes130 with a random
+split, the knockoff reaches concept AUC \(0.996\), while FSDS is \(0.742\).
 
 \begin{table}[t]
 \centering
-\small
-\caption{Federated alignment under concept drift on four data sets.
-AUC, precision at \(K\), and Spearman \(\rho\), for mean share and median
-share, at \(n_{\mathrm{bad}}\in\{0,5,10\}\).}
+\caption{Federated alignment on SECOM, TCGA, Diabetes130, and TEP under
+concept drift.
+AUC, precision at \(K\), and Spearman \(\rho\) at
+\(n_{\mathrm{bad}}\in\{0,5,10\}\).}
 \label{tab:federated_real_data}
-\begin{tabular}{l r rrr rrr}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l c rrr rrr}
 \toprule
  & & \multicolumn{3}{c}{Mean share} & \multicolumn{3}{c}{Median share} \\
-\cmidrule(lr){3-5}\cmidrule(lr){6-8}
-Data & \(n_{\mathrm{bad}}\) & AUC & \(P@K\) & \(\rho\) & AUC & \(P@K\) & \(\rho\) \\
+\cmidrule(lr){3-5} \cmidrule(lr){6-8}
+Dataset & \(n_{\mathrm{bad}}\) & AUC & \(P@K\) & \(\rho\) & AUC & \(P@K\) & \(\rho\) \\
 \midrule
-SECOM & 0 & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 \\
-SECOM & 5 & 1.000 & 0.98 & 0.894 & 0.995 & 0.92 & 0.917 \\
+SECOM & 0  & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 \\
+SECOM & 5  & 1.000 & 0.98 & 0.894 & 0.995 & 0.92 & 0.917 \\
 SECOM & 10 & 0.708 & 0.40 & 0.657 & 0.683 & 0.34 & 0.758 \\
-TCGA & 0 & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 \\
-TCGA & 5 & 1.000 & 1.00 & 0.869 & 0.999 & 0.98 & 0.877 \\
+\midrule
+TCGA & 0  & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 \\
+TCGA & 5  & 1.000 & 1.00 & 0.869 & 0.999 & 0.98 & 0.877 \\
 TCGA & 10 & 0.977 & 0.84 & 0.771 & 0.974 & 0.82 & 0.758 \\
-Diabetes & 0 & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 \\
-Diabetes & 5 & 1.000 & 1.00 & 0.887 & 1.000 & 1.00 & 0.796 \\
+\midrule
+Diabetes & 0  & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 \\
+Diabetes & 5  & 1.000 & 1.00 & 0.887 & 1.000 & 1.00 & 0.796 \\
 Diabetes & 10 & 0.920 & 0.75 & 0.814 & 0.940 & 0.85 & 0.635 \\
-TEP & 0 & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 \\
-TEP & 5 & 0.996 & 0.88 & 0.868 & 0.970 & 0.68 & 0.728 \\
+\midrule
+TEP & 0  & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 \\
+TEP & 5  & 0.996 & 0.88 & 0.868 & 0.970 & 0.68 & 0.728 \\
 TEP & 10 & 0.580 & 0.12 & 0.582 & 0.586 & 0.20 & 0.581 \\
 \bottomrule
 \end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Pooled comparison on SECOM and Diabetes130 under covariate (Cov)
+and concept (Con) shift.
+AUC and precision at \(10\).
+Random split and \texttt{max\_feature} split.
+The FSDS row is in bold.
+PermuCATE on SECOM random covariate is the mean of two replicates; one
+replicate had a one-class label batch and the fit was skipped.}
+\label{tab:pooled_comparison}
+\label{tab:pooled_fsds}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{l rrrr rrrr rrrr rrrr}
+\toprule
+ & \multicolumn{4}{c}{SECOM (random)} & \multicolumn{4}{c}{Diabetes130 (random)} & \multicolumn{4}{c}{SECOM (\texttt{max\_feature})} & \multicolumn{4}{c}{Diabetes130 (\texttt{max\_feature})} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13} \cmidrule(lr){14-17}
+Method & Cov AUC & Cov \(P@10\) & Con AUC & Con \(P@10\) & Cov AUC & Cov \(P@10\) & Con AUC & Con \(P@10\) & Cov AUC & Cov \(P@10\) & Con AUC & Con \(P@10\) & Cov AUC & Cov \(P@10\) & Con AUC & Con \(P@10\) \\
+\midrule
+PO & 0.452 & 0.400 & 0.619 & 0.600 & 0.308 & 0.633 & 0.892 & 0.867 & 0.487 & 0.267 & 0.579 & 0.600 & 0.492 & 0.733 & 0.758 & 0.767 \\
+\textbf{FSDS} & \textbf{0.716} & \textbf{0.433} & \textbf{0.598} & \textbf{0.400} & \textbf{0.792} & \textbf{0.867} & \textbf{0.742} & \textbf{0.800} & \textbf{0.650} & \textbf{0.267} & \textbf{0.442} & \textbf{0.200} & \textbf{0.483} & \textbf{0.733} & \textbf{0.713} & \textbf{0.767} \\
+deg & 0.950 & 0.833 & 0.552 & 0.333 & 0.992 & 0.967 & 0.467 & 0.733 & 0.916 & 0.767 & 0.429 & 0.167 & 0.850 & 0.900 & 0.583 & 0.733 \\
+RF & 1.000 & 1.000 & 0.549 & 0.300 & 1.000 & 1.000 & 0.558 & 0.800 & 0.920 & 0.733 & 0.459 & 0.200 & 0.917 & 0.967 & 0.617 & 0.767 \\
+RF-LOCO & 0.622 & 0.367 & 0.447 & 0.267 & 0.758 & 0.767 & 0.475 & 0.733 & 0.631 & 0.367 & 0.418 & 0.200 & 0.575 & 0.767 & 0.433 & 0.667 \\
+LOCO-MMD & 0.987 & 0.967 & 0.496 & 0.233 & 0.983 & 0.967 & 0.475 & 0.733 & 0.897 & 0.800 & 0.517 & 0.233 & 0.700 & 0.767 & 0.408 & 0.700 \\
+HSIC-LOCO & 0.402 & 0.167 & 0.577 & 0.367 & 0.575 & 0.767 & 0.475 & 0.767 & 0.505 & 0.367 & 0.612 & 0.367 & 0.558 & 0.767 & 0.475 & 0.700 \\
+GRF & 0.543 & 0.267 & 0.774 & 0.633 & 0.442 & 0.700 & 0.692 & 0.833 & 0.526 & 0.300 & 0.667 & 0.433 & 0.433 & 0.700 & 0.592 & 0.733 \\
+\(\ell_1\) mis & 0.580 & 0.267 & 0.803 & 0.667 & 0.458 & 0.700 & 0.725 & 0.767 & 0.718 & 0.500 & 0.697 & 0.500 & 0.533 & 0.767 & 0.700 & 0.767 \\
+\(\ell_1\) spec & 0.587 & 0.367 & 0.796 & 0.633 & 0.583 & 0.767 & 0.550 & 0.700 & 0.657 & 0.467 & 0.749 & 0.567 & 0.550 & 0.733 & 0.683 & 0.767 \\
+\(\Delta\)SHAP & 0.587 & 0.267 & 0.778 & 0.633 & 0.475 & 0.733 & 0.750 & 0.800 & 0.478 & 0.233 & 0.744 & 0.600 & 0.333 & 0.633 & 0.792 & 0.800 \\
+knockoff & 0.578 & 0.367 & 0.796 & 0.600 & 0.500 & 0.733 & 0.996 & 0.967 & 0.626 & 0.367 & 0.749 & 0.633 & 0.329 & 0.667 & 0.883 & 0.900 \\
+PermuCATE & 0.523 & 0.350 & 0.748 & 0.600 & 0.492 & 0.733 & 0.808 & 0.800 & 0.539 & 0.367 & 0.709 & 0.567 & 0.450 & 0.667 & 0.717 & 0.767 \\
+\bottomrule
+\end{tabular}}
 \end{table}
 
 A homogeneous synthetic check uses \(d=10\), \(n=2400\), and \(K=6\)
