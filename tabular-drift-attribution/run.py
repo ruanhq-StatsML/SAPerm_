@@ -74,16 +74,26 @@ def run(cfg):
         feature_ranked = rank_features(
             current[is_valid], counterfactual[is_valid], col_names,
         )
+        feature_total = sum(feature_ranked.values()) + 1e-8
+        feature_contribution = {
+            name: value / feature_total
+            for name, value in list(feature_ranked.items())[:10]
+        }
         gt_blocks = gt.get(t, set())
         top_block = next(iter(block_ranked))
         hit = top_block in gt_blocks if gt_blocks else None
+        contribution = {k: round(float(v), 6) for k, v in block_prop.items()}
         outputs.append({
             "t": t,
             "metric": cfg["metric"],
             "block_ranked": {k: round(float(v), 6) for k, v in block_ranked.items()},
-            "block_prop": {k: round(float(v), 6) for k, v in block_prop.items()},
+            "block_prop": contribution,
+            "contribution": contribution,
             "feature_ranked": {
                 k: round(float(v), 6) for k, v in list(feature_ranked.items())[:10]
+            },
+            "feature_contribution": {
+                k: round(float(v), 6) for k, v in feature_contribution.items()
             },
             "top": top_block,
             "gt_blocks": sorted(gt_blocks),

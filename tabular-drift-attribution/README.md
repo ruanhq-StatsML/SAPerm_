@@ -44,7 +44,23 @@ python run.py --config configs/synthetic.yaml
 }
 ```
 
-`block_prop` 是块距离占全部块距离的比例。`top_hit` 在没有真值时是 `null`。
+`contribution` 是这一批的块贡献，等于该块距离除以全部块距离，和 `block_prop` 是同一个数。`feature_contribution` 是绝对差最大的十个特征各自占总绝对差的比例。`top_hit` 在没有真值时是 `null`。
+
+## 贡献怎么定义
+
+参考批次是第 0 批。对后面的每一批、每一个块 \(b\)，条件是这一行里 \(b\) 以外的列。反事实块从参考条件分布里抽：
+
+\[
+X^{cf}_{t,b} \sim P_{\mathrm{ref}}(X_b \mid X_{-b}=X_{t,-b}).
+\]
+
+块贡献是观测块和这个反事实块的距离份额：
+
+\[
+c_t(b) = \frac{d(X_{t,b}, X^{cf}_{t,b})}{\sum_{b'} d(X_{t,b'}, X^{cf}_{t,b'})}.
+\]
+
+合成面板在漂移前四块各约 25%。`block_1` 从第 3 批被平移 1.5 之后，它的贡献升到 0.337，并且在五个漂移批次上都是第一名。
 
 ## 可切换的生成器
 

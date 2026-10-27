@@ -22,6 +22,10 @@ def test_synthetic_abrupt():
     assert all(r["top"] == "block_1" for r in drifted)
     assert drifted[0]["top_hit"] is True
     assert drifted[0]["valid_ratio"] > 0.5
+    for row in drifted:
+        assert abs(sum(row["contribution"].values()) - 1) < 1e-3
+        assert row["contribution"]["block_1"] > 0.30
+        assert row["contribution"] is row["block_prop"]
 
 
 def test_all_metrics():
