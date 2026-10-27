@@ -28,9 +28,13 @@ class UpliftModel:
         self.ready = self._t1 is not None and self._t0 is not None and ok
         return self.ready
 
-    def predict_tau(self, x: np.ndarray) -> np.ndarray:
+    def predict_parts(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         if not self.ready:
-            return np.zeros(len(x))
-        p1 = self._t1.predict_proba(x)[:, 1]
-        p0 = self._t0.predict_proba(x)[:, 1]
-        return p1 - p0
+            zeros = np.zeros(len(x))
+            return zeros, zeros, zeros
+        mu1 = self._t1.predict_proba(x)[:, 1]
+        mu0 = self._t0.predict_proba(x)[:, 1]
+        return mu0, mu1, mu1 - mu0
+
+    def predict_tau(self, x: np.ndarray) -> np.ndarray:
+        return self.predict_parts(x)[2]

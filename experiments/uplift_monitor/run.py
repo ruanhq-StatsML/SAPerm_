@@ -17,11 +17,12 @@ import numpy as np
 import pandas as pd
 
 from experiments.uplift_monitor.dgp import N_BATCH, draw_covariates, sample_outcomes
+from experiments.uplift_monitor.fsds_vimp import mmd_path, summarize_path_nonuniqueness
 from experiments.uplift_monitor.monitor import (
     EXPLORE,
     calibration_mae,
-    covariate_scores,
-    outcome_rrisk,
+    fsds_covariate,
+    fsds_uplift_risk,
     policy_value,
     sign_accuracy,
     transformed_outcome,
@@ -63,6 +64,7 @@ def run_one(scenario: str, seed: int) -> tuple[pd.DataFrame, pd.DataFrame]:
     burn_x: list[np.ndarray] = []
     burn_t: list[np.ndarray] = []
     burn_y: list[np.ndarray] = []
+    late_x: list[np.ndarray] = []
     monitor_rows = []
     arm_rows = []
 
@@ -124,22 +126,30 @@ def run_one(scenario: str, seed: int) -> tuple[pd.DataFrame, pd.DataFrame]:
             continue
 
         x_ref = np.vstack(burn_x)
-        t_ref = np.concatenate(burn_t)
-        y_ref = np.concatenate(burn_y)
         xe, te, ye, taue = x[explore], treat[explore], y[explore], tau[explore]
-        mmd, hsic = covariate_scores(x_ref, xe)
-        tau_s = stale.predict_tau(xe)
-        tau_f = fresh.predict_tau(xe)
+        if late:
+            late_x.append(xe)
+        cov = fsds_covariate(x_ref, xe, seed + 17 * t)
+        mu0_s, mu1_s, tau_s = stale.predict_parts(xe)
+        mu0_f, mu1_f, tau_f = fresh.predict_parts(xe)
+        risk_s = fsds_uplift_risk(xe, ye, te, mu0_s, mu1_s, tau_s, seed + t)
+        risk_f = fsds_uplift_risk(xe, ye, te, mu0_f, mu1_f, tau_f, seed + 100 + t)
         phi = transformed_outcome(ye, te)
+        mmd_vimp = np.asarray(cov["mmd_vimp"], dtype=float)
         monitor_rows.append(
             {
                 "scenario": scenario,
                 "seed": seed,
                 "batch": t,
                 "late": int(late),
-                "mmd": mmd,
-                "hsic": hsic,
-                "rrisk": outcome_rrisk(x_ref, t_ref, y_ref, xe, te, ye, seed + t),
+                "mmd": float(cov["mmd"]),
+                "hsic": float(cov["hsic"]),
+                "mmd_top": int(np.argmax(mmd_vimp)),
+                "mmd_v0": float(mmd_vimp[0]),
+                "rlearner_stale": risk_s["r_learner"],
+                "rlearner_fresh": risk_f["r_learner"],
+                "po_stale": risk_s["po"],
+                "po_fresh": risk_f["po"],
                 "calib_stale": calibration_mae(tau_s, phi),
                 "calib_fresh": calibration_mae(tau_f, phi),
                 "sign_stale": sign_accuracy(tau_s, taue),
@@ -151,7 +161,11 @@ def run_one(scenario: str, seed: int) -> tuple[pd.DataFrame, pd.DataFrame]:
                 "value_oracle": policy_value(ye, te, _choose(taue)),
             }
         )
-    return pd.DataFrame(monitor_rows), pd.DataFrame(arm_rows)
+    held = {
+        "burn": np.vstack(burn_x),
+        "late": np.vstack(late_x) if late_x else np.zeros((0, burn_x[0].shape[1])),
+    }
+    return pd.DataFrame(monitor_rows), pd.DataFrame(arm_rows), held
 
 
 def _phase_means(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
@@ -159,7 +173,11 @@ def _phase_means(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 
 def summarize(monitor: pd.DataFrame, arms: pd.DataFrame) -> dict:
-    score_cols = ["mmd", "hsic", "rrisk", "calib_stale", "calib_fresh", "sign_stale", "sign_fresh", "value_stale", "value_fresh", "value_oracle", "value_treat", "value_control"]
+    score_cols = [
+        "mmd", "hsic", "mmd_v0", "rlearner_stale", "rlearner_fresh", "po_stale", "po_fresh",
+        "calib_stale", "calib_fresh", "sign_stale", "sign_fresh",
+        "value_stale", "value_fresh", "value_oracle", "value_treat", "value_control",
+    ]
     phase = _phase_means(monitor, score_cols)
     traffic = arms.groupby(["scenario", "late", "arm"])["traffic"].mean()
     out = {"phase": {}, "traffic": {}}
@@ -180,24 +198,25 @@ def write_latex(summary: dict, path: Path) -> None:
     lines = [
         r"\begin{table}[t]",
         r"\centering",
-        r"\caption{Uplift monitor. Early is batches 4--7, after the burn-in and before the change. "
-        r"Late is batches 8--15. Concept flips the sign of $\tau(x)$ and leaves $P(X)$ alone. "
-        r"Covariate shifts the first coordinate and leaves $\tau(x)$ alone. "
-        r"MMD is the covariate score. Calibration is the mean absolute gap between predicted uplift "
-        r"and the transformed outcome on the randomized slice. Sign accuracy uses the true $\tau$ and is a diagnostic. "
+        r"\caption{Uplift monitor using the FSDS scores. "
+        r"MMD and HSIC are \texttt{MMD} and HSIC-LOCO on the randomized slice against the burn-in. "
+        r"R-learner is the FSDS loss with the deployed uplift plugged in as $\tau$. "
+        r"PO-risk is the PermuCATE pseudo-outcome risk. "
+        r"Early is batches 4--7. Late is batches 8--15. "
         r"Cells are means over four replicates.}",
         r"\label{tab:uplift-monitor}",
-        r"\begin{tabular}{llrrrrr}",
+        r"\begin{tabular}{llrrrrrr}",
         r"\toprule",
-        r"Scenario & Phase & MMD & Calib.\ stale & Calib.\ fresh & Sign stale & Sign fresh \\",
+        r"Scenario & Phase & MMD & HSIC & R-learn stale & R-learn fresh & PO stale & PO fresh \\",
         r"\midrule",
     ]
     for scenario in SCENARIOS:
         for label in ("early", "late"):
             row = summary["phase"][scenario][label]
             lines.append(
-                f"{scenario} & {label} & {row['mmd']:.4f} & {row['calib_stale']:.3f} & "
-                f"{row['calib_fresh']:.3f} & {row['sign_stale']:.3f} & {row['sign_fresh']:.3f} \\\\"
+                f"{scenario} & {label} & {row['mmd']:.4f} & {row['hsic']:.4f} & "
+                f"{row['rlearner_stale']:.3f} & {row['rlearner_fresh']:.3f} & "
+                f"{row['po_stale']:.3f} & {row['po_fresh']:.3f} \\\\"
             )
     lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}", ""])
     lines.extend(
@@ -226,14 +245,25 @@ def write_latex(summary: dict, path: Path) -> None:
 
 
 def print_board(summary: dict) -> None:
-    print("\nmonitor  (early = batches 4-7, late = batches 8-15)")
-    print(f"{'scenario':<12}{'phase':<8}{'MMD':>8}{'calib S':>9}{'calib F':>9}{'sign S':>8}{'sign F':>8}{'R-risk':>8}")
+    print("\nFSDS monitor  (early = batches 4-7, late = batches 8-15)")
+    print(f"{'scenario':<12}{'phase':<8}{'MMD':>8}{'HSIC':>8}{'RL S':>8}{'RL F':>8}{'PO S':>8}{'PO F':>8}{'sign S':>8}{'v0':>8}")
     for scenario in SCENARIOS:
         for label in ("early", "late"):
             row = summary["phase"][scenario][label]
             print(
-                f"{scenario:<12}{label:<8}{row['mmd']:8.4f}{row['calib_stale']:9.3f}"
-                f"{row['calib_fresh']:9.3f}{row['sign_stale']:8.3f}{row['sign_fresh']:8.3f}{row['rrisk']:8.3f}"
+                f"{scenario:<12}{label:<8}{row['mmd']:8.4f}{row['hsic']:8.4f}"
+                f"{row['rlearner_stale']:8.3f}{row['rlearner_fresh']:8.3f}"
+                f"{row['po_stale']:8.3f}{row['po_fresh']:8.3f}"
+                f"{row['sign_stale']:8.3f}{row['mmd_v0']:8.4f}"
+            )
+    if "paths" in summary:
+        print("\nFSDS mmd_path non-uniqueness (burn-in vs late, one replicate)")
+        for scenario, row in summary["paths"].items():
+            print(
+                f"{scenario:<12} MMD {row['metric_orig']:.4f}  "
+                f"mean step std {row['step_std_mean']:.4f}  "
+                f"mean path gap {row['pairwise_curve_diff_mean']:.4f}  "
+                f"finals match full MMD {row['final_all_equal_orig']}"
             )
     print("\nthompson traffic")
     print(f"{'scenario':<12}{'phase':<8}{'control':>9}{'treat':>9}{'stale':>9}{'fresh':>9}")
@@ -254,17 +284,26 @@ def main() -> None:
     args = parser.parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)
     monitors, arms = [], []
+    held_out = {}
     for scenario in SCENARIOS:
         for rep in range(args.reps):
-            m, a = run_one(scenario, args.seed + 100 * rep + (0 if scenario == "concept" else 17))
+            m, a, held = run_one(scenario, args.seed + 100 * rep + (0 if scenario == "concept" else 17))
             monitors.append(m)
             arms.append(a)
+            if rep == 0:
+                held_out[scenario] = held
             print(f"{scenario} rep {rep} done", flush=True)
     monitor = pd.concat(monitors, ignore_index=True)
     arm = pd.concat(arms, ignore_index=True)
     monitor.to_csv(args.out_dir / "batch_monitor.csv", index=False)
     arm.to_csv(args.out_dir / "arm_trace.csv", index=False)
     summary = summarize(monitor, arm)
+    summary["paths"] = {}
+    for scenario, held in held_out.items():
+        rng = np.random.default_rng(0)
+        take = min(180, len(held["burn"]), len(held["late"]))
+        paths, orig = mmd_path(held["burn"][:take], held["late"][:take], B=16, rng=rng)
+        summary["paths"][scenario] = summarize_path_nonuniqueness(paths, orig)
     (args.out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     write_latex(summary, args.out_dir / "uplift_monitor.tex")
     print_board(summary)

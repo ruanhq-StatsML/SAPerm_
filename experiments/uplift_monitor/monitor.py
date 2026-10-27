@@ -1,23 +1,22 @@
 """Batch monitor for a deployed uplift model.
 
 The randomized slice of a batch is the only place these scores are valid.
-MMD and HSIC compare covariates with the burn-in. R-risk is the excess MSE
-of a ridge fit on the burn-in outcome, using features (X, T). Calibration
-compares the model's predicted uplift with the transformed outcome, which
-is unbiased for tau(x) when treatment is randomized. Sign accuracy uses the
-true tau and is a simulation diagnostic, not an online score.
+Covariate scores are the FSDS ``MMD`` and HSIC-LOCO. The uplift scores are
+the FSDS R-learner loss and the PermuCATE pseudo-outcome risk, with the
+deployed tau plugged in. Calibration compares predicted uplift with the
+transformed outcome. Sign accuracy uses the true tau and is a simulation
+diagnostic, not an online score.
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-from experiments.synth_site_drivers.mmd_hsic_rrisk import (
-    _hsic,
-    _median_gamma,
-    _mmd2,
-    rrisk_loco,
-    scale_pair,
+from experiments.uplift_monitor.fsds_vimp import (
+    compute_hsic_loco_batches,
+    compute_loco_mmd_batches,
+    po_risk,
+    r_learner_risk,
 )
 
 EXPLORE = 0.30
@@ -59,28 +58,20 @@ def sign_accuracy(tau_hat: np.ndarray, tau_true: np.ndarray, tol: float = 0.15) 
     return float(np.mean(np.sign(tau_hat[keep]) == np.sign(tau_true[keep])))
 
 
-def covariate_scores(x_ref: np.ndarray, x_new: np.ndarray) -> tuple[float, float]:
-    a, b = scale_pair(x_ref, x_new)
-    cap = 160
-    if len(a) > cap:
-        a = a[:cap]
-    if len(b) > cap:
-        b = b[:cap]
-    gamma = _median_gamma(a, b)
-    mmd = _mmd2(a, b, gamma)
-    pooled = np.vstack([a, b])
-    label = np.concatenate([np.zeros(len(a)), np.ones(len(b))])
-    hsic = _hsic(pooled, label)
-    return mmd, hsic
+def fsds_covariate(x_ref: np.ndarray, x_new: np.ndarray, seed: int) -> dict[str, float | np.ndarray]:
+    """FSDS MMD and HSIC, global value plus leave-one-covariate importance."""
+    mmd, mmd_vimp, _ = compute_loco_mmd_batches(x_ref, x_new, max_n=200, seed=seed)
+    hsic, hsic_vimp, _ = compute_hsic_loco_batches(x_ref, x_new, max_n=200, seed=seed + 1)
+    return {"mmd": mmd, "hsic": hsic, "mmd_vimp": mmd_vimp, "hsic_vimp": hsic_vimp}
 
 
-def outcome_rrisk(
-    x0: np.ndarray, t0: np.ndarray, y0: np.ndarray, x1: np.ndarray, t1: np.ndarray, y1: np.ndarray, seed: int
-) -> float:
-    a0 = np.column_stack([x0, t0])
-    a1 = np.column_stack([x1, t1])
-    gap, _ = rrisk_loco(a0, y0, a1, y1, seed)
-    return float(gap)
+def fsds_uplift_risk(x, y, treat, mu0, mu1, tau, seed: int) -> dict[str, float]:
+    """Plug a deployed uplift into the FSDS R-learner loss and PO-risk."""
+    pi = np.full(len(y), 0.5)
+    return {
+        "r_learner": r_learner_risk(x, y, treat, tau=tau, seed=seed),
+        "po": po_risk(tau, y, treat, mu0, mu1, pi),
+    }
 
 
 def policy_value(y: np.ndarray, treat: np.ndarray, choose: np.ndarray, propensity: float = 0.5) -> float:

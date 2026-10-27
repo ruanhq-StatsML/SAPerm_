@@ -1,15 +1,15 @@
 \begin{table}[t]
 \centering
-\caption{Uplift monitor. Early is batches 4--7, after the burn-in and before the change. Late is batches 8--15. Concept flips the sign of $\tau(x)$ and leaves $P(X)$ alone. Covariate shifts the first coordinate and leaves $\tau(x)$ alone. MMD is the covariate score. Calibration is the mean absolute gap between predicted uplift and the transformed outcome on the randomized slice. Sign accuracy uses the true $\tau$ and is a diagnostic. Cells are means over four replicates.}
+\caption{Uplift monitor using the FSDS scores. MMD and HSIC are \texttt{MMD} and HSIC-LOCO on the randomized slice against the burn-in. R-learner is the FSDS loss with the deployed uplift plugged in as $\tau$. PO-risk is the PermuCATE pseudo-outcome risk. Early is batches 4--7. Late is batches 8--15. Cells are means over four replicates.}
 \label{tab:uplift-monitor}
-\begin{tabular}{llrrrrr}
+\begin{tabular}{llrrrrrr}
 \toprule
-Scenario & Phase & MMD & Calib.\ stale & Calib.\ fresh & Sign stale & Sign fresh \\
+Scenario & Phase & MMD & HSIC & R-learn stale & R-learn fresh & PO stale & PO fresh \\
 \midrule
-concept & early & 0.0007 & 0.215 & 0.243 & 0.975 & 0.916 \\
-concept & late & 0.0012 & 0.516 & 0.252 & 0.025 & 0.767 \\
-covariate & early & 0.0009 & 0.200 & 0.197 & 0.969 & 0.919 \\
-covariate & late & 0.1040 & 0.266 & 0.262 & 0.990 & 0.946 \\
+concept & early & 0.0011 & 0.0005 & 0.222 & 0.226 & 0.826 & 0.842 \\
+concept & late & 0.0008 & 0.0005 & 0.306 & 0.242 & 1.478 & 0.946 \\
+covariate & early & 0.0013 & 0.0006 & 0.220 & 0.222 & 0.821 & 0.840 \\
+covariate & late & 0.1055 & 0.0023 & 0.196 & 0.197 & 0.718 & 0.754 \\
 \bottomrule
 \end{tabular}
 \end{table}

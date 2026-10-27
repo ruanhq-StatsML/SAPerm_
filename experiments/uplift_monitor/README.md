@@ -9,7 +9,7 @@ Two regimes start at batch 8.
 - `concept` flips the sign of τ(x) and leaves P(X) alone.
 - `covariate` shifts the first coordinate and leaves τ(x) alone.
 
-MMD and HSIC are the covariate scores. R-risk is excess MSE of the burn-in outcome model. Calibration compares predicted uplift with the transformed outcome. Sign accuracy uses the true τ and is a simulation check, not an online score.
+The monitor calls the FSDS calculations in `fsds_vimp.py`: `MMD` and `compute_loco_mmd_batches`, `compute_hsic_loco_batches`, the R-learner loss from `vimp_loco_r_risk` with the deployed uplift plugged in as tau, PermuCATE `po_risk`, and `mmd_path` / `summarize_path_nonuniqueness`. Nuisance regressions are logistic and ridge. The original modules `chdir` onto a machine-local path and do not import here. Sign accuracy uses the true τ and is a simulation check, not an online score.
 
 ```bash
 python3 -m experiments.uplift_monitor
