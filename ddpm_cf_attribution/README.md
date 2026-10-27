@@ -26,9 +26,15 @@ pip install -r ddpm_cf_attribution/requirements.txt
 python -m ddpm_cf_attribution.example
 ```
 
-The full run trains a conditional DDPM (cosine schedule, 40 steps, noise
-prediction, 10% lag dropout) and writes `ddpm_cf_attribution/outputs/REPORT.md`.
+The full run trains a conditional DDPM (cosine schedule, noise prediction,
+10% lag dropout) and writes `ddpm_cf_attribution/outputs/REPORT.md`.
 A `--smoke` flag exercises the same path on a tiny panel.
+
+The headline attribution is still the random-Fourier MMD². The ratio of that
+score to the no-intervention baseline moves with bandwidth, because the
+baseline sits on the null floor of the RBF kernel. The same kernel inverts
+to a squared location shift, `shift2`, which is the bandwidth-stable reading.
+The frozen kernel clause still judges the raw ratio.
 
 Thresholds live in `protocol.py` and are the acceptance criteria. They were
 fixed before the run.

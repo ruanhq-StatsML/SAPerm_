@@ -22,6 +22,7 @@ from ddpm_cf_attribution.dgp import (
     K,
     N_TRAIN,
     T,
+    U_COEF,
     conditional_params,
     features_at,
     iter_design,
@@ -89,6 +90,40 @@ def _mean_key(records, site, horizon, key, supported_only=False):
     return float(np.mean([r[key] for r in rows]))
 
 
+def distribution_floors(panel, episodes, y_std: float, seed: int = 11) -> dict:
+    """Wasserstein floors on the same cell design as the calibration check.
+
+    The feature-only Gaussian folds the unobserved U into the variance.
+    The Monte Carlo floor is two draws from the U-conditional law.
+    """
+    rng = np.random.default_rng(seed)
+    cells = [(e, s, t) for e in episodes for s in range(panel.n_sites) for t in range(K, T)]
+    take = min(24, len(cells))
+    w_idx = rng.choice(len(cells), size=take, replace=False)
+    feat_ratios, mc_ratios = [], []
+    for idx in w_idx:
+        e, s, t = cells[int(idx)]
+        mu, sig = conditional_params(
+            panel.b0[e, s], panel.X[e, s, t], float(panel.overlap[e, s]),
+            float(panel.U[e, s]), s, t, panel.weights, panel.beta_social,
+            panel.alpha, panel.sigma_mult, panel.family,
+        )
+        mu_x = mu - U_COEF * float(panel.U[e, s])
+        fresh = rng.normal(mu, sig, size=300)
+        feature_only = rng.normal(mu_x, np.sqrt(sig ** 2 + U_COEF ** 2), size=300)
+        fresh_b = rng.normal(mu, sig, size=300)
+        feat_ratios.append(metrics.wasserstein1(fresh, feature_only) / y_std)
+        mc_ratios.append(metrics.wasserstein1(fresh, fresh_b) / y_std)
+    return {
+        "wasserstein_floor": float(np.mean(feat_ratios)),
+        "wasserstein_mc_floor": float(np.mean(mc_ratios)),
+        "floor_note": (
+            "Feature-conditional Gaussian oracle versus U-conditional replicates, "
+            "24 validation cells and the same W/std definition as the model."
+        ),
+    }
+
+
 def observational_calibration(panel, model, episodes, y_std: float, seed: int = 7) -> dict:
     """PIT, per-cell Wasserstein against fresh observational draws, HSIC ratio."""
     rng = np.random.default_rng(seed)
@@ -149,7 +184,8 @@ def observational_calibration(panel, model, episodes, y_std: float, seed: int = 
     }
 
 
-def _mask_scores(panel, model, episodes, x_mean, site: int, horizon: int, n_samples: int, kind: str) -> float:
+def _mask_scores(panel, model, episodes, x_mean, site: int, horizon: int, n_samples: int, kind: str,
+                 sigma: float | None = None) -> float:
     t = panel.t0 + horizon
     rows, sites, yobs = [], [], []
     for e in episodes:
@@ -164,9 +200,10 @@ def _mask_scores(panel, model, episodes, x_mean, site: int, horizon: int, n_samp
         sites.append(site)
         yobs.append(panel.Y[e, site, t])
     gen = model.sample(np.asarray(rows), np.asarray(sites), n_samples, seed=40 + horizon)
+    if sigma is None:
+        sigma = metrics.median_bandwidth(np.concatenate([np.asarray(a, dtype=float).ravel() for a in yobs]))
     deltas = []
     for i in range(len(rows)):
-        sigma = metrics.median_bandwidth(yobs[i], gen[i])
         rng = np.random.default_rng(50 + i)
         omega, bias = metrics.draw_rff(sigma, RFF_DIM, rng)
         deltas.append(metrics.mmd2_rff(yobs[i], gen[i], sigma=sigma, n_freq=RFF_DIM, omega=omega, bias=bias))
@@ -384,6 +421,7 @@ def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None
             f"HSIC={cal['hsic_ratio']:.3f}",
             flush=True,
         )
+    layer3.update(distribution_floors(panel, val_eps, y_std))
     accepted = bool(layer3["pass"])
 
     print("Stage 3 — rollout and MMD path", flush=True)
@@ -412,12 +450,16 @@ def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None
         base_modes[mode] = float(np.mean([r["delta_cf"] for r in rec]))
 
     kernel_norm = []
-    for mult, tag in ((0.5, 5), (1.0, 6), (2.0, 7)):
+    kernel_shift = []
+    # One draw, three bandwidths. A fresh sample at each multiplier would
+    # mix Monte Carlo noise into the kernel curve.
+    for mult in (0.5, 1.0, 2.0):
         rec = collect_query(
             panel, ddpm, val_eps, [0], [QUERY_HORIZON],
-            n_samples=n_samples, seed=tag, sigma_mult=mult, x_mean=x_mean, x_std=x_std,
+            n_samples=n_samples, seed=5, sigma_mult=mult, x_mean=x_mean, x_std=x_std,
         )["records"]
         kernel_norm.append(float(np.mean([r["normalized"] for r in rec])))
+        kernel_shift.append(float(np.mean([r["shift2"] for r in rec])))
 
     lin_rec = collect_query(
         panel, linear, val_eps, [0], [QUERY_HORIZON],
@@ -430,10 +472,13 @@ def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None
     }
 
     cate = r_learner_cate(x_train, y_train, s_train, lag_col=9)
+    head_sigma = float(np.median([
+        r["sigma"] for r in ddpm_records if r["site"] == 0 and r["horizon"] == QUERY_HORIZON
+    ]))
     mask_delta = _mask_scores(panel, ddpm, val_eps, x_mean, site=0, horizon=QUERY_HORIZON,
-                              n_samples=n_samples, kind="distractor")
+                              n_samples=n_samples, kind="distractor", sigma=head_sigma)
     x_delta = _mask_scores(panel, ddpm, val_eps, x_mean, site=0, horizon=QUERY_HORIZON,
-                           n_samples=n_samples, kind="covariates")
+                           n_samples=n_samples, kind="covariates", sigma=head_sigma)
     b0_delta = _mean_key(ddpm_records, 0, QUERY_HORIZON, "delta_cf")
     feature_scores = {"b0": b0_delta, "distractor": mask_delta, "covariates": x_delta}
     feature_name = max(feature_scores, key=feature_scores.get)
@@ -449,7 +494,7 @@ def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None
     signed = float(np.mean([r["signed"] for r in head_rows]))
     obs_sd = float(np.std(np.concatenate([panel.Y[e, 0, panel.t0 + QUERY_HORIZON] for e in val_eps])))
     cohens_d = signed / obs_sd if obs_sd > 1e-6 else 0.0
-    L5 = layer5(base_modes, kernel_norm, arch, cohens_d)
+    L5 = layer5(base_modes, kernel_norm, arch, cohens_d, shift2_scores=kernel_shift)
 
     # Headline: one validation window with dose 1, plus the episode-mean.
     dose1 = [e for e in val_eps if abs(panel.dose[e, 0] - 1.0) < 1e-8]
@@ -460,8 +505,12 @@ def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None
     x_c = features_at(panel, e_star, 0, t_star, b0_path=counterfactual_path(panel, e_star, 0, "reference_residual"))[None, :]
     y_cf = ddpm.sample(x_c, np.array([0]), n_samples, seed=99)[0]
     y_base = ddpm.sample(x_f, np.array([0]), n_samples, seed=100)[0]
-    boot = metrics.bootstrap_mmd(y_obs, y_cf, n_boot=BOOTSTRAP_B if not smoke else 50, n_freq=RFF_DIM, seed=99)
-    sigma_b = metrics.median_bandwidth(y_obs, y_base)
+    sigma_h = metrics.median_bandwidth(y_obs)
+    boot = metrics.bootstrap_mmd(
+        y_obs, y_cf, n_boot=BOOTSTRAP_B if not smoke else 50, n_freq=RFF_DIM, sigma=sigma_h, seed=99,
+    )
+    shift2_h = metrics.rbf_shift2(y_obs, y_cf, sigma_h)
+    sigma_b = sigma_h
     rng_b = np.random.default_rng(101)
     ob, bb = metrics.draw_rff(sigma_b, RFF_DIM, rng_b)
     delta_base = metrics.mmd2_rff(y_obs, y_base, sigma=sigma_b, n_freq=RFF_DIM, omega=ob, bias=bb)
@@ -483,7 +532,8 @@ def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None
                 "support_rate": row["support_rate"],
             }
         )
-    est_order = sorted(table, key=lambda r: -(r["normalized"] if r["normalized"] is not None else -1))
+    est_order = sorted(table, key=lambda r: -(r["delta"] if r["delta"] is not None else -1))
+    norm_order = sorted(table, key=lambda r: -(r["normalized"] if r["normalized"] is not None else -1))
     oracle_order = [r["site"] for r in sorted(oracle["rows"], key=lambda r: -abs(r["effect_h10"]))]
     recovered = est_order[0]["site"] == oracle["primary_site"]
     logic = (
@@ -492,8 +542,10 @@ def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None
         f"站点 7 的潜在核与站点 0 相同，但隔离把有效核置零；"
         f"站点 6 的重叠通道开在 lag {2}，回答不了 lag 10 的问题；"
         f"站点 2 和 3 的核分别集中在第 3 天和第 1 天。"
-        f"Oracle 在 lag 10 的排序是 {oracle_order}，估计的归一化 Δ 排序是 "
-        f"{[r['site'] for r in est_order]}。"
+        f"Oracle 在 lag 10 的排序是 {oracle_order}，估计的原始 Δ 排序是 "
+        f"{[r['site'] for r in est_order]}，归一化比值排序是 "
+        f"{[r['site'] for r in norm_order]}。"
+        f"主驱动按原始 Δ 取，因为比值的分母是无干预基线，接近零的站点会被抬上去。"
         f"估计的主驱动站点是 {est_order[0]['site']}（{est_order[0]['name']}），"
         f"oracle 主驱动是 {oracle['primary_site']}（{panel.names[oracle['primary_site']]}），"
         f"{'两者一致' if recovered else '两者不一致'}。"
@@ -512,6 +564,23 @@ def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None
 
     layers = {"L1": L1, "L2": L2, "L3": layer3, "L4": L4, "L5": L5}
     cred, bottleneck, rec = _credibility(layers, accepted)
+    if L5.get("shift2_scores"):
+        s2 = ", ".join(f"{v:.3f}" for v in L5["shift2_scores"])
+        raw = ", ".join(f"{v:.2f}" for v in L5["kernel_scores"])
+        oracle_sq = float(np.mean([r["oracle"] ** 2 for r in head_rows])) if head_rows else float("nan")
+        L5["oracle_shift2"] = oracle_sq
+        rec = (
+            f"主驱动按原始 Δ 读，不按 Δ/Δ_base。"
+            f"冻结条款仍用原始比值，核宽 0.5×/1×/2× 的比值是 [{raw}]，CV = {L5['kernel_cv']:.2f}。"
+            f"这个 CV 是 RBF 在零假设分母上的总体形状，不是训练没收敛。"
+            f"同一核反解出的平方位移是 [{s2}]，CV = {L5['shift2_cv']:.2f}，"
+            f"验证窗口上 oracle 的平方均值偏移是 {oracle_sq:.3f}。"
+            f"{'平方位移过了 0.20 的稳定性线，业务上引用这个数。' if L5['shift2_stable'] else '平方位移还没稳，先不要写成效应量。'}"
+            f"L3 的 0.10 仍在未观测混杂地板下面。"
+        )
+        if not L5["kernel_pass"] and layers["L1"]["pass"] and layers["L2"]["pass"] and layers["L4"]["pass"]:
+            cred = "中等"
+            bottleneck = "L3 的 Wasserstein 阈值低于未观测混杂的地板；L5 的原始比值随核宽变化，平方位移是尺度无关的读数"
     training_note = (
         f"家族 {family}。扩散步数 {ddpm.n_steps}，隐藏宽度 {ddpm.hidden}，"
         f"最优验证噪声损失 {min(ddpm.val_loss):.4f}。"
@@ -548,6 +617,7 @@ def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None
             "ci_high": boot["ci_high"],
             "delta_base": delta_base,
             "normalized": boot["delta"] / max(delta_base, 1e-3),
+            "shift2": shift2_h,
             "signed": float(np.mean(y_obs) - np.mean(y_cf)),
             "path_shape": s0_shape,
             "path_peak": s0_peak,

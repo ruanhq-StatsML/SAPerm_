@@ -171,6 +171,8 @@ def render_report(result: dict) -> str:
         f"Δ^cf = {_fmt(h['delta'])}（95% bootstrap CI [{_fmt(h['ci_low'])}, {_fmt(h['ci_high'])}]）。"
     )
     a(f"- 归一化分数 Δ^cf / Δ^base = {_fmt(h['normalized'], 2)}（基线 Δ^base = {_fmt(h['delta_base'])}）。")
+    if h.get("shift2") is not None:
+        a(f"- 同一带宽反解的平方位移 δ² = {_fmt(h['shift2'])}。这是尺度无关的读数，原始比值不是。")
     a(f"- 模型符号：反事实均值比观测均值低 {_fmt(h['signed'])}（异常抬高了购买指数）。")
     a(f"- 路径形状（站点 0，对验证窗口取平均）：{h['path_shape']}，峰值在第 {h['path_peak']} 天。")
     a(f"- 门控（站点 0，hourly / daily / weekly）= {', '.join(_fmt(g, 2) for g in h['gates'])}。")
@@ -267,6 +269,13 @@ def render_report(result: dict) -> str:
     a("")
     a(f"- 基线选择 CV = {_fmt(L5['baseline_cv'], 2)}。{_mark(L5['baseline_pass'])}。分数：{json.dumps({k: round(v, 4) for k, v in L5['baseline_scores'].items()})}。")
     a(f"- 核宽 CV（归一化分数）= {_fmt(L5['kernel_cv'], 2)}。{_mark(L5['kernel_pass'])}。分数：{[round(v, 4) for v in L5['kernel_scores']]}。")
+    if L5.get("shift2_scores"):
+        a(
+            f"- 同一三点的平方位移 δ² = {[round(v, 4) for v in L5['shift2_scores']]}，"
+            f"CV = {_fmt(L5['shift2_cv'], 2)}。"
+            f"{'稳定。' if L5.get('shift2_stable') else '不稳定。'}"
+            f"冻结条款不因这一项改判。"
+        )
     a(f"- 架构 CV = {_fmt(L5['architecture_cv'], 2)}。{_mark(L5['architecture_pass'])}。分数：{json.dumps({k: round(v, 4) for k, v in L5['architecture_scores'].items()})}。")
     a(
         f"- E-value = {_fmt(L5['e_value'], 2)}（Cohen's d = {_fmt(L5['cohens_d'], 2)}）。"

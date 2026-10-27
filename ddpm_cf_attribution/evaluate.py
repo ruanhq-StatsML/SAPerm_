@@ -74,23 +74,28 @@ def score_pairs(
     """
     y_cf = model.sample(x_cf, site, n_samples, seed=seed)
     y_base = model.sample(x_obs_cond, site, n_samples, seed=seed + 1)
+    # One bandwidth for the whole batch, taken from the observational law
+    # and then scaled. The counterfactual sample does not enter the anchor,
+    # and the no-intervention baseline uses the same Fourier features.
+    anchor = metrics.median_bandwidth(np.asarray(y_obs, dtype=float).ravel())
+    sigma = anchor * sigma_mult
     deltas_cf = []
     deltas_base = []
+    shifts = []
     signed = []
     for i in range(len(site)):
-        sigma = metrics.median_bandwidth(y_obs[i], y_cf[i]) * sigma_mult
         rng = np.random.default_rng(seed + 17 + i)
         omega, bias = metrics.draw_rff(sigma, RFF_DIM, rng)
         deltas_cf.append(metrics.mmd2_rff(y_obs[i], y_cf[i], sigma=sigma, n_freq=RFF_DIM, omega=omega, bias=bias))
-        sigma_b = metrics.median_bandwidth(y_obs[i], y_base[i]) * sigma_mult
-        rng_b = np.random.default_rng(seed + 91 + i)
-        ob, bb = metrics.draw_rff(sigma_b, RFF_DIM, rng_b)
-        deltas_base.append(metrics.mmd2_rff(y_obs[i], y_base[i], sigma=sigma_b, n_freq=RFF_DIM, omega=ob, bias=bb))
+        deltas_base.append(metrics.mmd2_rff(y_obs[i], y_base[i], sigma=sigma, n_freq=RFF_DIM, omega=omega, bias=bias))
+        shifts.append(metrics.rbf_shift2(y_obs[i], y_cf[i], sigma))
         signed.append(float(np.mean(y_obs[i]) - np.mean(y_cf[i])))
     return {
         "delta_cf": np.asarray(deltas_cf),
         "delta_base": np.asarray(deltas_base),
         "normalized": np.asarray(deltas_cf) / np.maximum(np.asarray(deltas_base), 1e-3),
+        "shift2": np.asarray(shifts),
+        "sigma": float(sigma),
         "signed_mean_shift": np.asarray(signed),
         "y_cf": y_cf,
         "y_base": y_base,
@@ -155,6 +160,8 @@ def collect_query(
                     "delta_cf": float(scored["delta_cf"][i]),
                     "delta_base": float(scored["delta_base"][i]),
                     "normalized": float(scored["normalized"][i]),
+                    "shift2": float(scored["shift2"][i]),
+                    "sigma": float(scored["sigma"]),
                     "signed": float(scored["signed_mean_shift"][i]),
                     "in_support": bool(supported[i]),
                 }
@@ -203,6 +210,7 @@ def _mean_record(records: list[dict], **filters) -> dict | None:
         "delta_cf": avg("delta_cf"),
         "delta_base": avg("delta_base"),
         "normalized": avg("normalized"),
+        "shift2": avg("shift2"),
         "signed": avg("signed"),
         "oracle": avg("oracle"),
         "support_rate": float(np.mean([r["in_support"] for r in rows])),
@@ -442,17 +450,22 @@ def layer4(records: list[dict], cate_by_site: dict[int, float], gates_by_site: d
 
 
 def layer5(baseline_scores: dict[str, float], kernel_scores: list[float],
-           arch_scores: dict[str, float], cohens_d: float) -> dict:
+           arch_scores: dict[str, float], cohens_d: float,
+           shift2_scores: list[float] | None = None) -> dict:
     base_cv = metrics.coef_variation(list(baseline_scores.values()))
     kern_cv = metrics.coef_variation(kernel_scores)
     arch_cv = metrics.coef_variation(list(arch_scores.values()))
     ev = metrics.e_value_from_d(cohens_d)
     base_ok = base_cv < L5_CV_BASELINE_MAX
+    # The frozen clause is the raw ratio. shift2 is the scale-free reading
+    # of the same kernel; it is reported and does not flip the clause.
     kern_ok = kern_cv < L5_CV_KERNEL_MAX
     arch_ok = arch_cv < L5_CV_ARCH_MAX
     ev_ok = ev > L5_EVALUE_MIN
     fragile = ev < L5_EVALUE_FRAGILE
     caution = ev < L5_EVALUE_CAUTION
+    shift2_scores = list(shift2_scores or [])
+    shift2_cv = metrics.coef_variation(shift2_scores) if shift2_scores else float("nan")
     return {
         "baseline_cv": base_cv,
         "baseline_scores": baseline_scores,
@@ -461,6 +474,9 @@ def layer5(baseline_scores: dict[str, float], kernel_scores: list[float],
         "kernel_scores": kernel_scores,
         "kernel_on_normalized": L5_KERNEL_ON_NORMALIZED,
         "kernel_pass": bool(kern_ok),
+        "shift2_scores": shift2_scores,
+        "shift2_cv": shift2_cv,
+        "shift2_stable": bool(shift2_scores) and shift2_cv < L5_CV_KERNEL_MAX,
         "architecture_cv": arch_cv,
         "architecture_scores": arch_scores,
         "architecture_pass": bool(arch_ok),

@@ -21,7 +21,8 @@ Ten days ago the IP-block feature of cohort~A spiked.
 If that day is put back on its reference path, what is today's purchase distribution for cohort~B, at which lag does the discrepancy peak, and which block carries it?
 The shipped object is a conditional-distribution counterfactual \citep{chernozhukov2013inference}, scored by random-Fourier MMD\textsuperscript{2} \citep{gretton2012kernel,rahimi2007random} under a conditional DDPM \citep{ho2020denoising}.
 On a ten-site linear panel with a known kernel, the validation path peaks at day~10 on the weekly site, the intervened block is the IP feature, and the isolated copy of the same site stays on the floor.
-The ratio of that score to the no-intervention baseline is not a stable effect size: it moves from $7.7$ to $31.6$ as the kernel width changes.
+The ratio of that score to the no-intervention baseline is not a stable effect size: on a shared observational bandwidth it still moves from $8.9$ to $46.4$.
+The same kernel, inverted to a squared location shift, stays at $0.80$ (coefficient of variation $0.01$).
 \end{abstract}
 
 \section{The query}
@@ -159,7 +160,7 @@ On site~0 the softmax was $(0.066,0.045,0.889)$ and the ablation weight was $(0.
 Both put the mass on the weekly bucket.
 
 Before diffusion, a quantile-regression MVP \citep{koenker2005quantile} must clear a dose-response concordance of $0.70$.
-On the validation windows the gradient-boosting quantiles scored $0.85$, and the run entered Stage~2.
+On the validation windows the gradient-boosting quantiles scored $0.83$, and the run entered Stage~2.
 The first diffusion fit failed the Wasserstein clause of Section~\ref{sec:protocol}.
 One pre-registered retry, one hundred and twenty epochs at width $192$, is the fit reported below.
 Its best validation noise loss was $0.397$.
@@ -175,15 +176,17 @@ Each future day is then scored by~\eqref{eq:delta}.
 One validation window with dose~$1$, site~0, horizon~$10$:
 \begin{equation}
 \label{eq:headline}
-\Delta^{\mathrm{cf}}=0.631,
+\Delta^{\mathrm{cf}}=0.674,
 \qquad
-95\%\ \mathrm{CI}\ [0.426,\,0.852],
+95\%\ \mathrm{CI}\ [0.442,\,0.906],
 \qquad
 \Delta^{\mathrm{base}}=0.021,
 \qquad
-\widetilde\Delta^{\mathrm{cf}}=30.3 .
+\widetilde\Delta^{\mathrm{cf}}=31.9 .
 \end{equation}
 The counterfactual mean sits $1.009$ below the observed mean.
+The bandwidth-stable reading of the same kernel is the inverted squared shift.
+On the twelve validation windows it is $0.808$, $0.798$, and $0.787$ at half, unit, and double bandwidth (coefficient of variation $0.01$), against the oracle mean of squared shifts $0.754$.
 The reference-history support rate on the whole validation grid is $1.00$ at a coordinate $z$-score of~$4$.
 A stress path that pushes the lag-10 distractor $b_2$ out by $4.5$ standard deviations is localised by a leave-one-coordinate nearest-neighbour score on that coordinate; clamping it cuts the neighbour distance from $4.05$ to $2.63$.
 The real attribution path did not need that clamp.
@@ -193,7 +196,7 @@ Table~\ref{tab:path} averages the twelve validation windows.
 The primary site is site~0.
 Its path rises and then falls, with the peak on day~$10$.
 Sites whose kernels sit on other lags peak on those lags and are flat at lag~$10$.
-The isolated copy of the weekly primary, site~7, has mean $\Delta^{\mathrm{cf}}=0.028$ against $0.412$ for site~0.
+The isolated copy of the weekly primary, site~7, has mean $\Delta^{\mathrm{cf}}=0.019$ against $0.400$ for site~0.
 
 \begin{table}[t]
 \centering
@@ -205,34 +208,34 @@ $\Delta^{\mathrm{cf}}$ is raw random-Fourier MMD\textsuperscript{2}.}
 \toprule
 Site & Oracle & $\Delta^{\mathrm{cf}}$ & Peak day & Shape \\
 \midrule
-0 weekly primary & $0.807$ & $0.412$ & 10 & peak, then decline \\
-1 weekly secondary & $0.425$ & $0.143$ & 10 & peak, then decline \\
-4 weekly weak & $0.238$ & $0.165$ & 11 & peak, then decline \\
-5 decay & $0.008$ & $0.046$ & 1 & irregular \\
-3 immediate & $0.000$ & $0.034$ & 1 & irregular \\
-6 social overlap & $0.000$ & $0.028$ & 2 & peak, then decline \\
-7 isolated & $0.000$ & $0.028$ & 15 & no lag-10 mass \\
-8 null & $0.000$ & $0.026$ & 4 & on the floor \\
-9 null, noisy & $0.000$ & $0.024$ & 7 & on the floor \\
-2 daily driver & $0.000$ & $0.020$ & 3 & peak, then decline \\
+0 weekly primary & $0.807$ & $0.400$ & 10 & peak, then decline \\
+4 weekly weak & $0.238$ & $0.141$ & 11 & peak, then decline \\
+1 weekly secondary & $0.425$ & $0.127$ & 10 & peak, then decline \\
+5 decay & $0.008$ & $0.036$ & 1 & irregular \\
+3 immediate & $0.000$ & $0.024$ & 1 & irregular \\
+6 social overlap & $0.000$ & $0.023$ & 2 & peak, then decline \\
+9 null, noisy & $0.000$ & $0.023$ & 7 & on the floor \\
+8 null & $0.000$ & $0.020$ & 4 & on the floor \\
+7 isolated & $0.000$ & $0.019$ & 15 & no lag-10 mass \\
+2 daily driver & $0.000$ & $0.015$ & 3 & peak, then decline \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The top three sites by raw $\Delta^{\mathrm{cf}}$ are $0$, $4$, and $1$, the same three sites as the oracle.
-Sites $4$ and $1$ swap order ($0.165$ against $0.143$; oracle $0.238$ against $0.425$).
+Sites $4$ and $1$ swap order ($0.141$ against $0.127$; oracle $0.238$ against $0.425$).
 Normalising by $\Delta^{\mathrm{base}}$ lifts null sites whose baseline is nearly zero.
 The driver call uses the raw score and the peak day together.
 Across windows, the signed mean gap on site~0 averages $0.794$, against the oracle average $0.807$.
 
 \paragraph{Which block.}
-Replacing the IP lag gives $\Delta=0.412$.
-Resetting the three lag-10 distractors to their training means gives $0.043$.
-Resetting the covariates gives $0.112$.
+Replacing the IP lag gives $\Delta=0.400$.
+Resetting the three lag-10 distractors to their training means gives $0.037$.
+Resetting the covariates gives $0.099$.
 The block that carries the query is the IP feature.
 
 \paragraph{Where the past information sits.}
-Placebo horizons $3$, $5$, $15$, and $20$ score $0.058$, $0.071$, $0.049$, and $0.072$, against $0.412$ at the true lag and $0.078$ for the no-intervention baseline.
+Placebo horizons $3$, $5$, $15$, and $20$ score $0.054$, $0.068$, $0.043$, and $0.067$, against $0.400$ at the true lag and $0.065$ for the no-intervention baseline.
 The precision scan over days $1$ through $15$ peaks at day~$10$.
 Daily site~2 peaks at day~$3$, immediate site~3 and the decay site peak at day~$1$, and the overlap site peaks at day~$2$, which is the only lag in its structural term.
 
@@ -250,61 +253,64 @@ A layer fails closed.
 \toprule
 Layer & Rule & Measured & Call \\
 \midrule
-L1 & $\ge 3$ of 4 constructions & temporal $-0.76$; overlap concordance $0.87$; isolation $d=-1.48$, $p<0.001$; dose Spearman $0.67$ & pass \\
+L1 & $\ge 3$ of 4 constructions & temporal $-0.77$; overlap concordance $0.87$; isolation $d=-1.45$, $p<0.001$; dose Spearman $0.69$ & pass \\
 L2 & placebo, peak in $\{9,10,11\}$, scale match & placebos $<0.35\times\Delta_{10}$; peak at 10; weekly, daily, hourly sites match & pass \\
 L3 & PIT $p>0.05$, $W<0.1\,\mathrm{sd}$, HSIC in $[0.8,1.2]$ & $p=0.445$; $W/\mathrm{sd}=0.245$; HSIC $1.009$ & fail \\
 L4 & $\ge 3$ proxies agree & CATE $+1.005$, mask gap $+0.369$, business peak on day 10, weekly gate & pass \\
-L5 & three CVs and E-value $>2$ & baseline CV $0.13$; architecture CV $0.16$; E-value $4.06$; kernel CV $0.70$ & fail \\
+L5 & three CVs and E-value $>2$ & baseline CV $0.14$; architecture CV $0.14$; E-value $4.06$; raw-ratio kernel CV $0.81$ & fail \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \paragraph{Relative rank.}
-Dose concordance on site~0 is $0.80$ and the Spearman correlation with dose is $0.67$, short of the $0.70$ clause, so that construction fails on its own.
-The decay site ranks horizons with Spearman $-0.76$.
-The same statistic on the weekly site is $+0.74$: a monotone-lag story is the wrong assumption for a day-10 kernel, and that failure is charged to the construction.
-Overlap concordance on the social site is $0.87$; on the risk site the overlap Spearman is $-0.13$.
-Isolation of the matched weekly site has paired Cohen's $d=-1.48$.
+Dose concordance on site~0 is $0.81$ and the Spearman correlation with dose is $0.69$, short of the $0.70$ clause, so that construction fails on its own.
+The decay site ranks horizons with Spearman $-0.77$.
+The same statistic on the weekly site is $+0.69$: a monotone-lag story is the wrong assumption for a day-10 kernel, and that failure is charged to the construction.
+Overlap concordance on the social site is $0.87$; on the risk site the overlap Spearman is $-0.11$.
+Isolation of the matched weekly site has paired Cohen's $d=-1.45$.
 Three constructions pass.
 
 \paragraph{Observational calibration.}
 The probability integral transform \citep{dawid1984present} has Kolmogorov--Smirnov $p=0.445$.
 The Hilbert--Schmidt dependence ratio \citep{gretton2005measuring} between generated outcomes and the conditioner, over the same ratio for observed outcomes, is $1.009$.
 Mean per-cell Wasserstein distance is $0.245$ standard deviations of $Y$, above the clause of $0.10$.
-A Gaussian oracle that sees only the features, putting the realised $U$ into the variance, sits at $0.180$ on the same comparison.
-Two samples from one conditional sit at $0.080$.
+A Gaussian oracle that sees only the features, putting the realised $U$ into the variance, sits at $0.166$ on the same comparison.
+Two samples from one conditional sit at $0.071$.
 The $0.10$ clause lies under the feature-only floor of this panel.
-The DDPM is $0.065$ above that floor.
+The DDPM is $0.079$ above that floor.
 PIT and HSIC pass.
 The layer still fails closed.
 
 \paragraph{Proxies.}
 An R-learner \citep{nie2021quasi} with the lag-10 IP feature as the continuous treatment estimates a site-0 coefficient of $+1.005$.
 The rollout's mean gap has the same sign.
-The mask gap $\Delta^{\mathrm{cf}}-\Delta_{\mathrm{mask}}=0.369$.
+The mask gap $\Delta^{\mathrm{cf}}-\Delta_{\mathrm{mask}}=0.363$.
 The excess of the purchase index over the spike day peaks on day~$10$, the same day as $\Delta_h$.
 Four proxies agree.
 
 \paragraph{Fragility.}
-Four reference replacements of the spike day, residual, mean, resample, and zero, give raw scores $0.412$, $0.413$, $0.533$, and $0.416$ (coefficient of variation $0.13$).
-The DDPM, the site-interacted linear Gaussian, and the quantile MVP score $0.412$, $0.408$, and $0.308$ (coefficient of variation $0.16$).
+Four reference replacements of the spike day, residual, mean, resample, and zero, give raw scores $0.400$, $0.386$, $0.505$, and $0.387$ (coefficient of variation $0.14$).
+The DDPM, the site-interacted linear Gaussian, and the quantile MVP score $0.400$, $0.386$, and $0.304$ (coefficient of variation $0.14$).
 The E-value \citep{vanderweele2017sensitivity} at Cohen's $d=0.92$ is $4.06$.
-Bandwidth multipliers $1/2$, $1$, and $2$ move the normalized diagnostic through $7.7$, $13.9$, and $31.6$ (coefficient of variation $0.70$).
-That clause fails.
-The stable objects are the ranking and the peak day.
+One observational bandwidth, shared by the counterfactual and the baseline, still moves the raw ratio through $8.9$, $17.6$, and $46.4$ at multipliers $1/2$, $1$, and $2$ (coefficient of variation $0.81$).
+That is the population shape of an RBF score divided by its null floor, and the frozen clause still fails on it.
+Inverting that same kernel to a squared location shift gives $0.808$, $0.798$, and $0.787$ (coefficient of variation $0.01$).
+The inversion does not rewrite the clause.
+The stable objects are the ranking, the peak day, and this squared shift.
 
 \section{Label on the decision}
 \label{sec:label}
 
 Ship the identity of the driver, not a unitless multiple.
 In this landing the driver is site~0, lag~$10$, IP block $B$, weekly scale.
-The purchase distribution moves with that cell: the dose-$1$ window scores $0.631$ with interval $[0.426,0.852]$, and the mean gap is about one purchase-index unit.
+The purchase distribution moves with that cell: the dose-$1$ window scores $0.674$ with interval $[0.442,0.906]$, and the mean gap is about one purchase-index unit.
 The path is a rise into day~$10$ and a decline after it.
 Sites with the same spike and a closed kernel, including the isolated twin, do not move.
 
 Put three labels on the card.
-The normalized ratio is a calibration check; at the default bandwidth it is about $30$, and across the three protocol bandwidths it runs from $7.7$ to $31.6$.
-The Wasserstein clause of the observational layer fails against a threshold that sits below the unobserved-confounder floor; PIT and the dependence ratio pass, and the conditional mean gap ($0.794$ against an oracle of $0.807$) is the calibration fact the card should quote.
+The normalized ratio is a calibration check; at the default bandwidth it is about $32$, and across the three protocol bandwidths it runs from $8.9$ to $46.4$.
+The number to quote for the size of the move is the squared shift, $0.80$ on the validation windows against an oracle mean of squares $0.754$.
+The Wasserstein clause of the observational layer fails against a threshold that sits below the unobserved-confounder floor ($0.166$); PIT and the dependence ratio pass, and the conditional mean gap ($0.794$ against an oracle of $0.807$) is the calibration fact the card should quote.
 The E-value is $4.06$.
 A randomised confirmation is still the next measurement if the decision isolates a live IP range.
 The product does not name a risk, recommendation, or social channel.

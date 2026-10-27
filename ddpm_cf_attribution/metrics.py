@@ -6,13 +6,54 @@ import numpy as np
 from scipy import stats
 
 
-def median_bandwidth(x: np.ndarray, y: np.ndarray, cap: int = 256) -> float:
-    z = np.concatenate([np.asarray(x, dtype=float).ravel(), np.asarray(y, dtype=float).ravel()])
+def median_bandwidth(x: np.ndarray, y: np.ndarray | None = None, cap: int = 256) -> float:
+    """Median pairwise distance. Pass one sample to anchor a kernel on the observed law.
+
+    A counterfactual sample is not included in the anchor: the location shift
+    would widen the bandwidth in proportion to the effect being measured.
+    """
+    z = np.asarray(x, dtype=float).ravel()
+    if y is not None:
+        z = np.concatenate([z, np.asarray(y, dtype=float).ravel()])
     if z.size > cap:
-        z = z[:cap]
+        rng = np.random.default_rng(0)
+        z = z[rng.choice(z.size, size=cap, replace=False)]
     d = np.abs(z[:, None] - z[None, :])
     med = np.median(d[d > 0]) if np.any(d > 0) else 1.0
     return float(max(med, 1e-3))
+
+
+def _offdiag_mean_kernel(z: np.ndarray, sigma: float) -> float:
+    z = np.asarray(z, dtype=float).ravel()
+    n = z.size
+    if n < 2:
+        return 1.0
+    d2 = (z[:, None] - z[None, :]) ** 2
+    k = np.exp(-d2 / (2.0 * sigma ** 2))
+    return float((k.sum() - np.trace(k)) / (n * (n - 1)))
+
+
+def rbf_shift2(x: np.ndarray, y: np.ndarray, sigma: float) -> float:
+    """Squared location shift implied by a biased RBF MMD, at a fixed bandwidth.
+
+    For two equal-variance Gaussian samples the population map is invertible:
+    MMD^2 = 2 c (1 - exp(-δ^2 / (2(σ^2 + 2v)))). Solving for δ^2 removes the
+    bandwidth. The diagonal of the biased Gram matrix is subtracted first, so
+    a no-shift pair does not report the 1/n null floor as a shift. c and v
+    are estimated from the two samples.
+    """
+    x = np.asarray(x, dtype=float).ravel()
+    y = np.asarray(y, dtype=float).ravel()
+    mmd = mmd2_rbf(x, y, sigma=sigma)
+    kx = _offdiag_mean_kernel(x, sigma)
+    ky = _offdiag_mean_kernel(y, sigma)
+    deb = mmd - (1.0 - kx) / len(x) - (1.0 - ky) / len(y)
+    if deb <= 1e-12:
+        return 0.0
+    c = float(np.clip(0.5 * (kx + ky), 1e-4, 0.999))
+    frac = min(deb / (2.0 * c), 0.999)
+    v = max(0.5 * (float(np.var(x)) + float(np.var(y))), 1e-6)
+    return float(-np.log(1.0 - frac) * 2.0 * (sigma ** 2 + 2.0 * v))
 
 
 def mmd2_rbf(x: np.ndarray, y: np.ndarray, sigma: float | None = None) -> float:
@@ -63,13 +104,21 @@ def bootstrap_mmd(
     n_boot: int = 400,
     n_freq: int = 100,
     sigma_mult: float = 1.0,
+    sigma: float | None = None,
     seed: int = 0,
 ) -> dict:
-    """Percentile interval for RFF-MMD^2. Fourier features are held fixed."""
+    """Percentile interval for RFF-MMD^2. Fourier features are held fixed.
+
+    ``sigma`` anchors the kernel. When it is omitted the anchor is the median
+    distance of ``x`` alone, then multiplied by ``sigma_mult``.
+    """
     x = np.asarray(x, dtype=float).ravel()
     y = np.asarray(y, dtype=float).ravel()
     rng = np.random.default_rng(seed)
-    sigma = median_bandwidth(x, y) * sigma_mult
+    if sigma is None:
+        sigma = median_bandwidth(x) * sigma_mult
+    else:
+        sigma = float(sigma) * sigma_mult
     omega, bias = draw_rff(sigma, n_freq, rng)
     point = mmd2_rff(x, y, sigma=sigma, n_freq=n_freq, omega=omega, bias=bias)
     stats_b = np.empty(n_boot)
