@@ -290,7 +290,14 @@ def _credibility(layers: dict, accepted: bool) -> tuple[str, str, str]:
     return cred, bottleneck, rec
 
 
-def run(family: str, smoke: bool, out_dir: Path) -> dict:
+def run(family: str = "linear", smoke: bool = False, out_dir: Path | None = None) -> dict:
+    """Run the landing case. Defaults are the ten-site linear panel.
+
+    ``ddpm_cf_attribution.run()`` is the product call.
+    """
+    if out_dir is None:
+        out_dir = OUT
+    out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     fig_dir = out_dir / "figures"
     fig_dir.mkdir(exist_ok=True)

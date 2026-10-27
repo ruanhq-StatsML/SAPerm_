@@ -16,10 +16,14 @@ From that directory: `pdflatex landing_case && bibtex landing_case && pdflatex l
 
 ## Run
 
+```python
+import ddpm_cf_attribution
+result = ddpm_cf_attribution.run()
+```
+
 ```bash
 pip install -r ddpm_cf_attribution/requirements.txt
-python -m ddpm_cf_attribution.tests.test_oracle
-python -m ddpm_cf_attribution.run_experiment
+python -m ddpm_cf_attribution.example
 ```
 
 The full run trains a conditional DDPM (cosine schedule, 40 steps, noise

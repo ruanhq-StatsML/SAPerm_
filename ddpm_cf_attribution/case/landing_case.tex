@@ -134,6 +134,18 @@ A live panel does not have that oracle; the five layers below are the acceptance
 \section{Model that ships}
 \label{sec:model}
 
+The landing call is the package. Nothing else is required to reproduce the card.
+
+\begin{verbatim}
+import ddpm_cf_attribution
+result = ddpm_cf_attribution.run()
+\end{verbatim}
+
+\noindent
+\texttt{result["primary\_driver"]} is the site, the lag, and the block.
+\texttt{result["headline"]} is $\Delta^{\mathrm{cf}}$, the interval, and the path shape.
+The call writes the five-layer report next to the package.
+
 The diffused variable is the scalar purchase index.
 A length-one series has no spatial U-Net, so the denoiser is a two-block MLP with adaptive layer normalisation, the scalar analogue of the adaptive group normalisation used by \citet{dhariwal2021diffusion}.
 History reaches the denoiser only after a three-way softmax gate over lags $1$--$2$ (hourly), $3$--$5$ (daily), and $6$--$14$ (weekly).
