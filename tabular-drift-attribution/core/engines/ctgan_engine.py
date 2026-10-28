@@ -27,16 +27,14 @@ class CTGANEngine(BaseEngine):
         from ctgan import CTGAN
 
         df = pd.DataFrame(X_ref, columns=col_names)
-        self.discrete_cols = list(discrete_cols or [])
-        original_discrete = set(self.discrete_cols)
+        discrete = set(discrete_cols or [])
         lag = np.roll(np.asarray(X_ref, dtype=np.float64), 1, axis=0)
         for i, c in enumerate(col_names):
             df[f"yest__{c}"] = lag[:, i]
-        for c in list(df.columns):
-            base = c[len("yest__"):] if c.startswith("yest__") else c
-            if c in self.discrete_cols or base in original_discrete:
-                if c.startswith("yest__") and c not in self.discrete_cols:
-                    self.discrete_cols.append(c)
+        discrete_cols_yes = [c for c in df.columns if str(c).split("__")[0] == "yest" and str(c).split("__", 1)[-1] in discrete]
+        self.discrete_cols = list(discrete) + discrete_cols_yes
+        for c in df.columns:
+            if c in self.discrete_cols:
                 continue
             bin_col = f"{c}_bin"
             df[bin_col] = pd.qcut(
