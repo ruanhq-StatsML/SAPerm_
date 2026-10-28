@@ -17,6 +17,7 @@ import pandas as pd
 from scipy.stats import norm
 
 from experiments.quadrant_monitor.dgp import FEATURES, SCENARIOS, SEGMENTS, draw_batch, realize
+from experiments.quadrant_monitor.fp_loss import fp_lines
 from experiments.quadrant_monitor.models import (
     OutcomePair,
     PropensityModel,
@@ -370,7 +371,7 @@ def _mode(counts: dict) -> str:
     return max(counts, key=counts.get)
 
 
-def write_board(summary: dict, path: Path) -> None:
+def write_board(summary: dict, path: Path, frame: pd.DataFrame | None = None) -> None:
     lines = [
         "# 四象限客群上的元学习器监控",
         "",
@@ -486,6 +487,12 @@ def write_board(summary: dict, path: Path) -> None:
             "说服者的影子分数只替换价格敏感度的上四分位，所以铁公鸡的发券率不动；上四分位里仍有一部分反感者，他们的净增量会掉一点。",
             "反感者的黑名单主要落在 complaint，其次是 ticket。无可救药的硬拦截落在 fingerprint。铁公鸡的截断落在 activity。",
             "",
+        ]
+    )
+    if frame is not None:
+        lines.extend(fp_lines(frame))
+    lines.extend(
+        [
             "## 和手稿代码的对应",
             "",
             "PO-risk 是 `permuCATE_vimp.py` 里的 `E[(φ - τ)^2]`，φ 用双稳健伪结果。",
@@ -541,7 +548,7 @@ def main() -> None:
     frame.to_csv(args.out_dir / "quadrant_batches.csv", index=False)
     summary = summarize(frame)
     (args.out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
-    write_board(summary, args.out_dir / "BOARD.md")
+    write_board(summary, args.out_dir / "BOARD.md", frame)
     write_latex(summary, args.out_dir / "quadrant_monitor.tex")
     print(f"wrote {args.out_dir / 'BOARD.md'}", flush=True)
 

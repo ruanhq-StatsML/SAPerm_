@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 
+from experiments.quadrant_monitor.fp_loss import atom_gains, incremental_value
 from experiments.quadrant_monitor.models import make_rf_regressor, po_risk
 from experiments.quadrant_monitor.policy import SandboxSchedule, apply_rule, treat_if
 from experiments.quadrant_monitor.saffron import saffron
@@ -60,6 +61,20 @@ def test_shadow_replaces_only_the_named_tail():
     quantiles = {f"q75_{j}": 1.0 for j in range(6)}
     score = apply_rule(plugin, g, x, rule, quantiles, shadow)
     assert score.tolist() == [0.8, 0.0]
+
+
+def test_atom_gains_match_the_incremental_value():
+    y0 = np.array([0, 0, 1, 1, 0])
+    y1 = np.array([1, 0, 1, 0, 1])
+    treat = np.array([1, 1, 1, 1, 0])
+    parts = atom_gains(y0, y1, treat)
+    total = parts["hit"] + parts["fp"] + parts["sure"] + parts["poison"]
+    assert np.allclose(total, incremental_value(y0, y1, treat))
+    assert parts["hit"][0] == 5
+    assert parts["fp"][1] == -1
+    assert parts["sure"][2] == -1
+    assert parts["poison"][3] == -7
+    assert parts["hit"][4] == 0
 
 
 def test_quiet_stretches_then_resets():

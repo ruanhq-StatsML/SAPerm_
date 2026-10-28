@@ -81,6 +81,12 @@ def _regime(scenario: str, late: bool):
     return mix, means, py
 
 
+def segment_mix(scenario: str, late: bool) -> np.ndarray:
+    """Design probability of the four latent segments, in ``SEGMENTS`` order."""
+    mix, _, _ = _regime(scenario, late)
+    return mix
+
+
 def draw_batch(
     n: int, scenario: str, late: bool, rng: np.random.Generator
 ) -> dict[str, np.ndarray]:

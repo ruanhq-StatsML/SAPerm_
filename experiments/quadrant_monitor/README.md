@@ -27,3 +27,5 @@ python3 -m experiments.quadrant_monitor
 ```
 
 `results/BOARD.md` is the reading of the run. Net value uses both potential outcomes: the coupon earns `Y(1) * 6 - 1`, no coupon earns `Y(0) * 6`.
+
+The value of the gate is a false-positive bill. Turning a coupon off gains 1 on a `(Y(0), Y(1)) = (0, 0)` draw, gains 7 on a `(1, 0)` draw, and loses 5 on a `(0, 1)` draw. Sleeping dogs dominate per person because one poison atom is worth seven lost-cause false positives. Lost causes dominate headcount. PO-risk only opens the gate; the bill is `1 - 6τ` on the region the rule removes, estimated on the sandbox by the doubly robust mean. The atom table in the board is the oracle audit of that estimand. The atoms are not the latent segment labels.
