@@ -14,6 +14,9 @@ def load_movielens(
     data_dir: str = "data/movielens",
     min_ratings: int = 20,
     seed: int = 0,
+    span: str = "calendar",
+    n_batches: int = 8,
+    per_batch: int | None = None,
 ):
     """MovieLens-1M as user, item, and context blocks.
 
@@ -70,17 +73,26 @@ def load_movielens(
         "item": list(range(len(user_cols), len(user_cols) + len(item_cols))),
         "context": list(range(len(user_cols) + len(item_cols), len(col_names))),
     }
-    day = (ratings["timestamp"] - ratings["timestamp"].min()) / (60 * 60 * 24)
-    n_batches = min(int(day.max() // 30) + 1, 8)
-    batched = []
-    for t in range(n_batches):
-        mask = (day >= t * 30) & (day < (t + 1) * 30)
-        if int(mask.sum()) < 200:
-            continue
-        batched.append(values[mask.to_numpy()])
-    gt = {}
-    for t in range(1, len(batched)):
-        gt[t] = {"user"} if t >= 3 else set()
+    if span == "calendar":
+        day = (ratings["timestamp"] - ratings["timestamp"].min()) / (60 * 60 * 24)
+        n_keep = min(int(day.max() // 30) + 1, n_batches)
+        batched = []
+        for t in range(n_keep):
+            mask = (day >= t * 30) & (day < (t + 1) * 30)
+            if int(mask.sum()) < 200:
+                continue
+            chunk = values[mask.to_numpy()]
+            if per_batch is not None and len(chunk) > per_batch:
+                take = np.linspace(0, len(chunk) - 1, per_batch).astype(int)
+                chunk = chunk[take]
+            batched.append(chunk)
+        gt = {t: ({"user"} if t >= 3 else set()) for t in range(1, len(batched))}
+    elif span == "equal":
+        order = np.argsort(ratings["timestamp"].to_numpy(), kind="mergesort")
+        batched = _batches_from_order(values[order], n_batches, min_rows=200, per_batch=per_batch)
+        gt = {t: set() for t in range(len(batched))}
+    else:
+        raise ValueError(span)
     return {
         "X_batched": batched,
         "blocks": blocks,
@@ -121,14 +133,23 @@ def _numeric_frame(df: pd.DataFrame) -> pd.DataFrame:
     return out[keep].astype(np.float32)
 
 
-def _batches_from_order(values: np.ndarray, n_batches: int, min_rows: int):
+def _batches_from_order(values: np.ndarray, n_batches: int, min_rows: int, per_batch: int | None = None):
+    """Split an ordered table into equal-count batches.
+
+    `per_batch` keeps evenly spaced rows inside each batch so a long panel
+    can be scored without fitting the generator on every row.
+    """
     n_batches = max(2, n_batches)
     edges = np.linspace(0, len(values), n_batches + 1).astype(int)
     batched = []
     for start, stop in zip(edges[:-1], edges[1:]):
         if stop - start < min_rows:
             continue
-        batched.append(values[start:stop])
+        if per_batch is None or stop - start <= per_batch:
+            batched.append(values[start:stop])
+            continue
+        take = np.linspace(start, stop - 1, per_batch).astype(int)
+        batched.append(values[take])
     return batched
 
 
@@ -150,11 +171,19 @@ def _blocks_from_groups(columns, groups):
     return blocks
 
 
-def load_ieee_cis(data_dir: str = "data/ieee_cis", max_rows: int | None = None, seed: int = 0):
+def load_ieee_cis(
+    data_dir: str = "data/ieee_cis",
+    max_rows: int | None = None,
+    seed: int = 0,
+    n_batches: int = 8,
+    per_batch: int | None = None,
+    drop_clock: bool = False,
+):
     """IEEE-CIS fraud transactions, blocked by column family.
 
     Expects train_transaction.csv and, when present, train_identity.csv.
-    There is no planted block label, so gt is empty.
+    TransactionID and isFraud are dropped. Vesta columns V1, V2, ... form
+    their own block. There is no planted block label, so gt is empty.
     """
     del seed
     root = Path(data_dir)
@@ -176,6 +205,10 @@ def load_ieee_cis(data_dir: str = "data/ieee_cis", max_rows: int | None = None, 
         frame["day"] = frame["TransactionDT"] / (24 * 60 * 60)
     if max_rows is not None:
         frame = frame.iloc[:max_rows]
+    drop = ["TransactionID", "isFraud"]
+    if drop_clock:
+        drop.extend(["TransactionDT", "day"])
+    frame = frame.drop(columns=[c for c in drop if c in frame.columns])
     numeric = _numeric_frame(frame)
     groups = [
         ("time", lambda name: name in {"TransactionDT", "hour", "day"}),
@@ -185,11 +218,12 @@ def load_ieee_cis(data_dir: str = "data/ieee_cis", max_rows: int | None = None, 
         ("counts", lambda name: re.fullmatch(r"C\d+", name) is not None),
         ("timedelta", lambda name: re.fullmatch(r"D\d+", name) is not None),
         ("match", lambda name: re.fullmatch(r"M\d+", name) is not None),
+        ("vesta", lambda name: re.fullmatch(r"V\d+", name) is not None),
         ("identity", lambda name: name.startswith("id_") or name.startswith("Device")),
     ]
     blocks = _blocks_from_groups(numeric.columns, groups)
     values = numeric.to_numpy(dtype=np.float32)
-    batched = _batches_from_order(values, n_batches=8, min_rows=200)
+    batched = _batches_from_order(values, n_batches=n_batches, min_rows=200, per_batch=per_batch)
     return {
         "X_batched": batched,
         "blocks": blocks,
@@ -199,7 +233,13 @@ def load_ieee_cis(data_dir: str = "data/ieee_cis", max_rows: int | None = None, 
     }
 
 
-def load_home_credit(data_dir: str = "data/home_credit", max_rows: int | None = None, seed: int = 0):
+def load_home_credit(
+    data_dir: str = "data/home_credit",
+    max_rows: int | None = None,
+    seed: int = 0,
+    n_batches: int = 8,
+    per_batch: int | None = None,
+):
     """Home Credit application_train.csv, blocked by column family.
 
     The file has no event time. Rows are split in SK_ID_CURR order. gt is empty.
@@ -215,7 +255,7 @@ def load_home_credit(data_dir: str = "data/home_credit", max_rows: int | None = 
         frame = frame.sort_values("SK_ID_CURR")
     if max_rows is not None:
         frame = frame.iloc[:max_rows]
-    numeric = _numeric_frame(frame.drop(columns=["SK_ID_CURR"], errors="ignore"))
+    numeric = _numeric_frame(frame.drop(columns=["SK_ID_CURR", "TARGET"], errors="ignore"))
     groups = [
         ("external", lambda name: name.startswith("EXT_SOURCE")),
         ("amount", lambda name: name.startswith("AMT_")),
@@ -226,7 +266,7 @@ def load_home_credit(data_dir: str = "data/home_credit", max_rows: int | None = 
     ]
     blocks = _blocks_from_groups(numeric.columns, groups)
     values = numeric.to_numpy(dtype=np.float32)
-    batched = _batches_from_order(values, n_batches=8, min_rows=200)
+    batched = _batches_from_order(values, n_batches=n_batches, min_rows=200, per_batch=per_batch)
     return {
         "X_batched": batched,
         "blocks": blocks,
