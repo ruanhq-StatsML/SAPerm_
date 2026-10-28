@@ -2,7 +2,11 @@
 
 锚点是峰值日。后面七个 batch 是七次前向步骤。TabDDPM 只在峰值日上训练一次，来自 `yandex-research/tab-ddpm` 的 `GaussianMultinomialDiffusion`（commit `b476257`），然后对后面每一个 batch 逐块做条件生成，中间不重训。每一步只重写一个特征块，其余列在反向链的每一步被钉回该行的加噪过程。传给去噪网络的标签从峰值日的标签分布里抽。观测行在训练前被夹到 [-5, 5]，预测的干净样本也夹回这个盒子；不夹的话，这几份真实表上的反向链会离开训练范围。
 
-距离用逻辑回归 meta-learner。PO-risk 是当天模型与峰值日模型在当天样本上的平方差。预测损失是峰值日模型传到当天的 Brier；合成数据和 MovieLens 上还有峰值日模型的连续目标 MSE。把一块换成 TabDDPM 的条件样本之后，损失的变动记为 Δ。排名占比是 |Δ| 占全部块 |Δ| 之和。MMD 比的是这一块和峰值日同一块。HSIC 比的是这一块和当天标签。最后一天给 Δ 的 bootstrap 区间，MMD 和 HSIC 用 40 次置换，最小 p 值是 0.024。七步之间用符号翻转检验，看绝对变动最大的那一块是否大于其余每一块。
+预测损失是峰值日逻辑回归传到当天的 Brier；合成数据和 MovieLens 上还有峰值日 ridge 的连续目标 MSE。PO-risk 按 PermuCATE：在峰值日（W=0）与当前步（W=1）合并样本上拟合 outcome、倾向和 τ 模型，用双重稳健伪结果
+\[
+\phi(Z)=\frac{(Y-\mu_T)(T-\pi)}{\pi(1-\pi)}+(\mu_1-\mu_0),
+\]
+在评估矩阵上算 \(E[(\phi-\hat\tau(X))^2]\)。outcome 与 τ 用随机森林（150 棵树，深度 5），倾向用平衡逻辑回归，倾向裁剪到 [0.01, 0.99]。当前步评估时 \(W=1\)。把一块换成 TabDDPM 的条件样本之后，PO-risk 与 Brier 的变动记为 Δ。排名占比是 |Δ| 占全部块 |Δ| 之和。MMD 比的是这一块和峰值日同一块。HSIC 比的是这一块和当天标签。最后一天给 Δ 的 bootstrap 区间，MMD 和 HSIC 用 40 次置换，最小 p 值是 0.024。七步之间用符号翻转检验，看绝对变动最大的那一块是否大于其余每一块。
 
 ## 合成数据：两种方法指到同一块
 
@@ -47,5 +51,36 @@ PO-risk 的七步平均绝对变动最大的是 timedelta，但它和 card、add
 Brier 把 external 单独标出来。七天平均绝对变动是 0.023，对其余四块的符号翻转 p 值都是 0.008。最后一段的 Brier 区间是 [-0.044, -0.006]。PO-risk 分不开 external 和 amount（平均绝对变动 0.005 和 0.004，符号翻转 p = 0.253）。最后一段这两块的 PO 区间都不含 0，personal、region、other 的区间含 0。HSIC 的差都小于 0.001。
 
 沿申请号往前走，协变量没有分开。峰值日的违约模型靠外部评分，所以把这一块换成条件样本之后，传到后面各段的 Brier 会动。
+
+## 怎么分开 sampler bias 和归因
+
+这是两套量，不要混读。
+
+**生成器有没有偏**：看峰值日上的无条件 TabDDPM 样本对真实峰值的 MMD（`fidelity_mmd`），以及把某一块在峰值日上重画时，该块 imputation MMD（`anchor_impute_mmd`）。MMD 很小说明生成器没有整体漂走。
+
+**相对贡献是不是 sampler 造成的**：对 PO-risk 和 Brier 都做峰值日 floor。floor 是只在峰值日上、用 TabDDPM 重画该块时的 Δ；excess = 最后一步 Δ 减 floor。`pathway_tables.tex` 的 **sampler-floor 表**同时给出 PO 与 Brier 的 floor、day、excess、raw share、excess share 和 verdict。带上这张表后，可以对业务说清楚三件事：**生成器**（重画就会动）、**pathway**（后面 batch 比重画还多出来的部分）、**模型依赖**（excess 大但协变量 MMD 不显著）。这比单看 raw share 稳得多——例如 MovieLens 用户块 PO raw share 只有 0.52，扣掉 floor 后 excess share 是 0.89，说明最后一步的 PO 排序里一大块其实是峰值重画就能解释的假象。
+
+Verdict 规则（表内 Brier 列）：|excess| < |floor| → `sampler`；excess ≥ 2×|floor| 且 day MMD 的 p < 0.05 → `drift`；excess 够大但 MMD 不显著 → `model`；介于中间 → `thin`；两边都接近 0 → `none`。
+
+### sampler-floor 表（最后一步，PO + Brier）
+
+**合成**（fidelity MMD 0.000）：driver 的 PO excess share 0.971、Brier excess share 0.915，verdict `drift`——pathway 真漂移，不是生成器重画 alone。stable/noise 的 verdict 是 `sampler`。
+
+| 块 | PO floor | PO day | PO excess | PO raw → excess share | Brier verdict |
+| --- | --- | --- | --- | --- | --- |
+| driver | -1.18 | -531 | -530 | 0.966 → 0.971 | drift |
+| context | -1.46 | -15.7 | -14.3 | 0.029 → 0.026 | drift |
+| stable | -1.27 | -1.65 | -0.37 | 0.003 → 0.001 | sampler |
+| noise | -0.17 | -1.37 | -1.21 | 0.002 → 0.002 | sampler |
+
+**IEEE-CIS**（fidelity 0.002）：Brier 上 card `sampler`、timedelta `thin`；PO raw 最大是 counts（0.39），excess 后仍是 counts（0.43），card 的 PO excess share 从 0.19 升到 0.29——生成器重画对 card 的 PO 解释力比 Brier 更明显。
+
+**MovieLens**（fidelity 0.004）：用户 PO floor -14.96、day -3.46，excess +11.5，Brier verdict `sampler`——**Brier 上主要是生成器/pathway 混合，PO 上 raw 0.52 扣 floor 后 excess share 0.89**，业务要讲“用户块 PO 排序别只看 raw”。题材 Brier raw 0.59 → excess 0.27，verdict `sampler`。
+
+**Home Credit**（fidelity 0.003）：external Brier excess share 0.51 → 0.17、verdict `sampler`（后面 slice 的 Brier 变动没超过峰值重画 external）；region verdict `model`（Brier excess 0.29，MMD 不显著）。PO 上 external excess share 0.50，仍最大但已扣掉 floor。
+
+**两种归因是否一致**：Brier/MSE 看峰值日预测；PO-risk 看 DR 伪结果与 τ；MMD 看协变量。三者可以不一致——MovieLens 仍是 MMD 偏用户/小时、Brier 偏题材。
+
+**给业务的三句话**：① `fidelity_mmd` + anchor impute MMD 过不过关（生成器）；② sampler-floor 里 excess share 谁排前面（pathway 相对贡献）；③ verdict 是 sampler 还是 drift/model（生成器 vs 真漂移 vs 模型敏感）。
 
 表在 `latex/pathway_attribution.tex`，数字由 `results/pathway_tables.tex` 从 `results/pathway.json` 生成。四份一起重算用 `python -m pathway.run_pathway`。只补 MovieLens 和 Home Credit 用 `python -m pathway.run_pathway extra`。TabDDPM 仓库放在 `/tmp/tab-ddpm`。
