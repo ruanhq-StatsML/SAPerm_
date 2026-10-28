@@ -7,7 +7,16 @@ from sklearn.ensemble import RandomForestRegressor
 
 from experiments.quadrant_monitor.fp_loss import atom_gains, incremental_value
 from experiments.quadrant_monitor.models import make_rf_regressor, po_risk
-from experiments.quadrant_monitor.policy import SandboxSchedule, apply_rule, treat_if
+from experiments.quadrant_monitor.policy import (
+    EPS_LOOSE,
+    EPS_TIGHT,
+    LAMBDA,
+    SandboxSchedule,
+    apply_rule,
+    economic_hurdle,
+    implicit_tau_hurdle,
+    treat_if,
+)
 from experiments.quadrant_monitor.saffron import saffron
 
 
@@ -61,6 +70,19 @@ def test_shadow_replaces_only_the_named_tail():
     quantiles = {f"q75_{j}": 1.0 for j in range(6)}
     score = apply_rule(plugin, g, x, rule, quantiles, shadow)
     assert score.tolist() == [0.8, 0.0]
+
+
+def test_assigned_hurdle_is_not_the_bayes_cut():
+    # Loss cut on τ. The operating cut is assigned and sits above it at g = 1/2.
+    assert abs(economic_hurdle() - 1.0 / 6.0) < 1e-12
+    assert LAMBDA > economic_hurdle()
+    assert abs(float(implicit_tau_hurdle(np.array([0.5]), EPS_LOOSE)[0]) - LAMBDA) < 1e-12
+    # Overlap tail: the same 0.30 becomes 0.03 on the τ scale, under the Bayes cut.
+    loose = float(implicit_tau_hurdle(np.array([0.01]), EPS_LOOSE)[0])
+    tight = float(implicit_tau_hurdle(np.array([0.01]), EPS_TIGHT)[0])
+    assert abs(loose - 0.03) < 1e-12
+    assert abs(tight - 0.09) < 1e-12
+    assert tight < economic_hurdle()
 
 
 def test_atom_gains_match_the_incremental_value():

@@ -17,7 +17,7 @@ import pandas as pd
 from scipy.stats import norm
 
 from experiments.quadrant_monitor.dgp import FEATURES, SCENARIOS, SEGMENTS, draw_batch, realize
-from experiments.quadrant_monitor.fp_loss import fp_lines
+from experiments.quadrant_monitor.fp_loss import fp_lines, threshold_lines
 from experiments.quadrant_monitor.models import (
     OutcomePair,
     PropensityModel,
@@ -491,6 +491,7 @@ def write_board(summary: dict, path: Path, frame: pd.DataFrame | None = None) ->
     )
     if frame is not None:
         lines.extend(fp_lines(frame))
+    lines.extend(threshold_lines())
     lines.extend(
         [
             "## 和手稿代码的对应",

@@ -23,8 +23,12 @@ from experiments.quadrant_monitor.models import deployed_score
 
 COST = 1.0
 MARGIN = 6.0
-# Hurdle on the propensity-reweighted score. At g = 1/2 the score equals the
-# plugin CATE, and persuadables sit near 0.55, above this hurdle.
+# Assigned operating cut on the propensity-reweighted score s = τ̂ * (1/2) / g_ε.
+# It is not the Bayes cut. The loss treats when τ > cost/margin = 1/6.
+# At g = 1/2 the score equals the plugin, so this cut sits at 0.30 on the τ
+# scale, above 1/6, between the reference persuadable contrast (~0.62) and
+# the near-zero contrasts (~0.02). At g = ε the same 0.30 falls to 0.03 on
+# the τ scale. See implicit_tau_hurdle.
 LAMBDA = 0.30
 EPS_LOOSE = 0.05
 EPS_TIGHT = 0.15
@@ -184,6 +188,24 @@ def apply_rule(
         score = score.copy()
         score[x[:, j] >= cut] = updated[x[:, j] >= cut]
     return score
+
+
+def economic_hurdle(margin: float = MARGIN, cost: float = COST) -> float:
+    """Bayes cut on τ. Coupon when margin * τ(x) - cost > 0."""
+    if margin <= 0:
+        raise ValueError("margin must be positive")
+    return cost / margin
+
+
+def implicit_tau_hurdle(g: np.ndarray, eps: float = EPS_LOOSE, lam: float = LAMBDA) -> np.ndarray:
+    """Map the assigned score cut back onto the plugin-CATE scale.
+
+    The code coupons when ``τ̂ * (1/2) / g_ε > λ``, i.e. when
+    ``τ̂ > λ * g_ε / (1/2)``. At g = 1/2 this is λ. At the clip g = ε it is
+    ``λ * 2ε``.
+    """
+    g_clip = np.clip(np.asarray(g, dtype=float), eps, 1.0 - eps)
+    return lam * g_clip / 0.5
 
 
 def treat_if(score: np.ndarray, hurdle: float = LAMBDA) -> np.ndarray:
