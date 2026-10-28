@@ -22,11 +22,55 @@ from data.loaders import (
 )
 
 
-LOADERS = {
-    "movielens": load_movielens,
-    "synthetic": load_synthetic_panel,
-    "ieee_cis": load_ieee_cis,
-    "home_credit": load_home_credit,
+class DatasetForward:
+    """One dataset. Each later batch is one forward pass of one generative model."""
+
+    def __init__(self, loader):
+        self.loader = loader
+
+    def forward(
+        self,
+        model,
+        seed=0,
+        metric="mean_diff",
+        loader_args=None,
+        generator_args=None,
+        n_sweeps=1,
+        max_cardinality=32,
+    ):
+        data = self.loader(**(loader_args or {}))
+        batches = data["X_batched"]
+        blocks = data["blocks"]
+        gt = data["gt"]
+        col_names = data["col_names"]
+        n_features = data["F"]
+        gate = QualityGate().fit(batches[0])
+        generator = CounterfactualGenerator(
+            backend=model, seed=seed, **(generator_args or {}),
+        )
+        digested = digest(batches[0], col_names, max_cardinality=max_cardinality)
+        generator.fit(batches[0], col_names, discrete_cols=digested["discrete"])
+        yest_names = lag_column_names(col_names)
+        methods = list(generator.methods) if generator.methods else [None]
+        outputs = []
+        for t in range(1, len(batches)):
+            for method in methods:
+                counterfactual = forward_batch(
+                    generator, batches[t], batches[t - 1], blocks, col_names,
+                    yest_names, n_features, n_sweeps, method,
+                )
+                outputs.append(_score(
+                    t, method, batches[t], counterfactual, blocks, col_names,
+                    gt, metric, gate,
+                ))
+        return outputs
+
+
+DATASETS = {
+    "movielens": DatasetForward(load_movielens),
+    "synthetic": DatasetForward(load_synthetic_panel),
+    "ieee_cis": DatasetForward(load_ieee_cis),
+    "home_credit": DatasetForward(load_home_credit),
 }
 
 
@@ -37,80 +81,18 @@ def condition_columns(n_features: int, target_cols: list[int]) -> list[int]:
 
 
 def run(cfg):
-    loader = LOADERS[cfg["dataset"]]
-    data = loader(**cfg.get("loader_args", {}))
-    batches = data["X_batched"]
-    blocks = data["blocks"]
-    gt = data["gt"]
-    col_names = data["col_names"]
-    n_features = data["F"]
-
-    gate = QualityGate().fit(batches[0])
-    digested = digest(
-        batches[0], col_names, max_cardinality=int(cfg.get("max_cardinality", 32)),
-    )
-    generator = CounterfactualGenerator(
-        backend=cfg["generator"],
+    return DATASETS[cfg["dataset"]].forward(
+        cfg["generator"],
         seed=cfg["seed"],
-        **cfg.get("generator_args", {}),
-    ).fit(batches[0], col_names, discrete_cols=digested["discrete"])
-    n_sweeps = int(cfg.get("n_sweeps", 1))
-    methods = list(generator.methods) if generator.methods else [None]
-    yest_names = lag_column_names(col_names)
-
-    outputs = []
-    for t in range(1, len(batches)):
-        yesterday = batches[t - 1]
-        current = batches[t]
-        for method in methods:
-            counterfactual = _counterfactual(
-                generator, current, yesterday, blocks, col_names,
-                yest_names, n_features, n_sweeps, method,
-            )
-            is_valid, diag = gate.check(counterfactual)
-            row = {"t": t}
-            if method is not None:
-                row["method"] = method
-            if int(is_valid.sum()) < 20:
-                outputs.append({**row, "skip": "too few valid", **diag})
-                continue
-            block_ranked, block_prop = rank_blocks(
-                current[is_valid], counterfactual[is_valid], blocks, metric=cfg["metric"],
-            )
-            feature_ranked = rank_features(
-                current[is_valid], counterfactual[is_valid], col_names,
-            )
-            feature_total = sum(feature_ranked.values()) + 1e-8
-            feature_contribution = {
-                name: value / feature_total
-                for name, value in list(feature_ranked.items())[:10]
-            }
-            gt_blocks = gt.get(t, set())
-            top_block = next(iter(block_ranked))
-            hit = top_block in gt_blocks if gt_blocks else None
-            contribution = {k: round(float(v), 6) for k, v in block_prop.items()}
-            row.update({
-                "metric": cfg["metric"],
-                "block_ranked": {k: round(float(v), 6) for k, v in block_ranked.items()},
-                "block_prop": contribution,
-                "contribution": contribution,
-                "feature_ranked": {
-                    k: round(float(v), 6) for k, v in list(feature_ranked.items())[:10]
-                },
-                "feature_contribution": {
-                    k: round(float(v), 6) for k, v in feature_contribution.items()
-                },
-                "top": top_block,
-                "gt_blocks": sorted(gt_blocks),
-                "top_hit": hit,
-                "n_valid": int(is_valid.sum()),
-                "valid_ratio": round(diag["valid_ratio"], 3),
-            })
-            outputs.append(row)
-    return outputs
+        metric=cfg["metric"],
+        loader_args=cfg.get("loader_args"),
+        generator_args=cfg.get("generator_args"),
+        n_sweeps=int(cfg.get("n_sweeps", 1)),
+        max_cardinality=int(cfg.get("max_cardinality", 32)),
+    )
 
 
-def _counterfactual(
+def forward_batch(
     generator, current, yesterday, blocks, col_names, yest_names,
     n_features, n_sweeps, method,
 ):
@@ -128,6 +110,44 @@ def _counterfactual(
         )
 
     return block_update(draw, current, yesterday, blocks, n_sweeps)
+
+
+def _score(t, method, current, counterfactual, blocks, col_names, gt, metric, gate):
+    is_valid, diag = gate.check(counterfactual)
+    row = {"t": t}
+    if method is not None:
+        row["method"] = method
+    if int(is_valid.sum()) < 20:
+        return {**row, "skip": "too few valid", **diag}
+    block_ranked, contribution = rank_blocks(
+        current[is_valid], counterfactual[is_valid], blocks, metric=metric,
+    )
+    feature_ranked = rank_features(
+        current[is_valid], counterfactual[is_valid], col_names,
+    )
+    feature_total = sum(feature_ranked.values()) + 1e-8
+    gt_blocks = gt.get(t, set())
+    top = next(iter(block_ranked))
+    contribution = {k: round(float(v), 6) for k, v in contribution.items()}
+    row.update({
+        "metric": metric,
+        "block_ranked": {k: round(float(v), 6) for k, v in block_ranked.items()},
+        "block_prop": contribution,
+        "contribution": contribution,
+        "feature_ranked": {
+            k: round(float(v), 6) for k, v in list(feature_ranked.items())[:10]
+        },
+        "feature_contribution": {
+            name: value / feature_total
+            for name, value in list(feature_ranked.items())[:10]
+        },
+        "top": top,
+        "gt_blocks": sorted(gt_blocks),
+        "top_hit": top in gt_blocks if gt_blocks else None,
+        "n_valid": int(is_valid.sum()),
+        "valid_ratio": round(diag["valid_ratio"], 3),
+    })
+    return row
 
 
 def print_summary(results, blocks):

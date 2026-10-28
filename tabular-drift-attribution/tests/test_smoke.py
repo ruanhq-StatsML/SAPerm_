@@ -1,4 +1,15 @@
-from run import condition_columns, run
+from core.generator import GENERATIVE_MODELS
+from run import DATASETS, condition_columns, run
+
+
+def test_forward_looks_up_the_model_dict():
+    assert set(GENERATIVE_MODELS) == {"stub", "ctgan", "tabforge", "diffltm"}
+    results = DATASETS["synthetic"].forward(
+        "stub", seed=0, loader_args={"N": 200, "T": 4, "F": 100, "seed": 0},
+    )
+    last = results[-1]
+    assert last["top"] == next(iter(last["block_ranked"])) == "block_1"
+    assert last["contribution"] is last["block_prop"]
 
 
 def test_condition_is_the_complement():

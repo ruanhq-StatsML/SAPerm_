@@ -8,6 +8,29 @@ from core.engines.base import BaseEngine
 from core.iterative import conditional_indices
 
 
+def _build_ctgan(seed=0, **kwargs):
+    from core.engines.ctgan_engine import CTGANEngine
+    return CTGANEngine(seed=seed, **kwargs)
+
+
+def _build_tabforge(seed=0, **kwargs):
+    from core.engines.tabforge_engine import TabFORGEEngine
+    return TabFORGEEngine(seed=seed, **kwargs)
+
+
+def _build_diffltm(seed=0, **kwargs):
+    from core.engines.diffltm_engine import DiffLTMEngine
+    return DiffLTMEngine(seed=seed, **kwargs)
+
+
+GENERATIVE_MODELS = {
+    "stub": lambda seed=0, **kwargs: _StubEngine(seed=seed),
+    "ctgan": _build_ctgan,
+    "tabforge": _build_tabforge,
+    "diffltm": _build_diffltm,
+}
+
+
 class CounterfactualGenerator:
     def __init__(self, backend="stub", seed=0, **kwargs):
         self.backend = backend
@@ -16,19 +39,11 @@ class CounterfactualGenerator:
         self._kwargs = kwargs
 
     def fit(self, X_ref, col_names, discrete_cols=None):
-        if self.backend == "ctgan":
-            from core.engines.ctgan_engine import CTGANEngine
-            self._engine = CTGANEngine(seed=self.seed, **self._kwargs)
-        elif self.backend == "tabforge":
-            from core.engines.tabforge_engine import TabFORGEEngine
-            self._engine = TabFORGEEngine(seed=self.seed, **self._kwargs)
-        elif self.backend == "diffltm":
-            from core.engines.diffltm_engine import DiffLTMEngine
-            self._engine = DiffLTMEngine(seed=self.seed, **self._kwargs)
-        elif self.backend == "stub":
-            self._engine = _StubEngine(seed=self.seed)
-        else:
-            raise ValueError(self.backend)
+        try:
+            build = GENERATIVE_MODELS[self.backend]
+        except KeyError:
+            raise ValueError(self.backend) from None
+        self._engine = build(seed=self.seed, **self._kwargs)
         self._engine.fit(X_ref, col_names, discrete_cols)
         return self
 

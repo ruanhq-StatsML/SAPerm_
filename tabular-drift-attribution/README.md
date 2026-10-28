@@ -7,7 +7,10 @@ Mini-batch 级表格漂移归因。对每一个特征块做一次迭代更新：
 ```bash
 pip install -r requirements.txt
 python run.py --config configs/synthetic.yaml
+python characterize.py --dataset synthetic --model stub
 ```
+
+`DATASETS[name].forward(model)` 对这个数据集逐个 batch 做一次 forward。`model` 从 `GENERATIVE_MODELS` 里取，取到之后再做 data digestion，把离散列交给这个模型。
 
 合成面板不需要外部数据。从第 3 个 batch 起，`block_1` 被平移 1.5。`stub` 生成器用参考批次里、在其余列上最近的行，捐出目标块。
 
