@@ -3,8 +3,10 @@
 import json
 
 import numpy as np
+import pandas as pd
 
 from core.conditional_schema import batch_schemas, dumps, panel_columns
+from core.engines.ctgan_engine import CTGANEngine
 from core.engines.diffltm_engine import DiffLTMEngine
 from core.generator import CounterfactualGenerator
 from core.iterative import LAG_PREFIX, block_update, lag_column_names
@@ -168,3 +170,31 @@ def test_sampler_command_is_not_the_batch_cfg_cli():
     assert "evaluate.py" not in text
     assert "method=cfg" not in text
     assert "smc" in cmd
+
+
+def test_ctgan_sample_uses_one_discrete_column():
+    engine = CTGANEngine(seed=3)
+    engine.discrete_cols = ["flag", "amount_bin"]
+    engine.bin_edges = {"amount": np.array([0.0, 1.0, 2.0])}
+    seen = {}
+
+    class _Model:
+        def set_random_state(self, seed):
+            seen["seed"] = seed
+
+        def sample(self, n, condition_column=None, condition_value=None):
+            seen["call"] = (n, condition_column, condition_value)
+            return pd.DataFrame({"amount": np.zeros(n)})
+
+    engine.model = _Model()
+    out = engine.generate(
+        np.array([[0.2], [1.5]], dtype=np.float32),
+        2,
+        ["amount"],
+        ["amount"],
+        X_yesterday=np.array([[0.0], [0.0]], dtype=np.float32),
+        col_names_yesterday=["flag"],
+    )
+    assert seen["seed"] == 3
+    assert seen["call"] == (2, "flag", 0.0)
+    assert out.shape == (2, 1)

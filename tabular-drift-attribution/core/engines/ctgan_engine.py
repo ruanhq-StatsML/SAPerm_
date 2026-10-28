@@ -1,9 +1,8 @@
-"""CTGAN backend. Discrete conditions are a single batch-level value.
+"""CTGAN backend.
 
-CTGAN samples from one condition dictionary, not a different condition per
-row. Continuous conditioning columns are reduced to the batch median bin.
-The dictionary is today's other features and yesterday's full features.
-Yesterday on the fitted table is the previous reference row.
+``CTGAN.sample(n, condition_column, condition_value)`` conditions on one
+discrete column. A continuous condition uses its training bin as that column.
+The returned frame is already inverse-transformed.
 """
 
 from __future__ import annotations
@@ -47,6 +46,7 @@ class CTGANEngine(BaseEngine):
             self.bin_edges[c] = np.quantile(df[c], np.linspace(0, 1, n_edges))
             self.discrete_cols.append(bin_col)
         self.model = CTGAN(epochs=self.epochs, cuda=False)
+        self.model.set_random_state(self.seed)
         self.model.fit(df, self.discrete_cols)
         self.col_names = list(col_names)
         return self
@@ -62,33 +62,32 @@ class CTGANEngine(BaseEngine):
         method=None,
     ):
         del method
-        df_cond = pd.DataFrame(X_cond, columns=col_names_cond)
+        frame = pd.DataFrame(X_cond, columns=col_names_cond)
         if X_yesterday is not None:
-            df_cond = pd.concat(
-                [df_cond, pd.DataFrame(X_yesterday, columns=col_names_yesterday)],
+            frame = pd.concat(
+                [frame, pd.DataFrame(X_yesterday, columns=col_names_yesterday)],
                 axis=1,
             )
-        conditions = {}
-        for c in list(col_names_cond) + list(col_names_yesterday or []):
-            if c in self.bin_edges:
-                med = float(df_cond[c].median())
-                bin_id = int(np.digitize(med, self.bin_edges[c][1:-1]))
-                conditions[f"{c}_bin"] = bin_id
-            elif c in self.discrete_cols and c in df_cond.columns:
-                conditions[c] = df_cond[c].mode().iloc[0]
-        gen_df = self.model.sample(n, conditions if conditions else None)
-        out = np.zeros((n, len(col_names_target)), dtype=np.float32)
-        rng = np.random.RandomState(self.seed)
-        for i, c in enumerate(col_names_target):
-            if c in self.bin_edges and f"{c}_bin" in gen_df.columns:
-                edges = self.bin_edges[c]
-                bins = gen_df[f"{c}_bin"].to_numpy()
-                bins = np.clip(bins, 0, len(edges) - 2)
-                lo = edges[bins]
-                hi = edges[bins + 1]
-                out[:, i] = rng.uniform(lo, np.maximum(hi, lo + 1e-6))
-            elif c in gen_df.columns:
-                out[:, i] = gen_df[c].to_numpy()
-            else:
-                raise KeyError(f"CTGAN sample has no column {c}")
-        return out.astype(np.float32)
+        column, value = None, None
+        names = list(col_names_cond) + list(col_names_yesterday or [])
+        for c in names:
+            if c in self.discrete_cols and c not in self.bin_edges and c in frame.columns:
+                column, value = c, frame[c].mode().iloc[0]
+                break
+        if column is None:
+            for c in names:
+                if c in self.bin_edges:
+                    med = float(frame[c].median())
+                    column, value = f"{c}_bin", int(np.digitize(med, self.bin_edges[c][1:-1]))
+                    break
+        self.model.set_random_state(self.seed)
+        if column is None:
+            generated = self.model.sample(n)
+        else:
+            generated = self.model.sample(n, condition_column=column, condition_value=value)
+        if not isinstance(generated, pd.DataFrame):
+            generated = pd.DataFrame(generated)
+        missing = [c for c in col_names_target if c not in generated.columns]
+        if missing:
+            raise KeyError(f"CTGAN sample has no column {missing[0]}")
+        return generated[list(col_names_target)].to_numpy(dtype=np.float32)
