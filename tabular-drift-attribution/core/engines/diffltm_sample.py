@@ -1,8 +1,9 @@
-"""Draw one DiffLTM row per predicate.
+"""Sample one DiffLTM row from a conditional-sampling schema.
 
-The predicate is built by DiffLTMEngine: today's other features and yesterday's
-full features. `method` is smc, harpoon, rejection, or cfg. One condition is
-not reused across rows.
+Each request row is a ``Condition.dumps`` string: bounds, equality, ranges,
+weights. ``free`` is the target block and must stay out of those fields.
+cfg encodes the schema with ``channels()``. SMC, Harpoon, and rejection use
+the same ``Condition`` as their predicate.
 """
 
 from __future__ import annotations
@@ -15,21 +16,43 @@ from pathlib import Path
 import pandas as pd
 
 
-def _condition(spec):
+def _load(text):
     from diffltm.generation.conditioning import Condition
 
-    equality = spec.get("equality") or {}
-    ranges = {
-        name: (float(lo), float(hi))
-        for name, (lo, hi) in (spec.get("ranges") or {}).items()
-    }
-    return Condition(equality=equality, ranges=ranges)
+    condition = Condition.loads(text)
+    if condition.predicate is not None:
+        raise ValueError("this update does not use a numerical predicate")
+    if condition.weights or condition.bounds is not None:
+        raise ValueError("this update does not set a linear constraint")
+    return condition
+
+
+def _check(condition, free, columns, schema):
+    used = set(condition.equality) | set(condition.ranges) | set(condition.weights)
+    overlap = used & set(free)
+    if overlap:
+        raise ValueError(f"free columns are conditioned: {sorted(overlap)}")
+    missing = [name for name in list(free) + list(used) if name not in schema.columns]
+    if missing:
+        raise ValueError(f"checkpoint schema has no column {missing[0]}")
+    if columns is not None:
+        unknown = [name for name in columns["columns"] if name not in schema.columns]
+        if unknown:
+            raise ValueError(f"checkpoint schema has no column {unknown[0]}")
+        bad_ranges = [name for name in condition.ranges if name not in schema.numerical]
+        if bad_ranges:
+            raise ValueError(f"range column {bad_ranges[0]} is not numerical")
+    condition.validate(schema)
 
 
 def _draw(model, method, condition, seed, guidance, pin, harpoon_eta):
     if method == "cfg":
+        from diffltm.generation.conditioning import channels
         from diffltm.generation.sampling import euler
 
+        encoded, mask = channels(model, condition, 1)
+        if encoded.shape[-1] != model.condition_dim or mask.shape != encoded.shape:
+            raise RuntimeError("conditional channel schema does not match the checkpoint")
         frame, _ = euler(model, 1, seed, condition, guidance, pin)
     elif method == "smc":
         from diffltm.generation.smc import sample
@@ -75,11 +98,12 @@ def main():
 
     model, _checkpoint = load_model(Path(args.run_dir) / "selected.pt", args.device)
     payload = json.loads(Path(args.request).read_text())
-    target = list(payload["target"])
+    free = list(payload["free"])
+    columns = payload.get("columns")
     frames = []
-    for index, spec in enumerate(payload["rows"]):
-        condition = _condition(spec)
-        condition.validate(model.preprocessor.schema)
+    for index, text in enumerate(payload["conditions"]):
+        condition = _load(text)
+        _check(condition, free, columns, model.preprocessor.schema)
         row_seed = args.seed + index * 1_000_003
         frame = _draw(
             model, args.method, condition, row_seed, args.guidance, args.pin, args.harpoon_eta,
@@ -88,10 +112,10 @@ def main():
             raise RuntimeError(f"{args.method} returned {len(frame)} rows for one condition")
         frames.append(frame.iloc[[0]])
     out = pd.concat(frames, ignore_index=True)
-    missing = [name for name in target if name not in out.columns]
+    missing = [name for name in free if name not in out.columns]
     if missing:
         raise KeyError(f"sample is missing {missing[0]}")
-    out[target].to_csv(args.out, index=False)
+    out[free].to_csv(args.out, index=False)
 
 
 if __name__ == "__main__":

@@ -1,14 +1,14 @@
 """DiffLTM backend for one iterative conditional update.
 
-Each row is its own predicate. Continuous columns are a window around the
-observed value. Discrete columns are equalities. The predicate is the other
-features of today plus every feature of yesterday. SMC, Harpoon and rejection
-all receive that same predicate. Classifier-free guidance is available as
-`method="cfg"` and is not the batch quartile used previously.
+Each row is a DiffLTM conditional-sampling schema: ``bounds``, ``equality``,
+``ranges``, and ``weights``. The target block is free. Today's other features
+and yesterday's full features fill the equality and range fields. SMC, Harpoon,
+rejection, and cfg all load that same schema. cfg encodes it with
+``channels()``. The other three read it as the sampling predicate.
 
-The checkpoint has to know both sets of names. Lag columns are `yest__`
-plus the current column name. Train with `experiment=conditional` when using
-`cfg`; SMC, Harpoon and rejection use an unconditional checkpoint.
+Lag columns are ``yest__`` plus the current column name. cfg needs a
+checkpoint trained with ``experiment=conditional``. SMC, Harpoon, and
+rejection use an unconditional checkpoint that still lists those columns.
 
     uv run python train.py experiment=conditional dataset=xxx \\
         output_dir=./outputs/xxx training.epochs=50
@@ -23,66 +23,12 @@ from pathlib import Path
 
 import numpy as np
 
-from ..iterative import LAG_PREFIX
+from ..conditional_schema import batch_schemas, dumps, panel_columns
 from .base import BaseEngine
 
 
 SAMPLER = Path(__file__).with_name("diffltm_sample.py")
 METHODS = ("smc", "harpoon", "rejection", "cfg")
-
-
-def _jsonable(value):
-    if isinstance(value, (np.floating, float)):
-        return float(value)
-    if isinstance(value, (np.integer, int)) and not isinstance(value, bool):
-        return int(value)
-    if isinstance(value, (str, bool)) or value is None:
-        return value
-    return str(value)
-
-
-def _base_name(name: str) -> str:
-    if name.startswith(LAG_PREFIX):
-        return name[len(LAG_PREFIX):]
-    return name
-
-
-def row_condition(values_today, names_today, values_yest, names_yest, discrete, scales, range_scale):
-    """One row predicate. Ranges are centered on the observed number."""
-    discrete = set(discrete or [])
-    scales = scales or {}
-    equality = {}
-    ranges = {}
-
-    def put(name, value):
-        base = _base_name(name)
-        if name in discrete or base in discrete:
-            equality[name] = _jsonable(value)
-            return
-        width = max(float(range_scale) * float(scales.get(base, 1.0)), 1e-6)
-        center = float(value)
-        ranges[name] = [center - width, center + width]
-
-    for name, value in zip(names_today, values_today):
-        put(name, value)
-    for name, value in zip(names_yest, values_yest):
-        put(name, value)
-    if not equality and not ranges:
-        raise ValueError("a DiffLTM update needs today's other features or yesterday")
-    return {"equality": equality, "ranges": ranges}
-
-
-def batch_conditions(X_cond, names_cond, X_yesterday, names_yest, discrete, scales, range_scale):
-    X_cond = np.asarray(X_cond)
-    X_yesterday = np.asarray(X_yesterday)
-    if len(X_cond) != len(X_yesterday):
-        raise ValueError("today and yesterday must have the same number of rows")
-    return [
-        row_condition(
-            X_cond[i], names_cond, X_yesterday[i], names_yest, discrete, scales, range_scale,
-        )
-        for i in range(len(X_cond))
-    ]
 
 
 class DiffLTMEngine(BaseEngine):
@@ -131,6 +77,7 @@ class DiffLTMEngine(BaseEngine):
             name: float(X_ref[:, i].std()) if len(X_ref) else 1.0
             for i, name in enumerate(self.col_names)
         }
+        self.columns = panel_columns(self.col_names, self._discrete_cols)
         return self
 
     def generate(
@@ -154,7 +101,7 @@ class DiffLTMEngine(BaseEngine):
         method = method or self.method
         if method not in METHODS:
             raise ValueError(f"unknown DiffLTM method {method}")
-        specs = batch_conditions(
+        schemas = batch_schemas(
             X_cond,
             col_names_cond,
             X_yesterday,
@@ -162,11 +109,14 @@ class DiffLTMEngine(BaseEngine):
             self._discrete_cols,
             self.scales,
             self.range_scale,
+            col_names_target,
         )
         if self.sample_fn is not None:
-            drawn = np.asarray(self.sample_fn(method, specs, list(col_names_target)), dtype=np.float32)
+            drawn = np.asarray(
+                self.sample_fn(method, schemas, list(col_names_target)), dtype=np.float32,
+            )
         else:
-            drawn = self._sample(method, specs, list(col_names_target))
+            drawn = self._sample(method, schemas, list(col_names_target))
         if drawn.shape != (n, len(col_names_target)):
             raise ValueError(f"sampler returned {drawn.shape}, expected {(n, len(col_names_target))}")
         return drawn
@@ -186,7 +136,7 @@ class DiffLTMEngine(BaseEngine):
             "--pin" if self.pin else "--no-pin",
         ]
 
-    def _sample(self, method, specs, col_names_target):
+    def _sample(self, method, schemas, col_names_target):
         if not self.repo_path or not self.run_dir:
             raise RuntimeError("DiffLTM needs repo_path and run_dir pointing at a selected.pt checkpoint")
         with tempfile.TemporaryDirectory(prefix="diffltm-update-") as tmp:
@@ -194,8 +144,9 @@ class DiffLTMEngine(BaseEngine):
             request = root / "request.json"
             out = root / "samples.csv"
             request.write_text(json.dumps({
-                "rows": specs,
-                "target": col_names_target,
+                "conditions": [dumps(row["condition"]) for row in schemas],
+                "free": list(col_names_target),
+                "columns": self.columns,
             }))
             completed = subprocess.run(
                 self.command(method, request, out),

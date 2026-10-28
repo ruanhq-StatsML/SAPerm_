@@ -69,9 +69,9 @@ c_t(b) = \frac{d(X_{t,b}, Z_{t,b})}{\sum_{b'} d(X_{t,b'}, Z_{t,b'})}.
 | `stub` | 今天其余列 + 昨天全量 | 参考行上的最近邻，不训练模型 |
 | `ctgan` | 今天其余列 + 昨天全量的批次中位箱 | 离散条件，连续列先分箱 |
 | `tabforge` | 同上，用来重排名次 | 无条件样本按参考捐赠行的名次重排 |
-| `diffltm` | 逐行等式和区间 | SMC、Harpoon、rejection 各走一遍；`cfg` 另选 |
+| `diffltm` | conditional sampling schema | 每行一份 `bounds` / `equality` / `ranges` / `weights`；目标块是 free |
 
-`generator_args` 原样传给对应引擎。DiffLTM 需要 `repo_path` 和 `run_dir`。检查点的列名要包含当天特征，以及 `yest__` 加原列名的滞后列。默认三种推断方法各生成一条反事实；只跑一种时设置 `method`。
+`generator_args` 原样传给对应引擎。DiffLTM 需要 `repo_path` 和 `run_dir`。检查点的列是当天特征加上 `yest__` 滞后列，数值列在前，类别列在后。类别条件用 DiffLTM 的字符串编码，数值条件是以观测值为中心的区间。这份 schema 不带线性约束。SMC、Harpoon、rejection 各生成一条；`cfg` 用 `channels()` 编码同一份 schema，需要 `method: cfg`。
 
 ## 距离
 

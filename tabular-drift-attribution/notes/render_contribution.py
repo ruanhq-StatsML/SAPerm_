@@ -85,7 +85,9 @@ def main():
     block(
         pdf,
         "stub 不训练模型。对当前行，用今天其余列和昨天全量特征找参考批次里最近的一行，把那一行的目标块捐出来。"
-        "CTGAN、TabFORGE、DiffLTM 走同一个迭代更新。DiffLTM 对每一行单独给条件，并用 SMC、Harpoon、rejection 各生成一次。",
+        "CTGAN、TabFORGE、DiffLTM 走同一个迭代更新。DiffLTM 的每一行是 conditional sampling schema："
+        "bounds、equality、ranges、weights。目标块是 free，今天其余列和昨天全量写进 equality 或 ranges。"
+        "SMC、Harpoon、rejection 读同一份 schema。",
         11,
         6,
     )

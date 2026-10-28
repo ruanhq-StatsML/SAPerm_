@@ -1,8 +1,11 @@
 """The block update conditions on today's other features and yesterday."""
 
+import json
+
 import numpy as np
 
-from core.engines.diffltm_engine import DiffLTMEngine, batch_conditions
+from core.conditional_schema import batch_schemas, dumps, panel_columns
+from core.engines.diffltm_engine import DiffLTMEngine
 from core.generator import CounterfactualGenerator
 from core.iterative import LAG_PREFIX, block_update, lag_column_names
 
@@ -69,8 +72,8 @@ def test_stub_uses_yesterday_when_today_does_not_separate_rows():
     assert donated[1, 0] == 5.0
 
 
-def test_diffltm_condition_is_per_row_and_includes_yesterday():
-    specs = batch_conditions(
+def test_diffltm_schema_is_per_row_and_includes_yesterday():
+    rows = batch_schemas(
         X_cond=np.array([[1.0], [5.0]]),
         names_cond=["a"],
         X_yesterday=np.array([[0.0, 1.0], [2.0, 3.0]]),
@@ -78,14 +81,26 @@ def test_diffltm_condition_is_per_row_and_includes_yesterday():
         discrete={"b"},
         scales={"a": 2.0, "b": 4.0},
         range_scale=0.05,
+        free=["b_target"],
     )
-    assert specs[0]["ranges"]["a"][0] < 1.0 < specs[0]["ranges"]["a"][1]
-    assert specs[1]["ranges"]["a"][0] < 5.0 < specs[1]["ranges"]["a"][1]
-    assert specs[0]["ranges"]["a"] != specs[1]["ranges"]["a"]
-    assert f"{LAG_PREFIX}a" in specs[0]["ranges"]
-    assert specs[0]["equality"][f"{LAG_PREFIX}b"] == 1.0
-    assert specs[1]["equality"][f"{LAG_PREFIX}b"] == 3.0
-    assert "equality" in specs[0] and "ranges" in specs[0]
+    first, second = rows[0]["condition"], rows[1]["condition"]
+    assert list(first) == ["bounds", "equality", "ranges", "weights"]
+    assert first["bounds"] is None and first["weights"] == {}
+    assert first["ranges"]["a"][0] < 1.0 < first["ranges"]["a"][1]
+    assert second["ranges"]["a"][0] < 5.0 < second["ranges"]["a"][1]
+    assert first["ranges"]["a"] != second["ranges"]["a"]
+    assert f"{LAG_PREFIX}a" in first["ranges"]
+    assert first["equality"][f"{LAG_PREFIX}b"] == "1"
+    assert second["equality"][f"{LAG_PREFIX}b"] == "3"
+    assert rows[0]["free"] == ["b_target"]
+    text = dumps(first)
+    loaded = json.loads(text)
+    assert list(loaded) == ["bounds", "equality", "ranges", "weights"]
+    assert "predicate" not in loaded
+    columns = panel_columns(["a", "b"], {"b"})
+    assert columns["numerical"] == ["a", f"{LAG_PREFIX}a"]
+    assert columns["categorical"] == ["b", f"{LAG_PREFIX}b"]
+    assert columns["columns"] == columns["numerical"] + columns["categorical"]
 
 
 def test_other_methods_share_one_iterative_procedure():
@@ -125,18 +140,24 @@ def test_other_methods_share_one_iterative_procedure():
     assert smc_first[1] == harpoon_first[1] == rejection_first[1]
 
     def center(spec, name):
-        lo, hi = spec["ranges"][name]
+        lo, hi = spec["condition"]["ranges"][name]
         return 0.5 * (lo + hi)
 
     first = smc_first[1][0]
+    assert first["free"] == ["a"]
+    assert first["condition"]["bounds"] is None
+    assert first["condition"]["weights"] == {}
     assert abs(center(first, "b") - 2.0) < 1e-6
     assert abs(center(first, f"{LAG_PREFIX}a") - 8.0) < 1e-6
     assert abs(center(first, f"{LAG_PREFIX}b") - 7.0) < 1e-6
-    assert "a" not in first["ranges"]
+    assert "a" not in first["condition"]["ranges"]
+    assert "a" not in first["condition"]["equality"]
     second = calls[1][1][0]
+    assert second["free"] == ["b"]
     assert abs(center(second, "a") - 0.0) < 1e-6
     assert abs(center(second, f"{LAG_PREFIX}a") - 8.0) < 1e-6
     assert abs(center(smc_first[1][1], "b") - 4.0) < 1e-6
+    assert list(json.loads(dumps(first["condition"]))) == ["bounds", "equality", "ranges", "weights"]
 
 
 def test_sampler_command_is_not_the_batch_cfg_cli():
