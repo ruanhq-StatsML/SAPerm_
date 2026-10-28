@@ -87,4 +87,4 @@ c_t(b) = \frac{d(X_{t,b}, X^{cf}_{t,b})}{\sum_{b'} d(X_{t,b'}, X^{cf}_{t,b'})}.
 
 新生成器：继承 `BaseEngine`，实现 `fit` / `generate`。`generate` 的 `X_cond` 是目标块以外的列。
 
-MovieLens、IEEE-CIS、Home Credit 的配置在 `configs/`。原始文件不在仓库里。MovieLens-1M 放到 `data/movielens/ml-1m/`。IEEE-CIS 的 `train_transaction.csv` 放到 `data/ieee_cis/`。Home Credit 的 `application_train.csv` 放到 `data/home_credit/`。这三份数据没有块级真值。全时段的块贡献和种植平移的命中率在 `results/panel_effect.md`，用 `python notes/panel_effect.py` 重算。
+MovieLens、IEEE-CIS、Home Credit 的配置在 `configs/`。原始文件不在仓库里。MovieLens-1M 放到 `data/movielens/ml-1m/`。IEEE-CIS 的 `train_transaction.csv` 放到 `data/ieee_cis/`。Home Credit 的 `application_train.csv` 放到 `data/home_credit/`。这三份数据没有块级真值。全时段的块贡献和种植平移的命中率在 `results/panel_effect.md`，用 `python notes/panel_effect.py` 重算。从峰值日向前七步的 TabDDPM pathway 在 `results/pathway_attribution.md`，表在 `latex/pathway_attribution.tex`。

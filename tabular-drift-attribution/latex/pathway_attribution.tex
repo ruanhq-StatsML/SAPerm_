@@ -1,0 +1,84 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,booktabs,graphicx,geometry}
+\geometry{margin=0.85in}
+\setlength{\tabcolsep}{4pt}
+
+\title{Pathway attribution with TabDDPM and a meta-learner}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Pathway}
+
+The comparison is not one batch against another. The anchor is a peak day.
+The next seven days are seven forward steps. On each step a TabDDPM fit only
+on the peak imputes one feature block, conditional on the other columns of
+that day's row. The diffusion class is
+\texttt{GaussianMultinomialDiffusion} from \texttt{yandex-research/tab-ddpm}
+(commit \texttt{b476257}). Numerical columns use the Gaussian head. Known
+columns are reset to the anchor noising process at every reverse step, the
+RePaint conditioning step. The label passed to the denoiser is drawn from the
+peak-day label distribution.
+
+The distance estimator is a logistic meta-learner. PO-risk on day \(t\) is
+\[
+\mathbb{E}\bigl[(\mu_t(X_t)-\mu_0(X_t))^2\bigr],
+\]
+with \(\mu_0\) fit on the peak and \(\mu_t\) fit on day \(t\). Predictive
+loss is the Brier score of \(\mu_0\) transferred onto day \(t\). On the
+synthetic panel a ridge fit on the peak also reports the latent MSE.
+Replacing block \(b\) by its imputed draw changes each loss by \(\Delta_b\).
+The rank share is \(|\Delta_b|/\sum_{b'}|\Delta_{b'}|\). MMD compares the
+block on day \(t\) with the same block on the peak. HSIC compares the block
+with the day's label.
+
+The last day reports a bootstrap percentile interval for each \(\Delta\) and
+a 40-permutation \(p\)-value for MMD and HSIC. Across the seven steps, a
+sign-flip test asks whether the block with the largest mean absolute
+movement exceeds each other block.
+
+\section{Synthetic peak}
+
+Day 0 is standard normal, with four blocks of four columns: \texttt{stable},
+\texttt{context}, \texttt{driver}, and \texttt{noise}. The outcome uses
+\texttt{stable} and \texttt{driver}. Over the next seven days the
+\texttt{driver} mean moves by up to \(1.5\) and its outcome coefficient
+rises, while \texttt{context} receives a smaller location shift and no
+outcome role. The unconditional TabDDPM sample has MMD \(0.0002\) against
+the peak day.
+
+PO-risk rises from \(0.005\) to \(0.050\) and latent MSE from \(0.337\) to
+\(4.496\). By day 7 the \texttt{driver} share is \(0.910\) of the PO-risk
+movement, \(0.953\) of the Brier movement, \(0.940\) of the MSE movement,
+and \(0.834\) of the MMD. Its PO interval is \([-0.118,-0.059]\) and its
+Brier interval is \([-0.140,-0.124]\); both exclude zero. The sign-flip
+\(p\)-values of \texttt{driver} against the other three blocks are at most
+\(0.028\) for PO-risk, Brier, and MSE. Context is the only other block with
+a significant MMD (\(p=0.024\)), and its Brier movement stays near
+\(0.002\). HSIC deltas are all below \(0.001\) and do not rank the blocks.
+Table~\ref{tab:pathway-synthetic}--\ref{tab:pathway-synthetic-sign} record
+the path, the peak day, and the sign-flip tests.
+
+\section{IEEE-CIS week after the fraud-rate peak}
+
+The local fraud-rate peak with seven usable days after it is transaction
+day 173 (fraud rate \(0.0495\)). The pathway runs through day 180
+(\(0.0374\)). Six blocks are used: amount, card, address, counts,
+timedelta, and hour. The monotone clock is not a feature. The unconditional
+sample is farther from the peak day here (MMD \(0.215\)) than on the
+Gaussian panel.
+
+No block has a significant MMD on day 180. The sign-flip test does not
+separate PO-risk among amount, card, address, counts, and timedelta. The
+transferred Brier movement is largest for card, and the sign-flip
+\(p\)-value against each other block is at most \(0.016\), while card's own
+MMD \(p\)-value is \(1\). Over this week the card block moves the
+fraud model's predictions, and the covariate blocks do not separate.
+Tables~\ref{tab:pathway-ieee-day} and~\ref{tab:pathway-ieee-sign} give the
+day-180 numbers and the seven-step tests.
+
+\input{../results/pathway_tables.tex}
+
+\end{document}

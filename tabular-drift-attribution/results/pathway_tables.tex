@@ -1,0 +1,100 @@
+
+\begin{table}[t]
+\centering
+\caption{Synthetic pathway. The anchor is day 0. Each step is one day closer to the drift peak. Shares are the block's fraction of the total absolute movement.}
+\label{tab:pathway-synthetic}
+\begin{tabular}{rcccccccc}
+\toprule
+step & PO-risk & Brier & MSE & driver PO & driver Brier & driver MSE & driver MMD & context MMD \\
+\midrule
+1 & 0.005 & 0.236 & 0.337 & 0.251 & 0.441 & 0.489 & 0.863 & 0.000 \\
+2 & 0.014 & 0.231 & 0.403 & 0.794 & 0.664 & 0.531 & 0.886 & 0.076 \\
+3 & 0.017 & 0.212 & 0.486 & 0.819 & 0.645 & 0.678 & 0.905 & 0.095 \\
+4 & 0.026 & 0.195 & 0.901 & 0.837 & 0.871 & 0.809 & 0.920 & 0.071 \\
+5 & 0.031 & 0.182 & 1.427 & 0.328 & 0.819 & 0.822 & 0.864 & 0.136 \\
+6 & 0.032 & 0.158 & 2.589 & 0.910 & 0.908 & 0.920 & 0.852 & 0.144 \\
+7 & 0.050 & 0.122 & 4.496 & 0.910 & 0.953 & 0.940 & 0.834 & 0.166 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Synthetic day 7, the drift peak. Deltas are the change in the loss when that block is replaced by the TabDDPM draw from the anchor conditional. Intervals are bootstrap percentiles. MMD and HSIC $p$-values use 40 permutations.}
+\label{tab:pathway-synthetic-day7}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+block & PO $\Delta$ & PO interval & Brier $\Delta$ & Brier interval & MSE $\Delta$ & MMD & MMD $p$ & HSIC $\Delta$ & HSIC $p$ & PO share & Brier share \\
+\midrule
+stable & -0.003 & [-0.011, 0.003] & -0.003 & [-0.008, 0.002] & -0.268 & 0.000 & 1.000 & -0.0004 & 0.585 & 0.023 & 0.025 \\
+context & -0.005 & [-0.017, 0.002] & -0.002 & [-0.003, -0.000] & -0.035 & 0.084 & 0.024 & -0.0002 & 0.341 & 0.043 & 0.012 \\
+driver & -0.100 & [-0.118, -0.059] & -0.131 & [-0.140, -0.124] & -4.785 & 0.420 & 0.024 & 0.0003 & 0.049 & 0.910 & 0.953 \\
+noise & 0.003 & [-0.005, 0.006] & -0.001 & [-0.003, 0.001] & 0.000 & 0.000 & 1.000 & -0.0002 & 0.024 & 0.024 & 0.009 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Sign-flip test over the seven synthetic steps. The contrast is the absolute movement of the driver minus the other block.}
+\label{tab:pathway-synthetic-sign}
+\begin{tabular}{llcc}
+\toprule
+loss & comparison & mean gap & $p$ \\
+\midrule
+PO-risk & driver $>$ stable & 0.030 & 0.008 \\
+PO-risk & driver $>$ context & 0.028 & 0.014 \\
+PO-risk & driver $>$ noise & 0.029 & 0.028 \\
+Brier & driver $>$ stable & 0.050 & 0.014 \\
+Brier & driver $>$ context & 0.060 & 0.008 \\
+Brier & driver $>$ noise & 0.059 & 0.008 \\
+MSE & driver $>$ stable & 1.487 & 0.014 \\
+MSE & driver $>$ context & 1.803 & 0.008 \\
+MSE & driver $>$ noise & 1.810 & 0.008 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{IEEE-CIS transaction day 180, seven days after the fraud-rate peak on day 173. Same columns as the synthetic peak day. No latent MSE on this table.}
+\label{tab:pathway-ieee-day}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccccc}
+\toprule
+block & PO $\Delta$ & PO interval & Brier $\Delta$ & Brier interval & MMD & MMD $p$ & HSIC $\Delta$ & HSIC $p$ & PO share & Brier share \\
+\midrule
+amount & -0.022 & [-0.032, 0.002] & 0.002 & [0.001, 0.005] & 0.002 & 0.098 & -0.0001 & 0.122 & 0.144 & 0.009 \\
+card & 0.012 & [-0.014, 0.018] & -0.080 & [-0.105, -0.062] & 0.001 & 1.000 & -0.0003 & 0.098 & 0.077 & 0.338 \\
+address & -0.058 & [-0.082, -0.039] & -0.048 & [-0.068, -0.033] & 0.000 & 1.000 & 0.0000 & 0.073 & 0.378 & 0.203 \\
+counts & -0.052 & [-0.055, 0.006] & -0.051 & [-0.063, -0.039] & 0.000 & 0.146 & -0.0000 & 0.122 & 0.338 & 0.214 \\
+timedelta & 0.008 & [-0.130, 0.023] & 0.029 & [0.013, 0.040] & 0.000 & 1.000 & -0.0001 & 0.049 & 0.055 & 0.120 \\
+hour & 0.001 & [-0.030, 0.005] & -0.028 & [-0.039, -0.016] & 0.002 & 0.073 & 0.0002 & 0.024 & 0.010 & 0.116 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Sign-flip test over the seven IEEE-CIS steps after the peak. PO-risk does not separate the blocks. The transferred Brier movement is largest for the card block.}
+\label{tab:pathway-ieee-sign}
+\begin{tabular}{llcc}
+\toprule
+loss & comparison & mean gap & $p$ \\
+\midrule
+PO-risk & timedelta $>$ amount & 0.007 & 0.491 \\
+PO-risk & timedelta $>$ card & 0.020 & 0.227 \\
+PO-risk & timedelta $>$ address & 0.008 & 0.432 \\
+PO-risk & timedelta $>$ counts & 0.009 & 0.423 \\
+PO-risk & timedelta $>$ hour & 0.029 & 0.024 \\
+Brier & card $>$ amount & 0.075 & 0.008 \\
+Brier & card $>$ address & 0.019 & 0.008 \\
+Brier & card $>$ counts & 0.015 & 0.016 \\
+Brier & card $>$ timedelta & 0.054 & 0.008 \\
+Brier & card $>$ hour & 0.059 & 0.008 \\
+\bottomrule
+\end{tabular}
+\end{table}
