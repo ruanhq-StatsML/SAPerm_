@@ -2,6 +2,9 @@ __pycache__/
 *.pyc
 .DS_Store
 experiments/primary_driver_10site/cache/
+tabular-drift-attribution/latex/*.aux
+tabular-drift-attribution/latex/*.log
+tabular-drift-attribution/latex/*.out
 experiments/primary_driver_10site/latex/*.aux
 experiments/primary_driver_10site/latex/*.log
 experiments/primary_driver_10site/latex/*.out
