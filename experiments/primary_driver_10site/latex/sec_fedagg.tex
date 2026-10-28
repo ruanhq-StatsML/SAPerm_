@@ -1,0 +1,1327 @@
+\section{Aggregate the distribution shift variable importance through federated aggregation}
+\label{sec:FedAGG_MetaLearner}
+
+In federated learning, model outputs are aggregated across sites in later
+stages, with the aim of preserving as much information as possible.
+This section asks whether FSDS, together with out-of-distribution variable
+importance, can sit in that pipeline: raw rows stay local, and each site
+uploads one score vector.
+The section answers four questions.
+When does the weight on a site change, and to what.
+How the aggregate responds when individual sites are corrupted.
+What the Matrix Bernstein argument actually supports.
+How a shift driver is justified when many sites are present and they do
+not all carry the same concept.
+
+Federated aggregation keeps raw rows local and moves only scores or
+nuisance fits.
+For variable importance, \cite{wang2019interpret} computes Shapley values
+for host features in vertical federated learning, while
+\cite{ducange2026fedshap} constructs row-free SHAP backgrounds via
+federated clustering and GANs.
+\cite{bonsignori2026iflash} aggregates client-specific SHAP vectors using
+accuracy and faithfulness weights instead of a flat mean.
+For vertical feature selection, \cite{fu2023feast} ranks features via
+conditional mutual information on statistical summaries, and
+\cite{li2023fedsdg} refines this with Gini initialization and encrypted
+stochastic gates.
+To mitigate shift, \cite{khellaf2026fedforest} pools split statistics to
+grow a federated forest whose impurity decrease approximates a pooled
+forest under covariate and outcome shift.
+\cite{khellaf2025federated} builds global propensity scores from membership
+weights, yielding Fed-IPW and Fed-AIPW, and compares those plug-in
+estimators with meta-analysis.
+For causal effects, \cite{xiong2023federated} ships propensity summaries to
+construct IPW and AIPW estimators, and \cite{vo2022bayesian} learns a
+posterior over potential outcomes via Gaussian processes across sites.
+\cite{almodovar2024pwfedavg} uses propensity-weighted FedAvg so that sites
+with scarce treated rows do not dominate the average.
+
+FSDS is applied to the same task.
+Rank correlations are computed for MMD-LOCO, a random-forest domain
+classifier, and pseudo-outcome risk, each against a stated reference:
+centralized importance, the pooled wrapper, or whole-batch FSDS.
+These references are not interchangeable.
+Some information loss across isolated sites is unavoidable.
+For permutation variable importance and for PermuCATE, inverse-variance
+weighting accounts for uncertainty at each site.
+Sample-size weights and the coordinate-wise median are the other
+magnitude aggregators.
+The subsections below say which of these is the weight to use, using the
+robustness grids, the real-data splits, and the concentration bound.
+
+\subsection{When the weight on a site changes}
+\label{sec:when-weight}
+
+Site \(k\) uploads one vector \(V_k\in[0,1]^p\) with
+\(\sum_j V_{k,j}=1\).
+The aggregate is
+\begin{equation}
+\label{eq:agg-weight}
+\bar V=\sum_{k=1}^{K} w_k V_k,
+\qquad w_k\ge 0,
+\qquad \sum_k w_k=1,
+\end{equation}
+or the coordinate-wise median of the same uploads.
+The default is the uniform weight \(w_k=1/K\).
+It is the right default when the sites are noisy copies of one shift and
+are about the same size.
+The weight on site \(k\) changes only in the rows of
+Table~\ref{tab:weight-rule}.
+Communication remains one upload of \(p\) floats per site, \(O(Kp)\) in
+total.
+No rule below asks for a second round.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Per-site weight. \(\rho\) is Spearman correlation with the
+reference named in the row. \(\Delta^{\mathrm{cf}}\) is the site score
+\eqref{eq:delta-cf-fed}.}
+\label{tab:weight-rule}
+\begin{tabular}{p{0.30\textwidth}p{0.28\textwidth}p{0.32\textwidth}}
+\toprule
+What is observed & Weight on site \(k\) & Evidence \\
+\midrule
+Sizes are close and the shift is shared & \(w_k=1/K\), or \(n|S|\) & TabReD max-frac \(=0.24\), \(\Delta(n|S|-\mathrm{unif})\approx 0.01\) \\
+Size mismatch is high & \(w_k\propto n_k\), or \(n|S|\) & High bin: \(\rho\) from \(0.620\) to \(0.905\) \\
+One or two uploads are replaced & median, or client-agreement Shapley & Two random corruptions: median \(0.741\), uniform \(0.055\) \\
+Variance estimates are bounded below and the wrapper is a covariate score & \(w_k\propto 1/\hat\sigma_k^2\) & WhyShift domain classifier: \(0.848\to 0.918\) \\
+A corrupted site reports a small variance & floor \(\hat\sigma_k^2\), or use the median & One bad site, variance ratio \(0.44\): IVW \(\rho=0.844\), mean \(\rho=0.959\) \\
+The wrapper is a concept score and sites need not share it & \(w_k\propto\Delta^{\mathrm{cf}}_k\) & PO-risk \(n\)-weight falls \(0.410\to 0.185\); Income shift AUC \(0.869\to 0.917\) \\
+Every weight returns the same \(\rho\), and that \(\rho\) misses the whole batch & do not retune \(w_k\) & \texttt{num\_105}: pair \(0.884\), \(\rho\approx -0.20\), headroom \(0\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Size is the first change.
+On the \(245\)-cell grid of Table~\ref{tab:fed-sim-size}, with size in
+\(\{0.1,\ldots,0.9\}\), feature correlation in \(\{0,0.15,\ldots,0.6\}\),
+and heterogeneity in \(\{0,\ldots,1\}\), the gain
+\(\Delta(n|S|-\mathrm{unif})=\rho(n|S|)-\rho(\mathrm{unif})\) is
+\(+0.004\) in the low size-mismatch bin and \(+0.285\) in the high bin.
+There the sites agree least with each other (pairwise concordance
+\(0.105\)) and the size-weighted aggregates agree most with the mixed pool
+(\(0.905\), against \(0.620\) for the uniform average).
+Rank aggregation moves the other way, from \(0.658\) to \(0.580\).
+Table~\ref{tab:fed-sim-size-hetero} splits the same grid by the
+heterogeneity fraction.
+At high size mismatch the gain rises from \(+0.24\) at hetero \(=0\) to
+\(+0.37\) at hetero \(=1\), while \(\rho(n|S|)\) rises from \(0.893\) to
+\(0.927\).
+Table~\ref{tab:fed-sim-high-grid} shows that this rise is present at every
+feature correlation from \(0\) to \(0.60\).
+Pairwise disagreement is the regime in which a size weight earns its keep,
+provided the large sites are the ones whose vector estimates the pool.
+
+A replaced vector is not a small site.
+Table~\ref{tab:fed-vimp-attack} replaces one or two client vectors.
+Two random replacements leave the uniform Spearman at \(0.055\) and the
+sample-size weight at \(0.156\).
+The median stays at \(0.741\) and client-agreement Shapley at \(0.737\).
+Client-agreement Shapley is a weight on sites.
+It is not Delta-Shapley, which is the feature-wise absolute difference of
+Shapley values between two batches and appears only in the single-batch
+comparison of Table~\ref{tab:tabred-fsds-all}.
+
+Inverse-variance weights are the third change, and only under the variance
+bound in Assumption~(A6) below.
+On ten random WhyShift folds
+(Table~\ref{tab:pol-ood}), the random-forest domain classifier moves from
+\(0.848\) on a single fold to \(0.887\) with sample-size weights and to
+\(0.918\) with inverse-variance weights.
+MMD-LOCO moves from \(0.891\) to \(0.985\) with sample-size weights.
+Both wrappers estimate a property of \(P(X)\) shared across folds.
+Pseudo-outcome risk does not: a single fold correlates \(0.410\) with the
+pooled PO-risk vector, sample-size weights lower that to \(0.185\), and
+inverse-variance weights return it to \(0.431\).
+Averaging a concept vector as if it were another noisy copy of one concept
+makes the ranking worse.
+The concept row of Table~\ref{tab:weight-rule} is the repair: set the
+weight proportional to the site score of
+Section~\ref{sec:drivers}, which is zero when the local model has no skill.
+
+The last row is a refusal.
+Cooking-time \texttt{num\_105}
+(Tables~\ref{tab:fed-tabred-summary} and~\ref{tab:num105-stab-summary})
+has pairwise concordance \(0.884\) and site-to-whole correlation
+\(-0.198\).
+Uniform, sample-size, \(n|S|\), and rank all return a Spearman near
+\(-0.20\).
+Under a feature-rank protocol the headroom
+\(\Delta(n|S|-\mathrm{unif})\) is \(+0.01\); under a random array split the
+Spearman rises to about \(0.80\) and the headroom is \(0\).
+The split axis is the defect.
+Retuning \(w_k\) does not change it.
+Leave-one-site-out influence does not find it either
+(Section~\ref{sec:real-fed}).
+
+\begin{table}[t]
+\centering
+\caption{Mixed synthetic blocks with corrupted client vectors.
+Spearman correlation with the centralized importance.
+Shapley is client agreement, not feature-wise Delta-Shapley.}
+\label{tab:fed-vimp-attack}
+\begin{tabular}{llcccc}
+\toprule
+Attack & \# bad & Uniform & \(n\)-weighted & Median & Shapley \\
+\midrule
+Random & 1 & 0.208 & 0.539 & 0.798 & 0.802 \\
+Random & 2 & 0.055 & 0.156 & 0.741 & 0.737 \\
+Extreme & 1 & 0.503 & 0.576 & 0.830 & 0.814 \\
+Extreme & 2 & 0.624 & 0.669 & 0.794 & 0.762 \\
+Collude & 2 & 0.572 & 0.612 & 0.899 & 0.842 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{FSDS on a WhyShift table, ten folds.
+Spearman correlation with the pooled out-of-distribution wrapper.
+The MMD-LOCO inverse-variance cell is not reported.}
+\label{tab:pol-ood}
+\begin{tabular}{lccc}
+\toprule
+Wrapper output & Single fold & \(n\)-weighted & IVW \\
+\midrule
+RF domain classifier & 0.848 & 0.887 & 0.918 \\
+MMD-LOCO & 0.891 & 0.985 & --- \\
+PO-risk & 0.410 & 0.185 & 0.431 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\caption{Simulation grid (245 cells; size \(\in\{0.1,\ldots,0.9\}\),
+correlation \(\in\{0,0.15,\ldots,0.6\}\),
+hetero \(\in\{0,\ldots,1\}\)): mean \(\rho\) by size-mismatch bin.
+Pairwise concordance is agreement among sites, not with the pool.}
+\label{tab:fed-sim-size}
+\begin{tabular}{@{}l@{\hspace{1.2em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{}}
+\toprule
+size bin & \(n\) & pair & unif & \(n\)-wt & \(n|S|\) & rank
+         & \(\Delta(n|S|-\mathrm{unif})\) \\
+\midrule
+low (\(\le 0.3\)) & 70  & 0.241 & 0.651 & 0.660 & 0.655 & 0.658 & \(+0.004\) \\
+mid               & 105 & 0.191 & 0.658 & 0.786 & 0.784 & 0.647 & \(+0.126\) \\
+high (\(\ge 0.7\)) & 70 & 0.105 & 0.620 & 0.905 & 0.905 & 0.580 & \(+0.285\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\caption{Mean \(\rho(n|S|)\), pairwise concordance, and
+\(\Delta(n|S|-\mathrm{unif})\) by size bin and heterogeneity fraction,
+averaged over feature correlation.
+At high size mismatch, \(\Delta\) rises with hetero while pairwise falls.}
+\label{tab:fed-sim-size-hetero}
+\begin{tabular}{@{}l@{\hspace{0.8em}}
+                r@{\hspace{0.5em}}r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r@{}}
+\toprule
+ & \multicolumn{3}{c}{low size}
+ & \multicolumn{3}{c}{mid}
+ & \multicolumn{2}{c}{high size} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-9}
+hetero
+ & \(\rho_{n|S}\) & pair & \(\Delta\)
+ & \(\rho_{n|S}\) & pair & \(\Delta\)
+ & \(\rho_{n|S}\) & \(\Delta\) \\
+\midrule
+\(0\)   & 0.653 & 0.339 & \(+0.01\) & 0.768 & 0.297 & \(+0.11\) & 0.893 & \(+0.24\) \\
+\(1/6\) & 0.639 & 0.283 & \(+0.01\) & 0.791 & 0.245 & \(+0.12\) & 0.886 & \(+0.25\) \\
+\(1/3\) & 0.656 & 0.262 & \(-0.00\) & 0.769 & 0.215 & \(+0.11\) & 0.888 & \(+0.27\) \\
+\(1/2\) & 0.640 & 0.250 & \(+0.00\) & 0.773 & 0.197 & \(+0.13\) & 0.892 & \(+0.27\) \\
+\(2/3\) & 0.657 & 0.213 & \(-0.00\) & 0.793 & 0.145 & \(+0.13\) & 0.921 & \(+0.29\) \\
+\(5/6\) & 0.664 & 0.183 & \(+0.01\) & 0.790 & 0.134 & \(+0.12\) & 0.925 & \(+0.31\) \\
+\(1\)   & 0.675 & 0.157 & \(+0.01\) & 0.804 & 0.103 & \(+0.15\) & 0.927 & \(+0.37\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\caption{High size-mismatch cells only:
+\(\Delta(n|S|-\mathrm{unif})\) on the hetero \(\times\) correlation grid.}
+\label{tab:fed-sim-high-grid}
+\begin{tabular}{@{}l@{\hspace{1em}}r@{\hspace{0.9em}}r@{\hspace{0.9em}}r@{\hspace{0.9em}}r@{\hspace{0.9em}}r@{}}
+\toprule
+hetero \(\backslash\) corr & \(0\) & \(0.15\) & \(0.30\) & \(0.45\) & \(0.60\) \\
+\midrule
+\(0\)   & \(+0.19\) & \(+0.23\) & \(+0.25\) & \(+0.27\) & \(+0.26\) \\
+\(1/6\) & \(+0.25\) & \(+0.26\) & \(+0.27\) & \(+0.26\) & \(+0.23\) \\
+\(1/3\) & \(+0.24\) & \(+0.27\) & \(+0.26\) & \(+0.33\) & \(+0.23\) \\
+\(1/2\) & \(+0.22\) & \(+0.28\) & \(+0.26\) & \(+0.28\) & \(+0.31\) \\
+\(2/3\) & \(+0.29\) & \(+0.28\) & \(+0.29\) & \(+0.31\) & \(+0.30\) \\
+\(5/6\) & \(+0.29\) & \(+0.36\) & \(+0.30\) & \(+0.28\) & \(+0.28\) \\
+\(1\)   & \(+0.40\) & \(+0.36\) & \(+0.37\) & \(+0.35\) & \(+0.36\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Robustness to corruption of individual sites}
+\label{sec:pressure}
+
+The pressure test uses many sites and asks whether the ranking of shifted
+features survives corrupted centers and a lower signal-to-noise ratio.
+The benchmark is a high-dimensional synthetic design rather than a small
+saturated table such as IHDP.
+Unless otherwise noted, local VIMP is an FSDS share, a random-forest
+importance, or \(|\Delta\mathrm{corr}|\).
+A dash means the variance ratio is undefined because one of the two groups
+is empty, or that the cell was not computed.
+The product
+\(n_{\mathrm{bad}}\times\mathrm{SNR}_{\mathrm{low}}\times\alpha\) is
+Table~\ref{tab:Product_HighDimResults}, now with the inverse-variance
+column included so that weight inflation can be read off the same grid.
+Entries are means over five replicates.
+\(w_{\mathrm{bad}}\) is the weight mass on corrupted sites.
+It equals \(0\) at \(n_{\mathrm{bad}}=0\) and \(1\) at
+\(n_{\mathrm{bad}}=12\).
+
+Selection and rank correlation break at different places.
+At full local support \(\alpha=1\) and SNR \(=0.5\), precision at \(K\) of
+the mean, the median, and inverse-variance weights is still \(1\) when
+every site is corrupted, while Spearman of the mean has fallen from \(1\)
+to \(0.719\).
+At SNR \(=0\) and twelve corrupted sites the selection AUC of the mean
+falls to \(0.479\) and its precision to \(0\).
+One remaining clean site is enough for the mean and not for the median:
+at \(n_{\mathrm{bad}}=11\), SNR \(=0.05\), and \(\alpha=1\), precision of
+the mean is \(0.92\) and precision of the median is \(0.14\).
+Thin support hurts the median before any site is corrupted.
+At \(\alpha=0.25\), SNR \(=0.5\), and \(n_{\mathrm{bad}}=0\), median
+precision is \(0.29\) and median AUC is \(0.768\), against precision \(1\)
+and AUC \(1\) for the mean and for inverse-variance weights.
+
+Inverse-variance weights pay for a small reported variance.
+At one corrupted site, \(\alpha=1\), and SNR \(=0.5\), the variance ratio
+is \(0.44\) and \(w_{\mathrm{bad}}=0.17\), about twice the equal share
+\(1/12\).
+Spearman falls to \(0.844\) against \(0.959\) for the uniform mean, while
+precision stays \(1\).
+Assumption~(A6) floors this variance so the weight stays bounded.
+The floor does not turn inverse-variance weighting into a detector of a
+bad concept.
+Table~\ref{tab:hidim-boundary} records the five rows that carry this
+reading.
+Table~\ref{tab:federated_highdim} is the mean-share slice of the same
+grid at \(\mathrm{SNR}_{\mathrm{low}}=0.15\), read across local support
+\(\alpha\in\{1,0.75,0.5,0.25\}\).
+Table~\ref{tab:federated_shared_support} records how far \(n_{\mathrm{bad}}\)
+must rise before Spearman falls through \(0.95\), \(0.90\), and \(0.80\),
+and the SNR swap at a clean SNR of \(1.5\).
+Table~\ref{tab:federated_tipping} records the first corrupted-site count
+at which mean share and median share cross the same thresholds.
+The full product grid follows.
+
+\begin{table}[t]
+\centering
+\caption{High-dimensional robustness under varying local support \(\alpha\).
+Mean share at \(\mathrm{SNR}_{\mathrm{low}}=0.15\).
+Spearman \(\rho\), selection AUC, and precision at \(K\), as
+\(n_{\mathrm{bad}}\) runs from \(0\) to \(12\).}
+\label{tab:federated_highdim}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{c rrr rrr rrr rrr}
+\toprule
+ & \multicolumn{3}{c}{\(\alpha = 1\)} & \multicolumn{3}{c}{\(\alpha = 0.75\)} & \multicolumn{3}{c}{\(\alpha = 0.5\)} & \multicolumn{3}{c}{\(\alpha = 0.25\)} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13}
+\(n_{\mathrm{bad}}/12\) & \(\rho\) & AUC & \(P@K\) & \(\rho\) & AUC & \(P@K\) & \(\rho\) & AUC & \(P@K\) & \(\rho\) & AUC & \(P@K\) \\
+\midrule
+0  & 1.000 & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 \\
+1  & 0.938 & 1.000 & 1.00 & 0.942 & 1.000 & 1.00 & 0.954 & 1.000 & 1.00 & 0.973 & 0.991 & 0.98 \\
+2  & 0.890 & 1.000 & 1.00 & 0.898 & 1.000 & 1.00 & 0.915 & 1.000 & 1.00 & 0.949 & 0.990 & 0.98 \\
+3  & 0.852 & 1.000 & 1.00 & 0.858 & 1.000 & 1.00 & 0.885 & 1.000 & 1.00 & 0.929 & 0.984 & 0.97 \\
+4  & 0.818 & 1.000 & 1.00 & 0.827 & 1.000 & 1.00 & 0.857 & 1.000 & 1.00 & 0.909 & 0.979 & 0.95 \\
+5  & 0.791 & 1.000 & 1.00 & 0.795 & 1.000 & 1.00 & 0.833 & 1.000 & 0.99 & 0.888 & 0.968 & 0.92 \\
+6  & 0.767 & 1.000 & 1.00 & 0.770 & 1.000 & 1.00 & 0.811 & 1.000 & 0.99 & 0.874 & 0.953 & 0.86 \\
+7  & 0.746 & 1.000 & 1.00 & 0.748 & 1.000 & 1.00 & 0.795 & 0.999 & 0.97 & 0.856 & 0.930 & 0.79 \\
+8  & 0.730 & 1.000 & 1.00 & 0.729 & 1.000 & 1.00 & 0.777 & 0.985 & 0.94 & 0.837 & 0.905 & 0.72 \\
+9  & 0.713 & 1.000 & 1.00 & 0.716 & 0.999 & 0.98 & 0.760 & 0.980 & 0.90 & 0.819 & 0.880 & 0.65 \\
+10 & 0.699 & 1.000 & 1.00 & 0.701 & 0.997 & 0.94 & 0.741 & 0.962 & 0.80 & 0.801 & 0.857 & 0.52 \\
+11 & 0.686 & 1.000 & 1.00 & 0.688 & 0.985 & 0.86 & 0.724 & 0.936 & 0.64 & 0.785 & 0.799 & 0.37 \\
+12 & 0.675 & 0.988 & 0.75 & 0.672 & 0.945 & 0.60 & 0.706 & 0.890 & 0.37 & 0.768 & 0.744 & 0.19 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Shared support: dimensional scaling and an SNR swap.
+The top panel is the smallest \(n_{\mathrm{bad}}\) at which Spearman falls
+below the stated threshold.
+The bottom panel is AUC and precision at \(K\) when the clean SNR is \(1.5\).}
+\label{tab:federated_shared_support}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{c c rrr r}
+\toprule
+ & & \multicolumn{3}{c}{Tipping points (\(n_{\mathrm{bad}}\))} & \(n_{\mathrm{bad}}=10\) \\
+\cmidrule(lr){3-5}
+\(p\) & \(K\) & \(\rho<0.95\) & \(\rho<0.90\) & \(\rho<0.80\) & \((\rho,\ \mathrm{AUC},\ P@K)\) \\
+\midrule
+500  & 20 & 1 & 3 & 7 & (0.718, 0.987, 0.81) \\
+1000 & 25 & 1 & 2 & 4 & (0.655, 0.981, 0.69) \\
+2000 & 50 & 1 & 1 & 3 & (0.538, 0.959, 0.57) \\
+\midrule
+\multicolumn{6}{c}{SNR swap at fixed \(p\) (clean SNR \(=1.5\), AUC \(=1.0\))} \\
+\midrule
+ & & \multicolumn{2}{c}{\(n_{\mathrm{bad}}=5\)} & \multicolumn{2}{c}{\(n_{\mathrm{bad}}=10\)} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6}
+\(\mathrm{SNR}_{\mathrm{low}}\) & \(p\) & AUC & \(P@K\) & AUC & \(P@K\) \\
+\midrule
+0.5  & 1000 & 1.000 & 1.00 & 1.000 & 1.00 \\
+0.5  & 2000 & 1.000 & 1.00 & 1.000 & 1.00 \\
+0.25 & 1000 & 1.000 & 1.00 & 1.000 & 1.00 \\
+0.25 & 2000 & 1.000 & 1.00 & 1.000 & 0.97 \\
+0.05 & 1000 & 1.000 & 1.00 & 0.628 & 0.10 \\
+0.05 & 2000 & 1.000 & 1.00 & 0.605 & 0.06 \\
+0    & 1000 & 1.000 & 1.00 & 0.487 & 0.02 \\
+0    & 2000 & 1.000 & 1.00 & 0.497 & 0.04 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Contamination tipping points for mean share and median share.
+Entries are the smallest \(n_{\mathrm{bad}}\) at which the metric falls
+below the threshold.
+A dash means the threshold is not crossed on the reported grid.}
+\label{tab:federated_tipping}
+\small
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{l c rrr rrr}
+\toprule
+ & & \multicolumn{3}{c}{Mean share} & \multicolumn{3}{c}{Median share} \\
+\cmidrule(lr){3-5} \cmidrule(lr){6-8}
+Mode & \(\mathrm{SNR}_{\mathrm{low}}\) & \(\rho<0.90\) & AUC\(<0.95\) & \(J@K<0.7\) & \(\rho<0.90\) & AUC\(<0.95\) & \(J@K<0.7\) \\
+\midrule
+low SNR    & 0.5  & --- & --- & --- & --- & --- & --- \\
+low SNR    & 0.25 & --- & --- & --- & 3   & --- & --- \\
+low SNR    & 0.1  & 10  & 10  & 10  & 3   & 9   & 9   \\
+low SNR    & 0    & 7   & 9   & 9   & 3   & 8   & 7   \\
+null SNR   & ---  & 5   & 9   & 9   & 3   & 8   & 7   \\
+wrong plant & --- & 1   & 7   & 6   & 4   & 6   & 6   \\
+\(y\) scramble & --- & 4 & --- & --- & 2 & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Boundary rows of Table~\ref{tab:Product_HighDimResults}.
+\(\rho\) is Spearman with the planted ranking.
+AUC and \(P\) are selection AUC and precision at \(K\).}
+\label{tab:hidim-boundary}
+\small
+\begin{tabular}{rrrrrrrr}
+\toprule
+\(n_{\mathrm{bad}}\) & \(\alpha\) & SNR & \(\rho\) mean & \(\rho\) IVW & \(P\) mean & \(P\) med & \(w_{\mathrm{bad}}\) \\
+\midrule
+0 & 0.25 & 0.5 & 1.000 & 1.000 & 1.00 & 0.29 & 0.00 \\
+1 & 1 & 0.5 & 0.959 & 0.844 & 1.00 & 1.00 & 0.17 \\
+11 & 1 & 0.05 & 0.677 & 0.651 & 0.92 & 0.14 & 0.97 \\
+12 & 1 & 0.5 & 0.719 & 0.710 & 1.00 & 1.00 & 1.00 \\
+12 & 1 & 0 & 0.606 & 0.601 & 0.00 & 0.02 & 1.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\input{tab_product_highdim}
+
+Sample-size imbalance is a different corruption.
+Table~\ref{tab:federated_imbalance} reports Spearman correlation of the
+aggregate with the clean aggregate under a Dirichlet allocation of site
+sizes.
+Uniform weights and the median stay at \(1\) for covariate shift across
+the concentration grid, including the severe imbalance at concentration
+\(0.05\).
+Inverse-variance weights are lower on that grid, down to \(0.610\) for
+concept drift at concentration \(10\).
+A pool of five covariate-shift sites and five concept-drift sites
+correlates only about \(0.30\) with the clean aggregate, for every
+aggregator that is defined.
+Size weights do not turn two kinds of shift into one ranking.
+That is the gap filled by the site score in
+Section~\ref{sec:drivers}.
+
+\begin{table}[t]
+\centering
+\caption{Sample-size imbalance (Dirichlet \(\alpha\)) and mixed sites.
+Spearman \(\rho\) of the observed aggregate against the clean aggregate.
+\(B=10\), \(p=80\), \(K=10\), \(N=4000\), five replicates.}
+\label{tab:federated_imbalance}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l l rrrr}
+\toprule
+\(\alpha\) & Regime & Uniform & \(n\)-weighted & IVW & Median \\
+\midrule
+0.05 & Covariate & 1.000 & 1.000 & 0.788 & 1.000 \\
+0.05 & Concept   & 0.996 & 0.913 & 0.876 & 0.975 \\
+0.1  & Covariate & 1.000 & 1.000 & 0.754 & 1.000 \\
+0.1  & Concept   & 0.996 & 0.921 & 0.888 & 0.985 \\
+1    & Covariate & 1.000 & 1.000 & 0.883 & 1.000 \\
+1    & Concept   & 0.991 & 0.952 & 0.738 & 0.964 \\
+10   & Covariate & 1.000 & 1.000 & 0.971 & 1.000 \\
+10   & Concept   & 0.984 & 0.965 & 0.610 & 0.961 \\
+20   & Covariate & 1.000 & 1.000 & 0.977 & 1.000 \\
+20   & Concept   & 0.985 & 0.976 & 0.749 & 0.950 \\
+\midrule
+\multicolumn{2}{l}{Mixed 5 CS + 5 CD} & 0.300 & 0.300 & ---   & 0.295 \\
+\multicolumn{2}{l}{Mixed (vs.\ all-CD)}  & 0.334 & 0.334 & ---   & 0.372 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On injected shifts in SECOM \cite{secom2008}, Diabetes130
+\cite{clore2014diabetes130}, TEP \cite{chiang2001fault}, and TCGA
+\cite{weinstein2013tcga}, mean share keeps a high selection AUC at five
+corrupted centers out of the reported grid
+(Table~\ref{tab:federated_real_data}).
+At ten corrupted centers the ranking moves: SECOM mean-share AUC falls to
+\(0.708\) and TEP to \(0.580\), while TCGA stays at \(0.977\).
+The median is not uniformly more fragile on this table.
+At ten corrupted SECOM centers its Spearman is \(0.758\) against \(0.657\)
+for the mean.
+The high-dimensional synthetic grid and these four data sets therefore
+agree on one fact and not on another.
+A moderate number of corrupted centers leaves the selected set intact when
+a clean signal remains.
+Which of the mean and the median wins the rank correlation depends on the
+design.
+On the same two data sets, a pooled comparison of the selectors themselves
+is Table~\ref{tab:pooled_comparison}.
+The FSDS row is marked in bold.
+Degree and the random forest dominate covariate AUC.
+Under concept drift the ordering changes: on Diabetes130 with a random
+split, the knockoff reaches concept AUC \(0.996\), while FSDS is \(0.742\).
+
+\begin{table}[t]
+\centering
+\caption{Federated alignment on SECOM, TCGA, Diabetes130, and TEP under
+concept drift.
+AUC, precision at \(K\), and Spearman \(\rho\) at
+\(n_{\mathrm{bad}}\in\{0,5,10\}\).}
+\label{tab:federated_real_data}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l c rrr rrr}
+\toprule
+ & & \multicolumn{3}{c}{Mean share} & \multicolumn{3}{c}{Median share} \\
+\cmidrule(lr){3-5} \cmidrule(lr){6-8}
+Dataset & \(n_{\mathrm{bad}}\) & AUC & \(P@K\) & \(\rho\) & AUC & \(P@K\) & \(\rho\) \\
+\midrule
+SECOM & 0  & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 \\
+SECOM & 5  & 1.000 & 0.98 & 0.894 & 0.995 & 0.92 & 0.917 \\
+SECOM & 10 & 0.708 & 0.40 & 0.657 & 0.683 & 0.34 & 0.758 \\
+\midrule
+TCGA & 0  & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 \\
+TCGA & 5  & 1.000 & 1.00 & 0.869 & 0.999 & 0.98 & 0.877 \\
+TCGA & 10 & 0.977 & 0.84 & 0.771 & 0.974 & 0.82 & 0.758 \\
+\midrule
+Diabetes & 0  & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 \\
+Diabetes & 5  & 1.000 & 1.00 & 0.887 & 1.000 & 1.00 & 0.796 \\
+Diabetes & 10 & 0.920 & 0.75 & 0.814 & 0.940 & 0.85 & 0.635 \\
+\midrule
+TEP & 0  & 1.000 & 1.00 & 1.000 & 1.000 & 1.00 & 1.000 \\
+TEP & 5  & 0.996 & 0.88 & 0.868 & 0.970 & 0.68 & 0.728 \\
+TEP & 10 & 0.580 & 0.12 & 0.582 & 0.586 & 0.20 & 0.581 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Pooled comparison on SECOM and Diabetes130 under covariate (Cov)
+and concept (Con) shift.
+AUC and precision at \(10\).
+Random split and \texttt{max\_feature} split.
+The FSDS row is in bold.
+PermuCATE on SECOM random covariate is the mean of two replicates; one
+replicate had a one-class label batch and the fit was skipped.}
+\label{tab:pooled_comparison}
+\label{tab:pooled_fsds}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{l rrrr rrrr rrrr rrrr}
+\toprule
+ & \multicolumn{4}{c}{SECOM (random)} & \multicolumn{4}{c}{Diabetes130 (random)} & \multicolumn{4}{c}{SECOM (\texttt{max\_feature})} & \multicolumn{4}{c}{Diabetes130 (\texttt{max\_feature})} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13} \cmidrule(lr){14-17}
+Method & Cov AUC & Cov \(P@10\) & Con AUC & Con \(P@10\) & Cov AUC & Cov \(P@10\) & Con AUC & Con \(P@10\) & Cov AUC & Cov \(P@10\) & Con AUC & Con \(P@10\) & Cov AUC & Cov \(P@10\) & Con AUC & Con \(P@10\) \\
+\midrule
+PO & 0.452 & 0.400 & 0.619 & 0.600 & 0.308 & 0.633 & 0.892 & 0.867 & 0.487 & 0.267 & 0.579 & 0.600 & 0.492 & 0.733 & 0.758 & 0.767 \\
+\textbf{FSDS} & \textbf{0.716} & \textbf{0.433} & \textbf{0.598} & \textbf{0.400} & \textbf{0.792} & \textbf{0.867} & \textbf{0.742} & \textbf{0.800} & \textbf{0.650} & \textbf{0.267} & \textbf{0.442} & \textbf{0.200} & \textbf{0.483} & \textbf{0.733} & \textbf{0.713} & \textbf{0.767} \\
+deg & 0.950 & 0.833 & 0.552 & 0.333 & 0.992 & 0.967 & 0.467 & 0.733 & 0.916 & 0.767 & 0.429 & 0.167 & 0.850 & 0.900 & 0.583 & 0.733 \\
+RF & 1.000 & 1.000 & 0.549 & 0.300 & 1.000 & 1.000 & 0.558 & 0.800 & 0.920 & 0.733 & 0.459 & 0.200 & 0.917 & 0.967 & 0.617 & 0.767 \\
+RF-LOCO & 0.622 & 0.367 & 0.447 & 0.267 & 0.758 & 0.767 & 0.475 & 0.733 & 0.631 & 0.367 & 0.418 & 0.200 & 0.575 & 0.767 & 0.433 & 0.667 \\
+LOCO-MMD & 0.987 & 0.967 & 0.496 & 0.233 & 0.983 & 0.967 & 0.475 & 0.733 & 0.897 & 0.800 & 0.517 & 0.233 & 0.700 & 0.767 & 0.408 & 0.700 \\
+HSIC-LOCO & 0.402 & 0.167 & 0.577 & 0.367 & 0.575 & 0.767 & 0.475 & 0.767 & 0.505 & 0.367 & 0.612 & 0.367 & 0.558 & 0.767 & 0.475 & 0.700 \\
+GRF & 0.543 & 0.267 & 0.774 & 0.633 & 0.442 & 0.700 & 0.692 & 0.833 & 0.526 & 0.300 & 0.667 & 0.433 & 0.433 & 0.700 & 0.592 & 0.733 \\
+\(\ell_1\) mis & 0.580 & 0.267 & 0.803 & 0.667 & 0.458 & 0.700 & 0.725 & 0.767 & 0.718 & 0.500 & 0.697 & 0.500 & 0.533 & 0.767 & 0.700 & 0.767 \\
+\(\ell_1\) spec & 0.587 & 0.367 & 0.796 & 0.633 & 0.583 & 0.767 & 0.550 & 0.700 & 0.657 & 0.467 & 0.749 & 0.567 & 0.550 & 0.733 & 0.683 & 0.767 \\
+\(\Delta\)SHAP & 0.587 & 0.267 & 0.778 & 0.633 & 0.475 & 0.733 & 0.750 & 0.800 & 0.478 & 0.233 & 0.744 & 0.600 & 0.333 & 0.633 & 0.792 & 0.800 \\
+knockoff & 0.578 & 0.367 & 0.796 & 0.600 & 0.500 & 0.733 & 0.996 & 0.967 & 0.626 & 0.367 & 0.749 & 0.633 & 0.329 & 0.667 & 0.883 & 0.900 \\
+PermuCATE & 0.523 & 0.350 & 0.748 & 0.600 & 0.492 & 0.733 & 0.808 & 0.800 & 0.539 & 0.367 & 0.709 & 0.567 & 0.450 & 0.667 & 0.717 & 0.767 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+A homogeneous synthetic check uses \(d=10\), \(n=2400\), and \(K=6\)
+blocks, three shifted and three clean, with equal sizes or a
+Dirichlet\((0.5)\) allocation.
+The regression on the clean blocks is linear in the first five coordinates
+plus standard normal noise.
+Covariate shifts are a mean shift, a covariance shift, or a mixture shift.
+Concept drifts added to the regression are linear, sine, cubic,
+interaction, and threshold.
+Across that list the Spearman correlation between the merged vector and
+the pooled vector stays in \([0.79,0.93]\), averaged over two seeds and
+both size allocations.
+The highest entry is linear drift with sample-size weights (\(0.933\)).
+The lowest is the uniform average under the product interaction
+(\(0.803\)).
+With no corruption, a mixed block of two covariate-shift clients, two
+concept-drift clients, one mixed client, and one clean client gives
+Spearman \(0.838\) (uniform), \(0.867\) (\(n\)-weighted), \(0.842\)
+(median), and \(0.879\) (client-agreement Shapley) against the centralized
+importance.
+Taking the top three or top five clients and then applying sample-size
+weights raises that to \(0.925\) and \(0.929\).
+Screening clients before averaging is the same idea as the
+\(\Delta^{\mathrm{cf}}\) weight, computed here by agreement with the
+central vector rather than by a local skill score.
+Table~\ref{tab:fed-vimp-homo} is the homogeneous list.
+Table~\ref{tab:fed-vimp-mixed} is the mixed block with no attack.
+
+\begin{table}[t]
+\centering
+\caption{Homogeneous shifts on six clients, three shifted and three clean.
+Spearman correlation of the merged permutation importance with the
+centralized importance.
+Entries are averages over two seeds and both size allocations
+(equal sizes, or Dirichlet\(0.5\)).
+\((\delta_X,\delta_C)\) is the covariate shift and the concept drift.}
+\label{tab:fed-vimp-homo}
+\small
+\begin{tabular}{llcccc}
+\toprule
+Shift & \((\delta_X,\delta_C)\) & Uniform & \(n\)-weighted & IVW & Median \\
+\midrule
+None & \((0,0)\) & 0.891 & 0.900 & 0.903 & 0.885 \\
+Mean & \((0.5,0)\) & 0.815 & 0.794 & 0.791 & 0.815 \\
+Mean & \((1.5,0)\) & 0.839 & 0.827 & 0.833 & 0.861 \\
+Covariance & \((0.6,0)\) & 0.842 & 0.836 & 0.833 & 0.845 \\
+Mixture & \((0.8,0)\) & 0.809 & 0.845 & 0.848 & 0.848 \\
+Linear CD & \((0,1)\) & 0.903 & 0.933 & 0.921 & 0.897 \\
+Nonlinear CD & \((0,1)\) & 0.867 & 0.894 & 0.888 & 0.873 \\
+Cubic CD & \((0,0.4)\) & 0.842 & 0.845 & 0.852 & 0.888 \\
+Interaction CD & \((0,1)\) & 0.803 & 0.830 & 0.855 & 0.830 \\
+Threshold CD & \((0,1)\) & 0.867 & 0.867 & 0.873 & 0.873 \\
+Mean \(+\) nonlinear & \((1,1)\) & 0.836 & 0.830 & 0.821 & 0.848 \\
+Mean \(+\) interaction & \((1,1)\) & 0.836 & 0.848 & 0.845 & 0.909 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Mixed blocks with no attack: two covariate-shift clients, two
+concept-drift clients, one mixed client, and one clean client.
+Correlation with the centralized importance.}
+\label{tab:fed-vimp-mixed}
+\small
+\begin{tabular}{lcc}
+\toprule
+Aggregator & Spearman & Pearson \\
+\midrule
+Uniform & 0.838 & 0.920 \\
+\(n\)-weighted & 0.867 & 0.952 \\
+Median & 0.842 & 0.921 \\
+Shapley (client agreement) & 0.879 & 0.922 \\
+Top-3, then \(n\)-weighted & 0.925 & 0.957 \\
+Top-5, then \(n\)-weighted & 0.929 & 0.951 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Real data: images, WhyShift, and TabReD}
+\label{sec:real-fed}
+
+FEMNIST \cite{leaf_federated_dataset} and WhyShift
+\cite{WhyShift_Attribution} check ranking consistency when the reference
+is the pooled vector on the same images or the same table.
+For a character pair, a \(30\)-component PCA is fit on the pooled pair and
+each batch is cut into \(K\in\{5,10,20,30\}\) blocks.
+The three uploaded vectors are random-forest domain importance,
+leave-one-coordinate RBF MMD, and the increase in pseudo-outcome risk
+under conditional permutation.
+Table~\ref{tab:femnist-ood} is the sample-size weighted merge against the
+pooled wrapper on character pairs.
+Table~\ref{tab:femnist-cs-ood} is the same comparison after the pair is
+treated as a covariate shift, averaged over the four adjacent pairs among
+the five most frequent characters.
+With a common cap of \(800\) images per class, the sample-size weighted
+mean coincides with the uniform mean.
+Pseudo-outcome risk is omitted from that table: the character label is the
+batch indicator, so the pseudo-outcome does not depend on \(X\).
+As a direct prediction problem, a random forest classifies digits \(0\)--\(9\)
+from \(30\) pooled PCA scores on \(200{,}000\) images.
+Importance is the drop in accuracy when a component is permuted.
+Twenty blocks of \(10{,}000\) have equal size, so the uniform average and
+the sample-size average coincide.
+Their Spearman correlation with the pooled importance is \(0.996\)
+(Pearson \(0.996\)).
+Inverse-variance weighting yields \(0.993\).
+A single block, before merging, already correlates at \(0.975\), and the
+first four components are \(2,3,6,9\) in both the pooled vector and the
+merge.
+Information loss from cutting the sample is small when every block is a
+copy of the same prediction problem.
+
+\begin{table}[t]
+\centering
+\caption{FEMNIST character pairs.
+Spearman correlation of the \(n\)-weighted merge with the pooled
+out-of-distribution wrapper.}
+\label{tab:femnist-ood}
+\small
+\begin{tabular}{lcccc}
+\toprule
+Wrapper output & \(K=5\) & \(K=10\) & \(K=20\) & \(K=30\) \\
+\midrule
+RF domain classifier & 0.795 & 0.819 & 0.843 & 0.830 \\
+MMD-LOCO & 0.781 & 0.887 & 0.903 & 0.909 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{FEMNIST covariate-shift attribution.
+Spearman correlation with the pooled ranking, averaged over the four
+adjacent pairs among the five most frequent characters
+(\(1\)--\(7\), \(7\)--\(3\), \(3\)--\(0\), \(0\)--\(2\)).
+Each pair is projected to \(30\) principal components fit on the pooled
+images.
+Every site reuses those coordinates and uses at most \(800\) images per
+class.
+Single-site is the mean correlation of the site-level rankings.
+Mean and median are the coordinate-wise aggregates.
+The sample-size weighted mean coincides with the unweighted mean under
+that cap.}
+\label{tab:femnist-cs-ood}
+\small
+\begin{tabular}{llccc}
+\toprule
+Sites & Method & Single-site & Mean & Median \\
+\midrule
+5 & RF domain & 0.74 & 0.80 & 0.78 \\
+5 & MMD-LOCO & 0.79 & 0.78 & 0.81 \\
+10 & RF domain & 0.73 & 0.82 & 0.81 \\
+10 & MMD-LOCO & 0.83 & 0.89 & 0.89 \\
+20 & RF domain & 0.74 & 0.84 & 0.84 \\
+20 & MMD-LOCO & 0.84 & 0.90 & 0.90 \\
+30 & RF domain & 0.74 & 0.83 & 0.83 \\
+30 & MMD-LOCO & 0.83 & 0.91 & 0.88 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Pseudo-outcome risk on the same images does not follow this pattern.
+With a balanced random treatment arm and the digit as the outcome, the
+pooled PO-risk vector has mean absolute entry \(0.0007\).
+Inverse-variance and sample-size merges correlate with it at \(-0.02\) and
+\(-0.01\).
+The treatment is independent of the image, so the wrapper has no residual
+contrast.
+The WhyShift folds in Table~\ref{tab:pol-ood} are the tabular version of
+the same split: covariate wrappers aggregate, and PO-risk does not.
+
+TabReD is the balanced tabular check.
+The largest site fraction on the summary grid is \(0.24\), so
+Table~\ref{tab:weight-rule} predicts a small gain for \(n|S|\).
+The mean Spearman values are \(0.453\) (uniform), \(0.460\) (sample size),
+\(0.466\) (\(n|S|\)), and \(0.453\) (rank).
+\(n|S|\) is a safe default because it ties the uniform average.
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\caption{TabReD federated FSDS on nine task\(\times\)split cells.
+Site sizes are nearly balanced (max-frac \(=0.24\)).
+Cooking \texttt{num\_105} agrees with itself and disagrees with the whole
+batch.}
+\label{tab:fed-tabred-summary}
+\begin{tabular}{@{}ll
+                r@{\hspace{0.7em}}r
+                r@{\hspace{0.6em}}r@{\hspace{0.6em}}r@{\hspace{0.6em}}r
+                l@{}}
+\toprule
+task & split & pair & site\(\leftrightarrow\)whole
+     & unif & \(n\) & \(n|S|\) & rank & best \\
+\midrule
+cooking & num\_105 & 0.884 & \(-0.198\) & \(-0.200\) & \(-0.191\) & \(-0.204\) & \(-0.209\) & \(n\) \\
+cooking & num\_80  & 0.383 & \(0.161\)  & \(0.250\)  & \(0.305\)  & \(0.329\)  & \(0.251\)  & \(n|S|\) \\
+cooking & num\_69  & 0.835 & \(0.468\)  & \(0.520\)  & \(0.525\)  & \(0.530\)  & \(0.520\)  & \(n|S|\) \\
+ecom    & num\_109 & 0.787 & \(0.545\)  & \(0.642\)  & \(0.645\)  & \(0.647\)  & \(0.635\)  & \(n|S|\) \\
+ecom    & num\_100 & 0.825 & \(0.532\)  & \(0.598\)  & \(0.596\)  & \(0.610\)  & \(0.605\)  & \(n|S|\) \\
+ecom    & num\_103 & 0.851 & \(0.470\)  & \(0.498\)  & \(0.505\)  & \(0.516\)  & \(0.501\)  & \(n|S|\) \\
+weather & num\_38  & 0.598 & \(0.428\)  & \(0.554\)  & \(0.514\)  & \(0.531\)  & \(0.546\)  & unif \\
+weather & num\_44  & 0.716 & \(0.725\)  & \(0.836\)  & \(0.840\)  & \(0.846\)  & \(0.827\)  & \(n|S|\) \\
+weather & num\_37  & 0.519 & \(0.283\)  & \(0.378\)  & \(0.399\)  & \(0.389\)  & \(0.401\)  & med \\
+\midrule
+mean    & ---      & 0.711 & \(0.379\)  & \(0.453\)  & \(0.460\)  & \(0.466\)  & \(0.453\)  & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Cooking-time \texttt{num\_105}: feature-rank versus random
+array-split (mean\(\pm\)SD of \(\rho\)).
+Aggregator headroom is about zero on both protocols.}
+\label{tab:num105-stab-summary}
+\begin{tabular}{@{}l@{\hspace{1.2em}}r@{\hspace{1em}}r@{\hspace{1em}}r@{\hspace{1em}}r@{\hspace{1em}}r@{\hspace{1em}}r@{}}
+\toprule
+protocol & \(n\) & pair & unif & \(n\) & \(n|S|\) & \(\Delta\) \\
+\midrule
+feature-rank & 20  & \(0.88\pm 0.01\) & \(0.07\pm 0.17\) & \(0.07\pm 0.17\) & \(0.07\pm 0.17\) & \(+0.01\) \\
+random       & 200 & \(0.26\pm 0.06\) & \(0.80\pm 0.06\) & \(0.81\pm 0.06\) & \(0.80\pm 0.06\) & \(+0.00\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A second TabReD partition scores the aggregate against whole-batch FSDS.
+The splits are not those of Table~\ref{tab:fed-tabred-summary}.
+Cooking \texttt{num\_184} repeats the \texttt{num\_105} geometry: pairwise
+concordance \(0.875\), and every convex weight correlates only about
+\(0.12\) with the whole batch.
+Weather \texttt{num\_5} and \texttt{num\_84} have pairwise concordance
+near \(0.78\) and a negative Spearman for every convex weight.
+Weather \texttt{num\_98} has the lowest pairwise concordance on that table
+(\(0.440\)) and the highest \(n|S|\) correlation (\(0.631\)).
+
+\begin{table}[t]
+\centering
+\small
+\caption{TabReD federated FSDS.
+Primary metric: Spearman correlation of the aggregate with whole-batch
+FSDS.}
+\label{tab:tabred-fsds-fed}
+\begin{tabular}{@{}ll
+                r@{\hspace{0.6em}}r@{\hspace{0.6em}}r@{\hspace{0.6em}}r@{\hspace{0.6em}}r
+                l@{}}
+\toprule
+task & split & pair & \(\rho_{\mathrm{unif}}\) & \(\rho_n\)
+     & \(\rho_{n|S|}\) & \(\rho_{\mathrm{rank}}\) & best \\
+\midrule
+cooking-time & num\_184 & 0.875 & 0.114 & 0.111 & 0.127 & 0.119 & \(n|S|\) \\
+cooking-time & num\_38  & 0.885 & 0.399 & 0.403 & 0.400 & 0.393 & \(n\) \\
+cooking-time & num\_123 & 0.812 & 0.403 & 0.433 & 0.433 & 0.397 & \(n|S|\) \\
+ecom-offers  & num\_67  & 0.769 & 0.321 & 0.362 & 0.356 & 0.300 & \(n\) \\
+ecom-offers  & num\_104 & 0.768 & 0.222 & 0.222 & 0.233 & 0.215 & \(n|S|\) \\
+ecom-offers  & num\_60  & 0.649 & 0.099 & 0.106 & 0.107 & 0.071 & \(n|S|\) \\
+weather      & num\_5   & 0.791 & \(-0.054\) & \(-0.061\) & \(-0.057\) & \(-0.064\) & median \\
+weather      & num\_84  & 0.767 & \(-0.111\) & \(-0.118\) & \(-0.108\) & \(-0.131\) & median \\
+weather      & num\_98  & 0.440 & 0.615 & 0.623 & 0.631 & 0.559 & \(n|S|\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Single-batch F1 and AUC against the top linear coefficients are a method
+comparison, not a federated metric.
+Mean F1 is \(0.433\) for Delta-Shapley, \(0.400\) for PermuCATE and for
+LOCO, \(0.367\) for the generalized random forest, \(0.333\) for the
+forest, \(0.311\) for FSDS, and \(0.178\) for the knockoff.
+Mean selection AUC has the same lead: Delta-Shapley \(0.701\), the
+generalized random forest \(0.677\), the forest \(0.647\), FSDS \(0.588\).
+FSDS and the forest take \(0.6\) seconds per cell.
+PermuCATE, LOCO, and the generalized random forest share one causal block
+of \(56\) seconds; the column total \(220.5\) adds that block three times.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{3.5pt}
+\caption{TabReD, single batch: F1 against the top \(|\beta|\) of a linear
+regression.
+PermuCATE uses \(50\) permutations and a random-forest outcome.
+Not a federated metric.}
+\label{tab:tabred-fsds-all}
+\begin{tabular}{@{}ll *{10}{r}@{}}
+\toprule
+task & split & FSDS & RF & \(\Delta\)SH & MMD & PC & LOCO & GRF & L1\(_m\) & L1\(_s\) & KO \\
+\midrule
+cooking-time & num\_184 & 0.100 & 0.200 & 0.500 & 0.200 & 0.400 & 0.200 & 0.200 & 0.400 & 0.300 & 0.200 \\
+cooking-time & num\_38  & 0.100 & 0.200 & 0.600 & 0.200 & 0.400 & 0.200 & 0.400 & 0.400 & 0.000 & 0.000 \\
+cooking-time & num\_123 & 0.100 & 0.200 & 0.300 & 0.200 & 0.300 & 0.200 & 0.200 & 0.600 & 0.000 & 0.000 \\
+ecom-offers  & num\_67  & 0.500 & 0.500 & 0.400 & 0.500 & 0.500 & 0.500 & 0.500 & 0.200 & 0.200 & 0.000 \\
+ecom-offers  & num\_104 & 0.500 & 0.500 & 0.400 & 0.400 & 0.400 & 0.500 & 0.500 & 0.300 & 0.300 & 0.200 \\
+ecom-offers  & num\_60  & 0.400 & 0.500 & 0.200 & 0.400 & 0.400 & 0.500 & 0.400 & 0.300 & 0.400 & 0.100 \\
+weather      & num\_5   & 0.400 & 0.300 & 0.400 & 0.200 & 0.400 & 0.500 & 0.200 & 0.300 & 0.200 & 0.400 \\
+weather      & num\_84  & 0.300 & 0.300 & 0.500 & 0.200 & 0.300 & 0.500 & 0.400 & 0.300 & 0.500 & 0.300 \\
+weather      & num\_98  & 0.400 & 0.300 & 0.600 & 0.300 & 0.500 & 0.500 & 0.500 & 0.300 & 0.300 & 0.400 \\
+\midrule
+mean & --- & 0.311 & 0.333 & 0.433 & 0.289 & 0.400 & 0.400 & 0.367 & 0.344 & 0.244 & 0.178 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3.5pt}
+\caption{TabReD: mean selection AUC by task, same run as
+Table~\ref{tab:tabred-fsds-all}.}
+\label{tab:tabred-fsds-auc}
+\begin{tabular}{@{}l *{10}{r}@{}}
+\toprule
+task & FSDS & RF & \(\Delta\)SH & MMD & PC & LOCO & GRF & L1\(_m\) & L1\(_s\) & KO \\
+\midrule
+cooking-time & 0.537 & 0.588 & 0.673 & 0.500 & 0.510 & 0.583 & 0.596 & 0.758 & 0.416 & 0.319 \\
+ecom-offers  & 0.797 & 0.792 & 0.700 & 0.626 & 0.642 & 0.613 & 0.806 & 0.511 & 0.572 & 0.361 \\
+weather      & 0.430 & 0.561 & 0.729 & 0.588 & 0.682 & 0.687 & 0.629 & 0.512 & 0.510 & 0.536 \\
+\midrule
+mean         & 0.588 & 0.647 & 0.701 & 0.571 & 0.611 & 0.628 & 0.677 & 0.594 & 0.499 & 0.405 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{TabReD wall seconds per cell, nine cells.
+PermuCATE, LOCO, and GRF share one causal block.
+The total adds that block three times.}
+\label{tab:tabred-eff}
+\begin{tabular}{@{}l *{11}{r}@{}}
+\toprule
+ & FSDS & RF & \(\Delta\)SH & MMD & PC & LOCO & GRF & L1\(_m\) & L1\(_s\) & KO & total \\
+\midrule
+sec & 0.6 & 0.6 & 7.9 & 20.9 & 56.0 & 56.0 & 56.0 & 7.5 & 7.5 & 7.5 & 220.5 \\
+\(\times\) vs.\ first & 1.0 & 1.0 & 14.2 & 37.6 & 100.9 & 100.9 & 100.9 & 13.5 & 13.5 & 13.5 & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Leave-one-site-out influence holds the whole-batch vector fixed and
+deletes one upload:
+\[
+\Delta_k=\rho(\mathrm{agg},\mathrm{whole})-\rho(\mathrm{agg}_{-k},\mathrm{whole}).
+\]
+On the random partition, \(\rho_{n|S|}=0.889\pm 0.106\) over \(45\) cells
+and the largest \(|\Delta_k|\) averages \(0.054\).
+On the feature-rank partition, \(\rho_{n|S|}=0.243\pm 0.241\) and the
+largest \(|\Delta_k|\) averages \(0.057\).
+The deletion moves the aggregate by the same amount whether the aggregate
+is aligned or not.
+Weather \texttt{num\_98}, the strongest feature-rank cell
+(\(\rho=0.645\)), moves by \(0.093\).
+Weather \texttt{num\_5}, a negative cell, moves by \(0.031\).
+Influence does not rank a misaligned split above an aligned one, because
+deleting one site cannot reveal that every site points the same wrong way.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\caption{TabReD FSDS leave-one-site-out.
+Random is the deployment partition.
+Feature-rank is the sensitivity.
+Entries are mean\(\pm\)SD.}
+\label{tab:tabred-fsds-loso}
+\begin{tabular}{@{}ll r r r r r r@{}}
+\toprule
+protocol & task & \(n\)
+ & \(\rho_{n|S|}\) & \(|\Delta|_{n|S|}\)
+ & \(\rho_{\mathrm{unif}}\) & \(|\Delta|_{\mathrm{unif}}\)
+ & \(|\Delta|_{\mathrm{med}}\) \\
+\midrule
+feature-rank & ALL          & 9  & \(0.243\pm 0.241\) & \(0.057\pm 0.017\) & \(0.231\pm 0.237\) & \(0.047\pm 0.016\) & \(0.052\pm 0.029\) \\
+feature-rank & cooking-time & 3  & \(0.300\pm 0.183\) & \(0.053\pm 0.008\) & \(0.299\pm 0.199\) & \(0.045\pm 0.015\) & \(0.036\pm 0.013\) \\
+feature-rank & ecom-offers  & 3  & \(0.264\pm 0.093\) & \(0.057\pm 0.006\) & \(0.245\pm 0.088\) & \(0.057\pm 0.005\) & \(0.061\pm 0.019\) \\
+feature-rank & weather      & 3  & \(0.165\pm 0.419\) & \(0.060\pm 0.031\) & \(0.148\pm 0.400\) & \(0.040\pm 0.024\) & \(0.060\pm 0.047\) \\
+\midrule
+random & ALL          & 45 & \(0.889\pm 0.106\) & \(0.054\pm 0.052\) & \(0.884\pm 0.115\) & \(0.049\pm 0.042\) & \(0.064\pm 0.048\) \\
+random & cooking-time & 15 & \(0.807\pm 0.144\) & \(0.101\pm 0.068\) & \(0.794\pm 0.159\) & \(0.090\pm 0.049\) & \(0.114\pm 0.047\) \\
+random & ecom-offers  & 15 & \(0.921\pm 0.049\) & \(0.023\pm 0.013\) & \(0.923\pm 0.044\) & \(0.022\pm 0.012\) & \(0.030\pm 0.017\) \\
+random & weather      & 15 & \(0.939\pm 0.033\) & \(0.040\pm 0.014\) & \(0.934\pm 0.034\) & \(0.035\pm 0.011\) & \(0.048\pm 0.024\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\caption{Feature-rank cells: largest leave-one-site-out \(|\Delta|\) by
+aggregator.}
+\label{tab:tabred-fsds-loso-feat}
+\begin{tabular}{@{}ll r r r r r r@{}}
+\toprule
+task & split & \(\rho_{n|S|}\) & \(|\Delta|_{n|S|}\)
+     & \(|\Delta|_n\) & \(|\Delta|_{\mathrm{unif}}\)
+     & \(|\Delta|_{\mathrm{med}}\) & \(|\Delta|_{\mathrm{rank}}\) \\
+\midrule
+cooking-time & num\_184 & 0.092  & 0.054 & 0.047 & 0.061 & 0.027 & 0.031 \\
+cooking-time & num\_38  & 0.437  & 0.045 & 0.054 & 0.042 & 0.031 & 0.048 \\
+cooking-time & num\_123 & 0.373  & 0.060 & 0.062 & 0.032 & 0.051 & 0.053 \\
+ecom-offers  & num\_67  & 0.347  & 0.062 & 0.057 & 0.062 & 0.081 & 0.073 \\
+ecom-offers  & num\_104 & 0.283  & 0.059 & 0.067 & 0.053 & 0.042 & 0.056 \\
+ecom-offers  & num\_60  & 0.163  & 0.050 & 0.050 & 0.055 & 0.059 & 0.077 \\
+weather      & num\_5   & \(-0.025\) & 0.031 & 0.029 & 0.022 & 0.029 & 0.059 \\
+weather      & num\_84  & \(-0.126\) & 0.055 & 0.038 & 0.031 & 0.037 & 0.039 \\
+weather      & num\_98  & 0.645  & 0.093 & 0.068 & 0.067 & 0.114 & 0.054 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Statistical justification}
+\label{sec:theory}
+
+Write \(V_{j,k}\) for the importance of feature \(j\) at site \(k\).
+Dependence across features inside a site is unrestricted.
+Across sites the uploads are treated as independent.
+This is a statement about the uploaded vectors, not about multi-modal
+attribution with several loaders.
+The guarantee uses consistency of the local estimator in mean and
+variance: \(\hat V_{j,k}\xrightarrow{p} V_{j,k}^{\star}\) and
+\(\hat\sigma_{j,k}^2\xrightarrow{p}\sigma_{j,k}^2\).
+Normalizing each upload onto the simplex gives
+\(\|V_k\|_2\le\|V_k\|_1=1\), so the aggregate converges to its
+expectation, and the Matrix Bernstein inequality upgrades pointwise
+consistency to a uniform bound over the \(p\) coordinates.
+The bound does not require the \(p\times p\) covariance of the
+coordinates.
+The dimension enters as \(\log(2p/\delta)\).
+
+\begin{quote}
+\noindent\textbf{Theorem (Matrix Bernstein bound for aggregated VIMP).}
+Let \(V_k\in[0,1]^p\) with \(\sum_{j=1}^p V_{k,j}=1\) for each
+\(k\in\{1,\ldots,K\}\), and let
+\(\bar V=K^{-1}\sum_{k=1}^K V_k\).
+For any \(\delta\in(0,1)\), with probability at least \(1-\delta\),
+\begin{equation}
+\label{eq:matrix_bernstein_main}
+\bigl\| \bar V - \mathbb{E}[\bar V] \bigr\|_2
+\le
+\sqrt{\frac{2\log(2p/\delta)}{K}}
++
+\frac{2\log(2p/\delta)}{3K}.
+\end{equation}
+\end{quote}
+
+The same simplex bound is the starting point for a mean, a median, and
+inverse-variance weights.
+The median and the mean satisfy it once a consistent variance estimator
+exists, for example from the bootstrap, the jackknife, or the
+bag of little bootstraps.
+Inverse-variance weights need the additional lower bound in
+Assumption~(A6).
+If that bound fails for some site, truncated weights or equal weights
+restore the coordinate-wise inequality below.
+Each site uploads its normalized vector once.
+Relative to iterative synchronization of a high-dimensional model, the
+communication is smaller by a factor of order \(1/K\), and no raw row is
+sent.
+
+\par\noindent\textbf{Claim.}
+\label{sec:fed-ood-vimp-tight}
+Under Assumptions~(A1)--(A4), the one-shot aggregate obeys the scalar and
+coordinate-wise bounds \eqref{eq:scalar}--\eqref{eq:linf}.
+Under the gap condition~(A5), the empirical Top-\(K\) set of \(\bar V\)
+equals that of \(\mathbb{E}\bar V\) on the event
+\(\{\|\bar V-\mathbb{E}\bar V\|_{\infty}<\mathrm{margin}/2\}\).
+Under~(A6), the leading range factor in \eqref{eq:linf} may be replaced
+by an empirical variance proxy.
+Any simplex upload satisfies the assumptions.
+They do not require a low-rank or sparse model for
+\(\Sigma=\mathrm{Cov}(V_k)\).
+The inequalities are not asserted to dominate the spectral bound for every
+\(\Sigma\), and they are not asserted to be minimax.
+They are enough for coordinate-wise control and for a Top-\(K\) corollary.
+
+\par\noindent\textbf{Assumptions.}
+\begin{itemize}
+\item[(A1)] \(V_k\in[0,1]^p\) with \(\mathbf{1}^{\top}V_k=1\);
+  the sites are independent;
+  \(\bar V=\sum_k w_k V_k\) with \(w_k\ge 0\) and \(\sum_k w_k=1\).
+\item[(A2)] \(\hat R:=\max_k\|V_k\|_2\) and \(R_{\star}\ge\hat R\)
+  (for example \(R_{\star}=1\)).
+\item[(A3)] \(K_{\mathrm{eff}}\) is the effective sample size induced by
+  \((w_k)\). It equals \(K\) when \(w_k=1/K\).
+\item[(A4)] A fixed contrast \(a\in\mathbb{R}^p\) with \(\|a\|_2\le 1\);
+  \(v_a=\mathrm{Var}(a^{\top}V_1)\) under identical site laws, or the
+  analogous weighted variance otherwise.
+\item[(A5)] The population shares separate a designated index set of size
+  \(K\) from its complement by a margin \(\mathrm{margin}>0\).
+\item[(A6)] Consistent estimates
+  \(\hat\sigma_k^2\ge\underline\sigma^2>0\) for the coordinates or the
+  contrast in use.
+\end{itemize}
+Dependence among coordinates inside a site is unrestricted, and \(\Sigma\)
+is not estimated.
+No condition is imposed on \(\mathrm{rank}(\Sigma)\).
+In particular,~(A1) and~(A2) hold for every FSDS share.
+
+\par\noindent\textbf{Spectral baseline.}
+Under~(A1)--(A3) and a bound \(R\) on
+\(\|w_k(V_k-\mathbb{E}V_k)\|_2\), Matrix Bernstein
+\cite{tropp2012user,mackey2014matrix} yields, with probability at least
+\(1-\delta\),
+\[
+\|\bar V-\mathbb{E}\bar V\|_2
+\le
+C\Bigl(
+R\sqrt{\frac{\log(2p/\delta)}{K_{\mathrm{eff}}}}
++
+R\frac{\log(2p/\delta)}{K_{\mathrm{eff}}}
+\Bigr).
+\]
+The substitution used below is \(R\leftarrow R_{\star}\) from~(A2).
+
+\par\noindent\textbf{Scalar and \(\ell_\infty\) bounds.}
+Under~(A1)--(A4), with probability at least \(1-\delta\),
+\begin{equation}
+\label{eq:scalar}
+\bigl|a^{\top}(\bar V-\mathbb{E}\bar V)\bigr|
+\le
+C\Bigl(
+\sqrt{\frac{v_a\log(2/\delta)}{K_{\mathrm{eff}}}}
++
+R_{\star}\frac{\log(2/\delta)}{K_{\mathrm{eff}}}
+\Bigr),
+\end{equation}
+and, by a union bound over coordinates,
+\begin{equation}
+\label{eq:linf}
+\|\bar V-\mathbb{E}\bar V\|_{\infty}
+\le
+C\Bigl(
+R_{\star}\sqrt{\frac{\log(2p/\delta)}{K_{\mathrm{eff}}}}
++
+R_{\star}\frac{\log(2p/\delta)}{K_{\mathrm{eff}}}
+\Bigr).
+\end{equation}
+Equation~\eqref{eq:linf} is the deviation that enters the Top-\(K\) event.
+It is not presented as a strict improvement of the spectral-norm
+inequality for every covariance.
+
+\par\noindent\textbf{Top-\(K\) corollary.}
+Under~(A1)--(A5), the event
+\(\{\|\bar V-\mathbb{E}\bar V\|_{\infty}<\mathrm{margin}/2\}\) implies
+equality of the empirical and population Top-\(K\) sets.
+Together with~\eqref{eq:linf}, a sufficient condition is
+\[
+C\Bigl(
+R_{\star}\sqrt{\frac{\log(2p/\delta)}{K_{\mathrm{eff}}}}
++
+R_{\star}\frac{\log(2p/\delta)}{K_{\mathrm{eff}}}
+\Bigr)
+<
+\frac12\,\mathrm{margin}.
+\]
+If the margin lies below this threshold, Top-\(K\) instability comes from
+insufficient separation of the population shares, not from the choice
+among the mean, the median, and inverse-variance weights.
+Concordance of the full Spearman ranking is not claimed.
+
+\par\noindent\textbf{Empirical Bernstein.}
+Under~(A1)--(A4) and~(A6), empirical Bernstein
+\cite{wainwright2019high,vershynin2018high} replaces the leading factor
+\(R_{\star}\) in~\eqref{eq:linf} by a consistent variance proxy, up to a
+remainder of order \(R_{\star}\log(2p/\delta)/K_{\mathrm{eff}}\).
+The same variance input is required for inverse-variance weights
+\cite{dersim}.
+If the lower bound in~(A6) fails at some site, truncated weights or equal
+weights restore~\eqref{eq:linf}.
+
+The bound concentrates \(\bar V\) around \(\mathbb{E}\bar V\).
+It does not identify which sites belong in that expectation.
+A noise site and a drifted site can both upload a large vector.
+The expectation of the uniform average then mixes a concept with a
+consensus breaker, and the inequality still holds around that mixture.
+Section~\ref{sec:drivers} is the justification for which sites enter the
+sum.
+
+\subsection{Justifying shift drivers across sites}
+\label{sec:drivers}
+
+A driver is a site whose conditional distribution \(P(Y\mid X)\) has
+changed, in a way a local model can learn, relative to a shared burn-in.
+The ten-site design makes that set known.
+Covariates are the ACS Income and ACS Public Coverage extracts used by
+WhyShift, California 2018, winsorized and standardized on the analysis
+sample, then cut at random into \(K=10\) sites of \(1600\) rows.
+Every site therefore shares the same empirical \(P(X)\).
+Each site is \(T=16\) batches of \(100\) rows.
+The first four batches are the burn-in, still labeled by the real outcome
+\(y^{\mathrm{base}}\).
+At batch \(t^{\star}=8\), four clean sites keep \(y^{\mathrm{base}}\),
+three linear sites rewrite an upper tail of a designated coordinate
+\(X_1\) by a site-specific halfspace whose positive rate matches the
+baseline, two nonlinear sites rewrite every activated row by a product
+rule or by \(\sin(X_1)+X_3^2\), again rate-matched, and one noise site
+draws independent \(\mathrm{Bernoulli}(1/2)\) labels.
+The noise site destroys consensus.
+It is not a driver.
+There is no new concept to learn.
+
+The site score uses a random forest with \(25\) trees, depth \(8\), and
+minimum leaf size \(5\).
+Local probabilities on the most recent six batches are three-fold
+cross-fit.
+Reference probabilities are the average of two forests, each trained on a
+subset of the pooled burn-in whose size equals the local training set.
+On a region \(\mathcal{R}\) with both classes present, at least fifty
+current rows, and at least eighty reference rows,
+\begin{equation}
+\label{eq:delta-region-fed}
+\Delta_k(\mathcal{R})
+=
+\bigl(B(\mu_0^{\mathrm{sm}})-B(\mu_k^{\mathrm{oof}})\bigr)_+
+\cdot
+\bigl(2(\mathrm{AUC}(\mu_k^{\mathrm{oof}})-1/2)\bigr)_+,
+\end{equation}
+and the reported score is
+\begin{equation}
+\label{eq:delta-cf-fed}
+\Delta_k^{\mathrm{cf}}
+=
+\max_{\mathcal{R}\in\{\mathrm{all},\,\mathrm{high},\,\mathrm{low}\}}
+\Delta_k(\mathcal{R}).
+\end{equation}
+High and low are the two sides of the burn-in median of \(X_1\).
+The first factor is the excess Brier risk of the size-matched reference.
+The second factor is zero when the local model does not beat a coin.
+The concept contrast on the winning region is
+\(\tau_k^2=\mathrm{mean}(\mu_k^{\mathrm{oof}}-\mu_0^{\mathrm{sm}})^2\),
+and \(\tau_k^{2,\mathrm{g}}\) multiplies it by the same skill factor.
+Pairwise concordance \(C(s;\mathcal{A},\mathcal{B})\) is the fraction of
+pairs with a strict inequality \(s_a>s_b\).
+The target is \(C(\Delta^{\mathrm{cf}};\mathcal{P},\mathcal{C})>0.8\),
+where \(\mathcal{P}\) is the five structured sites and \(\mathcal{C}\) is
+the four clean sites.
+
+At full rewrite, abrupt activation, and a median tail, over four seeds,
+that concordance equals \(1\) on both tasks, in every seed, for linear
+sites alone, for nonlinear sites alone, and for \(\mathcal{P}\) against
+the noise site.
+On Income the linear score is \(0.253\) on the upper tail and \(0.024\) on
+the whole window, because hours worked pile up at \(40\) and the median
+tail is about \(23\%\) of the rows.
+The noise site has skill \(0.008\) and \(\Delta^{\mathrm{cf}}=0.001\),
+while its ungated contrast is \(\tau^2=0.096\), larger than the clean
+contrast \(0.015\).
+The skill factor is what refuses to call that gap a driver.
+Pooled excess, without size matching and without the skill factor, ranks
+the Income noise site above every linear site: its concordance against
+the noise site is \(0.400\), which is exactly the two nonlinear sites
+beating the noise site and the three linear sites failing to.
+Label total variation and the covariate arms (domain AUC, RBF MMD) do not
+separate \(\mathcal{P}\) from \(\mathcal{C}\).
+The joint classifier on \((X,Y)\) clears \(0.8\) against clean sites on
+average and ranks the noise site as the stronger departure.
+
+A Pareto rank on \((\Delta^{\mathrm{cf}},\tau^{2,\mathrm{g}},\text{time jump})\)
+has the same concordance of \(1\).
+Mean ranks on Income are \(1.875\) (nonlinear), \(3.250\) (linear),
+\(6.625\) (clean), and \(6.750\) (noise).
+The undominated front is mostly the nonlinear sites.
+Linear sites are often dominated by a nonlinear site, because the
+nonlinear rule rewrites every row, and they remain strictly ahead of every
+clean site and of the noise site.
+The time curve of \(\Delta^{\mathrm{cf}}\), on windows of four batches,
+leaves zero after \(t^{\star}\) and levels off at batch \(11\), the first
+endpoint whose window lies entirely inside the drift.
+An online threshold at the maximum of the first two endpoints plus \(0.01\)
+hits every nonlinear site and, on Public Coverage, every linear site.
+Income linear sites hit in \(0.833\) of replicates.
+Income clean sites cross the threshold with rate \(0.375\); those crossings
+have mean absolute error \(4.17\) batches, so the typical alarm is not a
+call at \(t^{\star}\).
+The derivative of the curve marks the start of the plateau, about one
+window later.
+
+Concept-group logistic scores on \((Z_1,Z_2)\), on \(Z_1 Z_2\), and on
+\((\sin Z_1, Z_3^2)\) name the mechanism only on the region where it was
+planted.
+Top-five precision of \(\Delta^{\mathrm{cf}}\) is \(1\) in every seed.
+On the full window, product and sine-square recall are \(1\) and linear
+recall is \(0.500\).
+On the upper tail, linear recall is \(0.917\) and product recall falls to
+\(0.375\).
+Shift-permutation importance on a drifted site recovers the planted
+coordinates (AUC at least \(0.906\) on linear sites).
+Weighting those uploads by \(\Delta^{\mathrm{cf}}\) raises Income recovery
+AUC from \(0.869\) to \(0.917\).
+Leave-one-site-out influence on the uniform shift vector is about
+\(0.01\)--\(0.03\) and is not larger for the drivers than for the clean
+sites.
+The same negative result is Table~\ref{tab:tabred-fsds-loso}.
+The object that separates drivers is \(\Delta^{\mathrm{cf}}\), computed
+from the site's own labels, before the aggregate is formed.
+
+The \(0.8\) target is not uniform in the design.
+On Income, it holds for rewrite probabilities \(0.7\) and \(1\) down to a
+linear tail of about \(17\%\) of rows, abrupt or gradual.
+It falls below \(0.8\) at rewrite probability \(0.4\) (mean concordance
+\(0.783\), worst seed \(0.650\), on the main tail), and at a tail of about
+\(8\%\) combined with rewrite probability \(0.7\) and a four-batch ramp
+(\(0.683\), worst seed \(0.500\)).
+On that weak main-tail slice the whole-window score, without the region
+maximum, has concordance \(0.433\).
+
+\subsection{Summary}
+\label{sec:fed-summary}
+
+Covariate-shift rankings and predictive rankings aggregate.
+A uniform weight is enough when sites are similar in size.
+A size weight is the change when they are not: the high-mismatch gain is
+\(+0.285\), and it grows with heterogeneity.
+A median or a client-agreement Shapley weight is the change when one or
+two uploads are replaced.
+Inverse-variance weights are the change when the variance estimate is
+bounded below and the wrapper is a covariate score.
+They inflate a corrupted site that reports a small variance, and they do
+not repair pseudo-outcome risk.
+Concept rankings are weaker under aggregation because the sites are not
+noisy copies of one concept: WhyShift PO-risk falls from \(0.410\) to
+\(0.185\) under sample-size weights, FEMNIST PO-risk on a pure noise
+treatment correlates at about zero, and a five-plus-five mixture of
+covariate and concept sites correlates about \(0.30\) with the clean
+aggregate.
+The justification for a driver is the skill-gated, size-matched excess
+\(\Delta^{\mathrm{cf}}\).
+At full intensity it places every structured site ahead of every clean
+site and ahead of the noise site, on both ACS tasks, in every seed.
+Leave-one-site-out influence does not.
+Where every aggregator returns the same wrong Spearman correlation, as in
+cooking \texttt{num\_105}, the split is the defect and the weight is not.
+
+The construction is not a full federated optimization.
+It attributes shift at the feature level from one upload per site, with
+the finite-sample bound \eqref{eq:matrix_bernstein_main} and the per-site
+rule in Table~\ref{tab:weight-rule}.
+Open directions are streaming updates, modality-wise pseudo-outcome
+contributions, and a differentially private upload that preserves the same
+concentration.

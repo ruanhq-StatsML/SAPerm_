@@ -1,0 +1,14 @@
+dataset: movielens
+seed: 0
+generator: stub
+metric: mean_diff
+
+loader_args:
+  data_dir: data/movielens
+  min_ratings: 20
+
+# generator: tabforge
+# generator: ctgan
+# generator_args:
+#   epochs: 300
+#   n_bins: 10

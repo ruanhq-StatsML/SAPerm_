@@ -1,0 +1,7 @@
+dataset: ieee_cis
+seed: 0
+generator: stub
+metric: mean_diff
+
+loader_args:
+  data_dir: data/ieee_cis

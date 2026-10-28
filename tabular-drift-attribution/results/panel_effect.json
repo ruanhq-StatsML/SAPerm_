@@ -1,0 +1,2540 @@
+{
+  "movielens": {
+    "n_batches": 8,
+    "rows_per_batch": 2000,
+    "n_features": 17,
+    "dropped_degenerate": [],
+    "block_sizes": {
+      "user": 4,
+      "item": 10,
+      "context": 3
+    },
+    "block_columns": {
+      "user": [
+        "gender_num",
+        "age_num",
+        "occupation_num",
+        "zip_num"
+      ],
+      "item": [
+        "genre_Comedy",
+        "genre_Drama",
+        "genre_Action",
+        "genre_Thriller",
+        "genre_Sci-Fi",
+        "genre_Romance",
+        "genre_Adventure",
+        "genre_Crime"
+      ],
+      "context": [
+        "rating",
+        "hour",
+        "day_of_week"
+      ]
+    },
+    "cf_matches_marginal_top1": 0.429,
+    "std_matches_wasserstein_top1": 0.571,
+    "late_batches": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "rows": [
+      {
+        "t": 1,
+        "n": 1992,
+        "valid_ratio": 0.996,
+        "top_raw": "user",
+        "top_std": "context",
+        "top_marginal": "context",
+        "top_wasserstein": "context",
+        "raw": {
+          "user": 5.8694,
+          "item": 0.2747,
+          "context": 4.1232
+        },
+        "std": {
+          "user": 1.0341,
+          "item": 0.7233,
+          "context": 1.0994
+        },
+        "marginal": {
+          "user": 0.1052,
+          "item": 0.021,
+          "context": 0.1466
+        },
+        "wasserstein": {
+          "user": 0.1201,
+          "item": 0.0288,
+          "context": 0.1783
+        },
+        "share_raw": {
+          "user": 0.5717,
+          "context": 0.4016,
+          "item": 0.0268
+        },
+        "share_std": {
+          "context": 0.3848,
+          "user": 0.362,
+          "item": 0.2532
+        },
+        "share_marginal": {
+          "context": 0.5374,
+          "user": 0.3855,
+          "item": 0.0771
+        },
+        "share_wasserstein": {
+          "context": 0.5448,
+          "user": 0.3671,
+          "item": 0.0881
+        }
+      },
+      {
+        "t": 2,
+        "n": 1991,
+        "valid_ratio": 0.996,
+        "top_raw": "user",
+        "top_std": "context",
+        "top_marginal": "user",
+        "top_wasserstein": "user",
+        "raw": {
+          "user": 5.8349,
+          "item": 0.2713,
+          "context": 3.9458
+        },
+        "std": {
+          "user": 1.0171,
+          "item": 0.7122,
+          "context": 1.0769
+        },
+        "marginal": {
+          "user": 0.1521,
+          "item": 0.0505,
+          "context": 0.0995
+        },
+        "wasserstein": {
+          "user": 0.1917,
+          "item": 0.0587,
+          "context": 0.1197
+        },
+        "share_raw": {
+          "user": 0.5805,
+          "context": 0.3925,
+          "item": 0.027
+        },
+        "share_std": {
+          "context": 0.3838,
+          "user": 0.3624,
+          "item": 0.2538
+        },
+        "share_marginal": {
+          "user": 0.5036,
+          "context": 0.3294,
+          "item": 0.167
+        },
+        "share_wasserstein": {
+          "user": 0.518,
+          "context": 0.3234,
+          "item": 0.1586
+        }
+      },
+      {
+        "t": 3,
+        "n": 1991,
+        "valid_ratio": 0.996,
+        "top_raw": "user",
+        "top_std": "context",
+        "top_marginal": "user",
+        "top_wasserstein": "user",
+        "raw": {
+          "user": 5.7961,
+          "item": 0.2792,
+          "context": 4.0626
+        },
+        "std": {
+          "user": 1.0385,
+          "item": 0.7393,
+          "context": 1.1003
+        },
+        "marginal": {
+          "user": 0.0875,
+          "item": 0.048,
+          "context": 0.0356
+        },
+        "wasserstein": {
+          "user": 0.1233,
+          "item": 0.0398,
+          "context": 0.0784
+        },
+        "share_raw": {
+          "user": 0.5717,
+          "context": 0.4007,
+          "item": 0.0275
+        },
+        "share_std": {
+          "context": 0.3823,
+          "user": 0.3608,
+          "item": 0.2569
+        },
+        "share_marginal": {
+          "user": 0.5114,
+          "item": 0.2806,
+          "context": 0.208
+        },
+        "share_wasserstein": {
+          "user": 0.5107,
+          "context": 0.3245,
+          "item": 0.1647
+        }
+      },
+      {
+        "t": 4,
+        "n": 1993,
+        "valid_ratio": 0.997,
+        "top_raw": "user",
+        "top_std": "context",
+        "top_marginal": "context",
+        "top_wasserstein": "context",
+        "raw": {
+          "user": 6.0883,
+          "item": 0.2734,
+          "context": 4.2653
+        },
+        "std": {
+          "user": 1.0423,
+          "item": 0.7151,
+          "context": 1.172
+        },
+        "marginal": {
+          "user": 0.1358,
+          "item": 0.0401,
+          "context": 0.1735
+        },
+        "wasserstein": {
+          "user": 0.1669,
+          "item": 0.0577,
+          "context": 0.2824
+        },
+        "share_raw": {
+          "user": 0.5729,
+          "context": 0.4014,
+          "item": 0.0257
+        },
+        "share_std": {
+          "context": 0.4001,
+          "user": 0.3558,
+          "item": 0.2441
+        },
+        "share_marginal": {
+          "context": 0.4966,
+          "user": 0.3887,
+          "item": 0.1147
+        },
+        "share_wasserstein": {
+          "context": 0.557,
+          "user": 0.3292,
+          "item": 0.1137
+        }
+      },
+      {
+        "t": 5,
+        "n": 1997,
+        "valid_ratio": 0.999,
+        "top_raw": "user",
+        "top_std": "context",
+        "top_marginal": "context",
+        "top_wasserstein": "context",
+        "raw": {
+          "user": 6.1934,
+          "item": 0.2757,
+          "context": 4.0462
+        },
+        "std": {
+          "user": 1.0772,
+          "item": 0.7225,
+          "context": 1.0856
+        },
+        "marginal": {
+          "user": 0.157,
+          "item": 0.0228,
+          "context": 0.2885
+        },
+        "wasserstein": {
+          "user": 0.1742,
+          "item": 0.0369,
+          "context": 0.3075
+        },
+        "share_raw": {
+          "user": 0.589,
+          "context": 0.3848,
+          "item": 0.0262
+        },
+        "share_std": {
+          "context": 0.3763,
+          "user": 0.3733,
+          "item": 0.2504
+        },
+        "share_marginal": {
+          "context": 0.616,
+          "user": 0.3353,
+          "item": 0.0487
+        },
+        "share_wasserstein": {
+          "context": 0.5929,
+          "user": 0.3359,
+          "item": 0.0712
+        }
+      },
+      {
+        "t": 6,
+        "n": 1989,
+        "valid_ratio": 0.995,
+        "top_raw": "user",
+        "top_std": "context",
+        "top_marginal": "user",
+        "top_wasserstein": "user",
+        "raw": {
+          "user": 5.7872,
+          "item": 0.2761,
+          "context": 4.1316
+        },
+        "std": {
+          "user": 1.0167,
+          "item": 0.7308,
+          "context": 1.1156
+        },
+        "marginal": {
+          "user": 0.1423,
+          "item": 0.0311,
+          "context": 0.0547
+        },
+        "wasserstein": {
+          "user": 0.1768,
+          "item": 0.037,
+          "context": 0.0827
+        },
+        "share_raw": {
+          "user": 0.5677,
+          "context": 0.4053,
+          "item": 0.0271
+        },
+        "share_std": {
+          "context": 0.3896,
+          "user": 0.3551,
+          "item": 0.2552
+        },
+        "share_marginal": {
+          "user": 0.6238,
+          "context": 0.2398,
+          "item": 0.1364
+        },
+        "share_wasserstein": {
+          "user": 0.5963,
+          "context": 0.2789,
+          "item": 0.1248
+        }
+      },
+      {
+        "t": 7,
+        "n": 1995,
+        "valid_ratio": 0.998,
+        "top_raw": "user",
+        "top_std": "context",
+        "top_marginal": "user",
+        "top_wasserstein": "context",
+        "raw": {
+          "user": 5.9378,
+          "item": 0.2688,
+          "context": 4.1056
+        },
+        "std": {
+          "user": 1.0509,
+          "item": 0.7054,
+          "context": 1.1161
+        },
+        "marginal": {
+          "user": 0.0975,
+          "item": 0.048,
+          "context": 0.0842
+        },
+        "wasserstein": {
+          "user": 0.1299,
+          "item": 0.0807,
+          "context": 0.1307
+        },
+        "share_raw": {
+          "user": 0.5758,
+          "context": 0.3981,
+          "item": 0.0261
+        },
+        "share_std": {
+          "context": 0.3886,
+          "user": 0.3659,
+          "item": 0.2456
+        },
+        "share_marginal": {
+          "user": 0.4245,
+          "context": 0.3667,
+          "item": 0.2087
+        },
+        "share_wasserstein": {
+          "context": 0.383,
+          "user": 0.3806,
+          "item": 0.2364
+        }
+      }
+    ],
+    "planted_plus_1sd": {
+      "user": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 2.0,
+        "share_after": 0.445,
+        "share_before_same_batches": 0.3625,
+        "share_early": 0.3617
+      },
+      "item": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 3.0,
+        "share_after": 0.4006,
+        "share_before_same_batches": 0.2488,
+        "share_early": 0.2546
+      },
+      "context": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 1.0,
+        "share_after": 0.4362,
+        "share_before_same_batches": 0.3886,
+        "share_early": 0.3836
+      }
+    }
+  },
+  "ieee_cis": {
+    "n_batches": 8,
+    "rows_per_batch": 2000,
+    "n_features": 400,
+    "dropped_degenerate": [
+      "V107",
+      "V241",
+      "V305"
+    ],
+    "block_sizes": {
+      "time": 3,
+      "amount": 1,
+      "card": 4,
+      "address": 4,
+      "counts": 14,
+      "timedelta": 15,
+      "vesta": 336,
+      "identity": 23
+    },
+    "block_columns": {
+      "time": [
+        "TransactionDT",
+        "hour",
+        "day"
+      ],
+      "amount": [
+        "TransactionAmt"
+      ],
+      "card": [
+        "card1",
+        "card2",
+        "card3",
+        "card5"
+      ],
+      "address": [
+        "addr1",
+        "addr2",
+        "dist1",
+        "dist2"
+      ],
+      "counts": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7",
+        "C8"
+      ],
+      "timedelta": [
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8"
+      ],
+      "vesta": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6",
+        "V7",
+        "V8"
+      ],
+      "identity": [
+        "id_01",
+        "id_02",
+        "id_03",
+        "id_04",
+        "id_05",
+        "id_06",
+        "id_07",
+        "id_08"
+      ]
+    },
+    "cf_matches_marginal_top1": 1.0,
+    "std_matches_wasserstein_top1": 1.0,
+    "late_batches": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "rows": [
+      {
+        "t": 1,
+        "n": 1666,
+        "valid_ratio": 0.833,
+        "top_raw": "time",
+        "top_std": "time",
+        "top_marginal": "time",
+        "top_wasserstein": "time",
+        "raw": {
+          "time": 423383.6562,
+          "amount": 113.2467,
+          "card": 1438.2858,
+          "address": 47.3995,
+          "counts": 5.0993,
+          "timedelta": 30.7702,
+          "vesta": 161.8395,
+          "identity": 1518.5659
+        },
+        "std": {
+          "time": 2.2002,
+          "amount": 0.5217,
+          "card": 0.8091,
+          "address": 0.3872,
+          "counts": 0.0677,
+          "timedelta": 0.3125,
+          "vesta": 0.194,
+          "identity": 0.2205
+        },
+        "marginal": {
+          "time": 2.0135,
+          "amount": 0.0121,
+          "card": 0.0296,
+          "address": 0.0593,
+          "counts": 0.1041,
+          "timedelta": 0.0506,
+          "vesta": 0.0606,
+          "identity": 0.0362
+        },
+        "wasserstein": {
+          "time": 1.8689,
+          "amount": 0.0514,
+          "card": 0.0468,
+          "address": 0.0576,
+          "counts": 0.0204,
+          "timedelta": 0.0822,
+          "vesta": 0.1033,
+          "identity": 0.0608
+        },
+        "share_raw": {
+          "time": 0.9922,
+          "identity": 0.0036,
+          "card": 0.0034,
+          "vesta": 0.0004,
+          "amount": 0.0003,
+          "address": 0.0001,
+          "timedelta": 0.0001,
+          "counts": 0.0
+        },
+        "share_std": {
+          "time": 0.4668,
+          "card": 0.1717,
+          "amount": 0.1107,
+          "address": 0.0822,
+          "timedelta": 0.0663,
+          "identity": 0.0468,
+          "vesta": 0.0412,
+          "counts": 0.0144
+        },
+        "share_marginal": {
+          "time": 0.851,
+          "counts": 0.044,
+          "vesta": 0.0256,
+          "address": 0.0251,
+          "timedelta": 0.0214,
+          "identity": 0.0153,
+          "card": 0.0125,
+          "amount": 0.0051
+        },
+        "share_wasserstein": {
+          "time": 0.8156,
+          "vesta": 0.0451,
+          "timedelta": 0.0359,
+          "identity": 0.0266,
+          "address": 0.0251,
+          "amount": 0.0224,
+          "card": 0.0204,
+          "counts": 0.0089
+        }
+      },
+      {
+        "t": 2,
+        "n": 1777,
+        "valid_ratio": 0.888,
+        "top_raw": "time",
+        "top_std": "time",
+        "top_marginal": "time",
+        "top_wasserstein": "time",
+        "raw": {
+          "time": 1053371.375,
+          "amount": 128.7315,
+          "card": 1444.3616,
+          "address": 54.1757,
+          "counts": 7.3892,
+          "timedelta": 39.2642,
+          "vesta": 39.1784,
+          "identity": 711.6319
+        },
+        "std": {
+          "time": 4.967,
+          "amount": 0.593,
+          "card": 0.7776,
+          "address": 0.4098,
+          "counts": 0.0909,
+          "timedelta": 0.3693,
+          "vesta": 0.1752,
+          "identity": 0.0659
+        },
+        "marginal": {
+          "time": 4.6919,
+          "amount": 0.0272,
+          "card": 0.0408,
+          "address": 0.064,
+          "counts": 0.1096,
+          "timedelta": 0.1447,
+          "vesta": 0.0818,
+          "identity": 0.0856
+        },
+        "wasserstein": {
+          "time": 4.6377,
+          "amount": 0.1157,
+          "card": 0.0827,
+          "address": 0.0653,
+          "counts": 0.0293,
+          "timedelta": 0.1214,
+          "vesta": 0.0751,
+          "identity": 0.0211
+        },
+        "share_raw": {
+          "time": 0.9977,
+          "card": 0.0014,
+          "identity": 0.0007,
+          "amount": 0.0001,
+          "address": 0.0001,
+          "timedelta": 0.0,
+          "vesta": 0.0,
+          "counts": 0.0
+        },
+        "share_std": {
+          "time": 0.6668,
+          "card": 0.1044,
+          "amount": 0.0796,
+          "address": 0.055,
+          "timedelta": 0.0496,
+          "vesta": 0.0235,
+          "counts": 0.0122,
+          "identity": 0.0088
+        },
+        "share_marginal": {
+          "time": 0.8944,
+          "timedelta": 0.0276,
+          "counts": 0.0209,
+          "identity": 0.0163,
+          "vesta": 0.0156,
+          "address": 0.0122,
+          "card": 0.0078,
+          "amount": 0.0052
+        },
+        "share_wasserstein": {
+          "time": 0.9008,
+          "timedelta": 0.0236,
+          "amount": 0.0225,
+          "card": 0.0161,
+          "vesta": 0.0146,
+          "address": 0.0127,
+          "counts": 0.0057,
+          "identity": 0.0041
+        }
+      },
+      {
+        "t": 3,
+        "n": 1801,
+        "valid_ratio": 0.9,
+        "top_raw": "time",
+        "top_std": "time",
+        "top_marginal": "time",
+        "top_wasserstein": "time",
+        "raw": {
+          "time": 1769816.0,
+          "amount": 139.4843,
+          "card": 1432.902,
+          "address": 57.6095,
+          "counts": 7.6991,
+          "timedelta": 42.4257,
+          "vesta": 33.0617,
+          "identity": 771.6979
+        },
+        "std": {
+          "time": 8.1165,
+          "amount": 0.6425,
+          "card": 0.7789,
+          "address": 0.4259,
+          "counts": 0.0959,
+          "timedelta": 0.4052,
+          "vesta": 0.1893,
+          "identity": 0.0761
+        },
+        "marginal": {
+          "time": 7.7893,
+          "amount": 0.0197,
+          "card": 0.0379,
+          "address": 0.0823,
+          "counts": 0.1101,
+          "timedelta": 0.166,
+          "vesta": 0.0929,
+          "identity": 0.0854
+        },
+        "wasserstein": {
+          "time": 7.7766,
+          "amount": 0.1841,
+          "card": 0.0989,
+          "address": 0.103,
+          "counts": 0.037,
+          "timedelta": 0.1754,
+          "vesta": 0.0835,
+          "identity": 0.0235
+        },
+        "share_raw": {
+          "time": 0.9986,
+          "card": 0.0008,
+          "identity": 0.0004,
+          "amount": 0.0001,
+          "address": 0.0,
+          "timedelta": 0.0,
+          "vesta": 0.0,
+          "counts": 0.0
+        },
+        "share_std": {
+          "time": 0.7564,
+          "card": 0.0726,
+          "amount": 0.0599,
+          "address": 0.0397,
+          "timedelta": 0.0378,
+          "vesta": 0.0176,
+          "counts": 0.0089,
+          "identity": 0.0071
+        },
+        "share_marginal": {
+          "time": 0.9291,
+          "timedelta": 0.0198,
+          "counts": 0.0131,
+          "vesta": 0.0111,
+          "identity": 0.0102,
+          "address": 0.0098,
+          "card": 0.0045,
+          "amount": 0.0023
+        },
+        "share_wasserstein": {
+          "time": 0.9168,
+          "amount": 0.0217,
+          "timedelta": 0.0207,
+          "address": 0.0121,
+          "card": 0.0117,
+          "vesta": 0.0098,
+          "counts": 0.0044,
+          "identity": 0.0028
+        }
+      },
+      {
+        "t": 4,
+        "n": 1822,
+        "valid_ratio": 0.911,
+        "top_raw": "time",
+        "top_std": "time",
+        "top_marginal": "time",
+        "top_wasserstein": "time",
+        "raw": {
+          "time": 2433518.25,
+          "amount": 147.1541,
+          "card": 1415.8848,
+          "address": 47.7909,
+          "counts": 6.6467,
+          "timedelta": 44.5947,
+          "vesta": 19.9032,
+          "identity": 701.1909
+        },
+        "std": {
+          "time": 11.014,
+          "amount": 0.6778,
+          "card": 0.7619,
+          "address": 0.3768,
+          "counts": 0.0829,
+          "timedelta": 0.4285,
+          "vesta": 0.1811,
+          "identity": 0.0684
+        },
+        "marginal": {
+          "time": 10.7257,
+          "amount": 0.0577,
+          "card": 0.0498,
+          "address": 0.0633,
+          "counts": 0.1101,
+          "timedelta": 0.1719,
+          "vesta": 0.0939,
+          "identity": 0.0852
+        },
+        "wasserstein": {
+          "time": 10.6883,
+          "amount": 0.2251,
+          "card": 0.1419,
+          "address": 0.0772,
+          "counts": 0.0339,
+          "timedelta": 0.1489,
+          "vesta": 0.0796,
+          "identity": 0.0267
+        },
+        "share_raw": {
+          "time": 0.999,
+          "card": 0.0006,
+          "identity": 0.0003,
+          "amount": 0.0001,
+          "address": 0.0,
+          "timedelta": 0.0,
+          "vesta": 0.0,
+          "counts": 0.0
+        },
+        "share_std": {
+          "time": 0.8104,
+          "card": 0.0561,
+          "amount": 0.0499,
+          "timedelta": 0.0315,
+          "address": 0.0277,
+          "vesta": 0.0133,
+          "counts": 0.0061,
+          "identity": 0.005
+        },
+        "share_marginal": {
+          "time": 0.9444,
+          "timedelta": 0.0151,
+          "counts": 0.0097,
+          "vesta": 0.0083,
+          "identity": 0.0075,
+          "address": 0.0056,
+          "amount": 0.0051,
+          "card": 0.0044
+        },
+        "share_wasserstein": {
+          "time": 0.9358,
+          "amount": 0.0197,
+          "timedelta": 0.013,
+          "card": 0.0124,
+          "vesta": 0.007,
+          "address": 0.0068,
+          "counts": 0.003,
+          "identity": 0.0023
+        }
+      },
+      {
+        "t": 5,
+        "n": 1848,
+        "valid_ratio": 0.924,
+        "top_raw": "time",
+        "top_std": "time",
+        "top_marginal": "time",
+        "top_wasserstein": "time",
+        "raw": {
+          "time": 3102365.25,
+          "amount": 144.8135,
+          "card": 1415.7463,
+          "address": 48.7371,
+          "counts": 6.3943,
+          "timedelta": 47.9633,
+          "vesta": 15.584,
+          "identity": 804.1441
+        },
+        "std": {
+          "time": 13.9435,
+          "amount": 0.6671,
+          "card": 0.7721,
+          "address": 0.3775,
+          "counts": 0.0783,
+          "timedelta": 0.467,
+          "vesta": 0.1864,
+          "identity": 0.0768
+        },
+        "marginal": {
+          "time": 13.6595,
+          "amount": 0.023,
+          "card": 0.03,
+          "address": 0.0747,
+          "counts": 0.1126,
+          "timedelta": 0.2098,
+          "vesta": 0.0931,
+          "identity": 0.0944
+        },
+        "wasserstein": {
+          "time": 13.6219,
+          "amount": 0.2136,
+          "card": 0.1457,
+          "address": 0.075,
+          "counts": 0.0471,
+          "timedelta": 0.1835,
+          "vesta": 0.0898,
+          "identity": 0.0286
+        },
+        "share_raw": {
+          "time": 0.9992,
+          "card": 0.0005,
+          "identity": 0.0003,
+          "amount": 0.0,
+          "address": 0.0,
+          "timedelta": 0.0,
+          "vesta": 0.0,
+          "counts": 0.0
+        },
+        "share_std": {
+          "time": 0.8416,
+          "card": 0.0466,
+          "amount": 0.0403,
+          "timedelta": 0.0282,
+          "address": 0.0228,
+          "vesta": 0.0113,
+          "counts": 0.0047,
+          "identity": 0.0046
+        },
+        "share_marginal": {
+          "time": 0.9554,
+          "timedelta": 0.0147,
+          "counts": 0.0079,
+          "identity": 0.0066,
+          "vesta": 0.0065,
+          "address": 0.0052,
+          "card": 0.0021,
+          "amount": 0.0016
+        },
+        "share_wasserstein": {
+          "time": 0.9456,
+          "amount": 0.0148,
+          "timedelta": 0.0127,
+          "card": 0.0101,
+          "vesta": 0.0062,
+          "address": 0.0052,
+          "counts": 0.0033,
+          "identity": 0.002
+        }
+      },
+      {
+        "t": 6,
+        "n": 1813,
+        "valid_ratio": 0.906,
+        "top_raw": "time",
+        "top_std": "time",
+        "top_marginal": "time",
+        "top_wasserstein": "time",
+        "raw": {
+          "time": 3843628.75,
+          "amount": 149.1074,
+          "card": 1394.3447,
+          "address": 48.932,
+          "counts": 5.5276,
+          "timedelta": 52.2773,
+          "vesta": 14.8403,
+          "identity": 638.7587
+        },
+        "std": {
+          "time": 17.1976,
+          "amount": 0.6868,
+          "card": 0.7584,
+          "address": 0.3775,
+          "counts": 0.0679,
+          "timedelta": 0.4967,
+          "vesta": 0.1917,
+          "identity": 0.0651
+        },
+        "marginal": {
+          "time": 16.889,
+          "amount": 0.0167,
+          "card": 0.0549,
+          "address": 0.0727,
+          "counts": 0.1086,
+          "timedelta": 0.2516,
+          "vesta": 0.0958,
+          "identity": 0.1027
+        },
+        "wasserstein": {
+          "time": 16.8672,
+          "amount": 0.2773,
+          "card": 0.1425,
+          "address": 0.0692,
+          "counts": 0.042,
+          "timedelta": 0.2068,
+          "vesta": 0.0924,
+          "identity": 0.025
+        },
+        "share_raw": {
+          "time": 0.9994,
+          "card": 0.0004,
+          "identity": 0.0002,
+          "amount": 0.0,
+          "timedelta": 0.0,
+          "address": 0.0,
+          "vesta": 0.0,
+          "counts": 0.0
+        },
+        "share_std": {
+          "time": 0.8667,
+          "card": 0.0382,
+          "amount": 0.0346,
+          "timedelta": 0.025,
+          "address": 0.019,
+          "vesta": 0.0097,
+          "counts": 0.0034,
+          "identity": 0.0033
+        },
+        "share_marginal": {
+          "time": 0.96,
+          "timedelta": 0.0143,
+          "counts": 0.0062,
+          "identity": 0.0058,
+          "vesta": 0.0054,
+          "address": 0.0041,
+          "card": 0.0031,
+          "amount": 0.001
+        },
+        "share_wasserstein": {
+          "time": 0.9517,
+          "amount": 0.0156,
+          "timedelta": 0.0117,
+          "card": 0.008,
+          "vesta": 0.0052,
+          "address": 0.0039,
+          "counts": 0.0024,
+          "identity": 0.0014
+        }
+      },
+      {
+        "t": 7,
+        "n": 1774,
+        "valid_ratio": 0.887,
+        "top_raw": "time",
+        "top_std": "time",
+        "top_marginal": "time",
+        "top_wasserstein": "time",
+        "raw": {
+          "time": 4571531.5,
+          "amount": 157.3351,
+          "card": 1491.1288,
+          "address": 48.5014,
+          "counts": 5.5421,
+          "timedelta": 50.717,
+          "vesta": 29.525,
+          "identity": 900.1639
+        },
+        "std": {
+          "time": 20.3802,
+          "amount": 0.7247,
+          "card": 0.7748,
+          "address": 0.3716,
+          "counts": 0.0701,
+          "timedelta": 0.4928,
+          "vesta": 0.3077,
+          "identity": 0.0937
+        },
+        "marginal": {
+          "time": 20.1443,
+          "amount": 0.0061,
+          "card": 0.0274,
+          "address": 0.0761,
+          "counts": 0.1077,
+          "timedelta": 0.2111,
+          "vesta": 0.1833,
+          "identity": 0.081
+        },
+        "wasserstein": {
+          "time": 20.0527,
+          "amount": 0.3134,
+          "card": 0.1444,
+          "address": 0.0811,
+          "counts": 0.044,
+          "timedelta": 0.2134,
+          "vesta": 0.2118,
+          "identity": 0.0424
+        },
+        "share_raw": {
+          "time": 0.9994,
+          "card": 0.0003,
+          "identity": 0.0002,
+          "amount": 0.0,
+          "timedelta": 0.0,
+          "address": 0.0,
+          "vesta": 0.0,
+          "counts": 0.0
+        },
+        "share_std": {
+          "time": 0.8779,
+          "card": 0.0334,
+          "amount": 0.0312,
+          "timedelta": 0.0212,
+          "address": 0.016,
+          "vesta": 0.0133,
+          "identity": 0.004,
+          "counts": 0.003
+        },
+        "share_marginal": {
+          "time": 0.9668,
+          "timedelta": 0.0101,
+          "vesta": 0.0088,
+          "counts": 0.0052,
+          "identity": 0.0039,
+          "address": 0.0037,
+          "card": 0.0013,
+          "amount": 0.0003
+        },
+        "share_wasserstein": {
+          "time": 0.9502,
+          "amount": 0.0149,
+          "timedelta": 0.0101,
+          "vesta": 0.01,
+          "card": 0.0068,
+          "address": 0.0038,
+          "counts": 0.0021,
+          "identity": 0.002
+        }
+      }
+    ],
+    "planted_plus_1sd": {
+      "time": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 1.0,
+        "share_after": 0.8544,
+        "share_before_same_batches": 0.8491,
+        "share_early": 0.63
+      },
+      "amount": {
+        "top1": 0.0,
+        "rank_after": 2.0,
+        "rank_before": 3.0,
+        "share_after": 0.066,
+        "share_before_same_batches": 0.039,
+        "share_early": 0.0834
+      },
+      "card": {
+        "top1": 0.0,
+        "rank_after": 2.0,
+        "rank_before": 2.0,
+        "share_after": 0.0687,
+        "share_before_same_batches": 0.0436,
+        "share_early": 0.1162
+      },
+      "address": {
+        "top1": 0.0,
+        "rank_after": 2.0,
+        "rank_before": 5.0,
+        "share_after": 0.0644,
+        "share_before_same_batches": 0.0214,
+        "share_early": 0.059
+      },
+      "counts": {
+        "top1": 0.0,
+        "rank_after": 2.0,
+        "rank_before": 7.25,
+        "share_after": 0.057,
+        "share_before_same_batches": 0.0043,
+        "share_early": 0.0118
+      },
+      "timedelta": {
+        "top1": 0.0,
+        "rank_after": 2.0,
+        "rank_before": 4.0,
+        "share_after": 0.0703,
+        "share_before_same_batches": 0.0265,
+        "share_early": 0.0512
+      },
+      "vesta": {
+        "top1": 0.0,
+        "rank_after": 2.0,
+        "rank_before": 6.0,
+        "share_after": 0.0617,
+        "share_before_same_batches": 0.0119,
+        "share_early": 0.0274
+      },
+      "identity": {
+        "top1": 0.0,
+        "rank_after": 2.0,
+        "rank_before": 7.75,
+        "share_after": 0.0565,
+        "share_before_same_batches": 0.0042,
+        "share_early": 0.0209
+      }
+    }
+  },
+  "ieee_cis_no_clock": {
+    "n_batches": 8,
+    "rows_per_batch": 2000,
+    "n_features": 398,
+    "dropped_degenerate": [
+      "V107",
+      "V241",
+      "V305"
+    ],
+    "block_sizes": {
+      "time": 1,
+      "amount": 1,
+      "card": 4,
+      "address": 4,
+      "counts": 14,
+      "timedelta": 15,
+      "vesta": 336,
+      "identity": 23
+    },
+    "block_columns": {
+      "time": [
+        "hour"
+      ],
+      "amount": [
+        "TransactionAmt"
+      ],
+      "card": [
+        "card1",
+        "card2",
+        "card3",
+        "card5"
+      ],
+      "address": [
+        "addr1",
+        "addr2",
+        "dist1",
+        "dist2"
+      ],
+      "counts": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7",
+        "C8"
+      ],
+      "timedelta": [
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8"
+      ],
+      "vesta": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6",
+        "V7",
+        "V8"
+      ],
+      "identity": [
+        "id_01",
+        "id_02",
+        "id_03",
+        "id_04",
+        "id_05",
+        "id_06",
+        "id_07",
+        "id_08"
+      ]
+    },
+    "cf_matches_marginal_top1": 0.0,
+    "std_matches_wasserstein_top1": 0.0,
+    "late_batches": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "rows": [
+      {
+        "t": 1,
+        "n": 1624,
+        "valid_ratio": 0.812,
+        "top_raw": "identity",
+        "top_std": "time",
+        "top_marginal": "counts",
+        "top_wasserstein": "vesta",
+        "raw": {
+          "time": 7.8596,
+          "amount": 114.0426,
+          "card": 1401.6107,
+          "address": 47.2934,
+          "counts": 4.7334,
+          "timedelta": 29.0402,
+          "vesta": 170.9187,
+          "identity": 1684.8873
+        },
+        "std": {
+          "time": 1.0248,
+          "amount": 0.5253,
+          "card": 0.8077,
+          "address": 0.4011,
+          "counts": 0.0661,
+          "timedelta": 0.2991,
+          "vesta": 0.1965,
+          "identity": 0.2203
+        },
+        "marginal": {
+          "time": 0.0557,
+          "amount": 0.0167,
+          "card": 0.0262,
+          "address": 0.0648,
+          "counts": 0.1066,
+          "timedelta": 0.0523,
+          "vesta": 0.0595,
+          "identity": 0.0377
+        },
+        "wasserstein": {
+          "time": 0.0256,
+          "amount": 0.0476,
+          "card": 0.0374,
+          "address": 0.0646,
+          "counts": 0.0218,
+          "timedelta": 0.0565,
+          "vesta": 0.1235,
+          "identity": 0.0541
+        },
+        "share_raw": {
+          "identity": 0.4869,
+          "card": 0.405,
+          "vesta": 0.0494,
+          "amount": 0.033,
+          "address": 0.0137,
+          "timedelta": 0.0084,
+          "time": 0.0023,
+          "counts": 0.0014
+        },
+        "share_std": {
+          "time": 0.2894,
+          "card": 0.2281,
+          "amount": 0.1484,
+          "address": 0.1133,
+          "timedelta": 0.0845,
+          "identity": 0.0622,
+          "vesta": 0.0555,
+          "counts": 0.0187
+        },
+        "share_marginal": {
+          "counts": 0.2542,
+          "address": 0.1544,
+          "vesta": 0.1418,
+          "time": 0.1329,
+          "timedelta": 0.1248,
+          "identity": 0.0899,
+          "card": 0.0624,
+          "amount": 0.0397
+        },
+        "share_wasserstein": {
+          "vesta": 0.2864,
+          "address": 0.1499,
+          "timedelta": 0.1311,
+          "identity": 0.1255,
+          "amount": 0.1104,
+          "card": 0.0867,
+          "time": 0.0594,
+          "counts": 0.0506
+        }
+      },
+      {
+        "t": 2,
+        "n": 1721,
+        "valid_ratio": 0.861,
+        "top_raw": "card",
+        "top_std": "time",
+        "top_marginal": "timedelta",
+        "top_wasserstein": "amount",
+        "raw": {
+          "time": 8.0413,
+          "amount": 131.256,
+          "card": 1442.4594,
+          "address": 52.8399,
+          "counts": 6.566,
+          "timedelta": 36.6537,
+          "vesta": 35.9172,
+          "identity": 753.7922
+        },
+        "std": {
+          "time": 1.0485,
+          "amount": 0.6046,
+          "card": 0.7903,
+          "address": 0.4134,
+          "counts": 0.0806,
+          "timedelta": 0.3515,
+          "vesta": 0.1678,
+          "identity": 0.0669
+        },
+        "marginal": {
+          "time": 0.0294,
+          "amount": 0.0039,
+          "card": 0.0628,
+          "address": 0.0672,
+          "counts": 0.1077,
+          "timedelta": 0.1486,
+          "vesta": 0.0841,
+          "identity": 0.088
+        },
+        "wasserstein": {
+          "time": 0.0471,
+          "amount": 0.0956,
+          "card": 0.0361,
+          "address": 0.055,
+          "counts": 0.0242,
+          "timedelta": 0.0732,
+          "vesta": 0.0753,
+          "identity": 0.0179
+        },
+        "share_raw": {
+          "card": 0.5846,
+          "identity": 0.3055,
+          "amount": 0.0532,
+          "address": 0.0214,
+          "timedelta": 0.0149,
+          "vesta": 0.0146,
+          "time": 0.0033,
+          "counts": 0.0027
+        },
+        "share_std": {
+          "time": 0.2976,
+          "card": 0.2243,
+          "amount": 0.1716,
+          "address": 0.1173,
+          "timedelta": 0.0998,
+          "vesta": 0.0476,
+          "counts": 0.0229,
+          "identity": 0.019
+        },
+        "share_marginal": {
+          "timedelta": 0.2511,
+          "counts": 0.182,
+          "identity": 0.1488,
+          "vesta": 0.1421,
+          "address": 0.1136,
+          "card": 0.1061,
+          "time": 0.0497,
+          "amount": 0.0065
+        },
+        "share_wasserstein": {
+          "amount": 0.2253,
+          "vesta": 0.1775,
+          "timedelta": 0.1725,
+          "address": 0.1296,
+          "time": 0.1109,
+          "card": 0.0851,
+          "counts": 0.057,
+          "identity": 0.0421
+        }
+      },
+      {
+        "t": 3,
+        "n": 1744,
+        "valid_ratio": 0.872,
+        "top_raw": "card",
+        "top_std": "time",
+        "top_marginal": "timedelta",
+        "top_wasserstein": "timedelta",
+        "raw": {
+          "time": 8.2184,
+          "amount": 135.1742,
+          "card": 1387.7523,
+          "address": 59.7761,
+          "counts": 7.1301,
+          "timedelta": 40.8625,
+          "vesta": 34.0241,
+          "identity": 791.5952
+        },
+        "std": {
+          "time": 1.0716,
+          "amount": 0.6227,
+          "card": 0.7818,
+          "address": 0.452,
+          "counts": 0.0887,
+          "timedelta": 0.3949,
+          "vesta": 0.1784,
+          "identity": 0.0736
+        },
+        "marginal": {
+          "time": 0.0028,
+          "amount": 0.0005,
+          "card": 0.0563,
+          "address": 0.0784,
+          "counts": 0.1094,
+          "timedelta": 0.1669,
+          "vesta": 0.0941,
+          "identity": 0.0854
+        },
+        "wasserstein": {
+          "time": 0.0383,
+          "amount": 0.105,
+          "card": 0.0496,
+          "address": 0.0564,
+          "counts": 0.0308,
+          "timedelta": 0.1066,
+          "vesta": 0.0808,
+          "identity": 0.0226
+        },
+        "share_raw": {
+          "card": 0.5631,
+          "identity": 0.3212,
+          "amount": 0.0548,
+          "address": 0.0243,
+          "timedelta": 0.0166,
+          "vesta": 0.0138,
+          "time": 0.0033,
+          "counts": 0.0029
+        },
+        "share_std": {
+          "time": 0.2925,
+          "card": 0.2134,
+          "amount": 0.17,
+          "address": 0.1234,
+          "timedelta": 0.1078,
+          "vesta": 0.0487,
+          "counts": 0.0242,
+          "identity": 0.0201
+        },
+        "share_marginal": {
+          "timedelta": 0.2811,
+          "counts": 0.1843,
+          "vesta": 0.1584,
+          "identity": 0.1438,
+          "address": 0.132,
+          "card": 0.0949,
+          "time": 0.0047,
+          "amount": 0.0008
+        },
+        "share_wasserstein": {
+          "timedelta": 0.2175,
+          "amount": 0.2142,
+          "vesta": 0.1648,
+          "address": 0.1151,
+          "card": 0.1013,
+          "time": 0.0782,
+          "counts": 0.0629,
+          "identity": 0.0461
+        }
+      },
+      {
+        "t": 4,
+        "n": 1764,
+        "valid_ratio": 0.882,
+        "top_raw": "card",
+        "top_std": "time",
+        "top_marginal": "timedelta",
+        "top_wasserstein": "timedelta",
+        "raw": {
+          "time": 7.984,
+          "amount": 132.5145,
+          "card": 1433.0316,
+          "address": 60.0493,
+          "counts": 7.1111,
+          "timedelta": 42.7066,
+          "vesta": 29.9458,
+          "identity": 695.804
+        },
+        "std": {
+          "time": 1.041,
+          "amount": 0.6104,
+          "card": 0.7937,
+          "address": 0.4437,
+          "counts": 0.0875,
+          "timedelta": 0.4147,
+          "vesta": 0.1674,
+          "identity": 0.0722
+        },
+        "marginal": {
+          "time": 0.0218,
+          "amount": 0.0273,
+          "card": 0.061,
+          "address": 0.0633,
+          "counts": 0.1092,
+          "timedelta": 0.1741,
+          "vesta": 0.0959,
+          "identity": 0.0865
+        },
+        "wasserstein": {
+          "time": 0.0465,
+          "amount": 0.0643,
+          "card": 0.05,
+          "address": 0.0717,
+          "counts": 0.0196,
+          "timedelta": 0.0992,
+          "vesta": 0.0685,
+          "identity": 0.0275
+        },
+        "share_raw": {
+          "card": 0.5948,
+          "identity": 0.2888,
+          "amount": 0.055,
+          "address": 0.0249,
+          "timedelta": 0.0177,
+          "vesta": 0.0124,
+          "time": 0.0033,
+          "counts": 0.003
+        },
+        "share_std": {
+          "time": 0.2867,
+          "card": 0.2186,
+          "amount": 0.1681,
+          "address": 0.1222,
+          "timedelta": 0.1142,
+          "vesta": 0.0461,
+          "counts": 0.0241,
+          "identity": 0.0199
+        },
+        "share_marginal": {
+          "timedelta": 0.2724,
+          "counts": 0.1709,
+          "vesta": 0.15,
+          "identity": 0.1354,
+          "address": 0.0991,
+          "card": 0.0955,
+          "amount": 0.0427,
+          "time": 0.0341
+        },
+        "share_wasserstein": {
+          "timedelta": 0.2218,
+          "address": 0.1603,
+          "vesta": 0.1531,
+          "amount": 0.1437,
+          "card": 0.1118,
+          "time": 0.1039,
+          "identity": 0.0616,
+          "counts": 0.0438
+        }
+      },
+      {
+        "t": 5,
+        "n": 1767,
+        "valid_ratio": 0.883,
+        "top_raw": "card",
+        "top_std": "time",
+        "top_marginal": "timedelta",
+        "top_wasserstein": "timedelta",
+        "raw": {
+          "time": 7.8632,
+          "amount": 128.6808,
+          "card": 1459.7485,
+          "address": 60.6897,
+          "counts": 8.3499,
+          "timedelta": 45.5866,
+          "vesta": 25.9563,
+          "identity": 779.6882
+        },
+        "std": {
+          "time": 1.0252,
+          "amount": 0.5928,
+          "card": 0.7924,
+          "address": 0.4598,
+          "counts": 0.1027,
+          "timedelta": 0.4397,
+          "vesta": 0.1745,
+          "identity": 0.0714
+        },
+        "marginal": {
+          "time": 0.0462,
+          "amount": 0.0057,
+          "card": 0.0345,
+          "address": 0.0803,
+          "counts": 0.113,
+          "timedelta": 0.2192,
+          "vesta": 0.0965,
+          "identity": 0.0936
+        },
+        "wasserstein": {
+          "time": 0.0515,
+          "amount": 0.0639,
+          "card": 0.0583,
+          "address": 0.0729,
+          "counts": 0.0174,
+          "timedelta": 0.1448,
+          "vesta": 0.0815,
+          "identity": 0.0286
+        },
+        "share_raw": {
+          "card": 0.5801,
+          "identity": 0.3098,
+          "amount": 0.0511,
+          "address": 0.0241,
+          "timedelta": 0.0181,
+          "vesta": 0.0103,
+          "counts": 0.0033,
+          "time": 0.0031
+        },
+        "share_std": {
+          "time": 0.2802,
+          "card": 0.2166,
+          "amount": 0.162,
+          "address": 0.1257,
+          "timedelta": 0.1202,
+          "vesta": 0.0477,
+          "counts": 0.0281,
+          "identity": 0.0195
+        },
+        "share_marginal": {
+          "timedelta": 0.3181,
+          "counts": 0.164,
+          "vesta": 0.14,
+          "identity": 0.1358,
+          "address": 0.1165,
+          "time": 0.0671,
+          "card": 0.0501,
+          "amount": 0.0083
+        },
+        "share_wasserstein": {
+          "timedelta": 0.2791,
+          "vesta": 0.1571,
+          "address": 0.1405,
+          "amount": 0.1231,
+          "card": 0.1124,
+          "time": 0.0992,
+          "identity": 0.0551,
+          "counts": 0.0336
+        }
+      },
+      {
+        "t": 6,
+        "n": 1784,
+        "valid_ratio": 0.892,
+        "top_raw": "card",
+        "top_std": "time",
+        "top_marginal": "timedelta",
+        "top_wasserstein": "timedelta",
+        "raw": {
+          "time": 8.0296,
+          "amount": 132.1318,
+          "card": 1412.2377,
+          "address": 60.0919,
+          "counts": 6.6001,
+          "timedelta": 47.1229,
+          "vesta": 37.5496,
+          "identity": 810.1291
+        },
+        "std": {
+          "time": 1.0469,
+          "amount": 0.6087,
+          "card": 0.7848,
+          "address": 0.4534,
+          "counts": 0.0816,
+          "timedelta": 0.4535,
+          "vesta": 0.1757,
+          "identity": 0.0805
+        },
+        "marginal": {
+          "time": 0.0449,
+          "amount": 0.0186,
+          "card": 0.0452,
+          "address": 0.0693,
+          "counts": 0.1083,
+          "timedelta": 0.2403,
+          "vesta": 0.0929,
+          "identity": 0.0983
+        },
+        "wasserstein": {
+          "time": 0.0571,
+          "amount": 0.1357,
+          "card": 0.0524,
+          "address": 0.0777,
+          "counts": 0.0159,
+          "timedelta": 0.1471,
+          "vesta": 0.0809,
+          "identity": 0.0299
+        },
+        "share_raw": {
+          "card": 0.5618,
+          "identity": 0.3223,
+          "amount": 0.0526,
+          "address": 0.0239,
+          "timedelta": 0.0187,
+          "vesta": 0.0149,
+          "time": 0.0032,
+          "counts": 0.0026
+        },
+        "share_std": {
+          "time": 0.2841,
+          "card": 0.213,
+          "amount": 0.1652,
+          "timedelta": 0.1231,
+          "address": 0.123,
+          "vesta": 0.0477,
+          "counts": 0.0221,
+          "identity": 0.0218
+        },
+        "share_marginal": {
+          "timedelta": 0.3348,
+          "counts": 0.1508,
+          "identity": 0.137,
+          "vesta": 0.1294,
+          "address": 0.0965,
+          "card": 0.0629,
+          "time": 0.0626,
+          "amount": 0.026
+        },
+        "share_wasserstein": {
+          "timedelta": 0.2465,
+          "amount": 0.2273,
+          "vesta": 0.1356,
+          "address": 0.1302,
+          "time": 0.0958,
+          "card": 0.0879,
+          "identity": 0.05,
+          "counts": 0.0266
+        }
+      },
+      {
+        "t": 7,
+        "n": 1714,
+        "valid_ratio": 0.857,
+        "top_raw": "card",
+        "top_std": "time",
+        "top_marginal": "timedelta",
+        "top_wasserstein": "timedelta",
+        "raw": {
+          "time": 7.7174,
+          "amount": 122.9222,
+          "card": 1496.1259,
+          "address": 59.8148,
+          "counts": 7.1743,
+          "timedelta": 46.933,
+          "vesta": 47.4789,
+          "identity": 1017.4579
+        },
+        "std": {
+          "time": 1.0062,
+          "amount": 0.5662,
+          "card": 0.8054,
+          "address": 0.4562,
+          "counts": 0.0923,
+          "timedelta": 0.4502,
+          "vesta": 0.2227,
+          "identity": 0.0956
+        },
+        "marginal": {
+          "time": 0.0752,
+          "amount": 0.0302,
+          "card": 0.0328,
+          "address": 0.0828,
+          "counts": 0.1084,
+          "timedelta": 0.2155,
+          "vesta": 0.1173,
+          "identity": 0.0843
+        },
+        "wasserstein": {
+          "time": 0.0311,
+          "amount": 0.1237,
+          "card": 0.0577,
+          "address": 0.0859,
+          "counts": 0.0115,
+          "timedelta": 0.1618,
+          "vesta": 0.1336,
+          "identity": 0.0391
+        },
+        "share_raw": {
+          "card": 0.5333,
+          "identity": 0.3626,
+          "amount": 0.0438,
+          "address": 0.0213,
+          "vesta": 0.0169,
+          "timedelta": 0.0167,
+          "time": 0.0028,
+          "counts": 0.0026
+        },
+        "share_std": {
+          "time": 0.2723,
+          "card": 0.218,
+          "amount": 0.1533,
+          "address": 0.1235,
+          "timedelta": 0.1218,
+          "vesta": 0.0603,
+          "identity": 0.0259,
+          "counts": 0.025
+        },
+        "share_marginal": {
+          "timedelta": 0.2887,
+          "vesta": 0.1571,
+          "counts": 0.1452,
+          "identity": 0.1129,
+          "address": 0.1109,
+          "time": 0.1007,
+          "card": 0.0439,
+          "amount": 0.0405
+        },
+        "share_wasserstein": {
+          "timedelta": 0.251,
+          "vesta": 0.2073,
+          "amount": 0.192,
+          "address": 0.1333,
+          "card": 0.0896,
+          "identity": 0.0607,
+          "time": 0.0482,
+          "counts": 0.0179
+        }
+      }
+    ],
+    "planted_plus_1sd": {
+      "time": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 1.0,
+        "share_after": 0.3404,
+        "share_before_same_batches": 0.2808,
+        "share_early": 0.2932
+      },
+      "amount": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 3.0,
+        "share_after": 0.2764,
+        "share_before_same_batches": 0.1622,
+        "share_early": 0.1633
+      },
+      "card": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 2.0,
+        "share_after": 0.3048,
+        "share_before_same_batches": 0.2165,
+        "share_early": 0.2219
+      },
+      "address": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 4.25,
+        "share_after": 0.2709,
+        "share_before_same_batches": 0.1236,
+        "share_early": 0.118
+      },
+      "counts": {
+        "top1": 0.75,
+        "rank_after": 1.25,
+        "rank_before": 7.25,
+        "share_after": 0.2281,
+        "share_before_same_batches": 0.0248,
+        "share_early": 0.0219
+      },
+      "timedelta": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 4.75,
+        "share_after": 0.2848,
+        "share_before_same_batches": 0.1198,
+        "share_early": 0.0974
+      },
+      "vesta": {
+        "top1": 0.75,
+        "rank_after": 1.25,
+        "rank_before": 6.0,
+        "share_after": 0.2408,
+        "share_before_same_batches": 0.0504,
+        "share_early": 0.0506
+      },
+      "identity": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 7.75,
+        "share_after": 0.2269,
+        "share_before_same_batches": 0.0218,
+        "share_early": 0.0338
+      }
+    }
+  },
+  "home_credit": {
+    "n_batches": 8,
+    "rows_per_batch": 2000,
+    "n_features": 101,
+    "dropped_degenerate": [
+      "FLAG_DOCUMENT_7",
+      "FLAG_DOCUMENT_10",
+      "FLAG_DOCUMENT_12"
+    ],
+    "block_sizes": {
+      "external": 3,
+      "amount": 10,
+      "personal": 4,
+      "region": 6,
+      "other": 78
+    },
+    "block_columns": {
+      "external": [
+        "EXT_SOURCE_1",
+        "EXT_SOURCE_2",
+        "EXT_SOURCE_3"
+      ],
+      "amount": [
+        "AMT_INCOME_TOTAL",
+        "AMT_CREDIT",
+        "AMT_ANNUITY",
+        "AMT_GOODS_PRICE",
+        "AMT_REQ_CREDIT_BUREAU_HOUR",
+        "AMT_REQ_CREDIT_BUREAU_DAY",
+        "AMT_REQ_CREDIT_BUREAU_WEEK",
+        "AMT_REQ_CREDIT_BUREAU_MON"
+      ],
+      "personal": [
+        "CNT_CHILDREN",
+        "DAYS_BIRTH",
+        "DAYS_EMPLOYED",
+        "CNT_FAM_MEMBERS"
+      ],
+      "region": [
+        "REGION_POPULATION_RELATIVE",
+        "DAYS_REGISTRATION",
+        "DAYS_ID_PUBLISH",
+        "REGION_RATING_CLIENT",
+        "REGION_RATING_CLIENT_W_CITY",
+        "DAYS_LAST_PHONE_CHANGE"
+      ],
+      "other": [
+        "OWN_CAR_AGE",
+        "FLAG_MOBIL",
+        "FLAG_EMP_PHONE",
+        "FLAG_WORK_PHONE",
+        "FLAG_CONT_MOBILE",
+        "FLAG_PHONE",
+        "FLAG_EMAIL",
+        "HOUR_APPR_PROCESS_START"
+      ]
+    },
+    "cf_matches_marginal_top1": 0.0,
+    "std_matches_wasserstein_top1": 0.286,
+    "late_batches": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "rows": [
+      {
+        "t": 1,
+        "n": 1848,
+        "valid_ratio": 0.924,
+        "top_raw": "amount",
+        "top_std": "external",
+        "top_marginal": "personal",
+        "top_wasserstein": "other",
+        "raw": {
+          "external": 0.17,
+          "amount": 89501.25,
+          "personal": 7201.4282,
+          "region": 1024.8979,
+          "other": 0.2106
+        },
+        "std": {
+          "external": 1.0107,
+          "amount": 0.6566,
+          "personal": 0.6986,
+          "region": 0.9305,
+          "other": 0.4813
+        },
+        "marginal": {
+          "external": 0.0426,
+          "amount": 0.0238,
+          "personal": 0.0543,
+          "region": 0.0285,
+          "other": 0.0355
+        },
+        "wasserstein": {
+          "external": 0.082,
+          "amount": 0.0377,
+          "personal": 0.0623,
+          "region": 0.0707,
+          "other": 0.1031
+        },
+        "share_raw": {
+          "amount": 0.9158,
+          "personal": 0.0737,
+          "region": 0.0105,
+          "other": 0.0,
+          "external": 0.0
+        },
+        "share_std": {
+          "external": 0.2676,
+          "region": 0.2463,
+          "personal": 0.1849,
+          "amount": 0.1738,
+          "other": 0.1274
+        },
+        "share_marginal": {
+          "personal": 0.2938,
+          "external": 0.2307,
+          "other": 0.1922,
+          "region": 0.1544,
+          "amount": 0.1288
+        },
+        "share_wasserstein": {
+          "other": 0.2899,
+          "external": 0.2304,
+          "region": 0.1987,
+          "personal": 0.175,
+          "amount": 0.106
+        }
+      },
+      {
+        "t": 2,
+        "n": 1853,
+        "valid_ratio": 0.926,
+        "top_raw": "amount",
+        "top_std": "external",
+        "top_marginal": "personal",
+        "top_wasserstein": "other",
+        "raw": {
+          "external": 0.1681,
+          "amount": 86337.5391,
+          "personal": 6279.8618,
+          "region": 1039.1188,
+          "other": 0.212
+        },
+        "std": {
+          "external": 0.9975,
+          "amount": 0.6309,
+          "personal": 0.67,
+          "region": 0.933,
+          "other": 0.4452
+        },
+        "marginal": {
+          "external": 0.0159,
+          "amount": 0.0279,
+          "personal": 0.0488,
+          "region": 0.0192,
+          "other": 0.0285
+        },
+        "wasserstein": {
+          "external": 0.0642,
+          "amount": 0.0309,
+          "personal": 0.0514,
+          "region": 0.0584,
+          "other": 0.0755
+        },
+        "share_raw": {
+          "amount": 0.9218,
+          "personal": 0.0671,
+          "region": 0.0111,
+          "other": 0.0,
+          "external": 0.0
+        },
+        "share_std": {
+          "external": 0.2713,
+          "region": 0.2538,
+          "personal": 0.1822,
+          "amount": 0.1716,
+          "other": 0.1211
+        },
+        "share_marginal": {
+          "personal": 0.3481,
+          "other": 0.2032,
+          "amount": 0.1988,
+          "region": 0.1368,
+          "external": 0.1131
+        },
+        "share_wasserstein": {
+          "other": 0.2694,
+          "external": 0.2288,
+          "region": 0.2084,
+          "personal": 0.1833,
+          "amount": 0.11
+        }
+      },
+      {
+        "t": 3,
+        "n": 1847,
+        "valid_ratio": 0.923,
+        "top_raw": "amount",
+        "top_std": "external",
+        "top_marginal": "personal",
+        "top_wasserstein": "external",
+        "raw": {
+          "external": 0.1631,
+          "amount": 84810.875,
+          "personal": 6044.0566,
+          "region": 1025.86,
+          "other": 0.2127
+        },
+        "std": {
+          "external": 0.9673,
+          "amount": 0.6391,
+          "personal": 0.6612,
+          "region": 0.9272,
+          "other": 0.4378
+        },
+        "marginal": {
+          "external": 0.0462,
+          "amount": 0.0277,
+          "personal": 0.048,
+          "region": 0.0217,
+          "other": 0.0275
+        },
+        "wasserstein": {
+          "external": 0.0718,
+          "amount": 0.0375,
+          "personal": 0.0338,
+          "region": 0.0558,
+          "other": 0.0547
+        },
+        "share_raw": {
+          "amount": 0.923,
+          "personal": 0.0658,
+          "region": 0.0112,
+          "other": 0.0,
+          "external": 0.0
+        },
+        "share_std": {
+          "external": 0.2663,
+          "region": 0.2552,
+          "personal": 0.182,
+          "amount": 0.1759,
+          "other": 0.1205
+        },
+        "share_marginal": {
+          "personal": 0.2805,
+          "external": 0.2699,
+          "amount": 0.162,
+          "other": 0.1605,
+          "region": 0.1271
+        },
+        "share_wasserstein": {
+          "external": 0.2832,
+          "region": 0.2201,
+          "other": 0.2156,
+          "amount": 0.1478,
+          "personal": 0.1333
+        }
+      },
+      {
+        "t": 4,
+        "n": 1859,
+        "valid_ratio": 0.929,
+        "top_raw": "amount",
+        "top_std": "external",
+        "top_marginal": "personal",
+        "top_wasserstein": "other",
+        "raw": {
+          "external": 0.1662,
+          "amount": 83172.7422,
+          "personal": 7883.978,
+          "region": 1036.5442,
+          "other": 0.2138
+        },
+        "std": {
+          "external": 0.9881,
+          "amount": 0.6219,
+          "personal": 0.6759,
+          "region": 0.9276,
+          "other": 0.4523
+        },
+        "marginal": {
+          "external": 0.0306,
+          "amount": 0.031,
+          "personal": 0.084,
+          "region": 0.0161,
+          "other": 0.026
+        },
+        "wasserstein": {
+          "external": 0.0526,
+          "amount": 0.0406,
+          "personal": 0.0532,
+          "region": 0.07,
+          "other": 0.0887
+        },
+        "share_raw": {
+          "amount": 0.9031,
+          "personal": 0.0856,
+          "region": 0.0113,
+          "other": 0.0,
+          "external": 0.0
+        },
+        "share_std": {
+          "external": 0.2695,
+          "region": 0.253,
+          "personal": 0.1844,
+          "amount": 0.1696,
+          "other": 0.1234
+        },
+        "share_marginal": {
+          "personal": 0.4476,
+          "amount": 0.1652,
+          "external": 0.1629,
+          "other": 0.1383,
+          "region": 0.0859
+        },
+        "share_wasserstein": {
+          "other": 0.2908,
+          "region": 0.2294,
+          "personal": 0.1743,
+          "external": 0.1723,
+          "amount": 0.1332
+        }
+      },
+      {
+        "t": 5,
+        "n": 1858,
+        "valid_ratio": 0.929,
+        "top_raw": "amount",
+        "top_std": "external",
+        "top_marginal": "personal",
+        "top_wasserstein": "external",
+        "raw": {
+          "external": 0.1657,
+          "amount": 88398.625,
+          "personal": 7736.6069,
+          "region": 1036.4437,
+          "other": 0.2086
+        },
+        "std": {
+          "external": 0.9853,
+          "amount": 0.6476,
+          "personal": 0.6899,
+          "region": 0.9282,
+          "other": 0.4568
+        },
+        "marginal": {
+          "external": 0.0176,
+          "amount": 0.0161,
+          "personal": 0.0409,
+          "region": 0.017,
+          "other": 0.0263
+        },
+        "wasserstein": {
+          "external": 0.0883,
+          "amount": 0.0407,
+          "personal": 0.0395,
+          "region": 0.0623,
+          "other": 0.0793
+        },
+        "share_raw": {
+          "amount": 0.9097,
+          "personal": 0.0796,
+          "region": 0.0107,
+          "other": 0.0,
+          "external": 0.0
+        },
+        "share_std": {
+          "external": 0.2657,
+          "region": 0.2503,
+          "personal": 0.1861,
+          "amount": 0.1747,
+          "other": 0.1232
+        },
+        "share_marginal": {
+          "personal": 0.3471,
+          "other": 0.2228,
+          "external": 0.1496,
+          "region": 0.1442,
+          "amount": 0.1363
+        },
+        "share_wasserstein": {
+          "external": 0.2848,
+          "other": 0.2556,
+          "region": 0.201,
+          "amount": 0.1312,
+          "personal": 0.1274
+        }
+      },
+      {
+        "t": 6,
+        "n": 1843,
+        "valid_ratio": 0.921,
+        "top_raw": "amount",
+        "top_std": "external",
+        "top_marginal": "personal",
+        "top_wasserstein": "other",
+        "raw": {
+          "external": 0.1693,
+          "amount": 87615.4062,
+          "personal": 6318.062,
+          "region": 1007.1721,
+          "other": 0.2133
+        },
+        "std": {
+          "external": 1.0076,
+          "amount": 0.644,
+          "personal": 0.6495,
+          "region": 0.923,
+          "other": 0.4567
+        },
+        "marginal": {
+          "external": 0.0299,
+          "amount": 0.0344,
+          "personal": 0.0716,
+          "region": 0.0411,
+          "other": 0.026
+        },
+        "wasserstein": {
+          "external": 0.0725,
+          "amount": 0.045,
+          "personal": 0.075,
+          "region": 0.0585,
+          "other": 0.0853
+        },
+        "share_raw": {
+          "amount": 0.9228,
+          "personal": 0.0665,
+          "region": 0.0106,
+          "other": 0.0,
+          "external": 0.0
+        },
+        "share_std": {
+          "external": 0.2737,
+          "region": 0.2508,
+          "personal": 0.1765,
+          "amount": 0.175,
+          "other": 0.1241
+        },
+        "share_marginal": {
+          "personal": 0.3527,
+          "region": 0.2026,
+          "amount": 0.1694,
+          "external": 0.1471,
+          "other": 0.1283
+        },
+        "share_wasserstein": {
+          "other": 0.2537,
+          "personal": 0.2231,
+          "external": 0.2156,
+          "region": 0.1739,
+          "amount": 0.1337
+        }
+      },
+      {
+        "t": 7,
+        "n": 1864,
+        "valid_ratio": 0.932,
+        "top_raw": "amount",
+        "top_std": "external",
+        "top_marginal": "personal",
+        "top_wasserstein": "other",
+        "raw": {
+          "external": 0.1692,
+          "amount": 86700.3984,
+          "personal": 6394.7671,
+          "region": 1043.6909,
+          "other": 0.2074
+        },
+        "std": {
+          "external": 1.0045,
+          "amount": 0.6338,
+          "personal": 0.658,
+          "region": 0.9247,
+          "other": 0.4577
+        },
+        "marginal": {
+          "external": 0.0233,
+          "amount": 0.0301,
+          "personal": 0.0794,
+          "region": 0.0211,
+          "other": 0.0276
+        },
+        "wasserstein": {
+          "external": 0.0572,
+          "amount": 0.0462,
+          "personal": 0.0504,
+          "region": 0.068,
+          "other": 0.0872
+        },
+        "share_raw": {
+          "amount": 0.921,
+          "personal": 0.0679,
+          "region": 0.0111,
+          "other": 0.0,
+          "external": 0.0
+        },
+        "share_std": {
+          "external": 0.2731,
+          "region": 0.2514,
+          "personal": 0.1789,
+          "amount": 0.1723,
+          "other": 0.1244
+        },
+        "share_marginal": {
+          "personal": 0.4375,
+          "amount": 0.1659,
+          "other": 0.1521,
+          "external": 0.1281,
+          "region": 0.1163
+        },
+        "share_wasserstein": {
+          "other": 0.2822,
+          "region": 0.2199,
+          "external": 0.1853,
+          "personal": 0.163,
+          "amount": 0.1496
+        }
+      }
+    ],
+    "planted_plus_1sd": {
+      "external": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 1.0,
+        "share_after": 0.3358,
+        "share_before_same_batches": 0.2705,
+        "share_early": 0.2684
+      },
+      "amount": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 4.0,
+        "share_after": 0.2877,
+        "share_before_same_batches": 0.1729,
+        "share_early": 0.1738
+      },
+      "personal": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 3.0,
+        "share_after": 0.2858,
+        "share_before_same_batches": 0.1815,
+        "share_early": 0.183
+      },
+      "region": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 2.0,
+        "share_after": 0.325,
+        "share_before_same_batches": 0.2514,
+        "share_early": 0.2518
+      },
+      "other": {
+        "top1": 1.0,
+        "rank_after": 1.0,
+        "rank_before": 5.0,
+        "share_after": 0.2696,
+        "share_before_same_batches": 0.1238,
+        "share_early": 0.123
+      }
+    }
+  }
+}

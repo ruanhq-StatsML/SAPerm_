@@ -1,0 +1,10 @@
+dataset: synthetic
+seed: 0
+generator: stub
+metric: mean_diff
+
+loader_args:
+  N: 800
+  T: 8
+  F: 100
+  seed: 0

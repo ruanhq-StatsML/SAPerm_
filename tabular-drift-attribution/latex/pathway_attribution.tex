@@ -1,0 +1,148 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,booktabs,graphicx,geometry}
+\geometry{margin=0.85in}
+\setlength{\tabcolsep}{4pt}
+
+\title{Pathway attribution with TabDDPM and a meta-learner}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Pathway}
+
+The comparison is not one batch against another. The anchor is a peak day.
+The next seven days are seven forward steps. On each step a TabDDPM fit only
+on the peak imputes one feature block, conditional on the other columns of
+that day's row. The diffusion class is
+\texttt{GaussianMultinomialDiffusion} from \texttt{yandex-research/tab-ddpm}
+(commit \texttt{b476257}). Numerical columns use the Gaussian head. Known
+columns are reset to the anchor noising process at every reverse step, the
+RePaint conditioning step. The label passed to the denoiser is drawn from the
+peak-day label distribution. Observed rows are clipped to \([-5,5]\) before
+training, and the predicted clean sample is clamped to the same box. On
+these tables the unclipped reverse chain leaves that box.
+
+The distance estimator is a logistic meta-learner. PO-risk on day \(t\) is
+\[
+\mathbb{E}\bigl[(\mu_t(X_t)-\mu_0(X_t))^2\bigr],
+\]
+with \(\mu_0\) fit on the peak and \(\mu_t\) fit on day \(t\). Predictive
+loss is the Brier score of \(\mu_0\) transferred onto day \(t\). On the
+synthetic panel a ridge fit on the peak also reports the latent MSE.
+Replacing block \(b\) by its imputed draw changes each loss by \(\Delta_b\).
+The rank share is \(|\Delta_b|/\sum_{b'}|\Delta_{b'}|\). MMD compares the
+block on day \(t\) with the same block on the peak. HSIC compares the block
+with the day's label.
+
+The last day reports a bootstrap percentile interval for each \(\Delta\) and
+a 40-permutation \(p\)-value for MMD and HSIC. Across the seven steps, a
+sign-flip test asks whether the block with the largest mean absolute
+movement exceeds each other block.
+
+\section{Synthetic peak}
+
+Day 0 is standard normal, with four blocks of four columns: \texttt{stable},
+\texttt{context}, \texttt{driver}, and \texttt{noise}. The outcome uses
+\texttt{stable} and \texttt{driver}. Over the next seven days the
+\texttt{driver} mean moves by up to \(1.5\) and its outcome coefficient
+rises, while \texttt{context} receives a smaller location shift and no
+outcome role. The unconditional TabDDPM sample has MMD \(0.000\) against
+the peak day.
+
+PO-risk rises from \(0.005\) to \(0.050\) and latent MSE from \(0.337\) to
+\(4.496\). By day 7 the \texttt{driver} share is \(0.905\) of the PO-risk
+movement, \(0.959\) of the Brier movement, \(0.936\) of the MSE movement,
+and \(0.834\) of the MMD. Its PO interval is \([-0.122,-0.062]\) and its
+Brier interval is \([-0.139,-0.126]\); both exclude zero. The sign-flip
+\(p\)-values of \texttt{driver} against the other three blocks are at most
+\(0.021\) for PO-risk, Brier, and MSE. Context has MMD \(p=0.024\), and its
+Brier movement stays near \(0.001\). HSIC deltas are all below \(0.001\)
+and do not rank the blocks.
+Table~\ref{tab:pathway-synthetic}--\ref{tab:pathway-synthetic-sign} record
+the path, the peak day, and the sign-flip tests.
+
+\section{IEEE-CIS week after the fraud-rate peak}
+
+The local fraud-rate peak with seven usable days after it is transaction
+day 173 (fraud rate \(0.0495\)). The pathway runs through day 180
+(\(0.0374\)). Six blocks are used: amount, card, address, counts,
+timedelta, and hour. The monotone clock is not a feature. The unconditional
+sample has MMD \(0.002\) against the peak day.
+
+No block has an MMD \(p\)-value below \(0.05\) on day 180. The largest mean
+absolute PO-risk movement is timedelta, and its sign-flip \(p\)-values
+against card, address, and counts are all above \(0.178\). Every day-180 PO
+interval includes zero. The transferred Brier movement is largest for card.
+Its sign-flip \(p\)-value is \(0.008\) against amount and address and
+\(0.028\) against counts; it is \(0.054\) against hour and \(0.292\) against
+timedelta. Card's day-180 Brier interval is \([-0.023,-0.004]\), and its
+MMD \(p\)-value is \(1\). Over this week the card block moves the fraud
+model's predictions, and the covariate blocks do not separate.
+Tables~\ref{tab:pathway-ieee-day} and~\ref{tab:pathway-ieee-sign} give the
+day-180 numbers and the seven-step tests.
+
+\section{MovieLens week after the high-rating peak}
+
+The local peak in the rate of ratings of at least 4, among days that still
+have seven later calendar days, is 2001-01-01 (rate \(0.615\)). The pathway
+runs through 2001-01-08 (\(0.483\)). Rating is the outcome. The user block
+is gender, age, occupation, and the first zip digit. The item block is
+eight genre indicators. Context is the hour; weekday is constant inside one
+calendar day and drops out. The peak day has 633 rows after keeping users
+and items with at least 20 ratings. The unconditional sample has MMD
+\(0.004\) against that day.
+
+Mean MMD over the seven days is \(0.108\) for hour, \(0.100\) for user, and
+\(0.012\) for genre. Hour against genre has sign-flip \(p=0.016\); hour
+against user has \(p=0.413\). On the last day every block's MMD \(p\)-value
+sits at the permutation floor \(0.024\), while the genre MMD itself is
+\(0.006\).
+
+Predictive loss points at genre. Mean absolute Brier movement is \(0.010\)
+for genre, \(0.005\) for hour, and \(0.004\) for user. The sign-flip
+\(p\)-value of genre against user is \(0.029\), and against hour \(0.074\).
+On 2001-01-08 the genre Brier interval is \([-0.025,-0.010]\) and the user
+Brier interval includes zero. Rating MSE also leads on genre (\(0.044\)
+against \(0.027\) for user), with sign-flip \(p=0.125\) against user.
+Mean absolute PO-risk movement is \(0.009\) for user and \(0.005\) for
+genre, with sign-flip \(p=0.198\). The last-day user PO interval is
+\([-0.048,-0.008]\); the genre PO interval includes zero. HSIC deltas stay
+at most \(0.002\).
+
+The covariate shift over this week is who is rating and at which hour.
+The genre margin barely moves, and Brier still ranks genre first because
+the peak-day rating model uses genre.
+Tables~\ref{tab:movielens-path}--\ref{tab:movielens-sign} record the path.
+
+\section{Home Credit along application id}
+
+\texttt{application\_train.csv} has no event time. Rows sorted by
+\texttt{SK\_ID\_CURR} are cut into 40 equal slices. The local peak in the
+default rate is slice 31 (\(0.083\)), and the pathway runs to slice 38
+(\(0.080\)). The five blocks are external (the three \texttt{EXT\_SOURCE} columns),
+amount, personal, region, and other. Each slice contributes 700 rows. The
+unconditional sample has MMD \(0.003\) against the peak slice.
+
+Every block MMD stays below \(0.005\). The largest seven-step MMD is
+external, and its sign-flip \(p\)-value against each other block is at
+least \(0.266\). On the last slice only \texttt{other} has MMD \(p=0.049\),
+on a statistic of \(0.004\).
+
+Brier isolates external. Its mean absolute movement is \(0.023\), and the
+sign-flip \(p\)-value against each of the other four blocks is \(0.008\).
+The last-slice Brier interval is \([-0.044,-0.006]\). PO-risk does not
+separate external from amount (mean absolute movement \(0.005\) and
+\(0.004\), sign-flip \(p=0.253\)). On the last slice those two PO intervals
+exclude zero, and the personal, region, and other intervals include zero.
+HSIC deltas are all below \(0.001\).
+
+Along application id the covariates do not separate. The peak-day default
+model uses the external scores, so replacing that block moves the Brier
+score transferred onto the later slices.
+Tables~\ref{tab:home-credit-path}--\ref{tab:home-credit-sign} record the path.
+
+\input{../results/pathway_tables.tex}
+
+\end{document}

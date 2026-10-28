@@ -1,0 +1,691 @@
+% Joint reading of the one-shot federated aggregation and the ten-site
+% primary-source benchmark. Tables are the reported grids; the prose
+% states what those grids are evidence for.
+
+\section{One-shot aggregation, then primary sources}
+\label{sec:joint}
+
+Appendix~11 aggregates a variable-importance vector that never leaves its
+site.
+The ten-site benchmark in Section~\ref{sec:primary-source} asks a prior
+question: which of those sites carry a new concept, and which of them
+would corrupt the aggregate if they were treated as another noisy copy of
+the same shift.
+The two designs share the upload and the target.
+They do not share the failure mode.
+
+Each site $k$ computes a local vector $V_k\in[0,1]^p$ with
+$\sum_j V_{k,j}=1$, and uploads it once.
+The aggregate is a convex combination
+\begin{equation}
+\label{eq:aggregate}
+\bar V=\sum_{k=1}^{K} w_k V_k,
+\qquad w_k\ge 0,
+\qquad \sum_k w_k=1,
+\end{equation}
+or a coordinate-wise median of the same uploads.
+Uniform weights are $w_k=1/K$.
+Sample-size weights are $w_k\propto n_k$.
+Inverse-variance weights use a per-site variance estimate, floored so that
+a vanishing variance cannot take the whole mass.
+The column $n|S|$ is the size-and-support weight in the simulation grid.
+Its gain over the uniform average is
+\begin{equation}
+\label{eq:delta-ns}
+\Delta(n|S|-\mathrm{unif})
+=
+\rho(n|S|)-\rho(\mathrm{unif}).
+\end{equation}
+Client-agreement Shapley, in the corruption table below, is a weight on
+sites.
+It is not Delta-Shapley.
+Delta-Shapley is the feature-wise absolute difference of Shapley values
+between two batches, and it appears only in the single-batch TabReD
+comparison.
+Rank aggregation averages within-site ranks.
+Communication is $O(Kp)$ floats.
+No raw row moves.
+Under the simplex constraint the Matrix Bernstein bound of
+Appendix~11 controls $\|\bar V-\mathbb{E}\bar V\|_2$ with a leading factor
+$(\log(2p/\delta)/K_{\mathrm{eff}})^{1/2}$, and the coordinate-wise
+refinement replaces the spectral norm by an $\ell_\infty$ bound that is
+enough for a Top-$K$ corollary when population shares are separated by a
+fixed margin.
+The bound does not choose among the mean, the median, and inverse-variance
+weights.
+The tables do.
+
+Throughout, $\rho$ is Spearman correlation with a stated reference.
+The reference changes with the table, and the change is the point.
+Centralized importance, the pooled out-of-distribution wrapper, and
+whole-batch FSDS are three different targets.
+A high $\rho$ against one of them is not a high $\rho$ against the others.
+Selection AUC and precision at $K$ ask whether the top coordinates of
+$\bar V$ cover a planted support.
+They can stay perfect after $\rho$ has already fallen.
+Pairwise concordance asks whether sites agree with each other.
+On several grids below it moves in the opposite direction from $\rho$
+against the pool.
+
+\subsection{Corrupted uploads}
+\label{sec:attack}
+
+\begin{table}[t]
+\centering
+\caption{Mixed synthetic blocks with corrupted client vectors.
+Spearman correlation with the centralized importance.
+Shapley is client-agreement weight, not feature-wise Delta-Shapley.}
+\label{tab:fed-vimp-attack}
+\begin{tabular}{llcccc}
+\toprule
+Attack & \# bad & Uniform & $n$-weighted & Median & Shapley \\
+\midrule
+Random & 1 & 0.208 & 0.539 & 0.798 & 0.802 \\
+Random & 2 & 0.055 & 0.156 & 0.741 & 0.737 \\
+Extreme & 1 & 0.503 & 0.576 & 0.830 & 0.814 \\
+Extreme & 2 & 0.624 & 0.669 & 0.794 & 0.762 \\
+Collude & 2 & 0.572 & 0.612 & 0.899 & 0.842 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:fed-vimp-attack} is a weight problem, not a sample-size
+problem.
+Two random corruptions drop the uniform Spearman from a usable ranking to
+$0.055$, and sample-size weights only to $0.156$.
+The coordinate-wise median stays at $0.741$, and client-agreement Shapley
+at $0.737$.
+Extreme corruption and a two-site collusion are milder for the mean than
+random replacement is, and the median remains the highest or the second
+highest entry in every row.
+A corrupted vector is not a small site.
+Down-weighting small $n_k$ does not remove it.
+A robust summary of the coordinates does.
+
+\subsection{WhyShift folds, and where PO-risk stops aggregating}
+\label{sec:whyshift-folds}
+
+\begin{table}[t]
+\centering
+\caption{FSDS on a WhyShift table, ten folds.
+Spearman correlation with the pooled out-of-distribution wrapper.
+The MMD-LOCO inverse-variance cell is not reported.}
+\label{tab:pol-ood}
+\begin{tabular}{lccc}
+\toprule
+Wrapper output & Single fold & $n$-weighted & IVW \\
+\midrule
+RF domain classifier & 0.848 & 0.887 & 0.918 \\
+MMD-LOCO & 0.891 & 0.985 & --- \\
+PO-risk & 0.410 & 0.185 & 0.431 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:pol-ood} is the covariate arm and the concept arm on the
+same folds.
+A single fold of the random-forest domain classifier already correlates
+$0.848$ with the pooled wrapper; sample-size weights move that to $0.887$
+and inverse-variance weights to $0.918$.
+Leave-one-coordinate MMD moves from $0.891$ to $0.985$ under sample-size
+weights.
+Both wrappers are estimating a property of $P(X)$ that is shared across
+random folds, so averaging reduces noise.
+Pseudo-outcome risk does not follow them.
+A single fold correlates only $0.410$ with the pooled PO-risk vector.
+Sample-size weighting lowers that correlation to $0.185$.
+Inverse-variance weighting returns it to $0.431$, essentially the
+single-fold number.
+Averaging made the concept vector worse, and a variance weight did not
+repair it.
+Section~\ref{sec:primary-source} is the design that explains the gap.
+Random folds of one concept are what the domain classifier and MMD see.
+A concept vector is large on a drifted site because the local regression
+changed, and it can also be large on a site whose labels are noise,
+because a flat predictor sits far from a sharp reference.
+Those two uploads do not estimate the same target.
+Inverse-variance weights assume that they do, and that the variance
+estimate says which copy is cleaner.
+Table~\ref{tab:pol-ood} is what happens when that assumption fails.
+
+\subsection{High-dimensional corruption}
+\label{sec:hidim}
+
+The product grid crosses the number of corrupted sites $n_{\mathrm{bad}}$,
+the local-support fraction $\alpha$, and the signal-to-noise ratio on the
+corrupted sites.
+The bad-site weight $w_{\mathrm{bad}}$ is $0$ at $n_{\mathrm{bad}}=0$ and
+$1$ at $n_{\mathrm{bad}}=12$, and the variance ratio is blank at both
+extremes, so those two rows are the empty-group endpoints of the grid.
+Read as an inverse-variance weight, $w_{\mathrm{bad}}=0.17$ at one
+corrupted site and a variance ratio of $0.44$ is the share one site
+receives among twelve when its variance is $0.44$ times the clean-site
+variance. Equal share would have been $1/12$.
+Entries are means over five replicates.
+The full grid is Table~\ref{tab:Product_HighDimResults}.
+Five rows carry the reading.
+
+\begin{table}[t]
+\centering
+\caption{Boundary rows of Table~\ref{tab:Product_HighDimResults}.
+$\rho$ is Spearman with the planted ranking.
+AUC and $P$ are selection AUC and precision at $K$.
+$w_{\mathrm{bad}}$ is the weight mass on corrupted sites in the
+inverse-variance aggregate.
+The variance ratio is corrupted over clean.}
+\label{tab:hidim-boundary}
+\small
+\begin{tabular}{rrrrrrrr}
+\toprule
+$n_{\mathrm{bad}}$ & $\alpha$ & SNR & $\rho$ mean & $\rho$ IVW & $P$ mean & $P$ med & $w_{\mathrm{bad}}$ \\
+\midrule
+0 & 0.25 & 0.5 & 1.000 & 1.000 & 1.00 & 0.29 & 0.00 \\
+1 & 1 & 0.5 & 0.959 & 0.844 & 1.00 & 1.00 & 0.17 \\
+11 & 1 & 0.05 & 0.677 & 0.651 & 0.92 & 0.14 & 0.97 \\
+12 & 1 & 0.5 & 0.719 & 0.710 & 1.00 & 1.00 & 1.00 \\
+12 & 1 & 0 & 0.606 & 0.601 & 0.00 & 0.02 & 1.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Selection and rank correlation break at different places.
+At full support and SNR $=0.5$, precision of the mean, the median, and
+inverse-variance weights is still $1$ when every site is corrupted, while
+Spearman of the mean has already fallen from $1$ to $0.719$.
+The ranking gets noisier before the top set is lost.
+At SNR $=0$ and twelve corrupted sites the selection AUC of the mean falls
+to $0.479$ and its precision to $0$.
+There is no remaining clean concept to recover.
+One clean site is enough for the mean and not for the median: at
+$n_{\mathrm{bad}}=11$, SNR $=0.05$, and $\alpha=1$, precision of the mean
+is $0.92$ and precision of the median is $0.14$.
+Thin support hurts the median before any site is corrupted.
+At $\alpha=0.25$, SNR $=0.5$, and $n_{\mathrm{bad}}=0$, median precision
+is $0.29$ and median AUC is $0.768$, against precision $1$ and AUC $1$ for
+the mean and for inverse-variance weights.
+The manuscript's statement that the median is fragile under partial overlap
+is this cell, not a cell with a large $n_{\mathrm{bad}}$.
+
+Inverse-variance weights pay for the variance ratio.
+At one corrupted site, $\alpha=1$, and SNR $=0.5$, the variance ratio is
+$0.44$ and the bad-site weight is $0.17$, about twice the equal share
+$1/12$.
+Spearman falls to $0.844$ against $0.959$ for the uniform mean, while
+precision stays $1$.
+The same pattern repeats down the SNR column: corrupted sites report a
+smaller variance, receive more than their count share, and the rank
+correlation moves before the selected set does.
+Flooring the variance, which the Matrix Bernstein argument already
+requires, is the condition under which this inflation stays bounded.
+It does not make inverse-variance weights a detector of a bad concept.
+
+\input{tab_product_highdim}
+
+\subsection{Size mismatch against heterogeneity}
+\label{sec:size}
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\caption{Simulation grid (245 cells; size $\in\{0.1,\ldots,0.9\}$,
+$\mathrm{corr}\in\{0,0.15,\ldots,0.6\}$, $\mathrm{hetero}\in\{0,\ldots,1\}$):
+mean $\rho$ by size-mismatch bin.
+Pairwise concordance is landscape only.}
+\label{tab:fed-sim-size}
+\begin{tabular}{@{}l@{\hspace{1.2em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{\hspace{0.8em}}r@{}}
+\toprule
+size bin & $n$ & pair & unif & $n$-wt & $n|S|$ & rank
+         & $\Delta(nS-\mathrm{unif})$ \\
+\midrule
+low ($\le 0.3$)   & 70  & 0.241 & 0.651 & 0.660 & 0.655 & 0.658 & $+0.004$ \\
+mid               & 105 & 0.191 & 0.658 & 0.786 & 0.784 & 0.647 & $+0.126$ \\
+high ($\ge 0.7$)  & 70  & 0.105 & 0.620 & 0.905 & 0.905 & 0.580 & $+0.285$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:fed-sim-size} separates two agreements.
+Pairwise concordance is agreement among sites.
+Spearman $\rho$ is agreement with the mixed pool.
+In the high size-mismatch bin the sites agree least with each other
+(pairwise $0.105$) and the size-weighted aggregates agree most with the
+pool ($0.905$, against $0.620$ for the uniform average).
+The gain $\Delta(n|S|-\mathrm{unif})$ is $+0.004$ when sizes are close and
+$+0.285$ when they are not.
+Rank aggregation moves the other way: $0.658$ in the low bin and $0.580$
+in the high bin.
+Equal votes are the right default only when the sites are the same size.
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\caption{Fine grid slice: mean $\rho(n|S|)$, pairwise, and
+$\Delta(n|S|-\mathrm{unif})$ by size bin $\times$ hetero fraction
+(averaged over feature correlation).
+Under high size mismatch, $\Delta$ rises with hetero while
+pairwise falls. Alignment to the mixed pool strengthens as
+sites disagree.}
+\label{tab:fed-sim-size-hetero}
+\begin{tabular}{@{}l@{\hspace{0.8em}}
+                r@{\hspace{0.5em}}r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r@{}}
+\toprule
+ & \multicolumn{3}{c}{low size}
+ & \multicolumn{3}{c}{mid}
+ & \multicolumn{2}{c}{high size} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-9}
+hetero
+ & $\rho_{n|S}$ & pair & $\Delta$
+ & $\rho_{n|S}$ & pair & $\Delta$
+ & $\rho_{n|S}$ & $\Delta$ \\
+\midrule
+$0$   & 0.653 & 0.339 & $+0.01$ & 0.768 & 0.297 & $+0.11$ & 0.893 & $+0.24$ \\
+$1/6$ & 0.639 & 0.283 & $+0.01$ & 0.791 & 0.245 & $+0.12$ & 0.886 & $+0.25$ \\
+$1/3$ & 0.656 & 0.262 & $-0.00$ & 0.769 & 0.215 & $+0.11$ & 0.888 & $+0.27$ \\
+$1/2$ & 0.640 & 0.250 & $+0.00$ & 0.773 & 0.197 & $+0.13$ & 0.892 & $+0.27$ \\
+$2/3$ & 0.657 & 0.213 & $-0.00$ & 0.793 & 0.145 & $+0.13$ & 0.921 & $+0.29$ \\
+$5/6$ & 0.664 & 0.183 & $+0.01$ & 0.790 & 0.134 & $+0.12$ & 0.925 & $+0.31$ \\
+$1$   & 0.675 & 0.157 & $+0.01$ & 0.804 & 0.103 & $+0.15$ & 0.927 & $+0.37$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\caption{High size-mismatch cells only: $\Delta(n|S|-\mathrm{unif})$ on the
+hetero $\times$ feature-correlation grid.
+The size-weighting gain is large and stable across correlation;
+it grows further as hetero $\to 1$.}
+\label{tab:fed-sim-high-grid}
+\begin{tabular}{@{}l@{\hspace{1em}}r@{\hspace{0.9em}}r@{\hspace{0.9em}}r@{\hspace{0.9em}}r@{\hspace{0.9em}}r@{}}
+\toprule
+hetero $\backslash$ corr & $0$ & $0.15$ & $0.30$ & $0.45$ & $0.60$ \\
+\midrule
+$0$   & $+0.19$ & $+0.23$ & $+0.25$ & $+0.27$ & $+0.26$ \\
+$1/6$ & $+0.25$ & $+0.26$ & $+0.27$ & $+0.26$ & $+0.23$ \\
+$1/3$ & $+0.24$ & $+0.27$ & $+0.26$ & $+0.33$ & $+0.23$ \\
+$1/2$ & $+0.22$ & $+0.28$ & $+0.26$ & $+0.28$ & $+0.31$ \\
+$2/3$ & $+0.29$ & $+0.28$ & $+0.29$ & $+0.31$ & $+0.30$ \\
+$5/6$ & $+0.29$ & $+0.36$ & $+0.30$ & $+0.28$ & $+0.28$ \\
+$1$   & $+0.40$ & $+0.36$ & $+0.37$ & $+0.35$ & $+0.36$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:fed-sim-size-hetero} is the same split with the heterogeneity
+fraction in the rows.
+At low size mismatch, $\Delta$ stays inside a percentage point for every
+hetero value, and pairwise concordance falls from $0.339$ to $0.157$ as
+hetero goes from $0$ to $1$.
+Sites disagree more, and the pool-alignment of $n|S|$ barely changes,
+because the uniform average was already close.
+At high size mismatch the gain rises from $+0.24$ to $+0.37$ over the same
+hetero path, and $\rho(n|S|)$ rises from $0.893$ to $0.927$.
+Table~\ref{tab:fed-sim-high-grid} shows that this rise is not a feature
+correlation artifact.
+At hetero $=1$ the gain is between $+0.35$ and $+0.40$ at every correlation
+from $0$ to $0.60$.
+At hetero $=0$ it is between $+0.19$ and $+0.27$.
+Heterogeneity of the shift and disagreement among sites are not evidence
+that the aggregate has failed.
+They are the regime in which a size weight earns its keep, provided the
+large sites are the ones whose vector estimates the pool.
+
+\subsection{TabReD}
+\label{sec:tabred}
+
+TabReD is the balanced real-data check.
+The largest site fraction on the summary grid is $0.24$, so the simulation
+says the gain of $n|S|$ over the uniform average should be small.
+It is.
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\caption{TabReD federated FSDS: $\rho$ on nine task$\times$split cells.
+Site sizes are nearly balanced (max-frac $\equiv 0.24$),
+so $\Delta(n|S|-\mathrm{unif})$ is small; $n|S|$ remains a safe default.
+The cooking / \texttt{num\_105} cell is consensus-misaligned
+(high pair, negative site$\leftrightarrow$whole);
+see Table~\ref{tab:num105-stab-summary}.}
+\label{tab:fed-tabred-summary}
+\begin{tabular}{@{}ll
+                r@{\hspace{0.7em}}r
+                r@{\hspace{0.6em}}r@{\hspace{0.6em}}r@{\hspace{0.6em}}r
+                l@{}}
+\toprule
+task & split & pair & site$\leftrightarrow$whole
+     & unif & $n$ & $n|S|$ & rank & best \\
+\midrule
+cooking & num\_105 & 0.884 & $-0.198$ & $-0.200$ & $-0.191$ & $-0.204$ & $-0.209$ & $n$ \\
+cooking & num\_80  & 0.383 & $0.161$  & $0.250$  & $0.305$  & $0.329$  & $0.251$  & $n|S|$ \\
+cooking & num\_69  & 0.835 & $0.468$  & $0.520$  & $0.525$  & $0.530$  & $0.520$  & $n|S|$ \\
+ecom    & num\_109 & 0.787 & $0.545$  & $0.642$  & $0.645$  & $0.647$  & $0.635$  & $n|S|$ \\
+ecom    & num\_100 & 0.825 & $0.532$  & $0.598$  & $0.596$  & $0.610$  & $0.605$  & $n|S|$ \\
+ecom    & num\_103 & 0.851 & $0.470$  & $0.498$  & $0.505$  & $0.516$  & $0.501$  & $n|S|$ \\
+weather & num\_38  & 0.598 & $0.428$  & $0.554$  & $0.514$  & $0.531$  & $0.546$  & unif \\
+weather & num\_44  & 0.716 & $0.725$  & $0.836$  & $0.840$  & $0.846$  & $0.827$  & $n|S|$ \\
+weather & num\_37  & 0.519 & $0.283$  & $0.378$  & $0.399$  & $0.389$  & $0.401$  & med \\
+\midrule
+mean    & ---      & 0.711 & $0.379$  & $0.453$  & $0.460$  & $0.466$  & $0.453$  & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\caption{cooking-time / \texttt{num\_105}:
+feature-rank versus random array-split
+(mean$\pm$SD of $\rho$).
+The defect is the split axis, not $n|S|$
+(aggregator headroom $\approx 0$).}
+\label{tab:num105-stab-summary}
+\begin{tabular}{@{}l@{\hspace{1.2em}}r@{\hspace{1em}}r@{\hspace{1em}}r@{\hspace{1em}}r@{\hspace{1em}}r@{\hspace{1em}}r@{}}
+\toprule
+protocol & $n$ & pair & unif & $n$ & $n|S|$ & $\Delta$ \\
+\midrule
+feature-rank & 20  & $0.88\pm 0.01$ & $0.07\pm 0.17$ & $0.07\pm 0.17$ & $0.07\pm 0.17$ & $+0.01$ \\
+random       & 200 & $0.26\pm 0.06$ & $0.80\pm 0.06$ & $0.81\pm 0.06$ & $0.80\pm 0.06$ & $+0.00$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On the nine cells the mean $\rho$ is $0.453$ uniform, $0.460$ by sample
+size, $0.466$ by $n|S|$, and $0.453$ by rank.
+The largest single-cell gap between $n|S|$ and uniform is a few
+hundredths, except where every aggregator is negative.
+Cooking \texttt{num\_105} has pairwise concordance $0.884$ and
+site-to-whole correlation $-0.198$.
+The sites agree with each other and disagree with the whole.
+Every aggregator returns a Spearman near $-0.20$.
+There is no weight that can turn a consensus of the wrong vector into the
+pooled vector.
+Table~\ref{tab:num105-stab-summary} locates the defect on the split.
+Under the feature-rank protocol, twenty replicates keep pairwise
+concordance $0.88\pm 0.01$ and $\rho$ at $0.07\pm 0.17$ for every
+aggregator, with $\Delta=+0.01$.
+Under a random array split, two hundred replicates drop pairwise
+concordance to $0.26\pm 0.06$ and raise $\rho$ to about $0.80$, again with
+$\Delta$ at $0$.
+The headroom of the aggregator is zero on both protocols.
+The feature-rank axis is a shared direction that is not the whole-batch
+direction.
+Random splits destroy that shared direction and restore the usual
+aggregation problem, in which sites are noisy and the mean works.
+
+The single-batch method table is not this metric.
+It scores each procedure against the top coefficients of a linear
+regression, one batch at a time.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\caption{TabReD method comparison: F1 vs linreg top-$|\beta|$
+(PermuCATE $n_{\mathrm{perm}}=50$, RF outcome).
+Single-batch only. Not the federated metric.
+$\Delta$SH is feature-wise Delta-Shapley.}
+\label{tab:tabred-fsds-all}
+\begin{tabular}{@{}ll
+                r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{}}
+\toprule
+task & split
+     & FSDS & RF & $\Delta$SH & MMD & PC & LOCO & GRF
+     & L1$_m$ & L1$_s$ & KO \\
+\midrule
+cooking-time & num\_184 & 0.100 & 0.200 & 0.500 & 0.200 & 0.400 & 0.200 & 0.200 & 0.400 & 0.300 & 0.200 \\
+cooking-time & num\_38  & 0.100 & 0.200 & 0.600 & 0.200 & 0.400 & 0.200 & 0.400 & 0.400 & 0.000 & 0.000 \\
+cooking-time & num\_123 & 0.100 & 0.200 & 0.300 & 0.200 & 0.300 & 0.200 & 0.200 & 0.600 & 0.000 & 0.000 \\
+ecom-offers  & num\_67  & 0.500 & 0.500 & 0.400 & 0.500 & 0.500 & 0.500 & 0.500 & 0.200 & 0.200 & 0.000 \\
+ecom-offers  & num\_104 & 0.500 & 0.500 & 0.400 & 0.400 & 0.400 & 0.500 & 0.500 & 0.300 & 0.300 & 0.200 \\
+ecom-offers  & num\_60  & 0.400 & 0.500 & 0.200 & 0.400 & 0.400 & 0.500 & 0.400 & 0.300 & 0.400 & 0.100 \\
+weather      & num\_5   & 0.400 & 0.300 & 0.400 & 0.200 & 0.400 & 0.500 & 0.200 & 0.300 & 0.200 & 0.400 \\
+weather      & num\_84  & 0.300 & 0.300 & 0.500 & 0.200 & 0.300 & 0.500 & 0.400 & 0.300 & 0.500 & 0.300 \\
+weather      & num\_98  & 0.400 & 0.300 & 0.600 & 0.300 & 0.500 & 0.500 & 0.500 & 0.300 & 0.300 & 0.400 \\
+\midrule
+mean & --- & 0.311 & 0.333 & 0.433 & 0.289 & 0.400 & 0.400 & 0.367 & 0.344 & 0.244 & 0.178 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\caption{TabReD: mean selection AUC by task (same run as the F1 table).}
+\label{tab:tabred-fsds-auc}
+\begin{tabular}{@{}l
+                r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{}}
+\toprule
+task & FSDS & RF & $\Delta$SH & MMD & PC & LOCO & GRF & L1$_m$ & L1$_s$ & KO \\
+\midrule
+cooking-time & 0.537 & 0.588 & 0.673 & 0.500 & 0.510 & 0.583 & 0.596 & 0.758 & 0.416 & 0.319 \\
+ecom-offers  & 0.797 & 0.792 & 0.700 & 0.626 & 0.642 & 0.613 & 0.806 & 0.511 & 0.572 & 0.361 \\
+weather      & 0.430 & 0.561 & 0.729 & 0.588 & 0.682 & 0.687 & 0.629 & 0.512 & 0.510 & 0.536 \\
+\midrule
+mean         & 0.588 & 0.647 & 0.701 & 0.571 & 0.611 & 0.628 & 0.677 & 0.594 & 0.499 & 0.405 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\caption{TabReD efficiency: mean wall seconds per cell (9 cells).
+PermuCATE / LOCO / GRF share one causal block (time split approximately
+equally). The total on the last column adds that shared block three times.}
+\label{tab:tabred-eff}
+\begin{tabular}{@{}l
+                r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{\hspace{0.5em}}r@{}}
+\toprule
+ & FSDS & RF & $\Delta$SH & MMD & PC & LOCO & GRF & L1$_m$ & L1$_s$ & KO & total \\
+\midrule
+sec                 & 0.6 & 0.6 & 7.9 & 20.9 & 56.0 & 56.0 & 56.0 & 7.5 & 7.5 & 7.5 & 220.5 \\
+$\times$ vs first   & 1.0 & 1.0 & 14.2 & 37.6 & 100.9 & 100.9 & 100.9 & 13.5 & 13.5 & 13.5 & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Mean F1 against the linear top set is $0.433$ for Delta-Shapley, $0.400$
+for PermuCATE and for LOCO, $0.367$ for the generalized random forest,
+$0.333$ for the forest, $0.311$ for FSDS, and $0.178$ for the knockoff.
+Mean selection AUC has the same lead: Delta-Shapley $0.701$, forest
+$0.647$, FSDS $0.588$.
+The ordering is a property of one batch and one linear reference.
+It does not say which convex weight should merge ten uploads.
+The timing row is the practical counterpart.
+FSDS and the forest are $0.6$ seconds per cell.
+The causal block shared by PermuCATE, LOCO, and the generalized random
+forest is $56$ seconds and is written three times in the total of $220.5$.
+A joint run pays that block once.
+
+A second TabReD partition scores the aggregate against whole-batch FSDS
+rather than against a linear coefficient vector.
+The splits are not the nine cells of Table~\ref{tab:fed-tabred-summary}.
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\caption{TabReD federated FSDS: primary metric is
+Spearman$(\mathrm{agg},\mathrm{whole\text{-}batch})$, not AUC.
+Whole-batch means FSDS on the pooled site sample.
+These splits are not the cells of Table~\ref{tab:fed-tabred-summary}.}
+\label{tab:tabred-fsds-fed}
+\begin{tabular}{@{}ll
+                r@{\hspace{0.6em}}r@{\hspace{0.6em}}r@{\hspace{0.6em}}r@{\hspace{0.6em}}r
+                l@{}}
+\toprule
+task & split & pair & $\rho_{\mathrm{unif}}$ & $\rho_n$
+     & $\rho_{n|S|}$ & $\rho_{\mathrm{rank}}$ & best \\
+\midrule
+cooking-time & num\_184 & 0.875 & 0.114 & 0.111 & 0.127 & 0.119 & ns\_weighted \\
+cooking-time & num\_38  & 0.885 & 0.399 & 0.403 & 0.400 & 0.393 & n\_weighted \\
+cooking-time & num\_123 & 0.812 & 0.403 & 0.433 & 0.433 & 0.397 & ns\_weighted \\
+ecom-offers  & num\_67  & 0.769 & 0.321 & 0.362 & 0.356 & 0.300 & n\_weighted \\
+ecom-offers  & num\_104 & 0.768 & 0.222 & 0.222 & 0.233 & 0.215 & ns\_weighted \\
+ecom-offers  & num\_60  & 0.649 & 0.099 & 0.106 & 0.107 & 0.071 & ns\_weighted \\
+weather      & num\_5   & 0.791 & $-0.054$ & $-0.061$ & $-0.057$ & $-0.064$ & median \\
+weather      & num\_84  & 0.767 & $-0.111$ & $-0.118$ & $-0.108$ & $-0.131$ & median \\
+weather      & num\_98  & 0.440 & 0.615 & 0.623 & 0.631 & 0.559 & ns\_weighted \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Cooking \texttt{num\_184} repeats the \texttt{num\_105} geometry: pairwise
+concordance $0.875$, and every aggregate correlates only about $0.12$ with
+the whole batch.
+Weather \texttt{num\_5} and \texttt{num\_84} have pairwise concordance near
+$0.78$ and a negative Spearman for every convex weight; the median is the
+least negative, and it is still negative.
+Weather \texttt{num\_98} is the opposite cell: pairwise concordance is the
+lowest on the table ($0.440$) and $n|S|$ reaches $0.631$.
+Agreement among sites is not a substitute for correlation with the pool.
+The same sentence was the high size-mismatch row of
+Table~\ref{tab:fed-sim-size}, where pairwise concordance was $0.105$ and
+$\rho(n|S|)$ was $0.905$.
+
+\subsection{Leave-one-site-out is not a source detector}
+\label{sec:loso}
+
+\begin{table}[t]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\caption{TabReD FSDS leave-one-site-out (LOSO):
+$\Delta_k=\rho(\mathrm{agg},\mathrm{whole})-\rho(\mathrm{agg}_{-k},\mathrm{whole})$
+with the whole-batch vector fixed.
+Report $\rho$ and $\max_k|\Delta_k|$.
+Random is the deployment partition; feature-rank is the sensitivity.}
+\label{tab:tabred-fsds-loso}
+\begin{tabular}{@{}ll
+                r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r
+                r@{}}
+\toprule
+protocol & task & $n$
+ & $\rho_{n|S|}$ & $|\Delta|_{n|S|}$
+ & $\rho_{\mathrm{unif}}$ & $|\Delta|_{\mathrm{unif}}$
+ & $|\Delta|_{\mathrm{med}}$ \\
+\midrule
+feature\_rank & ALL          & 9  & $0.243\pm 0.241$ & $0.057\pm 0.017$ & $0.231\pm 0.237$ & $0.047\pm 0.016$ & $0.052\pm 0.029$ \\
+feature\_rank & cooking-time & 3  & $0.300\pm 0.183$ & $0.053\pm 0.008$ & $0.299\pm 0.199$ & $0.045\pm 0.015$ & $0.036\pm 0.013$ \\
+feature\_rank & ecom-offers  & 3  & $0.264\pm 0.093$ & $0.057\pm 0.006$ & $0.245\pm 0.088$ & $0.057\pm 0.005$ & $0.061\pm 0.019$ \\
+feature\_rank & weather      & 3  & $0.165\pm 0.419$ & $0.060\pm 0.031$ & $0.148\pm 0.400$ & $0.040\pm 0.024$ & $0.060\pm 0.047$ \\
+\midrule
+random & ALL          & 45 & $0.889\pm 0.106$ & $0.054\pm 0.052$ & $0.884\pm 0.115$ & $0.049\pm 0.042$ & $0.064\pm 0.048$ \\
+random & cooking-time & 15 & $0.807\pm 0.144$ & $0.101\pm 0.068$ & $0.794\pm 0.159$ & $0.090\pm 0.049$ & $0.114\pm 0.047$ \\
+random & ecom-offers  & 15 & $0.921\pm 0.049$ & $0.023\pm 0.013$ & $0.923\pm 0.044$ & $0.022\pm 0.012$ & $0.030\pm 0.017$ \\
+random & weather      & 15 & $0.939\pm 0.033$ & $0.040\pm 0.014$ & $0.934\pm 0.034$ & $0.035\pm 0.011$ & $0.048\pm 0.024$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\caption{Feature-rank cells: LOSO $|\Delta|_{\max}$ by aggregator
+(one draw per linreg top split).}
+\label{tab:tabred-fsds-loso-feat}
+\begin{tabular}{@{}ll
+                r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r
+                r@{\hspace{0.5em}}r@{}}
+\toprule
+task & split & $\rho_{n|S|}$ & $|\Delta|_{n|S|}$
+     & $|\Delta|_n$ & $|\Delta|_{\mathrm{unif}}$
+     & $|\Delta|_{\mathrm{med}}$ & $|\Delta|_{\mathrm{rank}}$ \\
+\midrule
+cooking-time & num\_184 & 0.092  & 0.054 & 0.047 & 0.061 & 0.027 & 0.031 \\
+cooking-time & num\_38  & 0.437  & 0.045 & 0.054 & 0.042 & 0.031 & 0.048 \\
+cooking-time & num\_123 & 0.373  & 0.060 & 0.062 & 0.032 & 0.051 & 0.053 \\
+ecom-offers  & num\_67  & 0.347  & 0.062 & 0.057 & 0.062 & 0.081 & 0.073 \\
+ecom-offers  & num\_104 & 0.283  & 0.059 & 0.067 & 0.053 & 0.042 & 0.056 \\
+ecom-offers  & num\_60  & 0.163  & 0.050 & 0.050 & 0.055 & 0.059 & 0.077 \\
+weather      & num\_5   & $-0.025$ & 0.031 & 0.029 & 0.022 & 0.029 & 0.059 \\
+weather      & num\_84  & $-0.126$ & 0.055 & 0.038 & 0.031 & 0.037 & 0.039 \\
+weather      & num\_98  & 0.645  & 0.093 & 0.068 & 0.067 & 0.114 & 0.054 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Leave-one-site-out influence answers a narrow question: if the reference
+vector is held fixed, how much does $\rho$ move when one upload is deleted.
+On the random partition the aggregate is already aligned
+($\rho_{n|S|}=0.889\pm 0.106$ over $45$ cells) and the largest deletion
+effect averages $0.054$.
+On the feature-rank partition the aggregate is not aligned
+($\rho_{n|S|}=0.243\pm 0.241$) and the largest deletion effect is $0.057$,
+the same magnitude.
+Table~\ref{tab:tabred-fsds-loso-feat} shows the same ceiling cell by cell.
+Weather \texttt{num\_98}, the best feature-rank cell ($\rho=0.645$), moves
+by $0.093$ under $n|S|$.
+Weather \texttt{num\_5}, a negative cell, moves by $0.031$.
+Influence does not rank the misaligned split above the aligned one.
+Deleting one site cannot reveal that every site is pointing the same wrong
+way.
+That is the \texttt{num\_105} geometry again, and it is why a source
+detector has to be computed from the site's own outcome model rather than
+from the change in a simplex average.
+
+\subsection{What is delegated to the site score}
+\label{sec:handoff}
+
+The aggregation tables support four uses of $\bar V$, and they mark two
+places where a better weight is the wrong repair.
+First, when the uploads are noisy copies of one covariate shift, sample-size
+weights and inverse-variance weights raise Spearman with the pool, and the
+gain is large exactly when site sizes differ
+(Tables~\ref{tab:pol-ood} and~\ref{tab:fed-sim-size}).
+Second, when a few uploads are replaced by arbitrary vectors, the median and
+client-agreement Shapley hold a Spearman near $0.8$ after the uniform mean
+has fallen below $0.2$
+(Table~\ref{tab:fed-vimp-attack}).
+Third, selection of a planted support survives a large corrupted fraction
+whenever one clean concept remains and the local support is not thin; rank
+correlation moves earlier, and the median loses the top set under thin
+support even with no corruption
+(Table~\ref{tab:hidim-boundary}).
+Fourth, on balanced TabReD splits, $n|S|$ is a safe default because it ties
+the uniform average, not because it wins a large margin.
+
+The two failures are not weight failures.
+Pseudo-outcome risk on random WhyShift folds becomes less correlated with
+its own pooled vector after sample-size weighting.
+Cooking \texttt{num\_105} and \texttt{num\_184} have high pairwise
+concordance and a near-zero or negative correlation with the whole, for
+every aggregator, and leave-one-site-out influence stays near $0.05$
+whether the aggregate is aligned or not.
+Both say that the sites are not noisy copies of the reference.
+A convex weight, a median, and a deletion diagnostic all assume that they
+are.
+The next section drops that assumption.
+Sites share $P(X)$ by construction, the concept is planted on five of ten
+sites, and one further site replaces labels by coin flips.
+The site score is a skill-gated excess risk against a size-matched burn-in
+model.
+It is a weight that can be computed before $\bar V$, and it is the object
+that separates a learnable concept from a consensus breaker.
+The aggregation results above are what that score is being asked to protect.
+
+\input{sec_primary_driver}
