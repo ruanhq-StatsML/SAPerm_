@@ -1,0 +1,863 @@
+{
+  "monitor": [
+    {
+      "site": 0,
+      "name": "weekly_primary",
+      "mu": 1.004721826918236,
+      "se": 0.03946818363025661,
+      "p_positive": 1.0,
+      "oracle": 0.95,
+      "sign_agree": true,
+      "alert": false,
+      "gap": 0.05472182691823613
+    },
+    {
+      "site": 1,
+      "name": "weekly_secondary",
+      "mu": 0.49272045072785553,
+      "se": 0.03404127528829775,
+      "p_positive": 1.0,
+      "oracle": 0.5,
+      "sign_agree": true,
+      "alert": false,
+      "gap": -0.00727954927214447
+    },
+    {
+      "site": 2,
+      "name": "daily_driver",
+      "mu": 0.06701100787129091,
+      "se": 0.03730748795047851,
+      "p_positive": 0.9637671468788258,
+      "oracle": 6.213714045763308e-14,
+      "sign_agree": true,
+      "alert": true,
+      "gap": 0.06701100787122878
+    },
+    {
+      "site": 3,
+      "name": "immediate_driver",
+      "mu": 0.10243771197466374,
+      "se": 0.032537849923914605,
+      "p_positive": 0.999178781015634,
+      "oracle": 1.1090746349129366e-49,
+      "sign_agree": true,
+      "alert": true,
+      "gap": 0.10243771197466374
+    },
+    {
+      "site": 4,
+      "name": "weekly_weak",
+      "mu": 0.3225249921589275,
+      "se": 0.030523044107875985,
+      "p_positive": 1.0,
+      "oracle": 0.28,
+      "sign_agree": true,
+      "alert": false,
+      "gap": 0.042524992158927466
+    },
+    {
+      "site": 5,
+      "name": "decay_recent",
+      "mu": 0.08619286513997874,
+      "se": 0.03380827539954902,
+      "p_positive": 0.9946055145022237,
+      "oracle": 0.009198212643658743,
+      "sign_agree": true,
+      "alert": true,
+      "gap": 0.07699465249632
+    },
+    {
+      "site": 6,
+      "name": "social_overlap",
+      "mu": 0.09237392487181083,
+      "se": 0.030888904531403565,
+      "p_positive": 0.9986074911689106,
+      "oracle": 0.0,
+      "sign_agree": true,
+      "alert": true,
+      "gap": 0.09237392487181083
+    },
+    {
+      "site": 7,
+      "name": "isolated_blocked",
+      "mu": 0.027380821670697247,
+      "se": 0.029523541680515512,
+      "p_positive": 0.8231466118081832,
+      "oracle": 0.0,
+      "sign_agree": true,
+      "alert": false,
+      "gap": 0.027380821670697247
+    },
+    {
+      "site": 8,
+      "name": "null",
+      "mu": -0.004098802745833294,
+      "se": 0.02929712206351876,
+      "p_positive": 0.4443676752589261,
+      "oracle": 0.0,
+      "sign_agree": true,
+      "alert": false,
+      "gap": -0.004098802745833294
+    },
+    {
+      "site": 9,
+      "name": "null_noisy",
+      "mu": 0.07004403399279788,
+      "se": 0.04502594494473744,
+      "p_positive": 0.9401028037357628,
+      "oracle": 0.0,
+      "sign_agree": true,
+      "alert": false,
+      "gap": 0.07004403399279788
+    }
+  ],
+  "n_sign_agree": 10,
+  "alerts": [
+    2,
+    3,
+    5,
+    6
+  ],
+  "primary_by_uplift": 0,
+  "oracle_primary": 0,
+  "thompson": {
+    "rounds": [
+      {
+        "episode": 36,
+        "site": 0,
+        "draw": 0.9575042325491921,
+        "reward": 0.42821214282477627,
+        "oracle_shift": 0.3800000000000001,
+        "best_oracle": 0.3800000000000001,
+        "regret": 0.0,
+        "cumulative_regret": 0.0
+      },
+      {
+        "episode": 37,
+        "site": 0,
+        "draw": 0.8255556659031109,
+        "reward": 0.7090654070662354,
+        "oracle_shift": 0.6649999999999999,
+        "best_oracle": 0.6649999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 0.0
+      },
+      {
+        "episode": 38,
+        "site": 0,
+        "draw": 0.8340790645133391,
+        "reward": 0.9861157194826414,
+        "oracle_shift": 0.9499999999999998,
+        "best_oracle": 0.9499999999999998,
+        "regret": 0.0,
+        "cumulative_regret": 0.0
+      },
+      {
+        "episode": 39,
+        "site": 0,
+        "draw": 0.8694651699537678,
+        "reward": 1.1717775031406665,
+        "oracle_shift": 1.2349999999999999,
+        "best_oracle": 1.2349999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 0.0
+      },
+      {
+        "episode": 40,
+        "site": 0,
+        "draw": 0.9066378023604289,
+        "reward": 0.2602733601136542,
+        "oracle_shift": 0.3800000000000001,
+        "best_oracle": 0.3800000000000001,
+        "regret": 0.0,
+        "cumulative_regret": 0.0
+      },
+      {
+        "episode": 41,
+        "site": 0,
+        "draw": 0.8524359876112166,
+        "reward": 0.7666964036477956,
+        "oracle_shift": 0.665,
+        "best_oracle": 0.665,
+        "regret": 0.0,
+        "cumulative_regret": 0.0
+      },
+      {
+        "episode": 42,
+        "site": 0,
+        "draw": 0.826929246239098,
+        "reward": 0.8421149074972386,
+        "oracle_shift": 0.95,
+        "best_oracle": 0.95,
+        "regret": 0.0,
+        "cumulative_regret": 0.0
+      },
+      {
+        "episode": 43,
+        "site": 0,
+        "draw": 0.8522474265938783,
+        "reward": 1.1924353829114769,
+        "oracle_shift": 1.2349999999999999,
+        "best_oracle": 1.2349999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 0.0
+      },
+      {
+        "episode": 44,
+        "site": 0,
+        "draw": 0.826138187046234,
+        "reward": 0.2903254982208485,
+        "oracle_shift": 0.3799999999999999,
+        "best_oracle": 0.3799999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 0.0
+      },
+      {
+        "episode": 45,
+        "site": 0,
+        "draw": 0.8134093096402257,
+        "reward": 0.6190156084423966,
+        "oracle_shift": 0.6649999999999998,
+        "best_oracle": 0.6649999999999998,
+        "regret": 0.0,
+        "cumulative_regret": 0.0
+      },
+      {
+        "episode": 46,
+        "site": 0,
+        "draw": 0.7973749796807509,
+        "reward": 1.0628800558879534,
+        "oracle_shift": 0.9499999999999998,
+        "best_oracle": 0.9499999999999998,
+        "regret": 0.0,
+        "cumulative_regret": 0.0
+      },
+      {
+        "episode": 47,
+        "site": 0,
+        "draw": 0.8133728408958173,
+        "reward": 1.18897543919456,
+        "oracle_shift": 1.235,
+        "best_oracle": 1.235,
+        "regret": 0.0,
+        "cumulative_regret": 0.0
+      }
+    ],
+    "pulls": [
+      12,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "cumulative_regret": 0.0,
+    "posterior": [
+      {
+        "site": 0,
+        "mu": 0.8393583599314862,
+        "se": 0.01712171205781721
+      },
+      {
+        "site": 1,
+        "mu": 0.49272045072785553,
+        "se": 0.03404127528829775
+      },
+      {
+        "site": 2,
+        "mu": 0.06701100787129091,
+        "se": 0.03730748795047851
+      },
+      {
+        "site": 3,
+        "mu": 0.10243771197466374,
+        "se": 0.032537849923914605
+      },
+      {
+        "site": 4,
+        "mu": 0.3225249921589275,
+        "se": 0.030523044107875985
+      },
+      {
+        "site": 5,
+        "mu": 0.08619286513997874,
+        "se": 0.03380827539954902
+      },
+      {
+        "site": 6,
+        "mu": 0.09237392487181083,
+        "se": 0.030888904531403565
+      },
+      {
+        "site": 7,
+        "mu": 0.027380821670697247,
+        "se": 0.029523541680515512
+      },
+      {
+        "site": 8,
+        "mu": -0.004098802745833294,
+        "se": 0.02929712206351876
+      },
+      {
+        "site": 9,
+        "mu": 0.07004403399279788,
+        "se": 0.04502594494473744
+      }
+    ]
+  },
+  "cold_start": {
+    "rounds": [
+      {
+        "episode": 36,
+        "site": 5,
+        "draw": 0.5556117190159404,
+        "reward": -0.06772232243946535,
+        "oracle_shift": 0.0036792850574635105,
+        "best_oracle": 0.3800000000000001,
+        "regret": 0.3763207149425366,
+        "cumulative_regret": 0.3763207149425366
+      },
+      {
+        "episode": 37,
+        "site": 7,
+        "draw": 1.07090950132202,
+        "reward": 0.07425392627054053,
+        "oracle_shift": 0.0,
+        "best_oracle": 0.6649999999999999,
+        "regret": 0.6649999999999999,
+        "cumulative_regret": 1.0413207149425365
+      },
+      {
+        "episode": 38,
+        "site": 9,
+        "draw": 0.7032165798816084,
+        "reward": 0.04786191450796928,
+        "oracle_shift": 0.0,
+        "best_oracle": 0.9499999999999998,
+        "regret": 0.9499999999999998,
+        "cumulative_regret": 1.9913207149425363
+      },
+      {
+        "episode": 39,
+        "site": 1,
+        "draw": 0.6141257824027709,
+        "reward": 0.7188866244718063,
+        "oracle_shift": 0.65,
+        "best_oracle": 1.2349999999999999,
+        "regret": 0.5849999999999999,
+        "cumulative_regret": 2.5763207149425362
+      },
+      {
+        "episode": 40,
+        "site": 8,
+        "draw": 1.0693274313657113,
+        "reward": -0.003666671595838056,
+        "oracle_shift": 0.0,
+        "best_oracle": 0.3800000000000001,
+        "regret": 0.3800000000000001,
+        "cumulative_regret": 2.956320714942536
+      },
+      {
+        "episode": 41,
+        "site": 1,
+        "draw": 0.6867307975577732,
+        "reward": 0.34149399962628846,
+        "oracle_shift": 0.34999999999999987,
+        "best_oracle": 0.665,
+        "regret": 0.31500000000000017,
+        "cumulative_regret": 3.2713207149425365
+      },
+      {
+        "episode": 42,
+        "site": 1,
+        "draw": 0.5978603892362124,
+        "reward": 0.43228206855278256,
+        "oracle_shift": 0.49999999999999994,
+        "best_oracle": 0.95,
+        "regret": 0.45,
+        "cumulative_regret": 3.7213207149425367
+      },
+      {
+        "episode": 43,
+        "site": 1,
+        "draw": 0.4158141296285509,
+        "reward": 0.731928668646127,
+        "oracle_shift": 0.6499999999999999,
+        "best_oracle": 1.2349999999999999,
+        "regret": 0.585,
+        "cumulative_regret": 4.306320714942537
+      },
+      {
+        "episode": 44,
+        "site": 1,
+        "draw": 0.5213615318436896,
+        "reward": 0.22807691140320202,
+        "oracle_shift": 0.2,
+        "best_oracle": 0.3799999999999999,
+        "regret": 0.17999999999999988,
+        "cumulative_regret": 4.486320714942536
+      },
+      {
+        "episode": 45,
+        "site": 6,
+        "draw": 0.5887709837020035,
+        "reward": -0.07989395345531221,
+        "oracle_shift": 0.0,
+        "best_oracle": 0.6649999999999998,
+        "regret": 0.6649999999999998,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 46,
+        "site": 0,
+        "draw": 1.328016807607476,
+        "reward": 1.0628800558879534,
+        "oracle_shift": 0.9499999999999998,
+        "best_oracle": 0.9499999999999998,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 47,
+        "site": 0,
+        "draw": 1.010607401155697,
+        "reward": 1.18897543919456,
+        "oracle_shift": 1.235,
+        "best_oracle": 1.235,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 36,
+        "site": 0,
+        "draw": 1.1337108660413353,
+        "reward": 0.42821214282477627,
+        "oracle_shift": 0.3800000000000001,
+        "best_oracle": 0.3800000000000001,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 37,
+        "site": 0,
+        "draw": 0.9193022445573532,
+        "reward": 0.7090654070662354,
+        "oracle_shift": 0.6649999999999999,
+        "best_oracle": 0.6649999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 38,
+        "site": 0,
+        "draw": 0.8174070893540953,
+        "reward": 0.9861157194826414,
+        "oracle_shift": 0.9499999999999998,
+        "best_oracle": 0.9499999999999998,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 39,
+        "site": 0,
+        "draw": 0.8534028414576262,
+        "reward": 1.1717775031406665,
+        "oracle_shift": 1.2349999999999999,
+        "best_oracle": 1.2349999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 40,
+        "site": 0,
+        "draw": 0.8994360814345893,
+        "reward": 0.2602733601136542,
+        "oracle_shift": 0.3800000000000001,
+        "best_oracle": 0.3800000000000001,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 41,
+        "site": 0,
+        "draw": 0.8291546028050267,
+        "reward": 0.7666964036477956,
+        "oracle_shift": 0.665,
+        "best_oracle": 0.665,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 42,
+        "site": 0,
+        "draw": 0.862602647949693,
+        "reward": 0.8421149074972386,
+        "oracle_shift": 0.95,
+        "best_oracle": 0.95,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 43,
+        "site": 0,
+        "draw": 0.8163889160555935,
+        "reward": 1.1924353829114769,
+        "oracle_shift": 1.2349999999999999,
+        "best_oracle": 1.2349999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 44,
+        "site": 0,
+        "draw": 0.8820028477006547,
+        "reward": 0.2903254982208485,
+        "oracle_shift": 0.3799999999999999,
+        "best_oracle": 0.3799999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 45,
+        "site": 0,
+        "draw": 0.8016479878124669,
+        "reward": 0.6190156084423966,
+        "oracle_shift": 0.6649999999999998,
+        "best_oracle": 0.6649999999999998,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 46,
+        "site": 0,
+        "draw": 0.7938525785315237,
+        "reward": 1.0628800558879534,
+        "oracle_shift": 0.9499999999999998,
+        "best_oracle": 0.9499999999999998,
+        "regret": 0.0,
+        "cumulative_regret": 5.151320714942536
+      },
+      {
+        "episode": 47,
+        "site": 2,
+        "draw": 1.5298673092576747,
+        "reward": 0.04810574645182708,
+        "oracle_shift": 8.071321389024888e-14,
+        "best_oracle": 1.235,
+        "regret": 1.2349999999999195,
+        "cumulative_regret": 6.386320714942456
+      },
+      {
+        "episode": 36,
+        "site": 0,
+        "draw": 0.8110275479641179,
+        "reward": 0.42821214282477627,
+        "oracle_shift": 0.3800000000000001,
+        "best_oracle": 0.3800000000000001,
+        "regret": 0.0,
+        "cumulative_regret": 6.386320714942456
+      },
+      {
+        "episode": 37,
+        "site": 0,
+        "draw": 0.8575908664580348,
+        "reward": 0.7090654070662354,
+        "oracle_shift": 0.6649999999999999,
+        "best_oracle": 0.6649999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 6.386320714942456
+      },
+      {
+        "episode": 38,
+        "site": 0,
+        "draw": 0.7503424498398245,
+        "reward": 0.9861157194826414,
+        "oracle_shift": 0.9499999999999998,
+        "best_oracle": 0.9499999999999998,
+        "regret": 0.0,
+        "cumulative_regret": 6.386320714942456
+      },
+      {
+        "episode": 39,
+        "site": 0,
+        "draw": 0.7879223209723035,
+        "reward": 1.1717775031406665,
+        "oracle_shift": 1.2349999999999999,
+        "best_oracle": 1.2349999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 6.386320714942456
+      },
+      {
+        "episode": 40,
+        "site": 0,
+        "draw": 0.8410866615396014,
+        "reward": 0.2602733601136542,
+        "oracle_shift": 0.3800000000000001,
+        "best_oracle": 0.3800000000000001,
+        "regret": 0.0,
+        "cumulative_regret": 6.386320714942456
+      },
+      {
+        "episode": 41,
+        "site": 0,
+        "draw": 0.7739280204370962,
+        "reward": 0.7666964036477956,
+        "oracle_shift": 0.665,
+        "best_oracle": 0.665,
+        "regret": 0.0,
+        "cumulative_regret": 6.386320714942456
+      },
+      {
+        "episode": 42,
+        "site": 0,
+        "draw": 0.8281148366770741,
+        "reward": 0.8421149074972386,
+        "oracle_shift": 0.95,
+        "best_oracle": 0.95,
+        "regret": 0.0,
+        "cumulative_regret": 6.386320714942456
+      },
+      {
+        "episode": 43,
+        "site": 0,
+        "draw": 0.8144202869260505,
+        "reward": 1.1924353829114769,
+        "oracle_shift": 1.2349999999999999,
+        "best_oracle": 1.2349999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 6.386320714942456
+      },
+      {
+        "episode": 44,
+        "site": 0,
+        "draw": 0.8141048045213052,
+        "reward": 0.2903254982208485,
+        "oracle_shift": 0.3799999999999999,
+        "best_oracle": 0.3799999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 6.386320714942456
+      },
+      {
+        "episode": 45,
+        "site": 3,
+        "draw": 0.9149169351650119,
+        "reward": 0.09665796132029647,
+        "oracle_shift": 0.0,
+        "best_oracle": 0.6649999999999998,
+        "regret": 0.6649999999999998,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 46,
+        "site": 0,
+        "draw": 0.8090745237829918,
+        "reward": 1.0628800558879534,
+        "oracle_shift": 0.9499999999999998,
+        "best_oracle": 0.9499999999999998,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 47,
+        "site": 0,
+        "draw": 0.8310309586218471,
+        "reward": 1.18897543919456,
+        "oracle_shift": 1.235,
+        "best_oracle": 1.235,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 36,
+        "site": 0,
+        "draw": 0.8090591272732766,
+        "reward": 0.42821214282477627,
+        "oracle_shift": 0.3800000000000001,
+        "best_oracle": 0.3800000000000001,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 37,
+        "site": 0,
+        "draw": 0.809760650147193,
+        "reward": 0.7090654070662354,
+        "oracle_shift": 0.6649999999999999,
+        "best_oracle": 0.6649999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 38,
+        "site": 0,
+        "draw": 0.7874640559136409,
+        "reward": 0.9861157194826414,
+        "oracle_shift": 0.9499999999999998,
+        "best_oracle": 0.9499999999999998,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 39,
+        "site": 0,
+        "draw": 0.8094886742902062,
+        "reward": 1.1717775031406665,
+        "oracle_shift": 1.2349999999999999,
+        "best_oracle": 1.2349999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 40,
+        "site": 0,
+        "draw": 0.8099549256012258,
+        "reward": 0.2602733601136542,
+        "oracle_shift": 0.3800000000000001,
+        "best_oracle": 0.3800000000000001,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 41,
+        "site": 0,
+        "draw": 0.8052445019799149,
+        "reward": 0.7666964036477956,
+        "oracle_shift": 0.665,
+        "best_oracle": 0.665,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 42,
+        "site": 0,
+        "draw": 0.8066930869730211,
+        "reward": 0.8421149074972386,
+        "oracle_shift": 0.95,
+        "best_oracle": 0.95,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 43,
+        "site": 0,
+        "draw": 0.8010756746178614,
+        "reward": 1.1924353829114769,
+        "oracle_shift": 1.2349999999999999,
+        "best_oracle": 1.2349999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 44,
+        "site": 0,
+        "draw": 0.8105906002674008,
+        "reward": 0.2903254982208485,
+        "oracle_shift": 0.3799999999999999,
+        "best_oracle": 0.3799999999999999,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 45,
+        "site": 0,
+        "draw": 0.800810325655566,
+        "reward": 0.6190156084423966,
+        "oracle_shift": 0.6649999999999998,
+        "best_oracle": 0.6649999999999998,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 46,
+        "site": 0,
+        "draw": 0.7813868594169882,
+        "reward": 1.0628800558879534,
+        "oracle_shift": 0.9499999999999998,
+        "best_oracle": 0.9499999999999998,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      },
+      {
+        "episode": 47,
+        "site": 0,
+        "draw": 0.8007539060567805,
+        "reward": 1.18897543919456,
+        "oracle_shift": 1.235,
+        "best_oracle": 1.235,
+        "regret": 0.0,
+        "cumulative_regret": 7.051320714942456
+      }
+    ],
+    "pulls": [
+      36,
+      5,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "cumulative_regret": 7.051320714942456,
+    "posterior": [
+      {
+        "site": 0,
+        "mu": 0.8131455908329894,
+        "se": 0.010970810678606783
+      },
+      {
+        "site": 1,
+        "mu": 0.47644446396935836,
+        "se": 0.029103826184915055
+      },
+      {
+        "site": 2,
+        "mu": 0.047283847477978216,
+        "se": 0.06535528975860702
+      },
+      {
+        "site": 3,
+        "mu": 0.09521073475673596,
+        "se": 0.06118140576494051
+      },
+      {
+        "site": 4,
+        "mu": 0.0,
+        "se": 0.5
+      },
+      {
+        "site": 5,
+        "mu": -0.0668785828280213,
+        "se": 0.05580952189446138
+      },
+      {
+        "site": 6,
+        "mu": -0.07893244879706085,
+        "se": 0.05485152980723777
+      },
+      {
+        "site": 7,
+        "mu": 0.07338374945595365,
+        "se": 0.05412701121477012
+      },
+      {
+        "site": 8,
+        "mu": -0.0036215571201055584,
+        "se": 0.055461543853895366
+      },
+      {
+        "site": 9,
+        "mu": 0.04645578897435315,
+        "se": 0.08570122274742867
+      }
+    ]
+  },
+  "most_pulled": 0,
+  "cold_most_pulled": 0
+}
