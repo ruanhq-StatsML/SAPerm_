@@ -10,6 +10,7 @@ import numpy as np
 import yaml
 
 from core.attribution import rank_blocks, rank_features
+from core.digestion import digest
 from core.generator import CounterfactualGenerator
 from core.iterative import block_update, lag_column_names
 from core.quality_gate import QualityGate
@@ -45,11 +46,14 @@ def run(cfg):
     n_features = data["F"]
 
     gate = QualityGate().fit(batches[0])
+    digested = digest(
+        batches[0], col_names, max_cardinality=int(cfg.get("max_cardinality", 32)),
+    )
     generator = CounterfactualGenerator(
         backend=cfg["generator"],
         seed=cfg["seed"],
         **cfg.get("generator_args", {}),
-    ).fit(batches[0], col_names)
+    ).fit(batches[0], col_names, discrete_cols=digested["discrete"])
     n_sweeps = int(cfg.get("n_sweeps", 1))
     methods = list(generator.methods) if generator.methods else [None]
     yest_names = lag_column_names(col_names)
