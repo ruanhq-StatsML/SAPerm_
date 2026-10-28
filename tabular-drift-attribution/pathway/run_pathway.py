@@ -157,6 +157,7 @@ def score_pathway(name: str, days: list[dict], blocks: dict[str, list[int]], ste
         "tabddpm_steps": steps,
         "tabddpm_timesteps": timesteps,
         "tabddpm_loss": generator.loss_last,
+        "x_clip": generator.x_clip,
         "fidelity_mmd": fidelity,
         "anchor_brier": anchor_brier,
         "anchor_rate": float(np.mean(y_anchor)),
@@ -338,6 +339,196 @@ def load_ieee_week(n: int = 800, seed: int = 0):
     return days, blocks, {"peak_day": peak, "window": window, "rate": {int(d): float(rates.loc[d]) for d in window}}
 
 
+def _consecutive(window) -> bool:
+    labels = [str(item) for item in window]
+    if not all(len(item) == 10 and item[4] == "-" and item[7] == "-" for item in labels):
+        return True
+    parsed = pd.to_datetime(pd.Series(labels), format="%Y-%m-%d", errors="coerce")
+    if parsed.isna().any():
+        return True
+    gaps = np.diff(parsed.to_numpy().astype("datetime64[D]").astype(np.int64))
+    return bool(np.all(gaps == 1))
+
+
+def _peak_window(rates: pd.Series, counts: pd.Series, min_count: int):
+    """Last local peak that still has seven later batches above `min_count`."""
+    usable = [idx for idx in rates.index if counts.loc[idx] >= min_count]
+    peak = None
+    for pos, idx in enumerate(usable):
+        if pos == 0 or pos + 7 >= len(usable):
+            continue
+        window = usable[pos: pos + 8]
+        if not _consecutive(window):
+            continue
+        prev_idx, next_idx = usable[pos - 1], usable[pos + 1]
+        if rates.loc[idx] >= rates.loc[prev_idx] and rates.loc[idx] >= rates.loc[next_idx]:
+            peak = idx
+    if peak is None:
+        for pos in range(len(usable) - 8, -1, -1):
+            window = usable[pos: pos + 8]
+            if _consecutive(window):
+                return usable[pos]
+        return usable[-8]
+    return peak
+
+
+def _blocks_from_frame(frame, groups, y, g, labels, n, seed, min_count):
+    names = [col for cols in groups.values() for col in cols if col in frame.columns]
+    groups = {name: [col for col in cols if col in frame.columns] for name, cols in groups.items()}
+    groups = {name: cols for name, cols in groups.items() if cols}
+    work = frame[names].apply(pd.to_numeric, errors="coerce")
+    rates = y.groupby(labels).mean()
+    counts = y.groupby(labels).size()
+    peak = _peak_window(rates, counts, min_count)
+    order = [idx for idx in rates.index if counts.loc[idx] >= min_count]
+    start = order.index(peak)
+    window = order[start: start + 8]
+    print(
+        f"peak {peak} rate {rates.loc[peak]:.4f}, forward to {window[-1]} rate {rates.loc[window[-1]]:.4f}",
+        flush=True,
+    )
+    rng = np.random.default_rng(seed)
+    days = []
+    for key in window:
+        mask = labels == key
+        X = work.loc[mask].to_numpy(dtype=np.float32)
+        yy = y.loc[mask].to_numpy(dtype=np.int64)
+        gg = None if g is None else g.loc[mask].to_numpy(dtype=np.float32)
+        if len(yy) > n:
+            take = rng.choice(len(yy), size=n, replace=False)
+            X, yy = X[take], yy[take]
+            if gg is not None:
+                gg = gg[take]
+        day = {"X": X, "y": yy, "label": str(key)}
+        if gg is not None:
+            day["g"] = gg
+        days.append(day)
+    med = np.nanmedian(days[0]["X"], axis=0)
+    keep = np.nanstd(np.nan_to_num(days[0]["X"], nan=0.0), axis=0) >= 1e-3
+    for day in days:
+        X = day["X"].copy()
+        bad = ~np.isfinite(X)
+        if bad.any():
+            X[bad] = np.take(med, np.where(bad)[1])
+        day["X"] = X[:, keep]
+    new_names = [name for name, flag in zip(names, keep) if flag]
+    blocks = {}
+    for block, cols in groups.items():
+        idx = [new_names.index(col) for col in cols if col in new_names]
+        if idx:
+            blocks[block] = idx
+    meta = {
+        "peak": str(peak),
+        "window": [str(key) for key in window],
+        "rate": {str(key): float(rates.loc[key]) for key in window},
+        "columns": {block: [new_names[i] for i in idx] for block, idx in blocks.items()},
+    }
+    return days, blocks, meta
+
+
+def load_movielens_week(n: int = 700, seed: int = 0):
+    """Seven calendar days after a peak in the high-rating rate.
+
+    Rating is the outcome. Context is the hour. Weekday is constant inside one
+    calendar day, so it drops out of the peak-day scale.
+    """
+    root = ROOT / "data" / "movielens" / "ml-1m"
+    ratings = pd.read_csv(
+        root / "ratings.dat", sep="::", engine="python", header=None,
+        names=["user_id", "item_id", "rating", "timestamp"],
+    )
+    users = pd.read_csv(
+        root / "users.dat", sep="::", engine="python", header=None,
+        names=["user_id", "gender", "age", "occupation", "zip"],
+    )
+    movies = pd.read_csv(
+        root / "movies.dat", sep="::", engine="python", header=None,
+        names=["item_id", "title", "genres"], encoding="latin-1",
+    )
+    user_n = ratings["user_id"].value_counts()
+    item_n = ratings["item_id"].value_counts()
+    ratings = ratings[
+        ratings["user_id"].isin(user_n[user_n >= 20].index)
+        & ratings["item_id"].isin(item_n[item_n >= 20].index)
+    ].copy()
+    ratings = ratings.merge(users, on="user_id", how="left").merge(movies, on="item_id", how="left")
+    ratings["gender_num"] = (ratings["gender"] == "M").astype(np.float32)
+    ratings["age_num"] = ratings["age"].astype(np.float32)
+    ratings["occupation_num"] = ratings["occupation"].astype(np.float32)
+    ratings["zip_num"] = pd.to_numeric(ratings["zip"].astype(str).str[:1], errors="coerce")
+    genres = ratings["genres"].fillna("(no genres listed)").str.get_dummies(sep="|")
+    for genre in genres.sum().nlargest(8).index.tolist():
+        ratings[f"genre_{genre}"] = genres[genre].astype(np.float32)
+    clock = pd.to_datetime(ratings["timestamp"], unit="s", utc=True)
+    ratings["hour"] = clock.dt.hour.astype(np.float32)
+    ratings["day_of_week"] = clock.dt.day_of_week.astype(np.float32)
+    ratings["date"] = clock.dt.strftime("%Y-%m-%d")
+    groups = {
+        "user": ["gender_num", "age_num", "occupation_num", "zip_num"],
+        "item": [col for col in ratings.columns if col.startswith("genre_")],
+        "context": ["hour", "day_of_week"],
+    }
+    y = (ratings["rating"] >= 4).astype(np.int64)
+    y.index = ratings.index
+    return _blocks_from_frame(
+        ratings, groups, y, ratings["rating"].astype(np.float32), ratings["date"], n, seed, min_count=400,
+    )
+
+
+def load_home_credit_week(n: int = 700, n_slices: int = 40, seed: int = 0):
+    """Seven ID-order slices after a peak in the default rate.
+
+    application_train.csv has no event time. Rows follow SK_ID_CURR, split
+    into equal slices. The pathway is that order, not a calendar week.
+    """
+    path = ROOT / "data" / "home_credit" / "application_train.csv"
+    groups = {
+        "external": ["EXT_SOURCE_1", "EXT_SOURCE_2", "EXT_SOURCE_3"],
+        "amount": ["AMT_INCOME_TOTAL", "AMT_CREDIT", "AMT_ANNUITY", "AMT_GOODS_PRICE"],
+        "personal": ["CNT_CHILDREN", "DAYS_BIRTH", "DAYS_EMPLOYED", "CNT_FAM_MEMBERS"],
+        "region": [
+            "REGION_POPULATION_RELATIVE", "DAYS_REGISTRATION", "DAYS_ID_PUBLISH",
+            "REGION_RATING_CLIENT", "DAYS_LAST_PHONE_CHANGE",
+        ],
+        "other": [
+            "HOUR_APPR_PROCESS_START", "OWN_CAR_AGE",
+            "OBS_30_CNT_SOCIAL_CIRCLE", "DEF_30_CNT_SOCIAL_CIRCLE",
+            "AMT_REQ_CREDIT_BUREAU_MON", "FLAG_EMP_PHONE",
+        ],
+    }
+    usecols = ["SK_ID_CURR", "TARGET"] + [col for cols in groups.values() for col in cols]
+    frame = pd.read_csv(path, usecols=usecols).sort_values("SK_ID_CURR")
+    if "DAYS_EMPLOYED" in frame.columns:
+        frame.loc[frame["DAYS_EMPLOYED"] > 300000, "DAYS_EMPLOYED"] = np.nan
+    edges = np.linspace(0, len(frame), n_slices + 1).astype(int)
+    labels = pd.Series(index=frame.index, dtype=object)
+    for i, (start, stop) in enumerate(zip(edges[:-1], edges[1:])):
+        labels.iloc[start:stop] = f"slice {i:02d}"
+    y = frame["TARGET"].astype(np.int64)
+    return _blocks_from_frame(frame, groups, y, None, labels, n, seed, min_count=400)
+
+
+def run_extra():
+    """Score MovieLens and Home Credit and merge them into the saved pathway."""
+    out_dir = ROOT / "results"
+    path = out_dir / "pathway.json"
+    payload = json.loads(path.read_text()) if path.exists() else {}
+    movielens_days, movielens_blocks, movielens_meta = load_movielens_week(n=700, seed=0)
+    movielens = score_pathway(
+        "movielens", movielens_days, movielens_blocks, steps=600, timesteps=50, seed=0,
+    )
+    movielens["window"] = movielens_meta
+    home_days, home_blocks, home_meta = load_home_credit_week(n=700, seed=0)
+    home = score_pathway(
+        "home_credit", home_days, home_blocks, steps=600, timesteps=50, seed=0,
+    )
+    home["window"] = home_meta
+    payload["movielens"] = movielens
+    payload["home_credit"] = home
+    path.write_text(json.dumps(payload, indent=2))
+    print(f"\nSaved {path}", flush=True)
+
+
 def main():
     out_dir = ROOT / "results"
     out_dir.mkdir(exist_ok=True)
@@ -357,4 +548,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "extra":
+        run_extra()
+    else:
+        main()

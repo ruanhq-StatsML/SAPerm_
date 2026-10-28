@@ -22,6 +22,12 @@ def _fmt(value, digits=3):
     return f"{value:.{digits}f}"
 
 
+def _cell(value, digits=3):
+    if value is None:
+        return "--"
+    return _fmt(value, digits)
+
+
 def _ci(pair):
     return f"[{pair[0]:.3f}, {pair[1]:.3f}]"
 
@@ -90,6 +96,91 @@ def sign_rows(panel, fields):
     return "\n".join(lines)
 
 
+def leader_rows(panel):
+    lines = []
+    has_mse = panel["pathway"][0]["mse"] is not None
+    for row in panel["pathway"]:
+        def top(field):
+            vals = {
+                name: abs(block[field])
+                for name, block in row["blocks"].items()
+                if block[field] is not None
+            }
+            total = sum(vals.values())
+            if total < 1e-4:
+                return "--", None
+            name = max(vals, key=vals.get)
+            return name, vals[name] / total
+        po_name, po_share = top("po_drop")
+        br_name, br_share = top("brier_drop")
+        mmd_name, mmd_share = top("mmd")
+        mse_cell = ""
+        if has_mse:
+            mse_name, mse_share = top("mse_drop")
+            mse_cell = f" & {mse_name} & {_cell(mse_share)}"
+        lines.append(
+            f"{row['label']} & {_fmt(row['fraud_rate'])} & {_fmt(row['po_risk'])} & {_fmt(row['brier'])} "
+            f"& {po_name} & {_cell(po_share)} & {br_name} & {_cell(br_share)}{mse_cell} "
+            f"& {mmd_name} & {_cell(mmd_share)} \\\\"
+        )
+    return "\n".join(lines), has_mse
+
+
+def panel_tables(panel, caption_path, caption_day, label_prefix):
+    leaders, has_mse = leader_rows(panel)
+    mse_head = " & MSE top & MSE share" if has_mse else ""
+    mse_cols = "cc" if has_mse else ""
+    day = panel_tables_day(panel, has_mse)
+    return f"""
+\\begin{{table}}[t]
+\\centering
+\\caption{{{caption_path}}}
+\\label{{tab:{label_prefix}-path}}
+\\small
+\\resizebox{{\\textwidth}}{{!}}{{%
+\\begin{{tabular}}{{lccccccc{mse_cols}cc}}
+\\toprule
+step & rate & PO-risk & Brier & PO top & PO share & Brier top & Brier share{mse_head} & MMD top & MMD share \\\\
+\\midrule
+{leaders}
+\\bottomrule
+\\end{{tabular}}}}
+\\end{{table}}
+
+\\begin{{table}}[t]
+\\centering
+\\caption{{{caption_day}}}
+\\label{{tab:{label_prefix}-day}}
+\\small
+\\resizebox{{\\textwidth}}{{!}}{{%
+\\begin{{tabular}}{{{'lccccccccccc' if has_mse else 'lcccccccccc'}}}
+\\toprule
+block & PO $\\Delta$ & PO interval & Brier $\\Delta$ & Brier interval{' & MSE $\\Delta$' if has_mse else ''} & MMD & MMD $p$ & HSIC $\\Delta$ & HSIC $p$ & PO share & Brier share \\\\
+\\midrule
+{day}
+\\bottomrule
+\\end{{tabular}}}}
+\\end{{table}}
+
+\\begin{{table}}[t]
+\\centering
+\\caption{{Sign-flip test across the seven steps. The contrast is absolute movement.}}
+\\label{{tab:{label_prefix}-sign}}
+\\begin{{tabular}}{{llcc}}
+\\toprule
+loss & comparison & mean gap & $p$ \\\\
+\\midrule
+{sign_rows(panel, ('po_drop', 'brier_drop', 'mse_drop') if has_mse else ('po_drop', 'brier_drop'))}
+\\bottomrule
+\\end{{tabular}}
+\\end{{table}}
+"""
+
+
+def panel_tables_day(panel, has_mse):
+    return block_rows(panel, with_mse=has_mse)
+
+
 def main():
     payload = json.loads((ROOT / "results" / "pathway.json").read_text())
     synthetic = payload["synthetic"]
@@ -153,7 +244,7 @@ block & PO $\Delta$ & PO interval & Brier $\Delta$ & Brier interval & MMD & MMD 
 
 \begin{table}[t]
 \centering
-\caption{Sign-flip test over the seven IEEE-CIS steps after the peak. PO-risk does not separate the blocks. The transferred Brier movement is largest for the card block.}
+\caption{Sign-flip test over the seven IEEE-CIS steps after the peak. PO-risk does not name a single block. The transferred Brier movement is largest for the card block.}
 \label{tab:pathway-ieee-sign}
 \begin{tabular}{llcc}
 \toprule
@@ -164,6 +255,23 @@ loss & comparison & mean gap & $p$ \\
 \end{tabular}
 \end{table}
 """
+    if "movielens" in payload:
+        text += panel_tables(
+            payload["movielens"],
+            "MovieLens-1M, seven calendar days after a peak in the high-rating rate. "
+            "Rating is the outcome. Shares use absolute movement.",
+            "MovieLens last day of the pathway. Rating MSE is the predictive companion of Brier.",
+            "movielens",
+        )
+    if "home_credit" in payload:
+        text += panel_tables(
+            payload["home_credit"],
+            "Home Credit along SK\\_ID\\_CURR. Seven slices after a peak in the default rate. "
+            "There is no event time. Every block MMD stays below 0.005. "
+            "An MMD entry of -- is a total below $10^{-4}$, and a large MMD share is still a split of a near-zero total.",
+            "Home Credit last slice. PO-risk and transferred Brier on the default label.",
+            "home-credit",
+        )
     # The synthetic pathway header has 9 columns but I listed 8 c's. Fix below by rewriting the header in the string carefully.
     out = ROOT / "results" / "pathway_tables.tex"
     out.write_text(text)

@@ -45,6 +45,7 @@ class TabDDPMRepaint:
         self.batch_size = batch_size
         self.lr = lr
         self.seed = seed
+        self.x_clip = 5.0
         self.device = torch.device(device)
         self.y_dist = None
         self.loss_last = None
@@ -114,10 +115,24 @@ class TabDDPMRepaint:
         for i in reversed(range(self.timesteps)):
             t = torch.full((b,), i, device=device, dtype=torch.long)
             model_out = self.diffusion._denoise_fn(z, t, y=y)
-            z = self.diffusion.gaussian_p_sample(
-                model_out[:, : self.n_features], z, t, clip_denoised=False,
-            )["sample"].float()
+            z = self._reverse_step(model_out, z, t)
         return z.cpu().numpy().astype(np.float32)
+
+    def _reverse_step(self, model_out, z, t):
+        """One reverse step with the clean prediction held in the training box.
+
+        Observed rows are clipped to [-x_clip, x_clip] before training. Their
+        ``gaussian_p_sample`` ignores ``clip_denoised``, and on these tables the
+        raw chain leaves that box. Clamping the predicted clean sample is the
+        usual denoised clip, matched to that box.
+        """
+        pred = self.diffusion._predict_xstart_from_eps(
+            z, t, model_out[:, : self.n_features],
+        ).clamp(-self.x_clip, self.x_clip)
+        mean, _, log_var = self.diffusion.gaussian_q_posterior_mean_variance(pred, z, t)
+        noise = torch.randn_like(z)
+        nonzero = (t != 0).float().view(-1, *([1] * (z.ndim - 1)))
+        return (mean + nonzero * torch.exp(0.5 * log_var) * noise).float()
 
     @torch.no_grad()
     def impute(self, X: np.ndarray, target_cols: list[int], batch_size: int = 512) -> np.ndarray:
@@ -141,9 +156,7 @@ class TabDDPMRepaint:
             for i in reversed(range(self.timesteps)):
                 t = torch.full((b,), i, device=self.device, dtype=torch.long)
                 model_out = self.diffusion._denoise_fn(z, t, y=y)
-                z = self.diffusion.gaussian_p_sample(
-                    model_out[:, : self.n_features], z, t, clip_denoised=False,
-                )["sample"].float()
+                z = self._reverse_step(model_out, z, t)
                 if i > 0:
                     t_prev = torch.full((b,), i - 1, device=self.device, dtype=torch.long)
                     known_noised = self.diffusion.gaussian_q_sample(x0, t_prev).float()

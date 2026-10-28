@@ -7,13 +7,13 @@
 \toprule
 step & PO-risk & Brier & MSE & driver PO & driver Brier & driver MSE & driver MMD & context MMD \\
 \midrule
-1 & 0.005 & 0.236 & 0.337 & 0.251 & 0.441 & 0.489 & 0.863 & 0.000 \\
-2 & 0.014 & 0.231 & 0.403 & 0.794 & 0.664 & 0.531 & 0.886 & 0.076 \\
-3 & 0.017 & 0.212 & 0.486 & 0.819 & 0.645 & 0.678 & 0.905 & 0.095 \\
-4 & 0.026 & 0.195 & 0.901 & 0.837 & 0.871 & 0.809 & 0.920 & 0.071 \\
-5 & 0.031 & 0.182 & 1.427 & 0.328 & 0.819 & 0.822 & 0.864 & 0.136 \\
-6 & 0.032 & 0.158 & 2.589 & 0.910 & 0.908 & 0.920 & 0.852 & 0.144 \\
-7 & 0.050 & 0.122 & 4.496 & 0.910 & 0.953 & 0.940 & 0.834 & 0.166 \\
+1 & 0.005 & 0.236 & 0.337 & 0.471 & 0.420 & 0.492 & 0.863 & 0.000 \\
+2 & 0.014 & 0.231 & 0.403 & 0.791 & 0.672 & 0.548 & 0.886 & 0.076 \\
+3 & 0.017 & 0.212 & 0.486 & 0.822 & 0.650 & 0.689 & 0.905 & 0.095 \\
+4 & 0.026 & 0.195 & 0.901 & 0.821 & 0.868 & 0.810 & 0.920 & 0.071 \\
+5 & 0.031 & 0.182 & 1.427 & 0.336 & 0.822 & 0.826 & 0.864 & 0.136 \\
+6 & 0.032 & 0.158 & 2.589 & 0.923 & 0.911 & 0.921 & 0.852 & 0.144 \\
+7 & 0.050 & 0.122 & 4.496 & 0.905 & 0.959 & 0.936 & 0.834 & 0.166 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -28,10 +28,10 @@ step & PO-risk & Brier & MSE & driver PO & driver Brier & driver MSE & driver MM
 \toprule
 block & PO $\Delta$ & PO interval & Brier $\Delta$ & Brier interval & MSE $\Delta$ & MMD & MMD $p$ & HSIC $\Delta$ & HSIC $p$ & PO share & Brier share \\
 \midrule
-stable & -0.003 & [-0.011, 0.003] & -0.003 & [-0.008, 0.002] & -0.268 & 0.000 & 1.000 & -0.0004 & 0.585 & 0.023 & 0.025 \\
-context & -0.005 & [-0.017, 0.002] & -0.002 & [-0.003, -0.000] & -0.035 & 0.084 & 0.024 & -0.0002 & 0.341 & 0.043 & 0.012 \\
-driver & -0.100 & [-0.118, -0.059] & -0.131 & [-0.140, -0.124] & -4.785 & 0.420 & 0.024 & 0.0003 & 0.049 & 0.910 & 0.953 \\
-noise & 0.003 & [-0.005, 0.006] & -0.001 & [-0.003, 0.001] & 0.000 & 0.000 & 1.000 & -0.0002 & 0.024 & 0.024 & 0.009 \\
+stable & -0.002 & [-0.008, 0.004] & -0.004 & [-0.008, 0.001] & -0.292 & 0.000 & 1.000 & -0.0004 & 0.585 & 0.015 & 0.028 \\
+context & -0.005 & [-0.016, 0.002] & -0.001 & [-0.002, -0.000] & -0.035 & 0.084 & 0.024 & -0.0002 & 0.341 & 0.041 & 0.010 \\
+driver & -0.103 & [-0.122, -0.062] & -0.132 & [-0.139, -0.126] & -4.835 & 0.420 & 0.024 & 0.0003 & 0.049 & 0.905 & 0.959 \\
+noise & 0.004 & [-0.002, 0.008] & -0.000 & [-0.002, 0.001] & 0.001 & 0.000 & 1.000 & -0.0002 & 0.024 & 0.039 & 0.003 \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -44,15 +44,15 @@ noise & 0.003 & [-0.005, 0.006] & -0.001 & [-0.003, 0.001] & 0.000 & 0.000 & 1.0
 \toprule
 loss & comparison & mean gap & $p$ \\
 \midrule
-PO-risk & driver $>$ stable & 0.030 & 0.008 \\
-PO-risk & driver $>$ context & 0.028 & 0.014 \\
-PO-risk & driver $>$ noise & 0.029 & 0.028 \\
+PO-risk & driver $>$ stable & 0.031 & 0.008 \\
+PO-risk & driver $>$ context & 0.029 & 0.008 \\
+PO-risk & driver $>$ noise & 0.029 & 0.021 \\
 Brier & driver $>$ stable & 0.050 & 0.014 \\
 Brier & driver $>$ context & 0.060 & 0.008 \\
-Brier & driver $>$ noise & 0.059 & 0.008 \\
-MSE & driver $>$ stable & 1.487 & 0.014 \\
-MSE & driver $>$ context & 1.803 & 0.008 \\
-MSE & driver $>$ noise & 1.810 & 0.008 \\
+Brier & driver $>$ noise & 0.060 & 0.008 \\
+MSE & driver $>$ stable & 1.511 & 0.014 \\
+MSE & driver $>$ context & 1.821 & 0.008 \\
+MSE & driver $>$ noise & 1.828 & 0.008 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -67,34 +67,150 @@ MSE & driver $>$ noise & 1.810 & 0.008 \\
 \toprule
 block & PO $\Delta$ & PO interval & Brier $\Delta$ & Brier interval & MMD & MMD $p$ & HSIC $\Delta$ & HSIC $p$ & PO share & Brier share \\
 \midrule
-amount & -0.022 & [-0.032, 0.002] & 0.002 & [0.001, 0.005] & 0.002 & 0.098 & -0.0001 & 0.122 & 0.144 & 0.009 \\
-card & 0.012 & [-0.014, 0.018] & -0.080 & [-0.105, -0.062] & 0.001 & 1.000 & -0.0003 & 0.098 & 0.077 & 0.338 \\
-address & -0.058 & [-0.082, -0.039] & -0.048 & [-0.068, -0.033] & 0.000 & 1.000 & 0.0000 & 0.073 & 0.378 & 0.203 \\
-counts & -0.052 & [-0.055, 0.006] & -0.051 & [-0.063, -0.039] & 0.000 & 0.146 & -0.0000 & 0.122 & 0.338 & 0.214 \\
-timedelta & 0.008 & [-0.130, 0.023] & 0.029 & [0.013, 0.040] & 0.000 & 1.000 & -0.0001 & 0.049 & 0.055 & 0.120 \\
-hour & 0.001 & [-0.030, 0.005] & -0.028 & [-0.039, -0.016] & 0.002 & 0.073 & 0.0002 & 0.024 & 0.010 & 0.116 \\
+amount & 0.001 & [-0.001, 0.006] & -0.000 & [-0.000, 0.000] & 0.002 & 0.098 & -0.0001 & 0.122 & 0.115 & 0.002 \\
+card & -0.004 & [-0.014, 0.001] & -0.013 & [-0.023, -0.004] & 0.001 & 1.000 & -0.0003 & 0.098 & 0.324 & 0.420 \\
+address & 0.006 & [-0.002, 0.013] & 0.005 & [0.002, 0.008] & 0.000 & 1.000 & 0.0000 & 0.073 & 0.484 & 0.159 \\
+counts & 0.000 & [-0.006, 0.003] & -0.003 & [-0.006, 0.002] & 0.000 & 0.146 & -0.0000 & 0.122 & 0.007 & 0.102 \\
+timedelta & 0.001 & [-0.007, 0.012] & 0.009 & [-0.003, 0.023] & 0.000 & 1.000 & -0.0001 & 0.049 & 0.061 & 0.302 \\
+hour & 0.000 & [-0.003, 0.002] & -0.000 & [-0.005, 0.004] & 0.002 & 0.073 & 0.0002 & 0.024 & 0.010 & 0.015 \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
 \begin{table}[t]
 \centering
-\caption{Sign-flip test over the seven IEEE-CIS steps after the peak. PO-risk does not separate the blocks. The transferred Brier movement is largest for the card block.}
+\caption{Sign-flip test over the seven IEEE-CIS steps after the peak. PO-risk does not name a single block. The transferred Brier movement is largest for the card block.}
 \label{tab:pathway-ieee-sign}
 \begin{tabular}{llcc}
 \toprule
 loss & comparison & mean gap & $p$ \\
 \midrule
-PO-risk & timedelta $>$ amount & 0.007 & 0.491 \\
-PO-risk & timedelta $>$ card & 0.020 & 0.227 \\
-PO-risk & timedelta $>$ address & 0.008 & 0.432 \\
-PO-risk & timedelta $>$ counts & 0.009 & 0.423 \\
-PO-risk & timedelta $>$ hour & 0.029 & 0.024 \\
-Brier & card $>$ amount & 0.075 & 0.008 \\
-Brier & card $>$ address & 0.019 & 0.008 \\
-Brier & card $>$ counts & 0.015 & 0.016 \\
-Brier & card $>$ timedelta & 0.054 & 0.008 \\
-Brier & card $>$ hour & 0.059 & 0.008 \\
+PO-risk & timedelta $>$ amount & 0.002 & 0.021 \\
+PO-risk & timedelta $>$ card & 0.001 & 0.303 \\
+PO-risk & timedelta $>$ address & 0.002 & 0.209 \\
+PO-risk & timedelta $>$ counts & 0.002 & 0.178 \\
+PO-risk & timedelta $>$ hour & 0.002 & 0.042 \\
+Brier & card $>$ amount & 0.008 & 0.008 \\
+Brier & card $>$ address & 0.006 & 0.008 \\
+Brier & card $>$ counts & 0.005 & 0.028 \\
+Brier & card $>$ timedelta & 0.002 & 0.292 \\
+Brier & card $>$ hour & 0.004 & 0.054 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{MovieLens-1M, seven calendar days after a peak in the high-rating rate. Rating is the outcome. Shares use absolute movement.}
+\label{tab:movielens-path}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+step & rate & PO-risk & Brier & PO top & PO share & Brier top & Brier share & MSE top & MSE share & MMD top & MMD share \\
+\midrule
+2001-01-02 & 0.503 & 0.041 & 0.263 & user & 0.614 & context & 0.692 & user & 0.769 & user & 0.825 \\
+2001-01-03 & 0.597 & 0.015 & 0.255 & item & 0.338 & item & 0.737 & user & 0.474 & user & 0.655 \\
+2001-01-04 & 0.500 & 0.024 & 0.244 & item & 0.629 & context & 0.426 & item & 0.601 & context & 0.698 \\
+2001-01-05 & 0.539 & 0.032 & 0.255 & item & 0.549 & item & 0.628 & item & 0.708 & user & 0.670 \\
+2001-01-06 & 0.657 & 0.046 & 0.251 & user & 0.802 & item & 0.617 & item & 0.599 & context & 0.498 \\
+2001-01-07 & 0.551 & 0.031 & 0.251 & item & 0.544 & item & 0.695 & item & 0.508 & context & 0.618 \\
+2001-01-08 & 0.490 & 0.027 & 0.246 & user & 0.894 & item & 0.593 & item & 0.497 & context & 0.582 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{MovieLens last day of the pathway. Rating MSE is the predictive companion of Brier.}
+\label{tab:movielens-day}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+block & PO $\Delta$ & PO interval & Brier $\Delta$ & Brier interval & MSE $\Delta$ & MMD & MMD $p$ & HSIC $\Delta$ & HSIC $p$ & PO share & Brier share \\
+\midrule
+user & -0.026 & [-0.048, -0.008] & -0.008 & [-0.014, 0.001] & -0.047 & 0.052 & 0.024 & 0.0021 & 0.024 & 0.894 & 0.284 \\
+item & -0.000 & [-0.006, 0.004] & -0.018 & [-0.025, -0.010] & -0.048 & 0.006 & 0.024 & -0.0000 & 0.024 & 0.006 & 0.593 \\
+context & 0.003 & [-0.001, 0.004] & 0.004 & [0.001, 0.006] & -0.002 & 0.081 & 0.024 & 0.0019 & 0.024 & 0.101 & 0.123 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Sign-flip test across the seven steps. The contrast is absolute movement.}
+\label{tab:movielens-sign}
+\begin{tabular}{llcc}
+\toprule
+loss & comparison & mean gap & $p$ \\
+\midrule
+PO-risk & user $>$ item & 0.004 & 0.198 \\
+PO-risk & user $>$ context & 0.007 & 0.016 \\
+Brier & item $>$ user & 0.005 & 0.029 \\
+Brier & item $>$ context & 0.005 & 0.074 \\
+MSE & item $>$ user & 0.017 & 0.125 \\
+MSE & item $>$ context & 0.030 & 0.016 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Home Credit along SK\_ID\_CURR. Seven slices after a peak in the default rate. There is no event time. Every block MMD stays below 0.005. An MMD entry of -- is a total below $10^{-4}$, and a large MMD share is still a split of a near-zero total.}
+\label{tab:home-credit-path}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccccc}
+\toprule
+step & rate & PO-risk & Brier & PO top & PO share & Brier top & Brier share & MMD top & MMD share \\
+\midrule
+slice 32 & 0.079 & 0.030 & 0.202 & other & 0.358 & external & 0.695 & external & 0.925 \\
+slice 33 & 0.097 & 0.036 & 0.201 & external & 0.419 & external & 0.500 & other & 0.531 \\
+slice 34 & 0.067 & 0.046 & 0.210 & other & 0.417 & external & 0.437 & amount & 0.423 \\
+slice 35 & 0.084 & 0.034 & 0.193 & amount & 0.514 & external & 0.702 & external & 0.939 \\
+slice 36 & 0.090 & 0.032 & 0.213 & external & 0.370 & external & 0.379 & -- & -- \\
+slice 37 & 0.086 & 0.046 & 0.201 & external & 0.401 & external & 0.366 & -- & -- \\
+slice 38 & 0.074 & 0.043 & 0.207 & amount & 0.386 & external & 0.508 & -- & -- \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Home Credit last slice. PO-risk and transferred Brier on the default label.}
+\label{tab:home-credit-day}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccccc}
+\toprule
+block & PO $\Delta$ & PO interval & Brier $\Delta$ & Brier interval & MMD & MMD $p$ & HSIC $\Delta$ & HSIC $p$ & PO share & Brier share \\
+\midrule
+external & -0.009 & [-0.022, -0.001] & -0.026 & [-0.044, -0.006] & 0.000 & 0.317 & -0.0005 & 0.024 & 0.362 & 0.508 \\
+amount & -0.010 & [-0.022, -0.003] & -0.003 & [-0.006, 0.002] & 0.000 & 0.317 & -0.0001 & 0.512 & 0.386 & 0.058 \\
+personal & -0.002 & [-0.009, 0.007] & 0.004 & [-0.002, 0.010] & 0.000 & 1.000 & -0.0000 & 0.195 & 0.071 & 0.076 \\
+region & -0.003 & [-0.005, 0.005] & 0.015 & [0.010, 0.024] & 0.000 & 0.195 & -0.0002 & 0.390 & 0.118 & 0.284 \\
+other & 0.002 & [-0.009, 0.008] & 0.004 & [-0.006, 0.010] & 0.000 & 0.049 & 0.0001 & 0.073 & 0.064 & 0.074 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Sign-flip test across the seven steps. The contrast is absolute movement.}
+\label{tab:home-credit-sign}
+\begin{tabular}{llcc}
+\toprule
+loss & comparison & mean gap & $p$ \\
+\midrule
+PO-risk & external $>$ amount & 0.001 & 0.253 \\
+PO-risk & external $>$ personal & 0.004 & 0.008 \\
+PO-risk & external $>$ region & 0.003 & 0.023 \\
+PO-risk & external $>$ other & 0.002 & 0.078 \\
+Brier & external $>$ amount & 0.020 & 0.008 \\
+Brier & external $>$ personal & 0.018 & 0.008 \\
+Brier & external $>$ region & 0.015 & 0.008 \\
+Brier & external $>$ other & 0.018 & 0.008 \\
 \bottomrule
 \end{tabular}
 \end{table}
