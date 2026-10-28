@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
 
 from core.engines.base import BaseEngine
+from core.iterative import conditional_indices
 
 
 class CounterfactualGenerator:
@@ -32,17 +32,39 @@ class CounterfactualGenerator:
         self._engine.fit(X_ref, col_names, discrete_cols)
         return self
 
-    def generate(self, X_cond, X_target_ref, n, col_names_cond, col_names_target):
-        raw = self._engine.generate(X_cond, n, col_names_cond, col_names_target)
+    @property
+    def methods(self):
+        return getattr(self._engine, "methods", None)
+
+    def generate(
+        self,
+        X_cond,
+        X_target_ref,
+        n,
+        col_names_cond,
+        col_names_target,
+        X_yesterday=None,
+        col_names_yesterday=None,
+        method=None,
+    ):
+        raw = self._engine.generate(
+            X_cond,
+            n,
+            col_names_cond,
+            col_names_target,
+            X_yesterday=X_yesterday,
+            col_names_yesterday=col_names_yesterday,
+            method=method,
+        )
         return self._engine.match_to_entities(raw, X_target_ref)
 
 
 class _StubEngine(BaseEngine):
-    """Donor from the reference, matched on the conditioning columns.
+    """Donor from the reference, matched on today and yesterday.
 
-    For each current row, the nearest reference row in the complement of the
-    target block supplies the target block. The condition is the rest of the
-    row, not a single lag.
+    For each current row, the nearest reference row supplies the target
+    block. The match uses today's other columns and yesterday's full row.
+    Yesterday on the reference side is the previous reference row.
     """
 
     def __init__(self, seed=0):
@@ -55,22 +77,31 @@ class _StubEngine(BaseEngine):
         self.index = {name: i for i, name in enumerate(self.col_names)}
         return self
 
-    def generate(self, X_cond, n, col_names_cond, col_names_target):
+    def generate(
+        self,
+        X_cond,
+        n,
+        col_names_cond,
+        col_names_target,
+        X_yesterday=None,
+        col_names_yesterday=None,
+        method=None,
+    ):
+        del col_names_yesterday, method
         tgt = [self.index[c] for c in col_names_target]
-        out = np.zeros((n, len(tgt)), dtype=np.float32)
-        if not col_names_cond:
+        if not col_names_cond and X_yesterday is None:
+            out = np.zeros((n, len(tgt)), dtype=np.float32)
             for j, col in enumerate(tgt):
                 ranks = self.rng.random(n)
                 out[:, j] = np.quantile(self.ref[:, col], ranks)
             return out
         cond = [self.index[c] for c in col_names_cond]
-        ref_cond = self.ref[:, cond].astype(np.float64)
-        mu = ref_cond.mean(axis=0)
-        sd = ref_cond.std(axis=0) + 1e-6
-        nn = NearestNeighbors(n_neighbors=1).fit((ref_cond - mu) / sd)
         query = np.asarray(X_cond, dtype=np.float64)
+        yesterday = None if X_yesterday is None else np.asarray(X_yesterday, dtype=np.float64)
         if len(query) != n:
             take = self.rng.choice(len(query), size=n, replace=len(query) < n)
             query = query[take]
-        matched = nn.kneighbors((query - mu) / sd, return_distance=False).ravel()
+            if yesterday is not None:
+                yesterday = yesterday[take]
+        matched = conditional_indices(self.ref, query, cond, yesterday)
         return self.ref[matched][:, tgt].astype(np.float32)
