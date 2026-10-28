@@ -1,5 +1,9 @@
+import numpy as np
+import pandas as pd
+
 from core.generator import GENERATIVE_MODELS
-from run import DATASETS, condition_columns, run
+from core.metrics import METRIC_FN
+from run import DATASETS, condition_columns, counterfactual_sim_df, run
 
 
 def test_forward_looks_up_the_model_dict():
@@ -32,11 +36,34 @@ def test_synthetic_abrupt():
     assert drifted, results
     assert all(r["top"] == "block_1" for r in drifted)
     assert drifted[0]["top_hit"] is True
-    assert drifted[0]["valid_ratio"] > 0.5
     for row in drifted:
         assert abs(sum(row["contribution"].values()) - 1) < 1e-3
         assert row["contribution"]["block_1"] > 0.30
         assert row["contribution"] is row["block_prop"]
+
+
+def test_counterfactual_sim_df_returns_digestion_and_metrics():
+    rng = np.random.RandomState(0)
+    chunks = []
+    for t in range(4):
+        x = rng.randn(40, 4)
+        if t >= 2:
+            x[:, 2:] += 1.5
+        chunks.append(x)
+    df = pd.DataFrame(np.vstack(chunks), columns=list("abcd"))
+    out = counterfactual_sim_df(
+        df, 40, {"left": [0, 1], "right": ["c", "d"]}, "stub",
+        metric_list={"mean_diff": METRIC_FN["mean_diff"]},
+    )
+    right = out["digestion"]["blocks"]["right"]
+    assert out["digestion"]["discrete"] == []
+    assert right["free"] == ["c", "d"]
+    assert len(right["conditioned_today"]) == 2
+    assert len(right["conditioned_yesterday"]) == 4
+    assert right["equality"] == []
+    assert len(right["ranges"]) == 6
+    assert out["metrics"][2]["mean_diff"]["top"] == "right"
+    assert out["metrics"][3]["mean_diff"]["top"] == "right"
 
 
 def test_all_metrics():

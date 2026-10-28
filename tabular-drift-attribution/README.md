@@ -39,9 +39,7 @@ python characterize.py --dataset synthetic --model stub
   "feature_ranked": {"f25": 1.5, "f26": 1.4},
   "top": "block_1",
   "gt_blocks": ["block_1"],
-  "top_hit": true,
-  "n_valid": 771,
-  "valid_ratio": 0.964
+  "top_hit": true
 }
 ```
 
@@ -88,9 +86,13 @@ stub 和 TabFORGE 不离散这 175 列。CTGAN 因为只能条件在类别上，
 
 `metric` 取 `mean_diff`、`wasserstein`、`mmd`、`nammd`、`h_div`、`c2st`。`h_div` 是线性假设上的 H-divergence，`c2st` 是分类器的 \(2\mathrm{AUC}-1\)。排名用的是观测块和反事实块的距离，不是一个标量 \(\rho\)。
 
-## 质量门
+真实表按时间顺序排好之后：
 
-反事实行要落在参考批次的分位区间里，并且标准化后的 k 近邻距离不能远过参考云。`density_tau: 0.5` 表示距离不超过参考中位近邻距离的 2 倍。高维下不要求每一列都落在区间内，一行里 95% 的列在区间内即可。
+```python
+counterfactual_sim_df(df, past_time_qwindow, feature_indce_attribute, generateion_mechanism)
+```
+
+`past_time_qwindow` 是每个时间窗的行数。第 0 窗做 digestion 并拟合，后面每个窗用上一窗当昨天生成反事实。返回 `{"digestion", "metrics"}`。
 
 ## 扩展
 
