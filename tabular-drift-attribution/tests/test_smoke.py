@@ -40,7 +40,7 @@ def test_synthetic_abrupt():
 
 
 def test_all_metrics():
-    for metric in ("mean_diff", "wasserstein", "mmd", "nammd", "h_div"):
+    for metric in ("mean_diff", "wasserstein", "mmd", "nammd", "h_div", "c2st"):
         cfg = {
             "dataset": "synthetic",
             "seed": 0,

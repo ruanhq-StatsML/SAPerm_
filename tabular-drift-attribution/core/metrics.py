@@ -5,7 +5,9 @@ from __future__ import annotations
 import numpy as np
 from scipy.stats import wasserstein_distance
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split
 
 
 def mean_diff(X_real, X_cf, cols):
@@ -57,6 +59,20 @@ def rbf_mmd2(X_real, X_cf, cols, gamma=None):
     )
 
 
+def h_divergence(X_real, X_cf, cols):
+    """Ben-David H-divergence, 2(1-2ε), on a held-out linear hypothesis."""
+    A = np.asarray(X_real[:, cols], dtype=float)
+    B = np.asarray(X_cf[:, cols], dtype=float)
+    if len(A) < 20 or len(B) < 20:
+        return float("nan")
+    X = np.vstack([A, B])
+    y = np.array([0] * len(A) + [1] * len(B))
+    Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
+    pred = LogisticRegression(max_iter=400, random_state=0).fit(Xtr, ytr).predict(Xte)
+    err = min(float(np.mean(pred != yte)), 1.0 - float(np.mean(pred != yte)))
+    return float(2 * (1 - 2 * err))
+
+
 def c2st_measure(X_real, X_cf, cols):
     A = X_real[:, cols]
     B = X_cf[:, cols]
@@ -74,5 +90,6 @@ METRIC_FN = {
     "wasserstein": wasserstein,
     "mmd": rbf_mmd2,
     "nammd": rbf_nammd2,
-    "h_div": c2st_measure,
+    "h_div": h_divergence,
+    "c2st": c2st_measure,
 }

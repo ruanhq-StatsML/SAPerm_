@@ -86,7 +86,7 @@ stub 和 TabFORGE 不离散这 175 列。CTGAN 因为只能条件在类别上，
 
 ## 距离
 
-`metric` 取 `mean_diff`、`wasserstein`、`mmd`、`nammd`、`h_div`。排名用的是观测块和反事实块的距离，不是一个标量 \(\rho\)。
+`metric` 取 `mean_diff`、`wasserstein`、`mmd`、`nammd`、`h_div`、`c2st`。`h_div` 是线性假设上的 H-divergence，`c2st` 是分类器的 \(2\mathrm{AUC}-1\)。排名用的是观测块和反事实块的距离，不是一个标量 \(\rho\)。
 
 ## 质量门
 

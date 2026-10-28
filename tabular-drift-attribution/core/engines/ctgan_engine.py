@@ -62,18 +62,16 @@ class CTGANEngine(BaseEngine):
             frame = pd.concat([frame, pd.DataFrame(X_yesterday, columns=col_names_yesterday)], axis=1)
         names = list(col_names_cond) + list(col_names_yesterday or [])
         discrete = next((c for c in names if c in self.discrete_cols and c not in self.bin_edges and c in frame), None)
-        if discrete is not None:
-            column, value = discrete, frame[discrete].mode().iloc[0]
-        else:
-            binned = next((c for c in names if c in self.bin_edges), None)
-            column, value = (None, None) if binned is None else (
-                f"{binned}_bin",
-                int(np.digitize(float(frame[binned].median()), self.bin_edges[binned][1:-1])),
-            )
+        binned = None if discrete is not None else next((c for c in names if c in self.bin_edges), None)
         self.model.set_random_state(self.seed)
-        generated = self.model.sample(n) if column is None else self.model.sample(
-            n, condition_column=column, condition_value=value,
-        )
-        if not isinstance(generated, pd.DataFrame):
-            generated = pd.DataFrame(generated)
-        return generated[list(col_names_target)].to_numpy(dtype=np.float32)
+        rows = []
+        for i in range(n):
+            if discrete is not None:
+                generated = self.model.sample(1, condition_column=discrete, condition_value=frame[discrete].iloc[i])
+            elif binned is not None:
+                bin_id = int(np.digitize(float(frame[binned].iloc[i]), self.bin_edges[binned][1:-1]))
+                generated = self.model.sample(1, condition_column=f"{binned}_bin", condition_value=bin_id)
+            else:
+                generated = self.model.sample(1)
+            rows.append(generated.iloc[0] if isinstance(generated, pd.DataFrame) else generated[0])
+        return pd.DataFrame(rows)[list(col_names_target)].to_numpy(dtype=np.float32)

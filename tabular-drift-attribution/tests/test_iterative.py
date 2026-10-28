@@ -183,7 +183,7 @@ def test_ctgan_sample_uses_one_discrete_column():
             seen["seed"] = seed
 
         def sample(self, n, condition_column=None, condition_value=None):
-            seen["call"] = (n, condition_column, condition_value)
+            seen.setdefault("calls", []).append((n, condition_column, condition_value))
             return pd.DataFrame({"amount": np.zeros(n)})
 
     engine.model = _Model()
@@ -192,9 +192,11 @@ def test_ctgan_sample_uses_one_discrete_column():
         2,
         ["amount"],
         ["amount"],
-        X_yesterday=np.array([[0.0], [0.0]], dtype=np.float32),
+        X_yesterday=np.array([[0.0], [1.0]], dtype=np.float32),
         col_names_yesterday=["flag"],
     )
     assert seen["seed"] == 3
-    assert seen["call"] == (2, "flag", 0.0)
+    assert [call[0] for call in seen["calls"]] == [1, 1]
+    assert [call[1] for call in seen["calls"]] == ["flag", "flag"]
+    assert [float(call[2]) for call in seen["calls"]] == [0.0, 1.0]
     assert out.shape == (2, 1)
