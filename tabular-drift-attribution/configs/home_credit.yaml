@@ -1,0 +1,7 @@
+dataset: home_credit
+seed: 0
+generator: stub
+metric: mean_diff
+
+loader_args:
+  data_dir: data/home_credit

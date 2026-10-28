@@ -1,0 +1,10 @@
+numpy
+pandas
+scikit-learn
+scipy
+pyyaml
+pytest
+
+# Optional generators. The stub backend and the synthetic smoke test do not need them.
+# ctgan
+# tabforge-ml
