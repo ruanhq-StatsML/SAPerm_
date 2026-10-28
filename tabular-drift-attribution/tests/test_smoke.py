@@ -66,8 +66,19 @@ def test_counterfactual_sim_df_returns_digestion_and_metrics():
     assert out["metrics"][3]["mean_diff"]["top"] == "right"
 
 
+def test_hsic_and_po_risk_follow_the_sample_split():
+    rng = np.random.RandomState(0)
+    base = rng.randn(40, 3)
+    outcome = rng.randn(40, 1)
+    real = np.hstack([base, outcome])
+    same = np.hstack([base.copy(), outcome])
+    shifted = np.hstack([base + np.array([0.0, 0.0, 2.0]), outcome])
+    assert METRIC_FN["hsic"](real, same, [0, 1, 2]) < METRIC_FN["hsic"](real, shifted, [0, 1, 2])
+    assert np.isfinite(METRIC_FN["po_risk"](real, shifted, [0, 1, 2]))
+
+
 def test_all_metrics():
-    for metric in ("mean_diff", "wasserstein", "mmd", "nammd", "h_div", "c2st"):
+    for metric in ("mean_diff", "wasserstein", "mmd", "nammd", "h_div", "c2st", "hsic"):
         cfg = {
             "dataset": "synthetic",
             "seed": 0,
