@@ -41,10 +41,13 @@ with the same block on the peak. HSIC compares the block with the day's
 label.
 
 To separate sampler bias from attribution, Table~\ref{tab:sampler-floor}
-reports a peak-day floor (redraw the block on the anchor) and the excess on
-the last batch. A verdict of \texttt{sampler} means the later batch does not
-move beyond that redraw; \texttt{drift} and \texttt{model} require a larger
-excess, with \texttt{drift} also requiring a significant block MMD.
+reports peak-day floors and last-batch excesses for both PermuCATE PO-risk
+and transferred Brier, with raw and excess shares. With that table one can
+tell business audiences what is generator redraw, what is pathway movement
+beyond redraw, and what is model sensitivity: it is more stable than raw
+share alone (for example MovieLens user PO raw share $0.52$ but excess share
+$0.89$ after subtracting the peak redraw floor). Verdicts use Brier excess
+against the floor and day MMD.
 
 The last day reports a bootstrap percentile interval for each \(\Delta\) and
 a 40-permutation \(p\)-value for MMD and HSIC. Across the seven steps, a

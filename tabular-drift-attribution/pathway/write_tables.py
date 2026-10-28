@@ -181,6 +181,32 @@ def panel_tables_day(panel, has_mse):
     return block_rows(panel, with_mse=has_mse)
 
 
+def sampler_lines(payload):
+    lines = []
+    titles = (
+        ("synthetic", "synthetic"),
+        ("ieee_cis", "IEEE"),
+        ("movielens", "MovieLens"),
+        ("home_credit", "Home Credit"),
+    )
+    for key, title in titles:
+        panel = payload.get(key) or {}
+        last = (panel.get("sampler_audit") or {}).get("last")
+        if not last:
+            continue
+        for name, row in last.items():
+            lines.append(
+                f"{title} & {name} "
+                f"& {_fmt(row['floor_po'])} & {_fmt(row['day_po'])} & {_fmt(row['excess_po'])} "
+                f"& {_fmt(row['raw_po_share'])} & {_fmt(row['excess_po_share'])} "
+                f"& {_fmt(row['floor_brier'])} & {_fmt(row['day_brier'])} & {_fmt(row['excess_brier'])} "
+                f"& {_fmt(row['raw_brier_share'])} & {_fmt(row['excess_brier_share'])} "
+                f"& {_fmt(row['anchor_impute_mmd'])} & {_fmt(row['day_covariate_mmd'])} "
+                f"& {row['verdict']} \\\\"
+            )
+    return "\n".join(lines)
+
+
 def main():
     payload = json.loads((ROOT / "results" / "pathway.json").read_text())
     synthetic = payload["synthetic"]
@@ -272,6 +298,24 @@ loss & comparison & mean gap & $p$ \\
             "Home Credit last slice. PO-risk and transferred Brier on the default label.",
             "home-credit",
         )
+    audit = sampler_lines(payload)
+    if audit:
+        text += r"""
+\begin{table}[t]
+\centering
+\caption{Sampler floor on the last batch for PermuCATE PO-risk and transferred Brier. The floor is the change from redrawing that block on the peak day only. Excess is the last-batch change minus the floor. Raw and excess shares are each block's fraction of total absolute movement, before and after subtracting the floor. Verdict uses Brier excess against the floor and day MMD ($p<0.05$ for drift). Use this table to tell generator redraw (sampler), covariate shift (drift), and model sensitivity (model) apart.}
+\label{tab:sampler-floor}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcccccccccccccc}
+\toprule
+data & block & PO floor & PO day & PO excess & PO raw & PO excess & Brier floor & Brier day & Brier excess & Brier raw & Brier excess & anchor MMD & day MMD & verdict \\
+\midrule
+""" + audit + r"""
+\bottomrule
+\end{tabular}}
+\end{table}
+"""
     # The synthetic pathway header has 9 columns but I listed 8 c's. Fix below by rewriting the header in the string carefully.
     out = ROOT / "results" / "pathway_tables.tex"
     out.write_text(text)
