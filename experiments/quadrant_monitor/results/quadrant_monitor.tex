@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\caption{Per-segment gate. PO-risk is the squared error of the deployed score against the doubly robust pseudo-outcome on the randomized slice. The p-value is the right tail against the reference variance. SAFFRON uses $\alpha=0.10$. Reject rate is the share of batches with $R_t=1$.}
+\label{tab:quadrant-gate}
+\begin{tabular}{llrrrrl}
+\toprule
+Scenario & Phase & PO-risk & p & Reject & $\rho$ & Rule \\
+\midrule
+stable & early & 0.603 & 0.384 & 0.00 & 0.050 & -- \\
+stable & late & 0.589 & 0.540 & 0.00 & 0.038 & -- \\
+persuadable_concept & early & 0.604 & 0.387 & 0.00 & 0.050 & -- \\
+persuadable_concept & late & 0.722 & 0.078 & 0.55 & 0.050 & shadow \\
+sleeping_concept & early & 0.577 & 0.623 & 0.00 & 0.050 & -- \\
+sleeping_concept & late & 0.772 & 0.037 & 0.82 & 0.050 & blacklist \\
+sure_covariate & early & 0.610 & 0.480 & 0.00 & 0.050 & -- \\
+sure_covariate & late & 1.054 & 0.001 & 0.97 & 0.050 & truncation \\
+lost_covariate & early & 0.593 & 0.573 & 0.00 & 0.050 & -- \\
+lost_covariate & late & 0.814 & 0.037 & 0.72 & 0.050 & hard_drop \\
+\bottomrule
+\end{tabular}
+\end{table}
