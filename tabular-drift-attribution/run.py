@@ -23,7 +23,7 @@ from data.loaders import (
 
 
 class DatasetForward:
-    """One dataset. Each later batch is one forward pass of one generative model."""
+    """One dataset: digest batch 0, draw each later batch, then score distances."""
 
     def __init__(self, loader):
         self.loader = loader
@@ -41,15 +41,12 @@ class DatasetForward:
         data = self.loader(**(loader_args or {}))
         batches = data["X_batched"]
         blocks = data["blocks"]
-        gt = data["gt"]
         col_names = data["col_names"]
-        n_features = data["F"]
-        gate = QualityGate().fit(batches[0])
+        digested = digest(batches[0], col_names, max_cardinality=max_cardinality)
         generator = CounterfactualGenerator(
             backend=model, seed=seed, **(generator_args or {}),
-        )
-        digested = digest(batches[0], col_names, max_cardinality=max_cardinality)
-        generator.fit(batches[0], col_names, discrete_cols=digested["discrete"])
+        ).fit(batches[0], col_names, discrete_cols=digested["discrete"])
+        gate = QualityGate().fit(batches[0])
         yest_names = lag_column_names(col_names)
         methods = list(generator.methods) if generator.methods else [None]
         outputs = []
@@ -57,11 +54,11 @@ class DatasetForward:
             for method in methods:
                 counterfactual = forward_batch(
                     generator, batches[t], batches[t - 1], blocks, col_names,
-                    yest_names, n_features, n_sweeps, method,
+                    yest_names, data["F"], n_sweeps, method,
                 )
                 outputs.append(_score(
                     t, method, batches[t], counterfactual, blocks, col_names,
-                    gt, metric, gate,
+                    data["gt"], metric, gate,
                 ))
         return outputs
 
