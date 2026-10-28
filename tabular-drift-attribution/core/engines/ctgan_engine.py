@@ -1,9 +1,4 @@
-"""CTGAN backend.
-
-``CTGAN.sample(n, condition_column, condition_value)`` conditions on one
-discrete column. A continuous condition uses its training bin as that column.
-The returned frame is already inverse-transformed.
-"""
+"""CTGAN backend. ``sample(n, condition_column, condition_value)`` takes one discrete column."""
 
 from __future__ import annotations
 
@@ -64,30 +59,21 @@ class CTGANEngine(BaseEngine):
         del method
         frame = pd.DataFrame(X_cond, columns=col_names_cond)
         if X_yesterday is not None:
-            frame = pd.concat(
-                [frame, pd.DataFrame(X_yesterday, columns=col_names_yesterday)],
-                axis=1,
-            )
-        column, value = None, None
+            frame = pd.concat([frame, pd.DataFrame(X_yesterday, columns=col_names_yesterday)], axis=1)
         names = list(col_names_cond) + list(col_names_yesterday or [])
-        for c in names:
-            if c in self.discrete_cols and c not in self.bin_edges and c in frame.columns:
-                column, value = c, frame[c].mode().iloc[0]
-                break
-        if column is None:
-            for c in names:
-                if c in self.bin_edges:
-                    med = float(frame[c].median())
-                    column, value = f"{c}_bin", int(np.digitize(med, self.bin_edges[c][1:-1]))
-                    break
-        self.model.set_random_state(self.seed)
-        if column is None:
-            generated = self.model.sample(n)
+        discrete = next((c for c in names if c in self.discrete_cols and c not in self.bin_edges and c in frame), None)
+        if discrete is not None:
+            column, value = discrete, frame[discrete].mode().iloc[0]
         else:
-            generated = self.model.sample(n, condition_column=column, condition_value=value)
+            binned = next((c for c in names if c in self.bin_edges), None)
+            column, value = (None, None) if binned is None else (
+                f"{binned}_bin",
+                int(np.digitize(float(frame[binned].median()), self.bin_edges[binned][1:-1])),
+            )
+        self.model.set_random_state(self.seed)
+        generated = self.model.sample(n) if column is None else self.model.sample(
+            n, condition_column=column, condition_value=value,
+        )
         if not isinstance(generated, pd.DataFrame):
             generated = pd.DataFrame(generated)
-        missing = [c for c in col_names_target if c not in generated.columns]
-        if missing:
-            raise KeyError(f"CTGAN sample has no column {missing[0]}")
         return generated[list(col_names_target)].to_numpy(dtype=np.float32)
