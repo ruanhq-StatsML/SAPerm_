@@ -24,17 +24,27 @@ peak-day label distribution. Observed rows are clipped to \([-5,5]\) before
 training, and the predicted clean sample is clamped to the same box. On
 these tables the unclipped reverse chain leaves that box.
 
-The distance estimator is a logistic meta-learner. PO-risk on day \(t\) is
+Predictive loss is the Brier score of a logistic model fit on the peak and
+transferred onto day \(t\). On the synthetic panel and MovieLens a ridge on
+the peak also reports rating or latent MSE. PO-risk follows PermuCATE on
+rows pooled from the peak (\(W=0\)) and day \(t\) (\(W=1\)): random forests
+for \(\mu_0\), \(\mu_1\), and \(\hat\tau\), logistic propensity with
+clipping, and
 \[
-\mathbb{E}\bigl[(\mu_t(X_t)-\mu_0(X_t))^2\bigr],
+\phi(Z)=\frac{(Y-\mu_T)(T-\pi)}{\pi(1-\pi)}+(\mu_1-\mu_0),\qquad
+\text{PO-risk}=\mathbb{E}\bigl[(\phi-\hat\tau(X))^2\bigr]
 \]
-with \(\mu_0\) fit on the peak and \(\mu_t\) fit on day \(t\). Predictive
-loss is the Brier score of \(\mu_0\) transferred onto day \(t\). On the
-synthetic panel a ridge fit on the peak also reports the latent MSE.
-Replacing block \(b\) by its imputed draw changes each loss by \(\Delta_b\).
-The rank share is \(|\Delta_b|/\sum_{b'}|\Delta_{b'}|\). MMD compares the
-block on day \(t\) with the same block on the peak. HSIC compares the block
-with the day's label.
+evaluated on day \(t\) with \(W=1\). Replacing block \(b\) by its imputed
+draw changes each loss by \(\Delta_b\). The rank share is
+\(|\Delta_b|/\sum_{b'}|\Delta_{b'}|\). MMD compares the block on day \(t\)
+with the same block on the peak. HSIC compares the block with the day's
+label.
+
+To separate sampler bias from attribution, Table~\ref{tab:sampler-floor}
+reports a peak-day floor (redraw the block on the anchor) and the excess on
+the last batch. A verdict of \texttt{sampler} means the later batch does not
+move beyond that redraw; \texttt{drift} and \texttt{model} require a larger
+excess, with \texttt{drift} also requiring a significant block MMD.
 
 The last day reports a bootstrap percentile interval for each \(\Delta\) and
 a 40-permutation \(p\)-value for MMD and HSIC. Across the seven steps, a

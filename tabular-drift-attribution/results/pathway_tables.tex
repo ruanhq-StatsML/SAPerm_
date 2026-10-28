@@ -7,13 +7,13 @@
 \toprule
 step & PO-risk & Brier & MSE & driver PO & driver Brier & driver MSE & driver MMD & context MMD \\
 \midrule
-1 & 0.005 & 0.236 & 0.337 & 0.471 & 0.420 & 0.492 & 0.863 & 0.000 \\
-2 & 0.014 & 0.231 & 0.403 & 0.791 & 0.672 & 0.548 & 0.886 & 0.076 \\
-3 & 0.017 & 0.212 & 0.486 & 0.822 & 0.650 & 0.689 & 0.905 & 0.095 \\
-4 & 0.026 & 0.195 & 0.901 & 0.821 & 0.868 & 0.810 & 0.920 & 0.071 \\
-5 & 0.031 & 0.182 & 1.427 & 0.336 & 0.822 & 0.826 & 0.864 & 0.136 \\
-6 & 0.032 & 0.158 & 2.589 & 0.923 & 0.911 & 0.921 & 0.852 & 0.144 \\
-7 & 0.050 & 0.122 & 4.496 & 0.905 & 0.959 & 0.936 & 0.834 & 0.166 \\
+1 & 0.656 & 0.236 & 0.337 & 0.447 & 0.420 & 0.492 & 0.863 & 0.000 \\
+2 & 0.720 & 0.231 & 0.403 & 0.764 & 0.672 & 0.548 & 0.886 & 0.076 \\
+3 & 0.763 & 0.212 & 0.486 & 0.946 & 0.650 & 0.689 & 0.905 & 0.095 \\
+4 & 0.918 & 0.195 & 0.901 & 0.983 & 0.868 & 0.810 & 0.920 & 0.071 \\
+5 & 1.322 & 0.182 & 1.427 & 0.985 & 0.822 & 0.826 & 0.864 & 0.136 \\
+6 & 0.863 & 0.158 & 2.589 & 0.989 & 0.911 & 0.921 & 0.852 & 0.144 \\
+7 & 1.176 & 0.122 & 4.496 & 0.966 & 0.959 & 0.936 & 0.834 & 0.166 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -28,10 +28,10 @@ step & PO-risk & Brier & MSE & driver PO & driver Brier & driver MSE & driver MM
 \toprule
 block & PO $\Delta$ & PO interval & Brier $\Delta$ & Brier interval & MSE $\Delta$ & MMD & MMD $p$ & HSIC $\Delta$ & HSIC $p$ & PO share & Brier share \\
 \midrule
-stable & -0.002 & [-0.008, 0.004] & -0.004 & [-0.008, 0.001] & -0.292 & 0.000 & 1.000 & -0.0004 & 0.585 & 0.015 & 0.028 \\
-context & -0.005 & [-0.016, 0.002] & -0.001 & [-0.002, -0.000] & -0.035 & 0.084 & 0.024 & -0.0002 & 0.341 & 0.041 & 0.010 \\
-driver & -0.103 & [-0.122, -0.062] & -0.132 & [-0.139, -0.126] & -4.835 & 0.420 & 0.024 & 0.0003 & 0.049 & 0.905 & 0.959 \\
-noise & 0.004 & [-0.002, 0.008] & -0.000 & [-0.002, 0.001] & 0.001 & 0.000 & 1.000 & -0.0002 & 0.024 & 0.039 & 0.003 \\
+stable & -1.645 & [-4.537, -0.191] & -0.004 & [-0.008, 0.001] & -0.292 & 0.000 & 1.000 & -0.0004 & 0.585 & 0.003 & 0.028 \\
+context & -15.743 & [-25.812, -3.465] & -0.001 & [-0.002, -0.000] & -0.035 & 0.084 & 0.024 & -0.0002 & 0.341 & 0.029 & 0.010 \\
+driver & -531.357 & [-879.121, -224.706] & -0.132 & [-0.139, -0.126] & -4.835 & 0.420 & 0.024 & 0.0003 & 0.049 & 0.966 & 0.959 \\
+noise & -1.374 & [-4.484, -0.227] & -0.000 & [-0.002, 0.001] & 0.001 & 0.000 & 1.000 & -0.0002 & 0.024 & 0.002 & 0.003 \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -44,9 +44,9 @@ noise & 0.004 & [-0.002, 0.008] & -0.000 & [-0.002, 0.001] & 0.001 & 0.000 & 1.0
 \toprule
 loss & comparison & mean gap & $p$ \\
 \midrule
-PO-risk & driver $>$ stable & 0.031 & 0.008 \\
-PO-risk & driver $>$ context & 0.029 & 0.008 \\
-PO-risk & driver $>$ noise & 0.029 & 0.021 \\
+PO-risk & driver $>$ stable & 241.247 & 0.008 \\
+PO-risk & driver $>$ context & 238.468 & 0.008 \\
+PO-risk & driver $>$ noise & 241.608 & 0.008 \\
 Brier & driver $>$ stable & 0.050 & 0.014 \\
 Brier & driver $>$ context & 0.060 & 0.008 \\
 Brier & driver $>$ noise & 0.060 & 0.008 \\
@@ -67,12 +67,12 @@ MSE & driver $>$ noise & 1.828 & 0.008 \\
 \toprule
 block & PO $\Delta$ & PO interval & Brier $\Delta$ & Brier interval & MMD & MMD $p$ & HSIC $\Delta$ & HSIC $p$ & PO share & Brier share \\
 \midrule
-amount & 0.001 & [-0.001, 0.006] & -0.000 & [-0.000, 0.000] & 0.002 & 0.098 & -0.0001 & 0.122 & 0.115 & 0.002 \\
-card & -0.004 & [-0.014, 0.001] & -0.013 & [-0.023, -0.004] & 0.001 & 1.000 & -0.0003 & 0.098 & 0.324 & 0.420 \\
-address & 0.006 & [-0.002, 0.013] & 0.005 & [0.002, 0.008] & 0.000 & 1.000 & 0.0000 & 0.073 & 0.484 & 0.159 \\
-counts & 0.000 & [-0.006, 0.003] & -0.003 & [-0.006, 0.002] & 0.000 & 0.146 & -0.0000 & 0.122 & 0.007 & 0.102 \\
-timedelta & 0.001 & [-0.007, 0.012] & 0.009 & [-0.003, 0.023] & 0.000 & 1.000 & -0.0001 & 0.049 & 0.061 & 0.302 \\
-hour & 0.000 & [-0.003, 0.002] & -0.000 & [-0.005, 0.004] & 0.002 & 0.073 & 0.0002 & 0.024 & 0.010 & 0.015 \\
+amount & -0.028 & [-0.136, -0.012] & -0.000 & [-0.000, 0.000] & 0.002 & 0.098 & -0.0001 & 0.122 & 0.104 & 0.002 \\
+card & -0.049 & [-0.145, -0.021] & -0.013 & [-0.023, -0.004] & 0.001 & 1.000 & -0.0003 & 0.098 & 0.185 & 0.420 \\
+address & -0.046 & [-0.089, -0.009] & 0.005 & [0.002, 0.008] & 0.000 & 1.000 & 0.0000 & 0.073 & 0.174 & 0.159 \\
+counts & -0.103 & [-0.308, -0.036] & -0.003 & [-0.006, 0.002] & 0.000 & 0.146 & -0.0000 & 0.122 & 0.385 & 0.102 \\
+timedelta & -0.027 & [-0.065, -0.009] & 0.009 & [-0.003, 0.023] & 0.000 & 1.000 & -0.0001 & 0.049 & 0.102 & 0.302 \\
+hour & -0.014 & [-0.059, -0.003] & -0.000 & [-0.005, 0.004] & 0.002 & 0.073 & 0.0002 & 0.024 & 0.051 & 0.015 \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -85,11 +85,11 @@ hour & 0.000 & [-0.003, 0.002] & -0.000 & [-0.005, 0.004] & 0.002 & 0.073 & 0.00
 \toprule
 loss & comparison & mean gap & $p$ \\
 \midrule
-PO-risk & timedelta $>$ amount & 0.002 & 0.021 \\
-PO-risk & timedelta $>$ card & 0.001 & 0.303 \\
-PO-risk & timedelta $>$ address & 0.002 & 0.209 \\
-PO-risk & timedelta $>$ counts & 0.002 & 0.178 \\
-PO-risk & timedelta $>$ hour & 0.002 & 0.042 \\
+PO-risk & counts $>$ amount & 0.199 & 0.008 \\
+PO-risk & counts $>$ card & 0.174 & 0.008 \\
+PO-risk & counts $>$ address & 0.211 & 0.008 \\
+PO-risk & counts $>$ timedelta & 0.210 & 0.008 \\
+PO-risk & counts $>$ hour & 0.220 & 0.008 \\
 Brier & card $>$ amount & 0.008 & 0.008 \\
 Brier & card $>$ address & 0.006 & 0.008 \\
 Brier & card $>$ counts & 0.005 & 0.028 \\
@@ -109,13 +109,13 @@ Brier & card $>$ hour & 0.004 & 0.054 \\
 \toprule
 step & rate & PO-risk & Brier & PO top & PO share & Brier top & Brier share & MSE top & MSE share & MMD top & MMD share \\
 \midrule
-2001-01-02 & 0.503 & 0.041 & 0.263 & user & 0.614 & context & 0.692 & user & 0.769 & user & 0.825 \\
-2001-01-03 & 0.597 & 0.015 & 0.255 & item & 0.338 & item & 0.737 & user & 0.474 & user & 0.655 \\
-2001-01-04 & 0.500 & 0.024 & 0.244 & item & 0.629 & context & 0.426 & item & 0.601 & context & 0.698 \\
-2001-01-05 & 0.539 & 0.032 & 0.255 & item & 0.549 & item & 0.628 & item & 0.708 & user & 0.670 \\
-2001-01-06 & 0.657 & 0.046 & 0.251 & user & 0.802 & item & 0.617 & item & 0.599 & context & 0.498 \\
-2001-01-07 & 0.551 & 0.031 & 0.251 & item & 0.544 & item & 0.695 & item & 0.508 & context & 0.618 \\
-2001-01-08 & 0.490 & 0.027 & 0.246 & user & 0.894 & item & 0.593 & item & 0.497 & context & 0.582 \\
+2001-01-02 & 0.503 & 2.569 & 0.263 & item & 0.605 & context & 0.692 & user & 0.769 & user & 0.825 \\
+2001-01-03 & 0.597 & 0.627 & 0.255 & user & 0.734 & item & 0.737 & user & 0.474 & user & 0.655 \\
+2001-01-04 & 0.500 & 2.650 & 0.244 & item & 0.584 & context & 0.426 & item & 0.601 & context & 0.698 \\
+2001-01-05 & 0.539 & 0.794 & 0.255 & user & 0.437 & item & 0.628 & item & 0.708 & user & 0.670 \\
+2001-01-06 & 0.657 & 0.625 & 0.251 & user & 0.894 & item & 0.617 & item & 0.599 & context & 0.498 \\
+2001-01-07 & 0.551 & 1.204 & 0.251 & user & 0.643 & item & 0.695 & item & 0.508 & context & 0.618 \\
+2001-01-08 & 0.490 & 2.935 & 0.246 & user & 0.524 & item & 0.593 & item & 0.497 & context & 0.582 \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -130,9 +130,9 @@ step & rate & PO-risk & Brier & PO top & PO share & Brier top & Brier share & MS
 \toprule
 block & PO $\Delta$ & PO interval & Brier $\Delta$ & Brier interval & MSE $\Delta$ & MMD & MMD $p$ & HSIC $\Delta$ & HSIC $p$ & PO share & Brier share \\
 \midrule
-user & -0.026 & [-0.048, -0.008] & -0.008 & [-0.014, 0.001] & -0.047 & 0.052 & 0.024 & 0.0021 & 0.024 & 0.894 & 0.284 \\
-item & -0.000 & [-0.006, 0.004] & -0.018 & [-0.025, -0.010] & -0.048 & 0.006 & 0.024 & -0.0000 & 0.024 & 0.006 & 0.593 \\
-context & 0.003 & [-0.001, 0.004] & 0.004 & [0.001, 0.006] & -0.002 & 0.081 & 0.024 & 0.0019 & 0.024 & 0.101 & 0.123 \\
+user & -3.461 & [-10.795, -2.257] & -0.008 & [-0.014, 0.001] & -0.047 & 0.052 & 0.024 & 0.0021 & 0.024 & 0.524 & 0.284 \\
+item & -1.975 & [-5.573, -0.715] & -0.018 & [-0.025, -0.010] & -0.048 & 0.006 & 0.024 & -0.0000 & 0.024 & 0.299 & 0.593 \\
+context & -1.167 & [-7.280, -0.291] & 0.004 & [0.001, 0.006] & -0.002 & 0.081 & 0.024 & 0.0019 & 0.024 & 0.177 & 0.123 \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -145,8 +145,8 @@ context & 0.003 & [-0.001, 0.004] & 0.004 & [0.001, 0.006] & -0.002 & 0.081 & 0.
 \toprule
 loss & comparison & mean gap & $p$ \\
 \midrule
-PO-risk & user $>$ item & 0.004 & 0.198 \\
-PO-risk & user $>$ context & 0.007 & 0.016 \\
+PO-risk & user $>$ item & 0.538 & 0.400 \\
+PO-risk & user $>$ context & 4.398 & 0.023 \\
 Brier & item $>$ user & 0.005 & 0.029 \\
 Brier & item $>$ context & 0.005 & 0.074 \\
 MSE & item $>$ user & 0.017 & 0.125 \\
@@ -165,13 +165,13 @@ MSE & item $>$ context & 0.030 & 0.016 \\
 \toprule
 step & rate & PO-risk & Brier & PO top & PO share & Brier top & Brier share & MMD top & MMD share \\
 \midrule
-slice 32 & 0.079 & 0.030 & 0.202 & other & 0.358 & external & 0.695 & external & 0.925 \\
-slice 33 & 0.097 & 0.036 & 0.201 & external & 0.419 & external & 0.500 & other & 0.531 \\
-slice 34 & 0.067 & 0.046 & 0.210 & other & 0.417 & external & 0.437 & amount & 0.423 \\
-slice 35 & 0.084 & 0.034 & 0.193 & amount & 0.514 & external & 0.702 & external & 0.939 \\
-slice 36 & 0.090 & 0.032 & 0.213 & external & 0.370 & external & 0.379 & -- & -- \\
-slice 37 & 0.086 & 0.046 & 0.201 & external & 0.401 & external & 0.366 & -- & -- \\
-slice 38 & 0.074 & 0.043 & 0.207 & amount & 0.386 & external & 0.508 & -- & -- \\
+slice 32 & 0.079 & 0.183 & 0.202 & external & 0.411 & external & 0.695 & external & 0.925 \\
+slice 33 & 0.097 & 0.194 & 0.201 & external & 0.478 & external & 0.500 & other & 0.531 \\
+slice 34 & 0.067 & 0.149 & 0.210 & external & 0.460 & external & 0.437 & amount & 0.423 \\
+slice 35 & 0.084 & 0.203 & 0.193 & external & 0.439 & external & 0.702 & external & 0.939 \\
+slice 36 & 0.090 & 0.207 & 0.213 & external & 0.493 & external & 0.379 & -- & -- \\
+slice 37 & 0.086 & 0.215 & 0.201 & external & 0.348 & external & 0.366 & -- & -- \\
+slice 38 & 0.074 & 0.177 & 0.207 & external & 0.385 & external & 0.508 & -- & -- \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -186,11 +186,11 @@ slice 38 & 0.074 & 0.043 & 0.207 & amount & 0.386 & external & 0.508 & -- & -- \
 \toprule
 block & PO $\Delta$ & PO interval & Brier $\Delta$ & Brier interval & MMD & MMD $p$ & HSIC $\Delta$ & HSIC $p$ & PO share & Brier share \\
 \midrule
-external & -0.009 & [-0.022, -0.001] & -0.026 & [-0.044, -0.006] & 0.000 & 0.317 & -0.0005 & 0.024 & 0.362 & 0.508 \\
-amount & -0.010 & [-0.022, -0.003] & -0.003 & [-0.006, 0.002] & 0.000 & 0.317 & -0.0001 & 0.512 & 0.386 & 0.058 \\
-personal & -0.002 & [-0.009, 0.007] & 0.004 & [-0.002, 0.010] & 0.000 & 1.000 & -0.0000 & 0.195 & 0.071 & 0.076 \\
-region & -0.003 & [-0.005, 0.005] & 0.015 & [0.010, 0.024] & 0.000 & 0.195 & -0.0002 & 0.390 & 0.118 & 0.284 \\
-other & 0.002 & [-0.009, 0.008] & 0.004 & [-0.006, 0.010] & 0.000 & 0.049 & 0.0001 & 0.073 & 0.064 & 0.074 \\
+external & -0.066 & [-0.142, -0.042] & -0.026 & [-0.044, -0.006] & 0.000 & 0.317 & -0.0005 & 0.024 & 0.385 & 0.508 \\
+amount & -0.015 & [-0.049, -0.011] & -0.003 & [-0.006, 0.002] & 0.000 & 0.317 & -0.0001 & 0.512 & 0.088 & 0.058 \\
+personal & -0.010 & [-0.039, -0.005] & 0.004 & [-0.002, 0.010] & 0.000 & 1.000 & -0.0000 & 0.195 & 0.059 & 0.076 \\
+region & -0.054 & [-0.151, -0.039] & 0.015 & [0.010, 0.024] & 0.000 & 0.195 & -0.0002 & 0.390 & 0.315 & 0.284 \\
+other & -0.026 & [-0.062, -0.017] & 0.004 & [-0.006, 0.010] & 0.000 & 0.049 & 0.0001 & 0.073 & 0.153 & 0.074 \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -203,14 +203,46 @@ other & 0.002 & [-0.009, 0.008] & 0.004 & [-0.006, 0.010] & 0.000 & 0.049 & 0.00
 \toprule
 loss & comparison & mean gap & $p$ \\
 \midrule
-PO-risk & external $>$ amount & 0.001 & 0.253 \\
-PO-risk & external $>$ personal & 0.004 & 0.008 \\
-PO-risk & external $>$ region & 0.003 & 0.023 \\
-PO-risk & external $>$ other & 0.002 & 0.078 \\
+PO-risk & external $>$ amount & 0.070 & 0.008 \\
+PO-risk & external $>$ personal & 0.066 & 0.008 \\
+PO-risk & external $>$ region & 0.043 & 0.008 \\
+PO-risk & external $>$ other & 0.068 & 0.008 \\
 Brier & external $>$ amount & 0.020 & 0.008 \\
 Brier & external $>$ personal & 0.018 & 0.008 \\
 Brier & external $>$ region & 0.015 & 0.008 \\
 Brier & external $>$ other & 0.018 & 0.008 \\
 \bottomrule
 \end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Sampler floor against the last batch. The floor is the Brier change from redrawing that block on the peak day. Excess is the last-batch Brier change minus the floor. Shares use absolute values. The anchor imputation MMD does not use a later batch. A verdict of sampler means the excess is smaller than the floor. Drift means the excess is at least twice the floor and the block MMD has $p<0.05$. Model means the same excess bar without that MMD. The factor of two is a reporting bar. Thin means the excess beats the floor but not by two. None means both pieces are under $10^{-4}$.}
+\label{tab:sampler-floor}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llccccccccc}
+\toprule
+data & block & floor & day & excess & raw share & excess share & anchor impute MMD & day MMD & clears $p$ & verdict \\
+\midrule
+synthetic & stable & -0.011 & -0.004 & 0.007 & 0.028 & 0.052 & 0.001 & 0.000 & 0.489 & sampler \\
+synthetic & context & 0.000 & -0.001 & -0.002 & 0.010 & 0.012 & 0.000 & 0.084 & 0.016 & drift \\
+synthetic & driver & -0.012 & -0.132 & -0.120 & 0.959 & 0.914 & 0.000 & 0.420 & 0.008 & drift \\
+synthetic & noise & -0.003 & -0.000 & 0.003 & 0.003 & 0.023 & 0.002 & 0.000 & 1.000 & sampler \\
+IEEE & amount & -0.000 & -0.000 & -0.000 & 0.002 & 0.001 & 0.021 & 0.002 & 0.021 & none \\
+IEEE & card & -0.008 & -0.013 & -0.005 & 0.420 & 0.148 & 0.002 & 0.001 & 0.416 & sampler \\
+IEEE & address & 0.000 & 0.005 & 0.005 & 0.159 & 0.123 & 0.012 & 0.000 & 0.008 & model \\
+IEEE & counts & 0.002 & -0.003 & -0.005 & 0.102 & 0.144 & 0.101 & 0.000 & 0.295 & model \\
+IEEE & timedelta & -0.010 & 0.009 & 0.020 & 0.302 & 0.532 & 0.001 & 0.000 & 0.955 & thin \\
+IEEE & hour & 0.001 & -0.000 & -0.002 & 0.015 & 0.052 & 0.039 & 0.002 & 0.059 & thin \\
+MovieLens & user & -0.013 & -0.008 & 0.005 & 0.284 & 0.362 & 0.008 & 0.052 & 1.000 & sampler \\
+MovieLens & item & -0.021 & -0.018 & 0.003 & 0.593 & 0.270 & 0.001 & 0.006 & 1.000 & sampler \\
+MovieLens & context & -0.001 & 0.004 & 0.005 & 0.123 & 0.368 & 0.007 & 0.081 & 0.008 & drift \\
+Home Credit & external & -0.019 & -0.026 & -0.008 & 0.508 & 0.172 & 0.005 & 0.000 & 0.141 & sampler \\
+Home Credit & amount & -0.002 & -0.003 & -0.001 & 0.058 & 0.019 & 0.005 & 0.000 & 0.174 & sampler \\
+Home Credit & personal & -0.006 & 0.004 & 0.010 & 0.076 & 0.232 & 0.009 & 0.000 & 0.845 & thin \\
+Home Credit & region & 0.002 & 0.015 & 0.013 & 0.284 & 0.288 & 0.003 & 0.000 & 0.016 & model \\
+Home Credit & other & -0.009 & 0.004 & 0.013 & 0.074 & 0.289 & 0.010 & 0.000 & 1.000 & thin \\
+\bottomrule
+\end{tabular}}
 \end{table}

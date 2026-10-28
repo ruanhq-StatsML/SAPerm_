@@ -2,7 +2,9 @@
 
 The anchor is the peak. Each later day is one step. TabDDPM, fit only on the
 peak, imputes one feature block at a time conditional on the other columns.
-The logistic meta-learner supplies the transferred Brier score and the PO-risk.
+The anchor logistic model supplies the transferred Brier score. PO-risk is the
+PermuCATE doubly robust pseudo-outcome risk on pooled peak (W=0) and day (W=1)
+rows.
 """
 
 from __future__ import annotations
@@ -21,14 +23,17 @@ if str(ROOT) not in sys.path:
 from pathway.generator import TabDDPMRepaint  # noqa: E402
 from pathway.metrics import (  # noqa: E402
     brier,
+    excess_over_floor,
     fit_logit,
     fit_ridge,
     hsic,
     hsic_pvalue,
     mmd_pvalue,
     mmd_rbf,
-    po_risk,
+    fit_pathway_nuisances,
+    pathway_po_risk,
     predict_proba,
+    sampler_verdict,
     shares,
     signflip_pvalue,
 )
@@ -67,6 +72,7 @@ def score_pathway(name: str, days: list[dict], blocks: dict[str, list[int]], ste
     fit_anchor = fit_logit(anchor, y_anchor, seed=seed)
     ridge = fit_ridge(anchor, days[0]["g"], seed) if days[0].get("g") is not None else None
     anchor_brier = brier(y_anchor, predict_proba(fit_anchor, anchor))
+    w_anchor = np.zeros(len(y_anchor), dtype=int)
     anchor_hsic = {
         block: hsic(anchor[:, cols], y_anchor, seed=seed) for block, cols in blocks.items()
     }
@@ -74,8 +80,12 @@ def score_pathway(name: str, days: list[dict], blocks: dict[str, list[int]], ste
     saved_cf = {}
     for step, day in enumerate(days[1:], start=1):
         X, y = day["X"], day["y"]
-        fit_day = fit_logit(X, y, seed=seed + step)
-        base_po = po_risk(fit_day, fit_anchor, X)
+        w_day = np.ones(len(y), dtype=int)
+        X_pool = np.vstack([anchor, X])
+        y_pool = np.concatenate([y_anchor, y])
+        w_pool = np.concatenate([w_anchor, w_day])
+        nuisances = fit_pathway_nuisances(X_pool, y_pool, w_pool, seed=seed + step)
+        base_po = pathway_po_risk(nuisances, X, y, w_day)
         base_brier = brier(y, predict_proba(fit_anchor, X))
         base_mse = None
         if ridge is not None:
@@ -85,7 +95,7 @@ def score_pathway(name: str, days: list[dict], blocks: dict[str, list[int]], ste
         for block, cols in blocks.items():
             X_cf = _imputed_matrix(generator, X, cols)
             cfs[block] = X_cf
-            po_drop = base_po - po_risk(fit_day, fit_anchor, X_cf)
+            po_drop = base_po - pathway_po_risk(nuisances, X_cf, y, w_day)
             brier_drop = base_brier - brier(y, predict_proba(fit_anchor, X_cf))
             mse_drop = None
             if ridge is not None:
@@ -100,6 +110,8 @@ def score_pathway(name: str, days: list[dict], blocks: dict[str, list[int]], ste
                 "hsic": hsic_now,
                 "hsic_delta": hsic_now - anchor_hsic[block],
                 "cf_mean_l2": float(np.mean((X_cf[:, cols] - X[:, cols]) ** 2)),
+                "impute_mmd": mmd_rbf(X[:, cols], X_cf[:, cols], seed=seed + step),
+                "mean_shift_l2": _mean_l2(X[:, cols], X_cf[:, cols]),
             }
             print(
                 f"  step {step} {block}: po {po_drop:+.4f} brier {brier_drop:+.4f} "
@@ -125,7 +137,17 @@ def score_pathway(name: str, days: list[dict], blocks: dict[str, list[int]], ste
                 {b: row["mse_drop"] for b, row in block_rows.items()}, how="absolute",
             )
         pathway.append(record)
-        saved_cf = {"X": X, "y": y, "g": day.get("g"), "cfs": cfs, "fit_day": fit_day}
+        saved_cf = {
+            "X": X,
+            "y": y,
+            "g": day.get("g"),
+            "cfs": cfs,
+            "nuisances": nuisances,
+            "w_day": w_day,
+            "anchor": anchor,
+            "y_anchor": y_anchor,
+            "w_anchor": w_anchor,
+        }
         print(
             f"  step {step} shares po { {k: round(v, 3) for k, v in record['share_po'].items()} }",
             flush=True,
@@ -150,6 +172,20 @@ def score_pathway(name: str, days: list[dict], blocks: dict[str, list[int]], ste
         tests[block]["po_drop_ci"] = boot[block]["po"]
         tests[block]["brier_drop_ci"] = boot[block]["brier"]
     paired = _paired_against_top(pathway, "po_drop", absolute=True)
+    audit = _sampler_audit(
+        generator,
+        anchor,
+        y_anchor,
+        w_anchor,
+        days[0].get("g"),
+        blocks,
+        fit_anchor,
+        ridge,
+        pathway,
+        tests,
+        seed,
+        saved_cf,
+    )
     return {
         "name": name,
         "n_per_day": int(len(y_anchor)),
@@ -164,7 +200,138 @@ def score_pathway(name: str, days: list[dict], blocks: dict[str, list[int]], ste
         "pathway": _public_pathway(pathway),
         "last_day_tests": tests,
         "paired_po_vs_top": paired,
+        "sampler_audit": audit,
     }
+
+
+def _mean_l2(left: np.ndarray, right: np.ndarray) -> float:
+    return float(np.linalg.norm(left.mean(axis=0) - right.mean(axis=0)))
+
+
+def _shuffle_block(X: np.ndarray, cols: list[int], seed: int) -> np.ndarray:
+    out = np.array(X, copy=True)
+    rng = np.random.default_rng(seed)
+    out[:, cols] = out[rng.permutation(len(out))][:, cols]
+    return out
+
+
+def _replacement_drops(X, y, g, cols, fit_anchor, ridge, X_alt):
+    base_brier = brier(y, predict_proba(fit_anchor, X))
+    alt_brier = brier(y, predict_proba(fit_anchor, X_alt))
+    out = {
+        "brier_drop": base_brier - alt_brier,
+        "impute_mmd": mmd_rbf(X[:, cols], X_alt[:, cols], seed=0),
+        "mean_shift_l2": _mean_l2(X[:, cols], X_alt[:, cols]),
+        "cf_mean_l2": float(np.mean((X[:, cols] - X_alt[:, cols]) ** 2)),
+    }
+    if ridge is not None and g is not None:
+        base_mse = float(np.mean((ridge.predict(X) - g) ** 2))
+        alt_mse = float(np.mean((ridge.predict(X_alt) - g) ** 2))
+        out["mse_drop"] = base_mse - alt_mse
+    else:
+        out["mse_drop"] = None
+    return out
+
+
+def _sampler_audit(
+    generator,
+    anchor,
+    y_anchor,
+    w_anchor,
+    g_anchor,
+    blocks,
+    fit_anchor,
+    ridge,
+    pathway,
+    tests,
+    seed,
+    saved_last,
+):
+    """Peak-day redraw is the sampler floor. Later batches are judged by the excess."""
+    print("  sampler floor: redraw each block on the peak day", flush=True)
+    X_day = saved_last["X"]
+    y_day = saved_last["y"]
+    w_day = saved_last["w_day"]
+    X_pool = np.vstack([anchor, X_day])
+    y_pool = np.concatenate([y_anchor, y_day])
+    w_pool = np.concatenate([w_anchor, w_day])
+    nuisances = fit_pathway_nuisances(X_pool, y_pool, w_pool, seed=seed + 999)
+    base_po_anchor = pathway_po_risk(nuisances, anchor, y_anchor, w_anchor)
+    anchor_rows = {}
+    for i, (block, cols) in enumerate(blocks.items()):
+        redrawn = _imputed_matrix(generator, anchor, cols)
+        shuffled = _shuffle_block(anchor, cols, seed + 1000 + i)
+        tab = _replacement_drops(anchor, y_anchor, g_anchor, cols, fit_anchor, ridge, redrawn)
+        shuf = _replacement_drops(anchor, y_anchor, g_anchor, cols, fit_anchor, ridge, shuffled)
+        po_drop = base_po_anchor - pathway_po_risk(nuisances, redrawn, y_anchor, w_anchor)
+        anchor_rows[block] = {
+            **tab,
+            "po_drop": po_drop,
+            "brier_drop_shuffle": shuf["brier_drop"],
+            "mse_drop_shuffle": shuf["mse_drop"],
+            "shuffle_mmd": shuf["impute_mmd"],
+        }
+        print(
+            f"    {block}: floor po {po_drop:+.4f} brier {tab['brier_drop']:+.4f} "
+            f"shuffle {shuf['brier_drop']:+.4f} impute mmd {tab['impute_mmd']:.4f}",
+            flush=True,
+        )
+    last = pathway[-1]
+    excess_brier = excess_over_floor(
+        {name: row["brier_drop"] for name, row in last["blocks"].items()},
+        {name: row["brier_drop"] for name, row in anchor_rows.items()},
+    )
+    excess_po = excess_over_floor(
+        {name: row["po_drop"] for name, row in last["blocks"].items()},
+        {name: row["po_drop"] for name, row in anchor_rows.items()},
+    )
+    raw_share = shares(
+        {name: row["brier_drop"] for name, row in last["blocks"].items()}, how="absolute",
+    )
+    raw_po_share = shares(
+        {name: row["po_drop"] for name, row in last["blocks"].items()}, how="absolute",
+    )
+    excess_share = shares(excess_brier, how="absolute")
+    excess_po_share = shares(excess_po, how="absolute")
+    blocks_out = {}
+    for block, floor in anchor_rows.items():
+        day = last["blocks"][block]
+        excess = excess_brier[block]
+        mmd_p = tests[block]["mmd_p"]
+        weekly = np.array([
+            abs(row["blocks"][block]["brier_drop"]) - abs(floor["brier_drop"]) for row in pathway
+        ])
+        blocks_out[block] = {
+            "floor_po": floor["po_drop"],
+            "floor_brier": floor["brier_drop"],
+            "floor_mse": floor["mse_drop"],
+            "shuffle_brier": floor["brier_drop_shuffle"],
+            "shuffle_mse": floor["mse_drop_shuffle"],
+            "anchor_impute_mmd": floor["impute_mmd"],
+            "anchor_mean_shift_l2": floor["mean_shift_l2"],
+            "day_po": day["po_drop"],
+            "day_brier": day["brier_drop"],
+            "day_mse": day["mse_drop"],
+            "excess_po": excess_po[block],
+            "excess_brier": excess,
+            "excess_mse": None if day["mse_drop"] is None else day["mse_drop"] - floor["mse_drop"],
+            "raw_po_share": raw_po_share[block],
+            "raw_brier_share": raw_share[block],
+            "excess_po_share": excess_po_share[block],
+            "excess_brier_share": excess_share[block],
+            "day_impute_mmd": day["impute_mmd"],
+            "day_covariate_mmd": day["mmd"],
+            "day_mmd_p": mmd_p,
+            "clears_floor_p": signflip_pvalue(weekly, seed=seed),
+            "verdict": sampler_verdict(excess, floor["brier_drop"], mmd_p),
+        }
+        print(
+            f"    {block}: excess brier {excess:+.4f} "
+            f"share {raw_share[block]:.3f} -> {excess_share[block]:.3f} "
+            f"{blocks_out[block]['verdict']}",
+            flush=True,
+        )
+    return {"anchor": anchor_rows, "last": blocks_out}
 
 
 def _public_pathway(pathway):
@@ -190,15 +357,20 @@ def _public_pathway(pathway):
 def _bootstrap_last_day(saved, fit_anchor, blocks, n_boot: int, seed: int):
     rng = np.random.default_rng(seed + 7)
     X, y, cfs = saved["X"], saved["y"], saved["cfs"]
+    anchor, y_anchor, w_anchor = saved["anchor"], saved["y_anchor"], saved["w_anchor"]
     n = len(y)
     buckets = {block: {"po": [], "brier": []} for block in blocks}
     for draw in range(n_boot):
         idx = rng.integers(0, n, size=n)
-        fit_day = fit_logit(X[idx], y[idx], seed=seed + 30 + draw)
-        base_po = po_risk(fit_day, fit_anchor, X[idx])
+        w_day = np.ones(len(idx), dtype=int)
+        X_pool = np.vstack([anchor, X[idx]])
+        y_pool = np.concatenate([y_anchor, y[idx]])
+        w_pool = np.concatenate([w_anchor, w_day])
+        nuisances = fit_pathway_nuisances(X_pool, y_pool, w_pool, seed=seed + 30 + draw)
+        base_po = pathway_po_risk(nuisances, X[idx], y[idx], w_day)
         base_brier = brier(y[idx], predict_proba(fit_anchor, X[idx]))
         for block, X_cf in cfs.items():
-            buckets[block]["po"].append(base_po - po_risk(fit_day, fit_anchor, X_cf[idx]))
+            buckets[block]["po"].append(base_po - pathway_po_risk(nuisances, X_cf[idx], y[idx], w_day))
             buckets[block]["brier"].append(
                 base_brier - brier(y[idx], predict_proba(fit_anchor, X_cf[idx]))
             )
@@ -541,7 +713,22 @@ def main():
         "ieee_cis", ieee_days, ieee_blocks, steps=800, timesteps=60, seed=0,
     )
     ieee["window"] = ieee_meta
-    payload = {"synthetic": synthetic, "ieee_cis": ieee}
+    movielens_days, movielens_blocks, movielens_meta = load_movielens_week(n=700, seed=0)
+    movielens = score_pathway(
+        "movielens", movielens_days, movielens_blocks, steps=600, timesteps=50, seed=0,
+    )
+    movielens["window"] = movielens_meta
+    home_days, home_blocks, home_meta = load_home_credit_week(n=700, seed=0)
+    home = score_pathway(
+        "home_credit", home_days, home_blocks, steps=600, timesteps=50, seed=0,
+    )
+    home["window"] = home_meta
+    payload = {
+        "synthetic": synthetic,
+        "ieee_cis": ieee,
+        "movielens": movielens,
+        "home_credit": home,
+    }
     path = out_dir / "pathway.json"
     path.write_text(json.dumps(payload, indent=2))
     print(f"\nSaved {path}", flush=True)

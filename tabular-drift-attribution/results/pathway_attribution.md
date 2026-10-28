@@ -2,7 +2,11 @@
 
 锚点是峰值日。后面七个 batch 是七次前向步骤。TabDDPM 只在峰值日上训练一次，来自 `yandex-research/tab-ddpm` 的 `GaussianMultinomialDiffusion`（commit `b476257`），然后对后面每一个 batch 逐块做条件生成，中间不重训。每一步只重写一个特征块，其余列在反向链的每一步被钉回该行的加噪过程。传给去噪网络的标签从峰值日的标签分布里抽。观测行在训练前被夹到 [-5, 5]，预测的干净样本也夹回这个盒子；不夹的话，这几份真实表上的反向链会离开训练范围。
 
-距离用逻辑回归 meta-learner。PO-risk 是当天模型与峰值日模型在当天样本上的平方差。预测损失是峰值日模型传到当天的 Brier；合成数据和 MovieLens 上还有峰值日模型的连续目标 MSE。把一块换成 TabDDPM 的条件样本之后，损失的变动记为 Δ。排名占比是 |Δ| 占全部块 |Δ| 之和。MMD 比的是这一块和峰值日同一块。HSIC 比的是这一块和当天标签。最后一天给 Δ 的 bootstrap 区间，MMD 和 HSIC 用 40 次置换，最小 p 值是 0.024。七步之间用符号翻转检验，看绝对变动最大的那一块是否大于其余每一块。
+预测损失是峰值日逻辑回归传到当天的 Brier；合成数据和 MovieLens 上还有峰值日 ridge 的连续目标 MSE。PO-risk 按 PermuCATE：在峰值日（W=0）与当前步（W=1）合并样本上拟合 outcome、倾向和 τ 模型，用双重稳健伪结果
+\[
+\phi(Z)=\frac{(Y-\mu_T)(T-\pi)}{\pi(1-\pi)}+(\mu_1-\mu_0),
+\]
+在评估矩阵上算 \(E[(\phi-\hat\tau(X))^2]\)。outcome 与 τ 用随机森林（150 棵树，深度 5），倾向用平衡逻辑回归，倾向裁剪到 [0.01, 0.99]。当前步评估时 \(W=1\)。把一块换成 TabDDPM 的条件样本之后，PO-risk 与 Brier 的变动记为 Δ。排名占比是 |Δ| 占全部块 |Δ| 之和。MMD 比的是这一块和峰值日同一块。HSIC 比的是这一块和当天标签。最后一天给 Δ 的 bootstrap 区间，MMD 和 HSIC 用 40 次置换，最小 p 值是 0.024。七步之间用符号翻转检验，看绝对变动最大的那一块是否大于其余每一块。
 
 ## 合成数据：两种方法指到同一块
 
@@ -47,5 +51,17 @@ PO-risk 的七步平均绝对变动最大的是 timedelta，但它和 card、add
 Brier 把 external 单独标出来。七天平均绝对变动是 0.023，对其余四块的符号翻转 p 值都是 0.008。最后一段的 Brier 区间是 [-0.044, -0.006]。PO-risk 分不开 external 和 amount（平均绝对变动 0.005 和 0.004，符号翻转 p = 0.253）。最后一段这两块的 PO 区间都不含 0，personal、region、other 的区间含 0。HSIC 的差都小于 0.001。
 
 沿申请号往前走，协变量没有分开。峰值日的违约模型靠外部评分，所以把这一块换成条件样本之后，传到后面各段的 Brier 会动。
+
+## 怎么分开 sampler bias 和归因
+
+这是两套量，不要混读。
+
+**生成器有没有偏**：看峰值日上的无条件 TabDDPM 样本对真实峰值的 MMD（`fidelity_mmd`），以及把某一块在峰值日上重画时，该块 imputation MMD（`anchor_impute_mmd`）。MMD 很小说明生成器没有整体漂走。
+
+**相对贡献是不是 sampler 造成的**：对 Brier（以及 PO-risk）做峰值日 floor。floor 是只在峰值日上、用 TabDDPM 重画该块时，损失相对未替换时的变动。当前步的 excess = 当前步 Δ 减去这个 floor。若 |excess| 小于 |floor|，标成 `sampler`：后面 batch 上的变动没有超过“在峰值日重画这一块”本身。若 excess 至少是 floor 的两倍，且该块对峰值的协变量 MMD 有 p<0.05，标成 `drift`；excess 够大但 MMD 不显著，标成 `model`（模型对这块敏感，分布未必分开）。`results/pathway_tables.tex` 里 Table sampler-floor 列了 floor、day、excess 和 verdict。
+
+**两种归因方法是否一致**：Brier/MSE 看峰值日预测模型；PO-risk 看 DR 伪结果与 τ 的拟合；MMD 看协变量块。三者可以不一致——例如 MovieLens 上 MMD 指向用户/小时，Brier 指向题材，因为分布动的是前者、预测模型依赖的是后者。
+
+给业务讲时：先说 `fidelity_mmd` 和 floor 表有没有把生成器挡在外面；再用 excess 后的占比和 sign-flip 讲哪一块在 pathway 上贡献最大；Brier 讲“预测会坏多少”，PO-risk 讲“因果 contrast 的 DR 风险会涨多少”，MMD 讲“数据像不像变了”。
 
 表在 `latex/pathway_attribution.tex`，数字由 `results/pathway_tables.tex` 从 `results/pathway.json` 生成。四份一起重算用 `python -m pathway.run_pathway`。只补 MovieLens 和 Home Credit 用 `python -m pathway.run_pathway extra`。TabDDPM 仓库放在 `/tmp/tab-ddpm`。

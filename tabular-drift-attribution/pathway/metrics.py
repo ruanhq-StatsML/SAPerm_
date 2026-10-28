@@ -1,15 +1,16 @@
 """Distances for one step of the pathway.
 
-The meta-learner is a logistic outcome model. PO-risk is the squared gap
-between the anchor model and the model fit on the current day, which is the
-pseudo-outcome contrast used in the site-level scores. Predictive loss is the
-Brier score of the anchor model transferred onto the current day. MMD and HSIC
-are the covariate and dependence companions.
+Predictive loss is the Brier score of the anchor model transferred onto the
+current day. PO-risk follows PermuCATE: the doubly robust pseudo-outcome risk
+E[(phi(Z) - tau_hat(X))^2]. MMD and HSIC are the covariate companions.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.metrics.pairwise import rbf_kernel
 
@@ -54,10 +55,90 @@ def fit_ridge(X, y, seed: int = 0):
     return model
 
 
-def po_risk(fit_day, fit_anchor, X) -> float:
-    """E[(mu_day - mu_anchor)^2] on the rows in X."""
-    gap = predict_proba(fit_day, X) - predict_proba(fit_anchor, X)
-    return float(np.mean(gap ** 2))
+def _as_1d(arr) -> np.ndarray:
+    return np.asarray(arr).reshape(-1)
+
+
+def dr_pseudo_outcome(Y, T, mu0, mu1, pi, clip: float = 1e-3) -> np.ndarray:
+    """Doubly robust pseudo outcome phi(Z) from PermuCATE."""
+    Y = _as_1d(Y).astype(float)
+    T = _as_1d(T).astype(int)
+    mu0 = _as_1d(mu0).astype(float)
+    mu1 = _as_1d(mu1).astype(float)
+    pi_clip = np.clip(_as_1d(pi).astype(float), clip, 1.0 - clip)
+    mu_t = np.where(T == 1, mu1, mu0)
+    return (Y - mu_t) * (T - pi_clip) / (pi_clip * (1.0 - pi_clip)) + (mu1 - mu0)
+
+
+def po_risk(tau, Y, T, mu0, mu1, pi, clip: float = 1e-3) -> float:
+    """PermuCATE PO-risk: mean squared error between phi(Z) and tau_hat(X)."""
+    pseudo = dr_pseudo_outcome(Y, T, mu0, mu1, pi, clip=clip)
+    tau = _as_1d(tau).astype(float)
+    return float(np.mean((pseudo - tau) ** 2))
+
+
+@dataclass
+class PathwayNuisances:
+    mu0: RandomForestRegressor
+    mu1: RandomForestRegressor
+    pi: LogisticRegression
+    tau: RandomForestRegressor
+    clip_e: float = 0.01
+
+
+def _rf_regressor(seed: int) -> RandomForestRegressor:
+    return RandomForestRegressor(
+        n_estimators=150,
+        max_depth=5,
+        random_state=seed,
+        n_jobs=1,
+    )
+
+
+def fit_pathway_nuisances(X, Y, W, seed: int = 0, clip_e: float = 0.01) -> PathwayNuisances:
+    """Nuisance models for PO-risk on pooled anchor (W=0) and day (W=1) rows."""
+    X = np.asarray(X, dtype=float)
+    Y = _as_1d(Y).astype(float)
+    W = _as_1d(W).astype(int)
+    mu0 = _rf_regressor(seed)
+    mu1 = _rf_regressor(seed + 1)
+    tau_model = _rf_regressor(seed + 3)
+    pi_model = LogisticRegression(
+        C=1.0,
+        solver="lbfgs",
+        max_iter=400,
+        class_weight="balanced",
+        random_state=seed + 2,
+    )
+    if np.any(W == 0):
+        mu0.fit(X[W == 0], Y[W == 0])
+    else:
+        mu0.fit(X[:1], Y[:1])
+    if np.any(W == 1):
+        mu1.fit(X[W == 1], Y[W == 1])
+    else:
+        mu1.fit(X[:1], Y[:1])
+    pi_model.fit(X, W)
+    mu0_hat = mu0.predict(X)
+    mu1_hat = mu1.predict(X)
+    pi_hat = np.clip(pi_model.predict_proba(X)[:, 1], clip_e, 1.0 - clip_e)
+    pseudo = dr_pseudo_outcome(Y, W, mu0_hat, mu1_hat, pi_hat, clip=clip_e)
+    tau_model.fit(X, pseudo)
+    return PathwayNuisances(mu0=mu0, mu1=mu1, pi=pi_model, tau=tau_model, clip_e=clip_e)
+
+
+def predict_pathway_nuisances(nuisances: PathwayNuisances, X) -> tuple[np.ndarray, ...]:
+    X = np.asarray(X, dtype=float)
+    mu0 = nuisances.mu0.predict(X).astype(float)
+    mu1 = nuisances.mu1.predict(X).astype(float)
+    pi = np.clip(nuisances.pi.predict_proba(X)[:, 1], nuisances.clip_e, 1.0 - nuisances.clip_e)
+    tau = nuisances.tau.predict(X).astype(float)
+    return mu0, mu1, pi, tau
+
+
+def pathway_po_risk(nuisances: PathwayNuisances, X, Y, W) -> float:
+    mu0, mu1, pi, tau = predict_pathway_nuisances(nuisances, X)
+    return po_risk(tau, Y, W, mu0, mu1, pi, clip=nuisances.clip_e)
 
 
 def mmd_rbf(X, Y, size: int = 250, seed: int = 0) -> float:
@@ -160,6 +241,31 @@ def shares(scores: dict[str, float], how: str = "positive") -> dict[str, float]:
         n = max(len(used), 1)
         return {key: 1.0 / n for key in used}
     return {key: used[key] / total for key in used}
+
+
+def excess_over_floor(day: dict, floor: dict) -> dict:
+    """Later-batch movement minus the same replacement on the peak day."""
+    return {key: float(day[key]) - float(floor[key]) for key in day}
+
+
+def sampler_verdict(excess: float, floor: float, mmd_p: float | None) -> str:
+    """Reporting rule for one block. The factor of two is a reporting bar.
+
+    ``sampler``: the later batch does not move more than redrawing the peak.
+    ``drift``: the excess clears that bar and the block's covariate MMD does too.
+    ``model``: the excess clears the bar and the covariate MMD does not.
+    ``thin``: the excess is larger than the floor but not by the reporting bar.
+    ``none``: both pieces are negligible.
+    """
+    if abs(excess) < 1e-4 and abs(floor) < 1e-4:
+        return "none"
+    if abs(excess) < abs(floor):
+        return "sampler"
+    if abs(excess) >= 2.0 * max(abs(floor), 1e-4):
+        if mmd_p is not None and mmd_p < 0.05:
+            return "drift"
+        return "model"
+    return "thin"
 
 
 def signflip_pvalue(diffs: np.ndarray, seed: int = 0, n_perm: int = 2000) -> float:
