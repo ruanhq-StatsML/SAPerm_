@@ -2,6 +2,8 @@
 
 CTGAN samples from one condition dictionary, not a different condition per
 row. Continuous conditioning columns are reduced to the batch median bin.
+The dictionary is today's other features and yesterday's full features.
+Yesterday on the fitted table is the previous reference row.
 """
 
 from __future__ import annotations
@@ -26,27 +28,50 @@ class CTGANEngine(BaseEngine):
 
         df = pd.DataFrame(X_ref, columns=col_names)
         self.discrete_cols = list(discrete_cols or [])
-        for c in col_names:
-            if c not in self.discrete_cols:
-                bin_col = f"{c}_bin"
-                df[bin_col] = pd.qcut(
-                    df[c].rank(method="first"),
-                    q=min(self.n_bins, max(2, df[c].nunique())),
-                    labels=False,
-                    duplicates="drop",
-                ).astype(int)
-                n_edges = int(df[bin_col].max()) + 2
-                self.bin_edges[c] = np.quantile(df[c], np.linspace(0, 1, n_edges))
-                self.discrete_cols.append(bin_col)
+        original_discrete = set(self.discrete_cols)
+        lag = np.roll(np.asarray(X_ref, dtype=np.float64), 1, axis=0)
+        for i, c in enumerate(col_names):
+            df[f"yest__{c}"] = lag[:, i]
+        for c in list(df.columns):
+            base = c[len("yest__"):] if c.startswith("yest__") else c
+            if c in self.discrete_cols or base in original_discrete:
+                if c.startswith("yest__") and c not in self.discrete_cols:
+                    self.discrete_cols.append(c)
+                continue
+            bin_col = f"{c}_bin"
+            df[bin_col] = pd.qcut(
+                df[c].rank(method="first"),
+                q=min(self.n_bins, max(2, df[c].nunique())),
+                labels=False,
+                duplicates="drop",
+            ).astype(int)
+            n_edges = int(df[bin_col].max()) + 2
+            self.bin_edges[c] = np.quantile(df[c], np.linspace(0, 1, n_edges))
+            self.discrete_cols.append(bin_col)
         self.model = CTGAN(epochs=self.epochs, cuda=False)
         self.model.fit(df, self.discrete_cols)
         self.col_names = list(col_names)
         return self
 
-    def generate(self, X_cond, n, col_names_cond, col_names_target):
+    def generate(
+        self,
+        X_cond,
+        n,
+        col_names_cond,
+        col_names_target,
+        X_yesterday=None,
+        col_names_yesterday=None,
+        method=None,
+    ):
+        del method
         df_cond = pd.DataFrame(X_cond, columns=col_names_cond)
+        if X_yesterday is not None:
+            df_cond = pd.concat(
+                [df_cond, pd.DataFrame(X_yesterday, columns=col_names_yesterday)],
+                axis=1,
+            )
         conditions = {}
-        for c in col_names_cond:
+        for c in list(col_names_cond) + list(col_names_yesterday or []):
             if c in self.bin_edges:
                 med = float(df_cond[c].median())
                 bin_id = int(np.digitize(med, self.bin_edges[c][1:-1]))

@@ -1,4 +1,4 @@
-"""Generator interface. fit on a reference batch, then generate a target block."""
+"""Generator interface. Fit on a reference batch, then draw one target block."""
 
 from __future__ import annotations
 
@@ -16,8 +16,16 @@ class BaseEngine:
         n: int,
         col_names_cond: list,
         col_names_target: list,
+        X_yesterday: np.ndarray | None = None,
+        col_names_yesterday: list | None = None,
+        method: str | None = None,
     ) -> np.ndarray:
-        """Draw the target columns under the reference conditional of X_cond."""
+        """Draw the target columns for each row.
+
+        The condition is today's other features (`X_cond`) together with
+        yesterday's full feature vector (`X_yesterday`), when that lag is
+        supplied. Rows stay aligned with the condition.
+        """
         raise NotImplementedError
 
     def match_to_entities(

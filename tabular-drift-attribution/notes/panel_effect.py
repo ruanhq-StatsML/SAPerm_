@@ -25,6 +25,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from core.generator import CounterfactualGenerator  # noqa: E402
+from core.iterative import block_update, lag_column_names  # noqa: E402
 from core.quality_gate import QualityGate  # noqa: E402
 from data.loaders import load_home_credit, load_ieee_cis, load_movielens  # noqa: E402
 from run import condition_columns  # noqa: E402
@@ -35,19 +36,23 @@ def _scale(reference):
     return sd
 
 
-def _fill_counterfactual(generator, current, blocks, names):
-    cf = np.zeros_like(current)
+def _fill_counterfactual(generator, current, yesterday, blocks, names):
     n_features = current.shape[1]
-    for cols in blocks.values():
+    yest_names = lag_column_names(names)
+
+    def draw(state, yest, cols):
         others = condition_columns(n_features, cols)
-        cf[:, cols] = generator.generate(
-            current[:, others],
-            current[:, cols],
-            len(current),
+        return generator.generate(
+            state[:, others],
+            state[:, cols],
+            len(state),
             [names[c] for c in others],
             [names[c] for c in cols],
+            X_yesterday=yest,
+            col_names_yesterday=yest_names,
         )
-    return cf
+
+    return block_update(draw, current, yesterday, blocks)
 
 
 def _block_numbers(real, cf, ref, blocks, sd):
@@ -115,7 +120,7 @@ def score_panel(data):
     rows = []
     for t in range(1, len(batches)):
         current = batches[t]
-        cf = _fill_counterfactual(generator, current, blocks, names)
+        cf = _fill_counterfactual(generator, current, batches[t - 1], blocks, names)
         valid, diag = gate.check(cf)
         use = valid if int(valid.sum()) >= 50 else np.ones(len(current), dtype=bool)
         raw, std, marg, waz = _block_numbers(current[use], cf[use], reference, blocks, sd)
@@ -154,7 +159,7 @@ def score_panel(data):
         for t in range(half, len(batches)):
             current = batches[t].copy()
             current[:, cols] = current[:, cols] + sd[cols].astype(np.float32)
-            cf = _fill_counterfactual(generator, current, blocks, names)
+            cf = _fill_counterfactual(generator, current, batches[t - 1], blocks, names)
             valid, _ = gate.check(cf)
             use = valid if int(valid.sum()) >= 50 else np.ones(len(current), dtype=bool)
             _, std, _, _ = _block_numbers(current[use], cf[use], reference, blocks, sd)
