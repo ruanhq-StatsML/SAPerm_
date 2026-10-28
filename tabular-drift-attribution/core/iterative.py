@@ -9,7 +9,7 @@ that write. Yesterday stays the observed previous day.
 from __future__ import annotations
 
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
+from scipy.spatial.distance import cdist
 
 
 LAG_PREFIX = "yest__"
@@ -69,5 +69,5 @@ def conditional_indices(ref, query_today, today_idx, query_yesterday=None):
         raise ValueError("conditioning blocks must share a row count")
     mu = ref_cond.mean(axis=0)
     sd = ref_cond.std(axis=0) + 1e-6
-    nn = NearestNeighbors(n_neighbors=1).fit((ref_cond - mu) / sd)
-    return nn.kneighbors((query - mu) / sd, return_distance=False).ravel()
+    dist = cdist((query - mu) / sd, (ref_cond - mu) / sd)
+    return dist.argmin(axis=1)

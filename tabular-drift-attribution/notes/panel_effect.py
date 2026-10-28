@@ -24,9 +24,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from core.digestion import block_account, digest  # noqa: E402
 from core.generator import CounterfactualGenerator  # noqa: E402
 from core.iterative import block_update, lag_column_names  # noqa: E402
-from core.quality_gate import QualityGate  # noqa: E402
 from data.loaders import load_home_credit, load_ieee_cis, load_movielens  # noqa: E402
 from run import condition_columns  # noqa: E402
 
@@ -114,24 +114,23 @@ def score_panel(data):
     names = data["col_names"]
     reference = batches[0]
     sd = _scale(reference)
-    gate = QualityGate().fit(reference)
-    generator = CounterfactualGenerator(backend="stub", seed=0).fit(reference, names)
+    digested = digest(reference, names)
+    generator = CounterfactualGenerator(backend="stub", seed=0).fit(
+        reference, names, discrete_cols=digested["discrete"],
+    )
 
     rows = []
     for t in range(1, len(batches)):
         current = batches[t]
         cf = _fill_counterfactual(generator, current, batches[t - 1], blocks, names)
-        valid, diag = gate.check(cf)
-        use = valid if int(valid.sum()) >= 50 else np.ones(len(current), dtype=bool)
-        raw, std, marg, waz = _block_numbers(current[use], cf[use], reference, blocks, sd)
+        raw, std, marg, waz = _block_numbers(current, cf, reference, blocks, sd)
         top_raw, share_raw = _shares(raw)
         top_std, share_std = _shares(std)
         top_marg, share_marg = _shares(marg)
         top_waz, share_waz = _shares(waz)
         rows.append({
             "t": t,
-            "n": int(use.sum()),
-            "valid_ratio": round(float(diag["valid_ratio"]), 3),
+            "n": int(len(current)),
             "top_raw": top_raw,
             "top_std": top_std,
             "top_marginal": top_marg,
@@ -145,7 +144,7 @@ def score_panel(data):
             "share_marginal": {k: round(v, 4) for k, v in share_marg.items()},
             "share_wasserstein": {k: round(v, 4) for k, v in share_waz.items()},
         })
-        print(f"  t={t} top_std={top_std} top_marg={top_marg} valid={diag['valid_ratio']:.2f}", flush=True)
+        print(f"  t={t} top_std={top_std} top_marg={top_marg}", flush=True)
 
     late = [row for row in rows if row["t"] >= len(batches) // 2]
     planted = {}
@@ -160,9 +159,7 @@ def score_panel(data):
             current = batches[t].copy()
             current[:, cols] = current[:, cols] + sd[cols].astype(np.float32)
             cf = _fill_counterfactual(generator, current, batches[t - 1], blocks, names)
-            valid, _ = gate.check(cf)
-            use = valid if int(valid.sum()) >= 50 else np.ones(len(current), dtype=bool)
-            _, std, _, _ = _block_numbers(current[use], cf[use], reference, blocks, sd)
+            _, std, _, _ = _block_numbers(current, cf, reference, blocks, sd)
             top, share = _shares(std)
             hits.append(top == block)
             shares.append(share[block])
@@ -194,6 +191,23 @@ def score_panel(data):
         "n_batches": len(batches),
         "rows_per_batch": int(batches[0].shape[0]),
         "n_features": int(batches[0].shape[1]),
+        "digestion": {
+            "discrete": digested["discrete"],
+            "continuous": digested["continuous"],
+            "blocks": {
+                block: {
+                    "free": len(account["free"]),
+                    "conditioned_today": len(account["conditioned_today"]),
+                    "conditioned_yesterday": len(account["conditioned_yesterday"]),
+                    "equality": len(account["equality"]),
+                    "ranges": len(account["ranges"]),
+                }
+                for block, account in (
+                    (block, block_account(names, cols, digested["discrete"]))
+                    for block, cols in blocks.items()
+                )
+            },
+        },
         "dropped_degenerate": data.get("dropped_degenerate", []),
         "block_sizes": {name: len(cols) for name, cols in blocks.items()},
         "block_columns": {

@@ -7,13 +7,14 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import yaml
 
 from core.attribution import rank_blocks, rank_features
-from core.digestion import digest
+from core.digestion import block_account, digest
 from core.generator import CounterfactualGenerator
 from core.iterative import block_update, lag_column_names
-from core.quality_gate import QualityGate
+from core.metrics import METRIC_FN
 from data.loaders import (
     load_home_credit,
     load_ieee_cis,
@@ -23,7 +24,7 @@ from data.loaders import (
 
 
 class DatasetForward:
-    """One dataset. Each later batch is one forward pass of one generative model."""
+    """One dataset: digest batch 0, draw each later batch, then score distances."""
 
     def __init__(self, loader):
         self.loader = loader
@@ -41,15 +42,11 @@ class DatasetForward:
         data = self.loader(**(loader_args or {}))
         batches = data["X_batched"]
         blocks = data["blocks"]
-        gt = data["gt"]
         col_names = data["col_names"]
-        n_features = data["F"]
-        gate = QualityGate().fit(batches[0])
+        digested = digest(batches[0], col_names, max_cardinality=max_cardinality)
         generator = CounterfactualGenerator(
             backend=model, seed=seed, **(generator_args or {}),
-        )
-        digested = digest(batches[0], col_names, max_cardinality=max_cardinality)
-        generator.fit(batches[0], col_names, discrete_cols=digested["discrete"])
+        ).fit(batches[0], col_names, discrete_cols=digested["discrete"])
         yest_names = lag_column_names(col_names)
         methods = list(generator.methods) if generator.methods else [None]
         outputs = []
@@ -57,11 +54,11 @@ class DatasetForward:
             for method in methods:
                 counterfactual = forward_batch(
                     generator, batches[t], batches[t - 1], blocks, col_names,
-                    yest_names, n_features, n_sweeps, method,
+                    yest_names, data["F"], n_sweeps, method,
                 )
                 outputs.append(_score(
                     t, method, batches[t], counterfactual, blocks, col_names,
-                    gt, metric, gate,
+                    data["gt"], metric,
                 ))
         return outputs
 
@@ -112,18 +109,69 @@ def forward_batch(
     return block_update(draw, current, yesterday, blocks, n_sweeps)
 
 
-def _score(t, method, current, counterfactual, blocks, col_names, gt, metric, gate):
-    is_valid, diag = gate.check(counterfactual)
+def counterfactual_sim_df(
+    df,
+    past_time_qwindow,
+    feature_indce_attribute,
+    generateion_mechanism,
+    metric_list=METRIC_FN,
+    seed=0,
+):
+    """Time-ordered rows, one window per batch. Digest batch 0, then score later batches."""
+    frame = pd.DataFrame(df)
+    names = list(frame.columns)
+    values = frame.to_numpy(dtype=np.float32)
+    window = int(past_time_qwindow)
+    if window < 1:
+        raise ValueError("past_time_qwindow must be a positive batch length")
+    batches = [values[i:i + window] for i in range(0, (len(values) // window) * window, window)]
+    if len(batches) < 2:
+        raise ValueError("need at least two time windows")
+    blocks = {}
+    for block, cols in feature_indce_attribute.items():
+        blocks[block] = [names.index(col) if isinstance(col, str) else int(col) for col in cols]
+    digested = digest(batches[0], names)
+    generator = CounterfactualGenerator(backend=generateion_mechanism, seed=seed).fit(
+        batches[0], names, discrete_cols=digested["discrete"],
+    )
+    yest_names = lag_column_names(names)
+    digestion = {"discrete": digested["discrete"], "continuous": digested["continuous"], "blocks": {}}
+    for block, cols in blocks.items():
+        account = block_account(names, cols, digested["discrete"])
+        digestion["blocks"][block] = {
+            "free": account["free"],
+            "conditioned_today": account["conditioned_today"],
+            "conditioned_yesterday": account["conditioned_yesterday"],
+            "equality": account["equality"],
+            "ranges": account["ranges"],
+        }
+    metrics = {}
+    for t in range(1, len(batches)):
+        counterfactual = forward_batch(
+            generator, batches[t], batches[t - 1], blocks, names, yest_names, len(names), 1, None,
+        )
+        metrics[t] = {}
+        for metric_name, fn in metric_list.items():
+            scores = {block: float(fn(batches[t], counterfactual, cols)) for block, cols in blocks.items()}
+            total = sum(v for v in scores.values() if np.isfinite(v)) + 1e-8
+            order = sorted(scores, key=lambda block: -(scores[block] if np.isfinite(scores[block]) else 0.0))
+            metrics[t][metric_name] = {
+                "distance": {block: scores[block] for block in order},
+                "contribution": {block: scores[block] / total if np.isfinite(scores[block]) else 0.0 for block in order},
+                "top": order[0],
+            }
+    return {"digestion": digestion, "metrics": metrics}
+
+
+def _score(t, method, current, counterfactual, blocks, col_names, gt, metric):
     row = {"t": t}
     if method is not None:
         row["method"] = method
-    if int(is_valid.sum()) < 20:
-        return {**row, "skip": "too few valid", **diag}
     block_ranked, contribution = rank_blocks(
-        current[is_valid], counterfactual[is_valid], blocks, metric=metric,
+        current, counterfactual, blocks, metric=metric,
     )
     feature_ranked = rank_features(
-        current[is_valid], counterfactual[is_valid], col_names,
+        current, counterfactual, col_names,
     )
     feature_total = sum(feature_ranked.values()) + 1e-8
     gt_blocks = gt.get(t, set())
@@ -144,8 +192,6 @@ def _score(t, method, current, counterfactual, blocks, col_names, gt, metric, ga
         "top": top,
         "gt_blocks": sorted(gt_blocks),
         "top_hit": top in gt_blocks if gt_blocks else None,
-        "n_valid": int(is_valid.sum()),
-        "valid_ratio": round(diag["valid_ratio"], 3),
     })
     return row
 

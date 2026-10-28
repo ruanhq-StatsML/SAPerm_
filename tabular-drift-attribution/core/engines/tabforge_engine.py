@@ -1,9 +1,4 @@
-"""TabFORGE backend.
-
-The published generator is unconditional. This procedure still draws that
-sample, then reorders each target column onto the ranks of the reference
-donor matched on today's other features and yesterday's full features.
-"""
+"""TabFORGE is unconditional. Rank-match each target column onto the donor."""
 
 from __future__ import annotations
 
@@ -23,11 +18,11 @@ class TabFORGEEngine(BaseEngine):
     def fit(self, X_ref, col_names, discrete_cols=None):
         from tabforge import TabFORGEGenerator
 
+        del discrete_cols
         self.ref = np.asarray(X_ref, dtype=np.float64)
         self.col_names = list(col_names)
-        df = pd.DataFrame(X_ref, columns=col_names)
         self.model = TabFORGEGenerator(task="unsupervision", random_state=self.seed)
-        self.model.fit(df)
+        self.model.fit(pd.DataFrame(X_ref, columns=col_names))
         return self
 
     def generate(
@@ -44,33 +39,15 @@ class TabFORGEEngine(BaseEngine):
         generated = self.model.generate(n, random_state=self.seed)
         if not isinstance(generated, pd.DataFrame):
             generated = pd.DataFrame(generated, columns=self.col_names)
-        donor = self._donor(X_cond, n, col_names_cond, col_names_target, X_yesterday)
-        out = np.zeros((n, len(col_names_target)), dtype=np.float32)
-        rng = np.random.RandomState(self.seed)
-        for i, c in enumerate(col_names_target):
-            j = self.col_names.index(c)
-            if c in generated.columns and len(generated) >= n and donor is not None:
-                order = np.argsort(donor[:, i], kind="mergesort")
-                synthetic = np.sort(generated[c].to_numpy()[:n])
-                out[order, i] = synthetic
-            elif donor is not None:
-                out[:, i] = donor[:, i]
-            else:
-                out[:, i] = np.quantile(self.ref[:, j], rng.random(n))
-        return out.astype(np.float32)
-
-    def _donor(self, X_cond, n, col_names_cond, col_names_target, X_yesterday):
-        if not col_names_cond and X_yesterday is None:
-            return None
-        cond = [self.col_names.index(c) for c in col_names_cond]
-        query = np.asarray(X_cond, dtype=np.float64)
-        yesterday = None if X_yesterday is None else np.asarray(X_yesterday, dtype=np.float64)
-        if len(query) != n:
-            rng = np.random.RandomState(self.seed)
-            take = rng.choice(len(query), size=n, replace=len(query) < n)
-            query = query[take]
-            if yesterday is not None:
-                yesterday = yesterday[take]
-        matched = conditional_indices(self.ref, query, cond, yesterday)
-        tgt = [self.col_names.index(c) for c in col_names_target]
-        return self.ref[matched][:, tgt].astype(np.float32)
+        matched = conditional_indices(
+            self.ref,
+            np.asarray(X_cond),
+            [self.col_names.index(c) for c in col_names_cond],
+            None if X_yesterday is None else np.asarray(X_yesterday),
+        )
+        donor = self.ref[matched]
+        out = np.empty((n, len(col_names_target)), dtype=np.float32)
+        for i, name in enumerate(col_names_target):
+            order = np.argsort(donor[:, self.col_names.index(name)], kind="mergesort")
+            out[order, i] = np.sort(np.asarray(generated[name])[:n])
+        return out
