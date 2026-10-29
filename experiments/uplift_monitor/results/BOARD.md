@@ -1,42 +1,50 @@
-# 接入 FSDS 之后的 uplift 监控
+# Uplift 评估对照脚本
 
-监控的四个数现在就是 FSDS 里的函数，不再是旁边重写的一套。
+评估写在 `evaluate.py`。能对上脚本的两列，和不能冒充脚本的一列，分开记。
 
-- 协变量距离是 `VIMP_mmd_benchmark.py` 里的 `MMD`。留一坐标重要度是同一个文件的 `compute_loco_mmd_batches`。
-- 协变量独立性是 `VIMP_hsic_benchmark.py` 里的 `compute_hsic_loco_batches`。它的核宽是代码里写死的 `sigma=1`，不是中位数带宽，所以水平比 MMD 小。
-- Uplift 的概念损失是 `LOCO_vimp_r_risk.py` 里的 R-learner：交叉拟合 `mu` 和 `e` 之后算 `mean((Y - mu - tau (W - e))^2)`。这里的 `tau` 是已经部署的 uplift，不是当场再拟合的那个。
-- 另一条 uplift 损失是 `permuCATE_vimp.py` 里的 `po_risk`，伪结果 `phi(Z)` 对部署的 `tau(X)` 的均方误差。随机片上的倾向得分就是 0.5。
-- 特征路径用的是 `fsds_nonuniqueness.py` 里的 `mmd_path` 和 `summarize_path_nonuniqueness`。
+## 脚本里怎么评
 
- nuisance 回归用的是逻辑回归和 ridge。原文件里的随机森林注册表连同 `chdir` 到本机路径的那几行在这棵树里导不进来。损失本身没有改。
+`r_learner_observed_risk` 走到 `vimp_loco_r_risk` 的 `observed_r_risk` 为止。
 
-四次重复。Batch 8 之前是对照，之后是机制。
+1. `make_folds` 把样本切成 5 折。
+2. `cross_nuisance_fit`：结果模型是 `rf_regressor`，倾向得分是 `logistic_classifier`。森林的 `max_features = round(p/3)`，`min_samples_leaf = round(sqrt(n)/2)`，和 `make_rf_regression` 一样。树的棵数是 40，注册表默认是 150。
+3. `Y_tilde = Y - mu`，`W_tilde = W - e`，`e` 截断在 0.01。
+4. τ 用 `_fit_tau_rlearner_weighted` 当场拟合：标准化之后的 ridge，权重是 `W_tilde^2`。
+5. 风险是 `mean((Y_tilde - tau_hat * W_tilde)^2)`。
 
-| 机制 | 阶段 | MMD | HSIC | R-learner 冻结 | R-learner 新 | PO 冻结 | PO 新 |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| concept | 4–7 | 0.0011 | 0.0005 | 0.222 | 0.226 | 0.826 | 0.842 |
-| concept | 8–15 | 0.0008 | 0.0005 | 0.306 | 0.242 | 1.478 | 0.946 |
-| covariate | 4–7 | 0.0013 | 0.0006 | 0.220 | 0.222 | 0.821 | 0.840 |
-| covariate | 8–15 | 0.1055 | 0.0023 | 0.196 | 0.197 | 0.718 | 0.754 |
+这里的 τ 是这一步拟合出来的，不是外面传进来的 uplift。LOCO 那一圈（去掉一列再重拟合）没有放进每个 batch。
 
-## 两条臂各看各的函数
+`permucate_test_po_risk` 走到 `permuCATE_vimp` 的 `po_risk_original` 为止。
 
-τ(x) 换号的时候，FSDS 的协变量函数不响。MMD 停在 0.0008，HSIC 停在 0.0005。响的是两条 uplift 损失。冻结模型的 R-learner 从 0.222 升到 0.306，新模型停在 0.242。PO-risk 分得更开：冻结模型从 0.826 升到 1.478，新模型到 batch 10 已经回到 0.91 附近，后段平均 0.946。符号准确率从 0.975 掉到 0.025，和这两条损失是同一件事：部署的 τ 和当前的处理效应对不上。
+1. `train_test_split(..., test_size=0.5, stratify=W)`。
+2. 训练集上，处理组和对照组各拟合一个随机森林，得到 `mu1`、`mu0`。倾向得分是逻辑回归。
+3. 伪结果是脚本里的那条：`(mu1 - mu0) + (Y - mu_T) (W - pi) / (pi (1-pi))`。
+4. τ 是这个伪结果上的随机森林。
+5. `po_risk` 在留出的一半上计算。
 
-第一列平移的时候，FSDS 的协变量函数响，uplift 函数不响。MMD 从 0.0013 升到 0.1055。HSIC 从 0.0006 升到 0.0023，方向一致，水平小，是因为 `sigma=1` 没有跟着数据的尺度走。R-learner 两条都停在 0.197。PO-risk 冻结模型是 0.718，新模型是 0.754，冻结的并不更差。符号停在 0.990。τ(x) 还是原来那个函数。
+置换那一圈（`n_perm` 次打乱残差）没有放进每个 batch。
 
-LOCO-MMD 在协变量平移的后段把第 0 列排在第一，32 个 batch 里 32 次。第 0 列的重要度均值是 0.103，整份 MMD 是 0.106，平移几乎全在这一列上。换号的后段 MMD 本身是 0，LOCO 的 argmax 有 66% 也落在第 0 列。那不是检测。全局统计量是零的时候，留一坐标的排序是噪声的排序，对照段里第 0 列同样会经常排到第一。
+`deployed_po_risk` 调用的是同一个 `po_risk`，但 `mu0`、`mu1`、τ 来自已经部署的双逻辑回归，`pi` 用随机片上已知的 0.5。这不是 `permuCATE_vimp`。那个函数会重拟合。
 
-## 路径不唯一
+判断只用两样东西：MMD，和这份部署的 PO-risk。late MMD 至少是 early 的 5 倍，判协变量。冻结模型的 PO-risk 上升至少 0.25，并且比同期重拟合高出至少 0.15，判 uplift。脚本自己重拟合出来的 R-risk 和 PO-risk 不进这个判断。
 
-`mmd_path` 用 16 条随机的加特征顺序，去画 burn-in 对后段的 MMD。任何一条路径走到最后，用上全部坐标，数值都等于整份 MMD：concept 的终点都是 0.0008，covariate 的终点都是 0.102。终点唯一。
+## 四次重复
 
-中间不是。Covariate 上，路径之间的平均最大差距是 0.159，比整份 MMD 还大；逐步的标准差平均 0.061。先放进第 0 列的路径一开始就跳到全部距离，先放进其余列的路径一直贴着零，直到第 0 列被加进来。两条路径都是合法的加法顺序，最后都到达同一个 MMD。所以“是哪一步造成的”取决于你抽到的顺序。LOCO 是删一列再补回去的一种边际，在这一份单列平移上它会指向第 0 列。它不是从 `mmd_path` 里辨识出来的唯一归因。
+| 机制 | 阶段 | MMD | 脚本 R-risk | 脚本 PO | 部署 PO 冻结 | 部署 PO 重拟合 | 判断 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| τ 换号 | 4–7 | 0.0011 | 0.217 | 1.350 | 0.826 | 0.842 | |
+| τ 换号 | 8–15 | 0.0008 | 0.215 | 1.807 | 1.478 | 0.946 | uplift |
+| 第一列平移 | 4–7 | 0.0013 | 0.217 | 1.528 | 0.821 | 0.840 | |
+| 第一列平移 | 8–15 | 0.1055 | 0.188 | 1.274 | 0.718 | 0.754 | covariate |
 
-Concept 上路径几乎是平的，逐步标准差 0.0005。没有一份协变量距离可以去拆。要看的是 R-learner 和 PO-risk。
+换号之后，脚本的 R-risk 从 0.217 到 0.215。它每个 batch 都重拟合 τ，所以冻结模型已经错了，这一列也不会升。脚本的 PO-risk 从 1.35 升到 1.81，重拟合之后的损失变大，但它评的是新拟合的森林，不是那份已经部署的模型。部署的 PO-risk 从 0.83 升到 1.48，同期重拟合是 0.95。判断用的是这一对比。
 
-## 和 Thompson sampling 怎么放在一起
+平移之后，MMD 从 0.0013 到 0.106。脚本 R-risk 从 0.217 到 0.188。部署的 PO-risk 从 0.82 降到 0.72，没有高于重拟合。判断是协变量。后段流量 0.87 仍在冻结模型上，因为两条策略的价值都在 0.81。流量不改判断。
 
-Bandit 不读这些 FSDS 分数。它只看结果。换号之后冻结策略的价值掉到 0.39，流量在 batch 12 以后大约 0.90 到新模型上。协变量平移之后冻结模型的 PO-risk 并没有变坏，流量却有 0.87 收在它上面，因为新模型的价值也是 0.81，两个合格的臂收成一个。
+## 没有照抄的地方
 
-FSDS 的函数负责说这次动的是哪一条臂。MMD / HSIC 动、R-learner 和 PO-risk 不动，是来的人不一样，τ(x) 留着。MMD 不动、PO-risk 和 R-learner 动，是 uplift 函数变了，让折扣后验把流量从冻结模型上拿走。路径终点是这批样本的 MMD，路径中间不是一个可以点名的特征。全局是零的时候，LOCO 的第一名不要读。
+- 森林是 40 棵。`vimp_loco_r_risk` 里注册表的 `ntree` 是 150。
+- 每个 batch 停在 `observed_r_risk` 和 `po_risk_original`。LOCO 那一圈和 `n_perm` 置换那一圈没有跑。
+- `vimp_loco_r_risk` 调用 `cross_nuisance_fit` 时没有传入 `seed`，脚本里的折因此固定是 2026。这里用的是这个 batch 的 seed。损失里的倾向得分截断是 0.01，和脚本外层那一次截断一样。
+- `permuCATE_vimp` 的 `train_test_split` 没有 `random_state`。这里传入了 `random_state=seed`。两个臂的森林用同一个 `seed`，和 `permuCATE_fit_nuisance` 一样。
+- 倾向得分那一折如果只剩一个处理组，这里用训练集均值。脚本仍去拟合逻辑回归。

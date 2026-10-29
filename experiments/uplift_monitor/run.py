@@ -17,12 +17,16 @@ import numpy as np
 import pandas as pd
 
 from experiments.uplift_monitor.dgp import N_BATCH, draw_covariates, sample_outcomes
+from experiments.uplift_monitor.evaluate import (
+    deployed_po_risk,
+    permucate_test_po_risk,
+    r_learner_observed_risk,
+)
 from experiments.uplift_monitor.fsds_vimp import mmd_path, summarize_path_nonuniqueness
 from experiments.uplift_monitor.monitor import (
     EXPLORE,
     calibration_mae,
     fsds_covariate,
-    fsds_uplift_risk,
     policy_value,
     sign_accuracy,
     transformed_outcome,
@@ -55,7 +59,7 @@ def _fit_window(model: UpliftModel, history: list[dict], end: int) -> None:
     )
 
 
-def run_one(scenario: str, seed: int) -> tuple[pd.DataFrame, pd.DataFrame]:
+def run_one(scenario: str, seed: int) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     rng = np.random.default_rng(seed)
     stale = UpliftModel(seed)
     fresh = UpliftModel(seed + 1)
@@ -132,8 +136,6 @@ def run_one(scenario: str, seed: int) -> tuple[pd.DataFrame, pd.DataFrame]:
         cov = fsds_covariate(x_ref, xe, seed + 17 * t)
         mu0_s, mu1_s, tau_s = stale.predict_parts(xe)
         mu0_f, mu1_f, tau_f = fresh.predict_parts(xe)
-        risk_s = fsds_uplift_risk(xe, ye, te, mu0_s, mu1_s, tau_s, seed + t)
-        risk_f = fsds_uplift_risk(xe, ye, te, mu0_f, mu1_f, tau_f, seed + 100 + t)
         phi = transformed_outcome(ye, te)
         mmd_vimp = np.asarray(cov["mmd_vimp"], dtype=float)
         monitor_rows.append(
@@ -146,10 +148,10 @@ def run_one(scenario: str, seed: int) -> tuple[pd.DataFrame, pd.DataFrame]:
                 "hsic": float(cov["hsic"]),
                 "mmd_top": int(np.argmax(mmd_vimp)),
                 "mmd_v0": float(mmd_vimp[0]),
-                "rlearner_stale": risk_s["r_learner"],
-                "rlearner_fresh": risk_f["r_learner"],
-                "po_stale": risk_s["po"],
-                "po_fresh": risk_f["po"],
+                "r_risk": r_learner_observed_risk(xe, ye, te, seed + t),
+                "po_script": permucate_test_po_risk(xe, ye, te, seed + t),
+                "po_stale": deployed_po_risk(tau_s, ye, te, mu0_s, mu1_s),
+                "po_fresh": deployed_po_risk(tau_f, ye, te, mu0_f, mu1_f),
                 "calib_stale": calibration_mae(tau_s, phi),
                 "calib_fresh": calibration_mae(tau_f, phi),
                 "sign_stale": sign_accuracy(tau_s, taue),
@@ -174,7 +176,7 @@ def _phase_means(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 def summarize(monitor: pd.DataFrame, arms: pd.DataFrame) -> dict:
     score_cols = [
-        "mmd", "hsic", "mmd_v0", "rlearner_stale", "rlearner_fresh", "po_stale", "po_fresh",
+        "mmd", "hsic", "mmd_v0", "r_risk", "po_script", "po_stale", "po_fresh",
         "calib_stale", "calib_fresh", "sign_stale", "sign_fresh",
         "value_stale", "value_fresh", "value_oracle", "value_treat", "value_control",
     ]
@@ -191,32 +193,60 @@ def summarize(monitor: pd.DataFrame, arms: pd.DataFrame) -> dict:
             out["traffic"][scenario][label] = {
                 arm: float(traffic.loc[(scenario, late, arm)]) for arm in ARMS
             }
+        late_rows = monitor[(monitor["scenario"] == scenario) & (monitor["late"] == 1)]
+        out["phase"][scenario]["call"] = arm_call(
+            out["phase"][scenario]["early"], out["phase"][scenario]["late"]
+        )
+        out["phase"][scenario]["loco_top0_late"] = float((late_rows["mmd_top"] == 0).mean())
     return out
+
+
+def arm_call(early: dict, late: dict) -> str:
+    """Which arm moved, from the phase means.
+
+    The covariate arm fires when late MMD is at least five times early MMD.
+    The uplift arm fires when frozen PO-risk rises by 0.25 and exceeds the
+    refit by 0.15. Both can fire. If neither fires the call is quiet.
+    """
+    mmd_ratio = late["mmd"] / max(early["mmd"], 1e-4)
+    po_rise = late["po_stale"] - early["po_stale"]
+    po_gap = late["po_stale"] - late["po_fresh"]
+    covariate = mmd_ratio >= 5.0
+    uplift = po_rise >= 0.25 and po_gap >= 0.15
+    if covariate and uplift:
+        return "both"
+    if covariate:
+        return "covariate"
+    if uplift:
+        return "uplift"
+    return "quiet"
 
 
 def write_latex(summary: dict, path: Path) -> None:
     lines = [
         r"\begin{table}[t]",
         r"\centering",
-        r"\caption{Uplift monitor using the FSDS scores. "
-        r"MMD and HSIC are \texttt{MMD} and HSIC-LOCO on the randomized slice against the burn-in. "
-        r"R-learner is the FSDS loss with the deployed uplift plugged in as $\tau$. "
-        r"PO-risk is the PermuCATE pseudo-outcome risk. "
-        r"Early is batches 4--7. Late is batches 8--15. "
-        r"Cells are means over four replicates.}",
+        r"\caption{Uplift evaluation. "
+        r"R-risk is \texttt{observed\_r\_risk} from \texttt{vimp\_loco\_r\_risk}: "
+        r"a random-forest outcome, a logistic propensity, and a weighted-ridge R-learner refit on the batch. "
+        r"PO script is \texttt{po\_risk\_original} from \texttt{permuCATE\_vimp} on a stratified half-split, "
+        r"with random-forest outcome and pseudo-outcome models. "
+        r"PO frozen and PO refit call the same \texttt{po\_risk} with the already deployed logistic uplift. "
+        r"The call uses MMD and the deployed PO-risk, not the refit script scores. "
+        r"Early is batches 4--7 and late is batches 8--15. Means over four replicates.}",
         r"\label{tab:uplift-monitor}",
-        r"\begin{tabular}{llrrrrrr}",
+        r"\begin{tabular}{llrrrrrl}",
         r"\toprule",
-        r"Scenario & Phase & MMD & HSIC & R-learn stale & R-learn fresh & PO stale & PO fresh \\",
+        r"Scenario & Phase & MMD & R-risk & PO script & PO frozen & PO refit & Call \\",
         r"\midrule",
     ]
     for scenario in SCENARIOS:
         for label in ("early", "late"):
             row = summary["phase"][scenario][label]
+            call = summary["phase"][scenario]["call"] if label == "late" else ""
             lines.append(
-                f"{scenario} & {label} & {row['mmd']:.4f} & {row['hsic']:.4f} & "
-                f"{row['rlearner_stale']:.3f} & {row['rlearner_fresh']:.3f} & "
-                f"{row['po_stale']:.3f} & {row['po_fresh']:.3f} \\\\"
+                f"{scenario} & {label} & {row['mmd']:.4f} & {row['r_risk']:.3f} & "
+                f"{row['po_script']:.3f} & {row['po_stale']:.3f} & {row['po_fresh']:.3f} & {call} \\\\"
             )
     lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}", ""])
     lines.extend(
@@ -244,18 +274,37 @@ def write_latex(summary: dict, path: Path) -> None:
     path.write_text("\n".join(lines))
 
 
+def _reading(scenario: str, summary: dict) -> str:
+    phase = summary["phase"][scenario]
+    early, late = phase["early"], phase["late"]
+    call = phase["call"]
+    traffic = summary["traffic"][scenario]["late"]
+    return (
+        f"{scenario:<12}{call:<12}"
+        f"MMD {early['mmd']:.4f} -> {late['mmd']:.4f}   "
+        f"script R-risk {late['r_risk']:.3f}  script PO {late['po_script']:.2f}   "
+        f"deployed PO {early['po_stale']:.2f} -> {late['po_stale']:.2f} "
+        f"(refit {late['po_fresh']:.2f})   "
+        f"late traffic frozen {traffic['stale']:.2f}  refit {traffic['fresh']:.2f}"
+    )
+
+
 def print_board(summary: dict) -> None:
-    print("\nFSDS monitor  (early = batches 4-7, late = batches 8-15)")
-    print(f"{'scenario':<12}{'phase':<8}{'MMD':>8}{'HSIC':>8}{'RL S':>8}{'RL F':>8}{'PO S':>8}{'PO F':>8}{'sign S':>8}{'v0':>8}")
+    print("\ncall  (covariate if late MMD >= 5 x early; uplift if frozen PO-risk rises 0.25 and beats the refit by 0.15)")
+    for scenario in SCENARIOS:
+        print(_reading(scenario, summary))
+    print("\nFSDS scores, batches 4-7 then 8-15")
+    print(f"{'scenario':<12}{'phase':<8}{'MMD':>8}{'R-risk':>8}{'PO scr':>8}{'PO frz':>8}{'PO new':>8}")
     for scenario in SCENARIOS:
         for label in ("early", "late"):
             row = summary["phase"][scenario][label]
             print(
-                f"{scenario:<12}{label:<8}{row['mmd']:8.4f}{row['hsic']:8.4f}"
-                f"{row['rlearner_stale']:8.3f}{row['rlearner_fresh']:8.3f}"
-                f"{row['po_stale']:8.3f}{row['po_fresh']:8.3f}"
-                f"{row['sign_stale']:8.3f}{row['mmd_v0']:8.4f}"
+                f"{scenario:<12}{label:<8}{row['mmd']:8.4f}{row['r_risk']:8.3f}"
+                f"{row['po_script']:8.3f}{row['po_stale']:8.3f}{row['po_fresh']:8.3f}"
             )
+        top0 = summary["phase"][scenario].get("loco_top0_late")
+        if top0 is not None:
+            print(f"{'':<12}{'LOCO':<8}coordinate 0 is the top MMD feature in {top0:.0%} of late batches")
     if "paths" in summary:
         print("\nFSDS mmd_path non-uniqueness (burn-in vs late, one replicate)")
         for scenario, row in summary["paths"].items():

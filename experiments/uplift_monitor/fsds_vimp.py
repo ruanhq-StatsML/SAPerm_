@@ -4,23 +4,21 @@ The arithmetic is the code in the FSDS tree:
 
 - ``MMD`` and ``compute_loco_mmd_batches`` from ``VIMP_mmd_benchmark.py``
 - ``compute_hsic_loco_batches`` from ``VIMP_hsic_benchmark.py``
-- the R-learner loss ``mean((Y - mu - tau * (W - e))^2)`` and
-  ``_fit_tau_rlearner_weighted`` from ``LOCO_vimp_r_risk.py``
 - ``po_risk`` from ``permuCATE_vimp.py``
 - ``mmd_path`` and ``summarize_path_nonuniqueness`` from ``fsds_nonuniqueness.py``
 
+The R-learner and PermuCATE fitting steps live in ``evaluate.py``. They follow
+``vimp_loco_r_risk`` and ``permuCATE_vimp``: a random-forest outcome model and,
+for PermuCATE, a random-forest pseudo-outcome regression. This module keeps
+the losses and the covariate scores those scripts call.
+
 Those modules are not importable as checked in: two of them ``chdir`` onto a
-local Mac path and import a model registry that is not in this tree. The
-functions below are the same calculations, with the nuisance regressions set
-to logistic and ridge so a batch monitor can call them.
+local Mac path and import a model registry that is not in this tree.
 """
 
 from __future__ import annotations
 
 import numpy as np
-from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 
 
 def _rank_positions(vimp):
@@ -151,73 +149,6 @@ def compute_hsic_loco_batches(df1_X, df2_X, max_n=1000, seed=0, sigma=1.0):
         X_minus = np.delete(X, j, axis=1)
         vimp[j] = base - _hsic(X_minus, W, sigma_x=sigma, sigma_w=sigma)
     return float(base), vimp, _rank_positions(vimp)
-
-
-def _fit_tau_rlearner_weighted(X, Y_tilde, W_tilde, seed: int = 0, clip_wtilde: float = 1e-3):
-    X = np.asarray(X)
-    Y_tilde = np.asarray(Y_tilde).reshape(-1)
-    W_tilde = np.asarray(W_tilde).reshape(-1)
-    mask = np.abs(W_tilde) > clip_wtilde
-    if int(mask.sum()) < 8:
-        return None
-    z = Y_tilde[mask] / W_tilde[mask]
-    weights = W_tilde[mask] ** 2
-    tau_model = Pipeline(
-        steps=[
-            ("scaler", StandardScaler(with_mean=True, with_std=True)),
-            ("ridge", Ridge(alpha=1.0, random_state=seed)),
-        ]
-    )
-    tau_model.fit(X[mask], z, ridge__sample_weight=weights)
-    return tau_model
-
-
-def _cross_fit_nuisance(X, Y, W, n_folds: int, seed: int):
-    """Cross-fit outcome and propensity, the same split ``vimp_loco_r_risk`` uses."""
-    n = len(Y)
-    rng = np.random.default_rng(seed)
-    order = rng.permutation(n)
-    folds = np.array_split(order, n_folds)
-    mu = np.full(n, float(np.mean(Y)))
-    propensity = np.full(n, float(np.mean(W)))
-    for k, test_idx in enumerate(folds):
-        train_idx = np.setdiff1d(np.arange(n), test_idx)
-        y_tr = Y[train_idx].astype(int)
-        w_tr = W[train_idx].astype(int)
-        if len(np.unique(y_tr)) >= 2:
-            outcome = LogisticRegression(C=1.0, solver="lbfgs", max_iter=200, random_state=seed + k)
-            outcome.fit(X[train_idx], y_tr)
-            mu[test_idx] = outcome.predict_proba(X[test_idx])[:, 1]
-        if len(np.unique(w_tr)) >= 2:
-            propensity_model = LogisticRegression(C=1.0, solver="lbfgs", max_iter=200, random_state=seed + 3 * k)
-            propensity_model.fit(X[train_idx], w_tr)
-            propensity[test_idx] = propensity_model.predict_proba(X[test_idx])[:, 1]
-    return mu, np.clip(propensity, 0.01, 0.99)
-
-
-def r_learner_risk(X, Y, W, tau=None, seed: int = 0, n_folds: int = 3) -> float:
-    """R-learner residual risk from ``vimp_loco_r_risk``.
-
-    Nuisances are cross-fit. If ``tau`` is omitted, tau is the weighted ridge
-    R-learner in ``_fit_tau_rlearner_weighted``. If ``tau`` is supplied, it is
-    a deployed uplift plugged into the same loss.
-    """
-    X = np.asarray(X, dtype=float)
-    Y = np.asarray(Y, dtype=float).reshape(-1)
-    W = np.asarray(W, dtype=int).reshape(-1)
-    if len(Y) < n_folds * 8:
-        return float("nan")
-    mu, propensity = _cross_fit_nuisance(X, Y, W, n_folds, seed)
-    residual_y = Y - mu
-    residual_w = W - propensity
-    if tau is None:
-        fitted = _fit_tau_rlearner_weighted(X, residual_y, residual_w, seed=seed)
-        if fitted is None:
-            return float("nan")
-        tau_hat = fitted.predict(X)
-    else:
-        tau_hat = np.asarray(tau, dtype=float).reshape(-1)
-    return float(np.mean((residual_y - tau_hat * residual_w) ** 2))
 
 
 def po_risk(tau, Y, T, mu0, mu1, pi, clip: float = 1e-3) -> float:
