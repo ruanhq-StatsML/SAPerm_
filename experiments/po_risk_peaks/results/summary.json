@@ -1,0 +1,62 @@
+{
+  "n_train": 800,
+  "n_cal": 240,
+  "n_test": 200,
+  "clean_accuracy": 0.91,
+  "fgsm_eps": 0.005,
+  "fgsm_probe_rate": 0.6875,
+  "fgsm_flip": 0.695,
+  "textfooler_flip": 0.09,
+  "train": {
+    "train_loss": 0.01982727088034153,
+    "steps": 200.0
+  },
+  "blocks": {
+    "synonym": {
+      "lexical": 0.418972370699048,
+      "semantic": 0.05294362545013428
+    },
+    "backtranslate": {
+      "lexical": 0.7596691370010376,
+      "semantic": 0.2059792622923851
+    },
+    "textfooler": {
+      "lexical": 0.3018081722781062,
+      "semantic": 0.09478363007307053
+    },
+    "fgsm": {
+      "lexical": 0.010816747806966304,
+      "semantic": 0.5684778916835785
+    }
+  },
+  "conformal": [
+    {
+      "fpr": 0.03,
+      "recall": 0.96,
+      "threshold": 0.947794497013092,
+      "calibrated_on": "clean cal",
+      "evaluated_on": "ref test"
+    },
+    {
+      "fpr": 0.01,
+      "recall": 0.81,
+      "threshold": 0.947794497013092,
+      "calibrated_on": "clean cal",
+      "evaluated_on": "synonym test"
+    },
+    {
+      "fpr": 0.07,
+      "recall": 0.93,
+      "threshold": 0.5434964299201965,
+      "calibrated_on": "synonym cal",
+      "evaluated_on": "synonym test"
+    },
+    {
+      "fpr": 0.15,
+      "recall": 0.98,
+      "threshold": 0.5434964299201965,
+      "calibrated_on": "synonym cal",
+      "evaluated_on": "ref test"
+    }
+  ]
+}
