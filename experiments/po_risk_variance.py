@@ -9,12 +9,11 @@ written next to the Wager, Hastie, and Efron citation.
 from __future__ import annotations
 
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 from experiments.dgps import banded_toeplitz_corr
+from model_registry_class import ModelRegistry
 
 DEFAULT_CONFIGS = {
     "n_trees": 150,
@@ -79,47 +78,47 @@ def po_risk(tau, Y, T, mu0, mu1, pi, clip=1e-3):
     return np.mean((pseudo - tau) ** 2)
 
 
-def make_registry(ntree=150, n_jobs=-1):
-    """The two registry entries the PO-risk variance calls."""
-
-    def rf_fit(X, Y, seed=0):
-        X = np.asarray(X, dtype=float)
-        Y = np.asarray(Y, dtype=float).ravel()
-        n, p = X.shape
-        return RandomForestRegressor(
-            n_estimators=int(ntree),
-            max_features=max(1, int(round(p / 3.0))),
-            min_samples_leaf=max(1, int(round(np.sqrt(n) / 2.0))),
-            random_state=None if seed is None else int(seed),
-            n_jobs=n_jobs,
-        ).fit(X, Y)
-
-    def rf_predict(fit, X_new):
-        return np.asarray(fit.predict(np.asarray(X_new, dtype=float)), dtype=float).ravel()
-
-    def logit_fit(X, Y, seed=0):
-        return LogisticRegression(
-            solver="lbfgs",
-            max_iter=500,
-            random_state=None if seed is None else int(seed),
-        ).fit(np.asarray(X, dtype=float), np.asarray(Y).ravel())
-
-    def logit_predict(fit, X_new):
-        proba = np.asarray(fit.predict_proba(np.asarray(X_new, dtype=float)), dtype=float)
-        classes = [int(c) for c in np.asarray(fit.classes_).tolist()]
-        column = classes.index(1) if 1 in classes else int(np.argmax(classes))
-        return proba[:, column]
-
-    rf = {"name": "rf_regressor", "fit": rf_fit, "predict": rf_predict}
-    logit = {"name": "logistic_classifier", "fit": logit_fit, "predict": logit_predict}
-    return {
-        "rf_regressor": rf,
-        "logistic_classifier": logit,
-        "multinomial_classifier": logit,
-    }
+def make_registry(ntree=150, n_jobs=1):
+    """The same factory, with the tree count the tests pass in."""
+    nthread = 1 if n_jobs is None or int(n_jobs) <= 1 else int(n_jobs)
+    return ModelRegistry(
+        ntree=int(ntree),
+        ridge_alpha=0.25,
+        nthread=nthread,
+        maxit=200,
+        max_depth=5,
+        gamma=0.25,
+        eta=0.15,
+        mlp_hidden_size=4,
+        mlp_decay=1e-5,
+        mlp_max_iter=500,
+        mlp_trace=False,
+        mlp_max_coef_reg=10000,
+        mlp_max_coef_clf=10000,
+        warn_xgb_labels=True,
+        positive_class=1,
+    ).as_r_style_dict()
 
 
-MODEL_REGISTRY = make_registry(ntree=DEFAULT_CONFIGS["n_trees"], n_jobs=DEFAULT_CONFIGS["n_jobs"])
+DEFAULT_MODEL_FACTORY = ModelRegistry(
+    ntree=150,
+    ridge_alpha=0.25,
+    nthread=1,
+    maxit=200,
+    max_depth=5,
+    gamma=0.25,
+    eta=0.15,
+    mlp_hidden_size=4,
+    mlp_decay=1e-5,
+    mlp_max_iter=500,
+    mlp_trace=False,
+    mlp_max_coef_reg=10000,
+    mlp_max_coef_clf=10000,
+    warn_xgb_labels=True,
+    positive_class=1,
+)
+
+MODEL_REGISTRY = DEFAULT_MODEL_FACTORY.as_r_style_dict()
 
 
 def infer_feature_type(X):
