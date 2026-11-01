@@ -412,3 +412,15 @@ def variance_estimator_po_risk(
     r = (pseudo - tau_est) ** 2
     var_estimator = 4 * r * var_tau
     return var_estimator
+
+
+def rank_by_po_risk_variance(var_estimator):
+    """Rank samples by the PO-risk variance. The second half is the drifted batch."""
+    var_estimator = np.asarray(var_estimator, dtype=float).ravel()
+    half = var_estimator.shape[0] // 2
+    order = np.argsort(-var_estimator)
+    return {
+        "mean_first": float(var_estimator[:half].mean()),
+        "mean_second": float(var_estimator[half:].mean()),
+        "top_half_in_second": float(np.mean(order[:half] >= half)),
+    }

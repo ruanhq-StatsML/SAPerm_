@@ -10,6 +10,7 @@ from experiments.po_risk_variance import (
     make_registry,
     permuCATE_PO,
     permuCATE_vimp_withPOModel,
+    rank_by_po_risk_variance,
     variance_estimator_po_risk,
 )
 
@@ -62,6 +63,12 @@ def test_concept_drift_dgp_po_risk_variance():
     _assert_variance(var_delta)
     assert np.mean(var_alt) > np.mean(var_null)
     assert _fit_risk(X1, Y1, W1) > _fit_risk(X0, Y0, W0)
+    null_rank = rank_by_po_risk_variance(var_null)
+    alt_rank = rank_by_po_risk_variance(var_alt)
+    delta_rank = rank_by_po_risk_variance(var_delta)
+    assert alt_rank["mean_second"] > alt_rank["mean_first"]
+    assert delta_rank["mean_second"] > delta_rank["mean_first"]
+    assert alt_rank["mean_second"] / alt_rank["mean_first"] > null_rank["mean_second"] / null_rank["mean_first"]
 
 
 def test_covariate_shift_dgp_po_risk_variance():
