@@ -11,6 +11,7 @@ from __future__ import annotations
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 from experiments.dgps import banded_toeplitz_corr
@@ -68,6 +69,14 @@ def generate_covariate_shift_dgp(n=2000, p=20, gamma=0.0, rho=0.0, seed=None):
 
 def _as_1d(values):
     return np.asarray(values).reshape(-1)
+
+
+def po_risk(tau, Y, T, mu0, mu1, pi, clip=1e-3):
+    pi_clip = np.clip(pi, clip, 1 - clip)
+    pseudo = (Y - np.where(T == 1, mu1, mu0)) * (T - pi_clip) / (
+        pi_clip * (1 - pi_clip)
+    ) + (mu1 - mu0)
+    return np.mean((pseudo - tau) ** 2)
 
 
 def make_registry(ntree=150, n_jobs=-1):
@@ -240,8 +249,71 @@ def permuCATE_PO(
     )
     pi_clip = np.clip(pi, clip_e, 1 - clip_e)
     pseudo = (Y - np.where(W == 1, mu1, mu0)) * (W - pi_clip) / (pi_clip * (1 - pi_clip)) + mu1 - mu0
-    po_risk = np.mean((tau_est - pseudo) ** 2)
-    return tau_est, pseudo, po_risk
+    risk = np.mean((tau_est - pseudo) ** 2)
+    return tau_est, pseudo, risk
+
+
+def permuCATE_vimp_withPOModel(
+    X, Y, W,
+    model_registry=None,
+    model_m="rf_regressor",
+    model_e="logistic_classifier",
+    model_tau="rf_regressor",
+    model_nu="rf_regressor",
+    model_nu_bi="logistic_classifier",
+    model_nu_multi="multinomial_classifier",
+    n_perm=100,
+    test_size=0.5,
+    seed=0,
+    clip_e=0.01,
+    normalize=False,
+):
+    """Holdout residual permutation. Each coordinate's score is the rise in PO-risk."""
+    if model_registry is None:
+        model_registry = MODEL_REGISTRY
+    X = np.asarray(X)
+    Y = _as_1d(Y)
+    W = _as_1d(W).astype(int)
+    X_train, X_test, W_train, W_test, Y_train, Y_test = train_test_split(
+        X, W, Y, test_size=test_size, stratify=W, random_state=seed
+    )
+    n, p = X.shape
+    outputs = permuCATE_fit_nuisance(
+        X_train, Y_train, W_train,
+        model_registry=model_registry,
+        model_m=model_m, model_e=model_e, model_tau=model_tau,
+        model_nu=model_nu, model_nu_bi=model_nu_bi, model_nu_multi=model_nu_multi,
+        clip_e=clip_e, seed=seed,
+    )
+    tau_est = outputs["model_tau"]["predict"](outputs["model_tau_fit"], X_new=X_test)
+    mu0_test = outputs["model_outcome0"]["predict"](outputs["mu0_fit"], X_new=X_test)
+    mu1_test = outputs["model_outcome1"]["predict"](outputs["mu1_fit"], X_new=X_test)
+    pi_test = np.clip(
+        outputs["model_propensity_score"]["predict"](outputs["model_e_fit"], X_new=X_test),
+        clip_e, 1 - clip_e,
+    )
+    po_risk_original = po_risk(tau_est, Y_test, W_test, mu0_test, mu1_test, pi_test)
+    vimp = np.zeros(p, dtype=float)
+    vimp_sd = np.zeros(p, dtype=float)
+    vimp_median = np.zeros(p, dtype=float)
+    for j in range(p):
+        rng = np.random.default_rng(seed + j)
+        nu_spec = outputs["nu_model"][j]["model_nu"]
+        nu_fit = outputs["nu_model"][j]["model_nu_fit"]
+        nu_hat = nu_spec["predict"](nu_fit, np.delete(X_test, j, axis=1)).ravel()
+        residual = (X_test[:, j] - nu_hat).ravel()
+        drops = np.zeros(n_perm, dtype=float)
+        for k in range(n_perm):
+            X_perm = X_test.copy()
+            X_perm[:, j] = nu_hat + rng.permutation(residual)
+            tau_perm = outputs["model_tau"]["predict"](outputs["model_tau_fit"], X_perm)
+            drops[k] = po_risk(tau_perm, Y_test, W_test, mu0_test, mu1_test, pi_test) - po_risk_original
+        vimp[j] = drops.mean()
+        vimp_sd[j] = drops.std()
+        vimp_median[j] = float(np.median(drops))
+    if normalize:
+        return vimp / np.sum(vimp)
+    return vimp, vimp_sd, vimp_median
 
 
 def _tree_matrix(forest, X):

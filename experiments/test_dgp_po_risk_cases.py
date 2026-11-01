@@ -9,6 +9,7 @@ from experiments.po_risk_variance import (
     generate_covariate_shift_dgp,
     make_registry,
     permuCATE_PO,
+    permuCATE_vimp_withPOModel,
     variance_estimator_po_risk,
 )
 
@@ -80,3 +81,30 @@ def test_covariate_shift_dgp_po_risk_variance():
     _assert_variance(var_delta)
     assert np.mean(var_alt) > np.mean(var_null)
     assert _fit_risk(X1, Y1, W1) > _fit_risk(X0, Y0, W0)
+
+
+def _rank(X, Y, W, n_perm=40):
+    vimp, _, _ = permuCATE_vimp_withPOModel(
+        X, Y, W,
+        model_registry=make_registry(ntree=TREES, n_jobs=1),
+        n_perm=n_perm,
+        seed=0,
+    )
+    order = np.argsort(-vimp)
+    return vimp, order
+
+
+def test_concept_drift_ranks_the_nonzero_slopes():
+    X, Y, W = generate_concept_drift_dgp(n=N, p=P, delta_beta=1.0, rho=0.0, seed=0)
+    vimp, order = _rank(X, Y, W)
+    # beta[:4] = (0, delta, 2 delta, 3 delta). Column 0 has slope 0.
+    assert set(order[:3].tolist()) == {1, 2, 3}
+    assert vimp[3] > vimp[2] > vimp[1]
+    assert vimp[1] > np.max(np.delete(vimp, [1, 2, 3]))
+
+
+def test_covariate_shift_ranks_the_shifted_columns():
+    X, Y, W = generate_covariate_shift_dgp(n=N, p=P, gamma=1.0, rho=0.0, seed=0)
+    vimp, order = _rank(X, Y, W)
+    assert set(order[:4].tolist()) == {0, 1, 2, 3}
+    assert np.min(vimp[:4]) > np.max(vimp[4:])
