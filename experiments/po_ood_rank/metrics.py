@@ -6,6 +6,24 @@ import numpy as np
 from sklearn.metrics import average_precision_score, roc_auc_score
 
 
+def argsort_spearman(score: np.ndarray, target: np.ndarray) -> float:
+    """``spearman(argsort(-score), arange)``.
+
+    This is the formula in the ranking loop. When the score rises with
+    position the value is negative. With no ties it is exactly the negation
+    of :func:`spearman` against that same position index. Ties can separate
+    the two, because argsort breaks them and Spearman averages them.
+    """
+    score = np.asarray(score, dtype=float).reshape(-1)
+    target = np.asarray(target, dtype=float).reshape(-1)
+    mask = np.isfinite(score) & np.isfinite(target)
+    score, target = score[mask], target[mask]
+    if score.size < 5:
+        return float("nan")
+    order = np.argsort(-score, kind="mergesort")
+    return spearman(order, np.arange(order.size, dtype=float))
+
+
 def spearman(score: np.ndarray, target: np.ndarray) -> float:
     """Spearman correlation. Constant inputs have no rank to recover."""
     from scipy.stats import spearmanr

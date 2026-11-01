@@ -100,6 +100,33 @@ def test_po_cell_returns_a_finite_rank_on_a_planted_ramp():
     assert rows[0]["mean_var_po"] >= 0
 
 
+def test_argsort_formula_is_negative_when_the_score_rises_with_position():
+    from experiments.po_ood_rank.metrics import argsort_spearman
+
+    target = np.linspace(0.0, 1.0, 40)
+    assert spearman(target, np.arange(40)) == 1.0
+    assert argsort_spearman(target, np.arange(40)) == -1.0
+    tied = np.array([1.0, 1.0, 1.0, 2.0, 3.0, 3.0, 4.0, 5.0])
+    direct = spearman(tied, np.arange(tied.size))
+    flipped = argsort_spearman(tied, np.arange(tied.size))
+    assert direct > 0 and flipped < 0
+
+
+def test_crossfit_po_covers_every_row_and_product_is_magnitude_times_var():
+    from experiments.po_ood_rank.crossfit import crossfit_magnitude_variance
+    from experiments.po_ood_rank.dgp import draw_ranked
+
+    sample = draw_ranked("covariate", shift=2.0, n=180, p=6, seed=0)
+    fit = crossfit_magnitude_variance(
+        sample["X"], sample["Y"], sample["W"], "PO",
+        n_folds=3, n_estimators=12, min_leaf=8, seed=1, n_jobs=1,
+    )
+    assert np.isfinite(fit["magnitude"]).all()
+    assert np.isfinite(fit["var_tau"]).all()
+    assert np.all(fit["var_tau"] >= -1e-8)
+    assert np.allclose(fit["product"], fit["magnitude"] * fit["var_tau"])
+
+
 def test_perfect_ranking_has_spearman_one_and_constant_is_nan():
     target = np.linspace(0, 1, 30)
     assert spearman(target, target) == 1.0

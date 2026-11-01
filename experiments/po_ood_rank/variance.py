@@ -60,6 +60,26 @@ def inbag_presence(forest) -> np.ndarray:
     return presence
 
 
+def ij_variance_at(forest, X_new, bias_correction: str = "Wager") -> np.ndarray:
+    """Jackknife variance of a fitted forest at new rows.
+
+    Training in-bag indicators stay on the fit sample. Predictions are at
+    ``X_new``, so this is the variance used on a held-out fold.
+    """
+    X_new = np.asarray(X_new, dtype=float)
+    tree_preds = np.column_stack([tree.predict(X_new) for tree in forest.estimators_])
+    inbag = inbag_presence(forest)
+    n_trees = tree_preds.shape[1]
+    centered_pred = tree_preds - np.mean(tree_preds, axis=1, keepdims=True)
+    centered_count = inbag - np.mean(inbag, axis=1, keepdims=True)
+    covariance = (centered_pred @ centered_count.T) / n_trees
+    variance = np.sum(covariance ** 2, axis=1)
+    if str(bias_correction).lower() == "wager":
+        monte_carlo = np.var(tree_preds, ddof=1, axis=1) / n_trees
+        variance = np.maximum(variance - monte_carlo, 0.0)
+    return variance
+
+
 def ij_variance(model_outputs: np.ndarray, inbag_times: np.ndarray, bias_correction: str = "Wager") -> np.ndarray:
     """Infinitesimal jackknife. The Wager branch subtracts ``Var(T_b) / B``."""
     outputs = np.asarray(model_outputs, dtype=float)
