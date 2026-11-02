@@ -61,19 +61,18 @@ Fits are in-sample. Nuisance outcome models are random forests and the propensit
 
 ## Nonlinear concept drift
 
-The linear concept drift above moves four coefficients by a ramp. The harder design redraws the second domain's sine, square, and interaction term and multiplies that term by `linspace(0, 5)`. `delta_beta` only rescales the nonlinear function, from `0.5` to `0.5 + delta_beta`. Covariates stay on the same AR(1) law, so a forest cannot see the ramp in `X`. The realized target is `|drift × ramp|`. The planted target is the row-order ramp itself.
+The linear concept drift above moves four coefficients by a ramp. The harder design redraws the second domain's sine, square, and interaction term and multiplies that term by `linspace(0, 5)`. `delta_beta` only rescales the nonlinear function, from `0.5` to `0.5 + delta_beta`. Covariates stay on the same AR(1) law. The realized target is `|drift × ramp|`. The planted target is the row-order ramp itself. Shift 0 is not a null for the realized target: the ramp is still there, and the nonlinear scale is `0.5`.
 
-This grid is synthetic only: `n = 2000` (1000 per domain), `p = 20`, shifts `{0,1,2,3,4,5}`, two seeds. The residual `r = (phi - tau)^2` is one five-fold held-out PO fit, shared by every curve, so the dashed magnitude line is the same for PO, CF, and orf. `Var(tau)` is that fit's out-of-fold jackknife for PO, and one full-sample standard-error squared for CF and orf. The score is still `r^power * Var(r)` with `Var(r) = 4 r Var(tau)`. Powers run from 0 to 2. Numbers below average shifts 1–5.
+This grid is synthetic only: `n = 2000` (1000 per domain), `p = 20`, shifts `{0,1,2,3,4,5}`, two seeds. The pseudo-outcome `phi` is one five-fold held-out doubly robust fit. Each model then uses its own `tau`: the PO forest's out-of-fold fit, or one full-sample causal forest or orthogonal forest. The score is `Var(phi - tau) ** power * (phi - tau) ** 2`, and with `phi` held fixed that variance is `Var(tau)`. Power 0 is the squared residual. Powers run from 0 to 2. Numbers below average shifts 1–5.
 
 | Model | Power 0 vs realized | Power 2 vs realized | vs planted ramp | `Var(tau)` vs ramp |
 | --- | ---: | ---: | ---: | ---: |
-| PO | 0.30 | 0.22 | −0.02 | 0.03 |
-| CF | 0.34 | 0.24 | −0.02 | 0.03 |
-| orf | 0.31 | 0.23 | 0.00 | 0.09 |
-| magnitude only | 0.17 | 0.17 | −0.01 |  |
+| PO | 0.17 | 0.38 | −0.02 | 0.03 |
+| CF | 0.20 | 0.43 | −0.01 | 0.03 |
+| orf | 0.08 | 0.36 | −0.04 to 0.01 | 0.09 |
 
-The planted row order is not recovered. Spearman of the score against the ramp sits on zero at every power, and `Var(tau)` against that ramp is 0.03 for PO and CF, 0.09 for orf. The rows are iid; the ramp is an index, and the nonlinear coefficients are redrawn, so the index is not a function of `X`.
+The planted row order is not recovered. Spearman of the score against the ramp stays within about −0.04 and 0.01 at every power. `Var(tau)` against that ramp is 0.03 for PO and CF, 0.09 for orf. The rows are iid and the ramp is an index, so a function of `X` has nothing to order.
 
-The realized size of the nonlinear term is only weakly ordered. Power 0 is the top of a low curve: CF 0.34, orf 0.31, PO 0.30, against a residual of 0.17. Raising the power pulls every curve back toward that residual, down to 0.22–0.24 at power 2. The seed band on the shift average is about 0.02 at power 0 and about 0.02–0.05 at power 2. Raising `delta_beta` from 1 to 5 moves the power-0 CF correlation from 0.32 to 0.36.
+The realized size of the nonlinear term is only partly ordered, and the variance weight helps. The squared residual alone sits at 0.17 (PO), 0.20 (CF), and 0.08 (orf). Raising the power on `Var(tau)` lifts those curves to 0.38, 0.43, and 0.36 at power 2. The two seeds, after averaging shifts 1–5, differ by about 0.03–0.05 for PO and CF, and by about 0.09 for orf at power 0. Moving `delta_beta` from 1 to 5 barely changes the level: CF at power 2 stays between 0.42 and 0.44.
 
-On the linear concept drift the same realized Spearman sits near 0.55 (PO) and 0.47 (CF, orf), flat on the residual. The nonlinear term keeps a small variance lift at power 0 and loses it as the exponent grows. The figure is `nonlinear_concept_power.png`.
+The same climb appears at shift 0, where the nonlinear scale is only the baseline `0.5`: CF realized Spearman goes from 0.16 to 0.43. The lift is the variance reweighting the residual toward larger nonlinear terms, not a response to a bigger `delta_beta`. On the linear concept drift the realized Spearman sits near 0.55 and does not need this exponent. The figure is `nonlinear_concept_power.png`.
