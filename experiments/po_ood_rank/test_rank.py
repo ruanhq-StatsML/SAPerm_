@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 from experiments.po_ood_rank.dgp import apply_concept_drift, apply_covariate_shift, draw_ranked
-from experiments.po_ood_rank.metrics import powered_score, rank_row, spearman
+from experiments.po_ood_rank.metrics import powered_score, rank_row, residual_variance_score, spearman
 from experiments.po_ood_rank.variance import ij_variance, pointwise_quantities
 
 
@@ -90,6 +90,8 @@ def test_score_at_zero_power_is_the_delta_method_variance():
     assert np.allclose(var_po, 4.0 * risk * var_tau)
     assert np.allclose(powered_score(risk, var_po, 0.0), var_po)
     assert np.allclose(powered_score(risk, var_po, 1.0), risk * var_po)
+    assert np.allclose(residual_variance_score(var_tau, risk, 0.0), risk)
+    assert np.allclose(residual_variance_score(var_tau, risk, 2.0), (var_tau ** 2) * risk)
 
 
 def test_po_cell_returns_a_finite_rank_on_a_planted_ramp():

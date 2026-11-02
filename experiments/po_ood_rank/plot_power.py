@@ -134,14 +134,14 @@ def write_concept_only_figure(frame: pd.DataFrame, path: Path) -> None:
                 color=color, marker="o", markersize=4.5, linewidth=1.8, label=model,
             )
             ax.fill_between(block["mag_power"], block["lo"], block["hi"], color=color, alpha=0.15, linewidth=0)
-        if not risk.empty:
-            level = float(risk["mean"].mean())
-            ax.axhline(level, color="#555555", linestyle="--", linewidth=1.1)
+            base = risk[risk["cate_model"] == model]
+            if not base.empty:
+                ax.axhline(float(base["mean"].mean()), color=color, linestyle="--", linewidth=1.0, alpha=0.9)
         ax.axhline(0.0, color="#9a9a9a", linewidth=0.7)
         ax.set_xlim(-0.08, 2.08)
         ax.set_ylim(-0.05, 1.02)
         ax.set_xticks([0, 0.5, 1, 1.5, 2])
-        ax.set_xlabel("power on the PO-risk magnitude")
+        ax.set_xlabel(r"power on $\mathrm{Var}(\phi-\tau)$")
         ax.set_ylabel(ylabel)
         ax.set_title(title, fontsize=11)
     handles, _labels = axes[0].get_legend_handles_labels()
@@ -152,9 +152,9 @@ def write_concept_only_figure(frame: pd.DataFrame, path: Path) -> None:
         loc="upper center", ncol=4, frameon=False, bbox_to_anchor=(0.5, 1.08),
     )
     fig.suptitle(
-        r"Nonlinear concept drift, synthetic. Spearman of $r^{\mathrm{power}} \times \mathrm{Var}(r)$"
+        r"Nonlinear concept drift, synthetic. Spearman of $\mathrm{Var}(\phi-\tau)^{\mathrm{power}}\times(\phi-\tau)^{2}$"
         "\n"
-        r"$\mathrm{Var}(r)=4\,r\,\mathrm{Var}(\tau)$. Band is the two seeds. Shifts 1–5 averaged.",
+        r"$\phi$ is the cross-fit pseudo-outcome. Band is the two seeds. Shifts 1–5 averaged.",
         fontsize=12, y=1.18,
     )
     fig.tight_layout()

@@ -1,9 +1,10 @@
-"""Nonlinear concept drift, cross-fit PO risk, power sweep.
+"""Nonlinear concept drift, cross-fit pseudo-outcome, power sweep.
 
-The residual ``r = (phi - tau)^2`` comes from the five-fold PO fit. ``Var(tau)``
-for the pseudo-outcome forest is that fit's held-out jackknife. Causal-forest
-and orthogonal-forest variances are one full-sample fit each. The score at a
-power is ``r ** power * (4 r Var(tau))``. Completed cells in the csv are
+The plotted score is ``Var(phi - tau) ** power * (phi - tau) ** 2``. With the
+pseudo-outcome held fixed, ``Var(phi - tau) = Var(tau)``. Each model uses its
+own ``tau``. The pseudo-outcome is the five-fold held-out DR target. The PO
+forest's ``tau`` and jackknife are out of fold. Causal forest and orthogonal
+forest each contribute one full-sample fit. Completed cells in the csv are
 skipped, so a stopped run continues.
 """
 
@@ -20,7 +21,7 @@ import pandas as pd
 
 from experiments.po_ood_rank.crossfit import po_risk_cf
 from experiments.po_ood_rank.dgp import draw_ranked
-from experiments.po_ood_rank.metrics import powered_score, rank_row, spearman
+from experiments.po_ood_rank.metrics import rank_row, residual_variance_score, spearman
 from experiments.po_ood_rank.plot_power import write_concept_only_figure, write_power_figure
 from experiments.po_ood_rank.variance import pointwise_quantities, tau_variance_cf, tau_variance_orf
 
@@ -79,6 +80,8 @@ def evaluate_cell(source: str, family: str, shift: float, seed: int, cfg: Nonlin
     designed = sample["designed"][mask]
     realized = sample["realized"][mask]
     started = time.perf_counter()
+    # Cross-fit pseudo-outcome. The PO forest's tau and jackknife come from
+    # the same held-out fit. CF and ORF bring their own tau.
     oof = po_risk_cf(
         X, Y, W,
         n_folds=cfg.n_folds,
@@ -88,10 +91,10 @@ def evaluate_cell(source: str, family: str, shift: float, seed: int, cfg: Nonlin
         n_jobs=cfg.n_jobs,
         clip_e=cfg.clip_e,
     )
-    risk = np.asarray(oof["po_risk"], dtype=float)
-    variances = {"PO": np.asarray(oof["var_tau"], dtype=float)}
+    phi = np.asarray(oof["pseudo_outcome"], dtype=float)
+    fitted = {"PO": (np.asarray(oof["tau_est"], dtype=float), np.asarray(oof["var_tau"], dtype=float))}
     if "CF" in cfg.models:
-        _, variances["CF"] = tau_variance_cf(
+        fitted["CF"] = tau_variance_cf(
             X, Y, W,
             n_estimators=cfg.cf_trees,
             min_leaf=cfg.min_leaf,
@@ -99,7 +102,7 @@ def evaluate_cell(source: str, family: str, shift: float, seed: int, cfg: Nonlin
             n_jobs=cfg.n_jobs,
         )
     if "orf" in cfg.models:
-        _, variances["orf"] = tau_variance_orf(
+        fitted["orf"] = tau_variance_orf(
             X, Y, W,
             n_estimators=cfg.orf_trees,
             min_leaf=cfg.min_leaf,
@@ -111,13 +114,15 @@ def evaluate_cell(source: str, family: str, shift: float, seed: int, cfg: Nonlin
     order = np.arange(int(mask.sum()), dtype=float)
     rows = []
     for model in cfg.models:
-        _, var_po = pointwise_quantities(np.sqrt(np.maximum(risk, 0.0)), np.zeros(risk.shape[0]), variances[model])
+        tau, var_tau = fitted[model]
+        # r = (phi - tau)^2. Var(phi - tau) = Var(tau) with phi held fixed.
+        risk, var_po = pointwise_quantities(phi, tau, var_tau)
         held_risk = risk[mask]
         held_var = var_po[mask]
-        held_tau = np.maximum(variances[model][mask], 0.0)
+        held_tau = np.maximum(np.asarray(var_tau, dtype=float)[mask], 0.0)
         for mag in cfg.mag_powers:
-            metrics = rank_row(held_risk, held_var, held_tau, designed, realized, mag)
-            score = powered_score(held_risk, held_var, mag)
+            score = residual_variance_score(held_tau, held_risk, mag)
+            metrics = rank_row(held_risk, held_var, held_tau, designed, realized, mag, score=score)
             metrics["spearman_order"] = spearman(score, order)
             metrics["spearman_risk_order"] = spearman(held_risk, order)
             rows.append({
@@ -160,7 +165,7 @@ def _write_plots(frame: pd.DataFrame, out_dir: Path) -> None:
 
 def run_grid(cfg: NonlinearConfig, verbose: bool = True) -> pd.DataFrame:
     cfg.out_dir.mkdir(parents=True, exist_ok=True)
-    destination = cfg.out_dir / "nonlinear_power.csv"
+    destination = cfg.out_dir / "nonlinear_concept_power.csv"
     if destination.exists():
         collected = pd.read_csv(destination).to_dict("records")
     else:

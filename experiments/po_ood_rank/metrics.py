@@ -60,9 +60,21 @@ def powered_score(risk: np.ndarray, var_po: np.ndarray, mag_power: float) -> np.
     return weighted * np.asarray(var_po, dtype=float)
 
 
-def rank_row(risk: np.ndarray, var_po: np.ndarray, var_tau: np.ndarray, designed: np.ndarray, realized: np.ndarray, mag_power: float) -> dict:
+def residual_variance_score(var_tau: np.ndarray, residual_sq: np.ndarray, power: float) -> np.ndarray:
+    """``Var(phi - tau) ** power * (phi - tau) ** 2``.
+
+    ``var_tau`` is the pointwise variance of the residual when the
+    pseudo-outcome is held fixed, so ``Var(phi - tau) = Var(tau)``.
+    ``residual_sq`` is ``(phi - tau) ** 2``. Power 0 is that square alone.
+    """
+    base = np.maximum(np.asarray(var_tau, dtype=float), 0.0)
+    return np.power(base, float(power)) * np.asarray(residual_sq, dtype=float)
+
+
+def rank_row(risk: np.ndarray, var_po: np.ndarray, var_tau: np.ndarray, designed: np.ndarray, realized: np.ndarray, mag_power: float, score: np.ndarray | None = None) -> dict:
     """Spearman and high-OOD detection for one magnitude power."""
-    score = powered_score(risk, var_po, mag_power)
+    if score is None:
+        score = powered_score(risk, var_po, mag_power)
     designed_high = high_ood_mask(designed)
     realized_high = high_ood_mask(realized)
     auroc_index, ap_index = _binary_rank_scores(score, designed_high)
