@@ -39,6 +39,7 @@ class GridConfig:
     subsample_ratio: float = 0.7
     clip_e: float = 0.01
     n_jobs: int = 4
+    concept: str = "linear"
     out_dir: Path = field(default_factory=lambda: Path("experiments/po_ood_rank/results"))
 
 
@@ -55,6 +56,7 @@ def evaluate_cell(source: str, family: str, shift: float, seed: int, cfg: GridCo
         rho=cfg.rho,
         seed=seed,
         source=source,
+        concept=cfg.concept,
     )
     X, Y, W = sample["X"], sample["Y"], sample["W"]
     mask = sample["eval_mask"]
@@ -272,6 +274,7 @@ def build_config(argv: list[str] | None = None) -> GridConfig:
     parser.add_argument("--min-leaf", type=int, default=20)
     parser.add_argument("--n-jobs", type=int, default=4)
     parser.add_argument("--out", type=str, default="experiments/po_ood_rank/results")
+    parser.add_argument("--concept", type=str, default="linear", choices=("linear", "nonlinear"))
     parser.add_argument("--smoke", action="store_true")
     args = parser.parse_args(argv)
     if args.smoke:
@@ -289,6 +292,7 @@ def build_config(argv: list[str] | None = None) -> GridConfig:
             orf_trees=8,
             min_leaf=8,
             n_jobs=args.n_jobs,
+            concept=args.concept,
             out_dir=Path(args.out),
         )
     mags = _parse_floats(args.mags) if args.mags else tuple(np.round(np.linspace(0.0, 2.0, 9), 4))
@@ -306,6 +310,7 @@ def build_config(argv: list[str] | None = None) -> GridConfig:
         orf_trees=args.orf_trees,
         min_leaf=args.min_leaf,
         n_jobs=args.n_jobs,
+        concept=args.concept,
         out_dir=Path(args.out),
     )
 

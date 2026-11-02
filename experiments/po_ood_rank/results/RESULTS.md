@@ -58,3 +58,22 @@ The embedding experiment repeats the Gaussian pattern rather than breaking it. C
 The pasted loop indexed a scalar mean risk, correlated `argsort` of the score with the row index (a second ranking, with the sign flipped), and applied the covariate ramp on the first half while reading the second. The covariate generator also referenced `Y` before it was drawn. The runner fixes those and evaluates both batches on the half that actually moves.
 
 Fits are in-sample. Nuisance outcome models are random forests and the propensity is logistic, with probabilities clipped to `[0.01, 0.99]`. Tree counts are 120 (pseudo-outcome), 80 (causal forest), and 40 (orthogonal forest), with minimum leaf size 20. That is smaller than the sketched `n = 2000`, `p = 30`, 150 trees; the orthogonal-forest bootstrap standard errors dominate the runtime. The sign and the shape of the curves are consistent across both seeds and both data sources.
+
+## Nonlinear concept drift
+
+The linear concept drift above moves four coefficients by a ramp. The harder design redraws the second domain's sine, square, and interaction term and multiplies that term by `linspace(0, 5)`. `delta_beta` only rescales the nonlinear function, from `0.5` to `0.5 + delta_beta`. Covariates stay on the same AR(1) law, so a forest cannot see the ramp in `X`. The realized target is `|drift × ramp|`. The planted target is the row-order ramp itself.
+
+This grid is synthetic only: `n = 2000` (1000 per domain), `p = 20`, shifts `{0,1,2,3,4,5}`, two seeds. The residual `r = (phi - tau)^2` is one five-fold held-out PO fit, shared by every curve, so the dashed magnitude line is the same for PO, CF, and orf. `Var(tau)` is that fit's out-of-fold jackknife for PO, and one full-sample standard-error squared for CF and orf. The score is still `r^power * Var(r)` with `Var(r) = 4 r Var(tau)`. Powers run from 0 to 2. Numbers below average shifts 1–5.
+
+| Model | Power 0 vs realized | Power 2 vs realized | vs planted ramp | `Var(tau)` vs ramp |
+| --- | ---: | ---: | ---: | ---: |
+| PO | 0.30 | 0.22 | −0.02 | 0.03 |
+| CF | 0.34 | 0.24 | −0.02 | 0.03 |
+| orf | 0.31 | 0.23 | 0.00 | 0.09 |
+| magnitude only | 0.17 | 0.17 | −0.01 |  |
+
+The planted row order is not recovered. Spearman of the score against the ramp sits on zero at every power, and `Var(tau)` against that ramp is 0.03 for PO and CF, 0.09 for orf. The rows are iid; the ramp is an index, and the nonlinear coefficients are redrawn, so the index is not a function of `X`.
+
+The realized size of the nonlinear term is only weakly ordered. Power 0 is the top of a low curve: CF 0.34, orf 0.31, PO 0.30, against a residual of 0.17. Raising the power pulls every curve back toward that residual, down to 0.22–0.24 at power 2. The seed band on the shift average is about 0.02 at power 0 and about 0.02–0.05 at power 2. Raising `delta_beta` from 1 to 5 moves the power-0 CF correlation from 0.32 to 0.36.
+
+On the linear concept drift the same realized Spearman sits near 0.55 (PO) and 0.47 (CF, orf), flat on the residual. The nonlinear term keeps a small variance lift at power 0 and loses it as the exponent grows. The figure is `nonlinear_concept_power.png`.

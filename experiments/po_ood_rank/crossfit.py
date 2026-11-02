@@ -108,6 +108,39 @@ def _tau_var_orf(X_tr, Y_tr, W_tr, X_te, *, n_estimators, min_leaf, subsample_ra
     return tau, np.nan_to_num(stderr, nan=0.0) ** 2
 
 
+def po_risk_cf(
+    X, Y, W,
+    *,
+    n_folds: int = 5,
+    n_estimators: int = 80,
+    min_leaf: int = 20,
+    seed: int = 0,
+    n_jobs: int = 1,
+    clip_e: float = 0.01,
+) -> dict:
+    """Held-out PO risk, the cross-fit used in place of an in-sample residual.
+
+    ``po_risk`` is already ``(phi - tau)^2`` on the test fold. ``var_tau`` is
+    the jackknife of that same fold's pseudo-outcome forest, scored on the
+    held-out rows.
+    """
+    fit = crossfit_magnitude_variance(
+        X, Y, W, "PO",
+        n_folds=n_folds,
+        n_estimators=n_estimators,
+        min_leaf=min_leaf,
+        seed=seed,
+        n_jobs=n_jobs,
+        clip_e=clip_e,
+    )
+    return {
+        "pseudo_outcome": fit["phi"],
+        "tau_est": fit["tau"],
+        "po_risk": fit["magnitude"],
+        "var_tau": fit["var_tau"],
+    }
+
+
 def crossfit_magnitude_variance(
     X, Y, W,
     cate_model: str,

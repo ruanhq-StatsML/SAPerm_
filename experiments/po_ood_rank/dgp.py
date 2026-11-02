@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 from sklearn.decomposition import PCA
 
-from experiments.dgps import banded_toeplitz_corr
+from experiments.dgps import _fsds_base_beta, _fsds_nonlinear_delta, banded_toeplitz_corr
 
 
 def _ramp(n: int, level: float) -> np.ndarray:
@@ -70,6 +70,54 @@ def apply_covariate_shift(
     return X, Y, _batch_indicator(n), designed, realized
 
 
+def nonlinear_concept_ranked(
+    delta_beta: float,
+    *,
+    n_per_domain: int = 1000,
+    p: int = 20,
+    rho: float = 0.3,
+    seed: int = 0,
+    X0: np.ndarray | None = None,
+    X1: np.ndarray | None = None,
+) -> dict:
+    """Nonlinear concept drift with a within-batch ramp on the second domain.
+
+    The second domain's sine, square, and interaction drift is multiplied by
+    ``linspace(0, 5)``. ``delta_beta`` raises the scale of that drift from
+    ``0.5`` to ``0.5 + delta_beta``. Covariates stay on the same law.
+    ``designed`` on the second half is the ramp. ``realized`` is the absolute
+    size of the ramped nonlinear term.
+    """
+    rng = np.random.default_rng(seed)
+    beta = _fsds_base_beta(rng, p)
+    if X0 is None or X1 is None:
+        cov = float(rho) ** np.abs(np.arange(p)[:, None] - np.arange(p)[None, :]) + 1e-6 * np.eye(p)
+        X0 = rng.multivariate_normal(np.zeros(p), cov, size=n_per_domain)
+        X1 = rng.multivariate_normal(np.zeros(p), cov, size=n_per_domain)
+    else:
+        X0 = np.asarray(X0, dtype=float)
+        X1 = np.asarray(X1, dtype=float)
+    n0, n1 = X0.shape[0], X1.shape[0]
+    y0 = X0 @ beta + _fsds_nonlinear_delta(X0, rng, 0.5) + rng.normal(0.0, 0.1, n0)
+    drift = _fsds_nonlinear_delta(X1, rng, 0.5 + float(delta_beta))
+    ramp = np.linspace(0.0, 5.0, n1)
+    intervention = drift * ramp
+    y1 = X1 @ beta + intervention + rng.normal(0.0, 0.1, n1)
+    X = np.vstack([X0, X1])
+    Y = np.concatenate([y0, y1])
+    W = np.concatenate([np.zeros(n0, dtype=int), np.ones(n1, dtype=int)])
+    designed = np.concatenate([np.zeros(n0), ramp])
+    realized = np.concatenate([np.zeros(n0), np.abs(intervention)])
+    return {
+        "X": X,
+        "Y": Y,
+        "W": W,
+        "designed": designed,
+        "realized": realized,
+        "eval_mask": np.arange(n0 + n1) >= n0,
+    }
+
+
 def gaussian_covariates(n: int, p: int, rho: float, rng: np.random.Generator) -> np.ndarray:
     cov = banded_toeplitz_corr(float(rho), p=p)
     return rng.multivariate_normal(np.zeros(p), cov, size=n)
@@ -84,12 +132,30 @@ def draw_ranked(
     seed: int = 0,
     source: str = "synthetic",
     embedding_path: str | Path | None = None,
+    concept: str = "linear",
 ) -> dict:
-    """One ranked sample. ``family`` is ``concept`` or ``covariate``."""
+    """One ranked sample. ``family`` is ``concept`` or ``covariate``.
+
+    ``concept="nonlinear"`` uses the ramped FSDS nonlinear drift on the
+    second domain. ``n`` is the total sample, split in half.
+    """
     if family not in {"concept", "covariate"}:
         raise ValueError(family)
     if source not in {"synthetic", "semisynthetic"}:
         raise ValueError(source)
+    if concept not in {"linear", "nonlinear"}:
+        raise ValueError(concept)
+    if family == "concept" and concept == "nonlinear":
+        n_per = n // 2
+        if source == "synthetic":
+            return nonlinear_concept_ranked(
+                shift, n_per_domain=n_per, p=p, rho=rho, seed=seed,
+            )
+        block = biasfinder_components(n, p, seed, embedding_path)
+        return nonlinear_concept_ranked(
+            shift, n_per_domain=n_per, p=p, rho=rho, seed=seed,
+            X0=block[:n_per], X1=block[n_per:],
+        )
     rng = np.random.default_rng(seed)
     if source == "synthetic":
         X = gaussian_covariates(n, p, rho, rng)

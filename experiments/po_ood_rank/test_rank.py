@@ -47,6 +47,21 @@ def test_zero_covariate_shift_leaves_X_put():
     assert np.all(designed == 0) and np.all(realized == 0)
 
 
+def test_nonlinear_concept_ramps_only_the_second_domain_up_to_five():
+    from experiments.po_ood_rank.dgp import nonlinear_concept_ranked
+
+    mild = nonlinear_concept_ranked(0.0, n_per_domain=40, p=8, seed=7)
+    strong = nonlinear_concept_ranked(5.0, n_per_domain=40, p=8, seed=7)
+    ramp = mild["designed"][40:]
+    assert np.isclose(ramp[0], 0.0) and np.isclose(ramp[-1], 5.0)
+    assert np.all(np.diff(ramp) > 0)
+    assert np.all(mild["realized"][:40] == 0)
+    assert mild["realized"][40] == 0
+    assert strong["realized"][-1] > mild["realized"][-1] * 5
+    assert mild["X"].shape == (80, 8)
+    assert set(np.unique(mild["W"])) == {0, 1}
+
+
 def test_draw_ranked_eval_mask_matches_the_ramp():
     sample = draw_ranked("concept", shift=1.0, n=50, p=5, seed=3)
     mask = sample["eval_mask"]
@@ -110,6 +125,19 @@ def test_argsort_formula_is_negative_when_the_score_rises_with_position():
     direct = spearman(tied, np.arange(tied.size))
     flipped = argsort_spearman(tied, np.arange(tied.size))
     assert direct > 0 and flipped < 0
+
+
+def test_po_risk_cf_is_the_held_out_squared_residual():
+    from experiments.po_ood_rank.crossfit import po_risk_cf
+    from experiments.po_ood_rank.dgp import draw_ranked
+
+    sample = draw_ranked("concept", shift=1.0, n=180, p=6, seed=2, concept="nonlinear")
+    fit = po_risk_cf(sample["X"], sample["Y"], sample["W"], n_folds=3, n_estimators=12, min_leaf=8, seed=1, n_jobs=1)
+    manual = (fit["pseudo_outcome"] - fit["tau_est"]) ** 2
+    assert np.allclose(fit["po_risk"], manual)
+    assert np.isfinite(fit["po_risk"]).all()
+    assert fit["var_tau"].shape == fit["po_risk"].shape
+    assert np.all(fit["var_tau"] >= -1e-8)
 
 
 def test_crossfit_po_covers_every_row_and_product_is_magnitude_times_var():
