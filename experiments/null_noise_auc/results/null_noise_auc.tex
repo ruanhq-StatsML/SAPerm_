@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Selection AUC when every observed feature is noise. Both batches draw $X$ from the same multivariate-$t$, degrees of freedom $5$, with AR(1) scale correlation $0.5$. Columns are then scaled by the pooled median and MAD, the same map in both batches, and that map does not use $Y$. The outcome does not use $X$. Write $U\sim t_4$, $V\sim N(0,1)$, and $\varepsilon\sim N(0,0.35^2)$, none of which is a column of $X$, and $Y=0.9\sin(U)+0.28\,U|U|+0.5\tanh(1.4V)+\varepsilon$. In the second batch the latents become $1.45U+1.25$ and $0.75V-0.55$, so the marginal of $Y$ changes and no coordinate of $X$ does. Each replicate is scored against a decoy support of 4 coordinates drawn independently of the sample. A coin flip is $0.5$. Cells are means over 30 replicates, with 280 observations in each batch. The average is the equal-weight mean across dimensions, with a percentile bootstrap $95\%$ interval from 2000 resamples. PermuCATE uses a random forest for the outcome model and for the conditional model $X_j\mid X_{-j}$ (60 trees, depth 5, 16 conditional permutations).}
+\label{tab:null-noise-auc}
+\begin{tabular}{lcccc}
+\toprule
+Method & $p=10$ & $p=20$ & $p=40$ & Average \\
+\midrule
+PermuCATE & 0.440 & 0.491 & 0.527 & 0.486 [0.447, 0.524] \\
+LOCO R-risk & 0.525 & 0.549 & 0.530 & 0.535 [0.504, 0.565] \\
+GRF & 0.494 & 0.478 & 0.480 & 0.484 [0.454, 0.515] \\
+LOCO-MMD & 0.476 & 0.496 & 0.484 & 0.485 [0.466, 0.505] \\
+LOCO-HSIC & 0.497 & 0.481 & 0.500 & 0.493 [0.454, 0.532] \\
+RF domain & 0.476 & 0.465 & 0.531 & 0.491 [0.454, 0.531] \\
+$\Delta$SHAP & 0.482 & 0.474 & 0.450 & 0.469 [0.435, 0.504] \\
+\bottomrule
+\end{tabular}
+\end{table}

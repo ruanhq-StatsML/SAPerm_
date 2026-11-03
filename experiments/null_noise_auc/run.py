@@ -30,6 +30,16 @@ DISPLAY = {
     "delta_shap": "Delta-SHAP",
 }
 
+DISPLAY_TEX = {
+    "permucate": "PermuCATE",
+    "loco_r_risk": "LOCO R-risk",
+    "grf": "GRF",
+    "loco_mmd": "LOCO-MMD",
+    "loco_hsic": "LOCO-HSIC",
+    "rf_domain": "RF domain",
+    "delta_shap": r"$\Delta$SHAP",
+}
+
 
 def bootstrap_mean_ci(values: np.ndarray, n_boot: int, seed: int, alpha: float = 0.05):
     values = np.asarray(values, dtype=float)
@@ -156,9 +166,7 @@ def write_table(summary: pd.DataFrame, path: Path, n_per: int, k: int, reps: int
     lines = [
         "# 全是噪声特征时的选择 AUC",
         "",
-        "两个 batch 的 X 来自同一套多元 t，自由度 5，尺度是相关系数 0.5 的 AR(1)。列与列之间有相关，也有厚尾，不是独立的标准正态。Y 由两个没有写进 X 的潜变量经正弦、平方型和 tanh 生成。第二个 batch 里这两个潜变量的位置和尺度变了，所以 Y 的边际在变，但没有任何一列 X 进入结果，也没有任何一列 X 的分布在两个 batch 之间不同。",
-        "",
-        "每一列在两个 batch 拼在一起之后用共同的中位数和 MAD 做了尺度对齐，好让核方法落在和手稿里单位方差正态差不多的尺度上。这个变换不用 Y，两个 batch 用的是同一组中位数和尺度。",
+        "两个 batch 的 X 来自同一套多元 t，自由度 5，尺度是相关系数 0.5 的 AR(1)。列与列之间有相关，也有厚尾。拼在一起之后用共同的中位数和 MAD 做尺度对齐，两个 batch 用同一组中位数和尺度，这个变换不用 Y。Y 由两个没有写进 X 的潜变量生成：U 是自由度 4 的 t，V 是标准正态，ε 是 N(0, 0.35²)，Y = 0.9 sin(U) + 0.28 U|U| + 0.5 tanh(1.4 V) + ε。第二个 batch 里 U 换成 1.45 U + 1.25，V 换成 0.75 V − 0.55，所以 Y 的边际在变，但没有任何一列 X 进入结果，也没有任何一列 X 的分布在变。",
         "",
         f"每次重复随机抽 {k} 个坐标当作假的支撑，这个支撑不看数据。选择 AUC 是变量重要度对这个 0/1 标签的 ROC。瞎猜是 0.5。每个格子是 {reps} 次重复的均值，方括号里是这个均值的 {n_boot} 次百分位 bootstrap 95% 区间。每个 batch 的样本量是 {n_per}。",
         "",
@@ -235,6 +243,87 @@ def write_table(summary: pd.DataFrame, path: Path, n_per: int, k: int, reps: int
     return text
 
 
+def equal_weight_average(frame: pd.DataFrame, method: str, dims: list[int], n_boot: int, seed: int):
+    """Mean of the per-dimension means. The interval resamples replicates inside each dimension."""
+    parts = []
+    for p in dims:
+        values = frame.loc[(frame["method"] == method) & (frame["p"] == p), "auc"].to_numpy(dtype=float)
+        values = values[np.isfinite(values)]
+        if values.size == 0:
+            return float("nan"), float("nan"), float("nan")
+        parts.append(values)
+    point = float(np.mean([values.mean() for values in parts]))
+    rng = np.random.default_rng(seed)
+    total = np.zeros(n_boot, dtype=float)
+    for values in parts:
+        draw = rng.integers(0, values.size, size=(n_boot, values.size))
+        total += values[draw].mean(axis=1)
+    total /= len(parts)
+    lo, hi = np.quantile(total, [0.025, 0.975])
+    return point, float(lo), float(hi)
+
+
+def write_latex(
+    frame: pd.DataFrame,
+    summary: pd.DataFrame,
+    path: Path,
+    n_per: int,
+    k: int,
+    reps: int,
+    n_boot: int,
+    cfg: ScoreConfig,
+) -> str:
+    dims = sorted(int(v) for v in summary["p"].unique())
+    col = "c" * len(dims)
+    lines = [
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\small",
+        r"\caption{Selection AUC when every observed feature is noise. "
+        r"Both batches draw $X$ from the same multivariate-$t$, degrees of freedom $5$, "
+        r"with AR(1) scale correlation $0.5$. "
+        r"Columns are then scaled by the pooled median and MAD, the same map in both batches, and that map does not use $Y$. "
+        r"The outcome does not use $X$. "
+        r"Write $U\sim t_4$, $V\sim N(0,1)$, and $\varepsilon\sim N(0,0.35^2)$, none of which is a column of $X$, and "
+        r"$Y=0.9\sin(U)+0.28\,U|U|+0.5\tanh(1.4V)+\varepsilon$. "
+        r"In the second batch the latents become $1.45U+1.25$ and $0.75V-0.55$, "
+        r"so the marginal of $Y$ changes and no coordinate of $X$ does. "
+        rf"Each replicate is scored against a decoy support of {k} coordinates drawn independently of the sample. "
+        r"A coin flip is $0.5$. "
+        rf"Cells are means over {reps} replicates, with {n_per} observations in each batch. "
+        r"The average is the equal-weight mean across dimensions, "
+        rf"with a percentile bootstrap $95\%$ interval from {n_boot} resamples. "
+        r"PermuCATE uses a random forest for the outcome model and for the conditional model "
+        rf"$X_j\mid X_{{-j}}$ ({cfg.n_estimators} trees, depth {cfg.max_depth}, "
+        rf"{cfg.n_perm} conditional permutations).}}",
+        r"\label{tab:null-noise-auc}",
+        rf"\begin{{tabular}}{{l{col}c}}",
+        r"\toprule",
+        "Method & " + " & ".join(rf"$p={p}$" for p in dims) + r" & Average \\",
+        r"\midrule",
+    ]
+    for slot, name in enumerate(METHOD_NAMES):
+        cells = []
+        for p in dims:
+            hit = summary[(summary["method"] == name) & (summary["p"] == p)]
+            cells.append(f"{hit.iloc[0]['mean']:.3f}" if not hit.empty else "---")
+        avg, lo, hi = equal_weight_average(frame, name, dims, n_boot, seed=3100 + slot)
+        cells.append(f"{avg:.3f} [{lo:.3f}, {hi:.3f}]")
+        lines.append(DISPLAY_TEX[name] + " & " + " & ".join(cells) + r" \\")
+    lines.extend(
+        [
+            r"\bottomrule",
+            r"\end{tabular}",
+            r"\end{table}",
+            "",
+        ]
+    )
+    text = "\n".join(lines)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return text
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Null-feature selection AUC for FSDS scores.")
     parser.add_argument("--dims", type=int, nargs="+", default=[10, 20, 40])
@@ -280,7 +369,9 @@ def main(argv: list[str] | None = None) -> None:
     frame.to_csv(out / "auc_replicates.csv", index=False)
     summary.to_csv(out / "auc_summary.csv", index=False)
     text = write_table(summary, out / "TABLE.md", args.n_per, args.k, args.reps, args.n_boot, cfg)
+    tex = write_latex(frame, summary, out / "null_noise_auc.tex", args.n_per, args.k, args.reps, args.n_boot, cfg)
     print(text)
+    print(tex)
 
 
 if __name__ == "__main__":
