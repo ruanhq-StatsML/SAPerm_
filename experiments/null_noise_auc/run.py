@@ -278,25 +278,22 @@ def write_latex(
     lines = [
         r"\begin{table}[t]",
         r"\centering",
-        r"\small",
+        r"\footnotesize",
+        r"\setlength{\tabcolsep}{4pt}",
         r"\caption{Selection AUC when every observed feature is noise. "
-        r"Both batches draw $X$ from the same multivariate-$t$, degrees of freedom $5$, "
-        r"with AR(1) scale correlation $0.5$. "
-        r"Columns are then scaled by the pooled median and MAD, the same map in both batches, and that map does not use $Y$. "
-        r"The outcome does not use $X$. "
-        r"Write $U\sim t_4$, $V\sim N(0,1)$, and $\varepsilon\sim N(0,0.35^2)$, none of which is a column of $X$, and "
-        r"$Y=0.9\sin(U)+0.28\,U|U|+0.5\tanh(1.4V)+\varepsilon$. "
-        r"In the second batch the latents become $1.45U+1.25$ and $0.75V-0.55$, "
-        r"so the marginal of $Y$ changes and no coordinate of $X$ does. "
+        r"Both batches share an AR(1) covariance with correlation $0.5$. "
+        r"$Y$ is a nonlinear function of a latent that is not a column of $X$; "
+        r"that latent is shifted in the second batch, so the marginal of $Y$ changes and no coordinate of $X$ does. "
         rf"Each replicate is scored against a decoy support of {k} coordinates drawn independently of the sample. "
         r"A coin flip is $0.5$. "
-        rf"Cells are means over {reps} replicates, with {n_per} observations in each batch. "
-        r"The average is the equal-weight mean across dimensions, "
-        rf"with a percentile bootstrap $95\%$ interval from {n_boot} resamples. "
+        rf"Each cell is the mean over {reps} replicates ({n_per} observations per batch) "
+        rf"and its percentile bootstrap $95\%$ interval from {n_boot} resamples. "
+        r"The average is the equal-weight mean across dimensions, with the same interval. "
         r"PermuCATE uses a random forest for the outcome model and for the conditional model "
         rf"$X_j\mid X_{{-j}}$ ({cfg.n_estimators} trees, depth {cfg.max_depth}, "
         rf"{cfg.n_perm} conditional permutations).}}",
         r"\label{tab:null-noise-auc}",
+        r"\resizebox{\textwidth}{!}{%",
         rf"\begin{{tabular}}{{l{col}c}}",
         r"\toprule",
         "Method & " + " & ".join(rf"$p={p}$" for p in dims) + r" & Average \\",
@@ -306,14 +303,18 @@ def write_latex(
         cells = []
         for p in dims:
             hit = summary[(summary["method"] == name) & (summary["p"] == p)]
-            cells.append(f"{hit.iloc[0]['mean']:.3f}" if not hit.empty else "---")
+            if hit.empty:
+                cells.append("---")
+            else:
+                row = hit.iloc[0]
+                cells.append(f"{row['mean']:.3f} [{row['boot_lo']:.3f}, {row['boot_hi']:.3f}]")
         avg, lo, hi = equal_weight_average(frame, name, dims, n_boot, seed=3100 + slot)
         cells.append(f"{avg:.3f} [{lo:.3f}, {hi:.3f}]")
         lines.append(DISPLAY_TEX[name] + " & " + " & ".join(cells) + r" \\")
     lines.extend(
         [
             r"\bottomrule",
-            r"\end{tabular}",
+            r"\end{tabular}}",
             r"\end{table}",
             "",
         ]
