@@ -18,6 +18,10 @@ COLORS = {
     "kcenter": "#009E73",
     "badge": "#CC79A7",
     "learning_loss": "#D55E00",
+    "cinv0": "#56B4E9",
+    "cinv05": "#F0E442",
+    "cinv1": "#882255",
+    "cinv2": "#117733",
 }
 LABELS = {
     "recent": "Recent window",
@@ -26,6 +30,10 @@ LABELS = {
     "kcenter": "k-center",
     "badge": "BADGE",
     "learning_loss": "Learning loss",
+    "cinv0": r"Conf$^{-1}$",
+    "cinv05": r"Conf$^{-1}(1-0.5\cdot$OOD)",
+    "cinv1": r"Conf$^{-1}(1-1\cdot$OOD)",
+    "cinv2": r"Conf$^{-1}(1-2\cdot$OOD)",
 }
 
 
@@ -50,8 +58,10 @@ def _draw_paths(axis, block: pd.DataFrame, column: str) -> None:
     axis.spines["right"].set_visible(False)
 
 
-def plot_ood(curves: pd.DataFrame, path: str | Path, shift_at: int) -> None:
+def plot_ood(curves: pd.DataFrame, path: str | Path, shift_at: int, keep: tuple[str, ...] | None = None) -> None:
     """Loss path on the top row, fitted-effect path on the bottom row."""
+    if keep is not None:
+        curves = curves[curves["strategy"].isin(keep)]
     scenarios = [name for name in ("concept", "covariate") if name in set(curves["scenario"])]
     titles = {"concept": "Conditional shift", "covariate": "Covariate shift"}
     fig, axes = plt.subplots(

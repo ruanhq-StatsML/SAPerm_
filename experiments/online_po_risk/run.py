@@ -207,6 +207,12 @@ def run_comparison(
     summary.to_csv(out / "strategy_summary.csv", index=False)
     pfi.to_csv(out / "online_pfi.csv", index=False)
     plot_ood(curves, out / "ood_strategies.png", shift_at)
+    plot_ood(
+        curves,
+        out / "cinv_paths.png",
+        shift_at,
+        keep=("recent", "learning_loss", "cinv0", "cinv05", "cinv1", "cinv2"),
+    )
     return summary
 
 

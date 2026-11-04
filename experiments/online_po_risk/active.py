@@ -13,6 +13,11 @@ into that pool.
   reference outcome fit and draws a k-means++ batch, as in BADGE.
 - ``learning_loss`` takes the pool rows with the largest absolute residual
   from that same reference fit.
+- ``cinv0``, ``cinv05``, ``cinv1``, ``cinv2`` rank
+  ``confidence^{-1} * (1 - gamma * ood)``. Confidence is
+  ``1 / (1 + z^2)`` for the reference-model residual. The OOD score is the
+  Mahalanobis distance to the reference, divided by the reference 95%
+  quantile and clipped to ``[0, 1]``. Gamma is 0, 0.5, 1, or 2.
 """
 
 from __future__ import annotations
@@ -20,7 +25,19 @@ from __future__ import annotations
 import numpy as np
 from sklearn.linear_model import LogisticRegression, Ridge
 
-STRATEGIES = ("recent", "random", "entropy", "kcenter", "badge", "learning_loss")
+STRATEGIES = (
+    "recent",
+    "random",
+    "entropy",
+    "kcenter",
+    "badge",
+    "learning_loss",
+    "cinv0",
+    "cinv05",
+    "cinv1",
+    "cinv2",
+)
+CINV_GAMMA = {"cinv0": 0.0, "cinv05": 0.5, "cinv1": 1.0, "cinv2": 2.0}
 
 
 def _top_k(scores: np.ndarray, budget: int, rng: np.random.Generator) -> np.ndarray:
@@ -105,6 +122,38 @@ def _badge(ref_x, ref_y, pool_x, pool_y, budget: int, rng: np.random.Generator) 
     return np.asarray(chosen, dtype=int)
 
 
+def _confidence_inv_ood(ref_x, ref_y, pool_x, pool_y, gamma: float) -> np.ndarray:
+    """Point score ``confidence^{-1} * max(1 - gamma * ood, 0)``."""
+    ref_x = np.asarray(ref_x, dtype=float)
+    pool_x = np.asarray(pool_x, dtype=float)
+    ref_y = np.asarray(ref_y, dtype=float).ravel()
+    pool_y = np.asarray(pool_y, dtype=float).ravel()
+    model = Ridge(alpha=1.0)
+    model.fit(ref_x, ref_y)
+    sigma = float(np.std(ref_y - model.predict(ref_x), ddof=1))
+    sigma = max(sigma, 1e-6)
+    z = (pool_y - model.predict(pool_x)) / sigma
+    inv_conf = 1.0 + z * z
+
+    center = ref_x.mean(axis=0)
+    centered = ref_x - center
+    cov = (centered.T @ centered) / max(len(ref_x) - 1, 1)
+    cov = cov + 1e-3 * np.eye(cov.shape[0])
+    precision = np.linalg.inv(cov)
+
+    def _distance(x):
+        delta = np.asarray(x, dtype=float) - center
+        quad = np.einsum("ij,ij->i", delta @ precision, delta)
+        return np.sqrt(np.maximum(quad, 0.0))
+
+    ref_distance = _distance(ref_x)
+    scale = float(np.quantile(ref_distance, 0.95))
+    scale = max(scale, 1e-6)
+    ood = np.clip(_distance(pool_x) / scale, 0.0, 1.0)
+    gate = np.maximum(1.0 - float(gamma) * ood, 0.0)
+    return inv_conf * gate
+
+
 def select_window(
     strategy: str,
     ref_x,
@@ -136,4 +185,9 @@ def select_window(
         model.fit(ref_x, np.asarray(ref_y, dtype=float).ravel())
         residual = np.abs(np.asarray(pool_y, dtype=float).ravel() - model.predict(pool_x))
         return _top_k(residual, budget, rng)
+    if strategy in CINV_GAMMA:
+        scores = _confidence_inv_ood(ref_x, ref_y, pool_x, pool_y, CINV_GAMMA[strategy])
+        if not np.isfinite(scores).any() or float(np.nanmax(scores)) <= 0:
+            return rng.choice(n_pool, size=budget, replace=False).astype(int)
+        return _top_k(np.nan_to_num(scores, nan=0.0), budget, rng)
     raise ValueError(f"unknown strategy: {strategy}")
