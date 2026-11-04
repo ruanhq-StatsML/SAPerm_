@@ -1,6 +1,6 @@
-"""Null selection-AUC check: Y is independent of every feature."""
+"""Null selection AUC: two DGPs, then the benchmark scores."""
 
-from experiments.null_noise_auc.dgp import draw_null_pair
-from experiments.null_noise_auc.methods import selection_auc
+from experiments.null_noise_auc.dgp import DGPS
+from experiments.null_noise_auc.methods import score_all
 
-__all__ = ["draw_null_pair", "selection_auc"]
+__all__ = ["DGPS", "score_all"]
