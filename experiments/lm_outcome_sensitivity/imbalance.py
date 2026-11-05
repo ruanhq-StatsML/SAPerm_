@@ -7,11 +7,14 @@ carries the concept drift. The data law is the linear outcome from the
 coefficient-shift study: noise sd 10, and either no shift (type I) or a
 shift of 0.8 on ``X5``--``X8`` (power). The outcome model is linear and the
 propensity is logistic. LOCO, GRF, and PermuCATE share that specification.
+The reported run uses 150 label permutations and 150 Monte Carlo replicates.
+GRF uses 30 trees. PermuCATE uses 10 inner permutations of the pseudo-outcome.
 """
 
 from __future__ import annotations
 
 import hashlib
+import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
@@ -101,6 +104,8 @@ def _one(task: dict) -> dict:
         "n_ref": n_ref,
         "n_new": n_new,
         "n_perm": int(task["n_perm"]),
+        "n_perm_cate": int(task["n_perm_cate"]),
+        "grf_n_estimators": int(task["grf_n_estimators"]),
         "rejected": int(result["rejected"]),
         "reject_signal": int(result["reject_signal"]),
         "min_p": float(result["min_p"]),
@@ -114,6 +119,8 @@ def summarize(replicates: pd.DataFrame) -> pd.DataFrame:
         n_ref=("n_ref", "first"),
         n_new=("n_new", "first"),
         n_perm=("n_perm", "first"),
+        n_perm_cate=("n_perm_cate", "first"),
+        grf_n_estimators=("grf_n_estimators", "first"),
         rate=("rejected", "mean"),
         signal_rate=("reject_signal", "mean"),
     )
@@ -124,9 +131,9 @@ def summarize(replicates: pd.DataFrame) -> pd.DataFrame:
 def run_imbalance(
     out_dir: str | Path | None = None,
     ratios: tuple[float, ...] = RATIOS,
-    replicates: int = 12,
-    n_perm: int = 29,
-    n_perm_cate: int = 8,
+    replicates: int = 150,
+    n_perm: int = 150,
+    n_perm_cate: int = 10,
     grf_n_estimators: int = 30,
     n_jobs: int = 4,
     base_seed: int = 20261104,
@@ -142,6 +149,9 @@ def run_imbalance(
             for vimp in VIMP:
                 for replicate in range(replicates):
                     task_id = f"{setting}|{vimp}|{float(ratio):.4f}|{replicate}"
+                    # One draw per setting, ratio, and replicate. The three
+                    # importance measures are scored on that same sample.
+                    draw_id = f"{setting}|{float(ratio):.4f}|{replicate}"
                     tasks.append(
                         {
                             "task_id": task_id,
@@ -155,40 +165,68 @@ def run_imbalance(
                             "n_perm": n_perm,
                             "n_perm_cate": n_perm_cate,
                             "grf_n_estimators": grf_n_estimators,
-                            "seed": _seed_for(task_id, base_seed),
+                            "seed": _seed_for(draw_id, base_seed),
                         }
                     )
     done: dict[str, dict] = {}
     if replicate_path.exists():
         previous = pd.read_csv(replicate_path)
-        if len(previous):
+        if len(previous) and "n_perm" in previous.columns:
+            previous = previous[previous["n_perm"] == int(n_perm)]
             done = {row.task_id: row.to_dict() for row in previous.itertuples(index=False)}
-    pending = [task for task in tasks if task["task_id"] not in done]
     rows = list(done.values())
+    by_replicate: dict[int, list[dict]] = {}
+    for task in tasks:
+        by_replicate.setdefault(int(task["replicate"]), []).append(task)
+    n_pending = sum(1 for task in tasks if task["task_id"] not in done)
     print(
-        f"imbalance grid: {len(tasks)} replicates, {len(pending)} pending, n_jobs={n_jobs}",
+        f"imbalance grid: {len(tasks)} replicates, {n_pending} pending, "
+        f"n_perm={n_perm}, B={replicates}, n_jobs={n_jobs}",
         flush=True,
     )
 
     def _flush() -> None:
         frame = pd.DataFrame(rows)
         frame.to_csv(replicate_path, index=False)
-        summarize(frame).to_csv(summary_path, index=False)
+        if len(frame):
+            summarize(frame).to_csv(summary_path, index=False)
 
-    if pending:
-        workers = max(1, min(int(n_jobs), len(pending)))
+    workers = max(1, min(int(n_jobs), max(n_pending, 1)))
+    started = time.perf_counter()
+    if n_pending:
         with ProcessPoolExecutor(max_workers=workers) as pool:
-            futures = [pool.submit(_one, task) for task in pending]
-            for finished, future in enumerate(as_completed(futures), start=1):
-                rows.append(future.result())
-                if finished % checkpoint_every == 0 or finished == len(pending):
-                    _flush()
-                    print(f"finished {finished}/{len(pending)}", flush=True)
-    else:
-        _flush()
+            for replicate, layer in sorted(by_replicate.items()):
+                pending = [task for task in layer if task["task_id"] not in done]
+                if not pending:
+                    continue
+                futures = [pool.submit(_one, task) for task in pending]
+                finished_layer = 0
+                for future in as_completed(futures):
+                    row = future.result()
+                    rows.append(row)
+                    done[row["task_id"]] = row
+                    finished_layer += 1
+                    if finished_layer % checkpoint_every == 0 or finished_layer == len(pending):
+                        _flush()
+                elapsed = time.perf_counter() - started
+                print(
+                    f"finished replicate {replicate + 1}/{replicates} "
+                    f"({len(rows)}/{len(tasks)} rows, {elapsed / 60:.1f} min)",
+                    flush=True,
+                )
     replicates_frame = pd.DataFrame(rows)
     summary = summarize(replicates_frame)
     replicates_frame.to_csv(replicate_path, index=False)
     summary.to_csv(summary_path, index=False)
     plot_imbalance(summary, out / "imbalance_power.png")
     return summary
+
+
+def main() -> None:
+    out = Path(__file__).resolve().parent / "results" / "imbalance_b150"
+    summary = run_imbalance(out_dir=out)
+    print(summary.to_string(index=False), flush=True)
+
+
+if __name__ == "__main__":
+    main()
