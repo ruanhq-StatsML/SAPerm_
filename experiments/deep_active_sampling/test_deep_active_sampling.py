@@ -4,7 +4,8 @@ import numpy as np
 import torch
 from torch import nn
 
-from experiments.deep_active_sampling.data import make_shift_stream
+from experiments.deep_active_sampling.data import make_digits_stream, make_shift_stream
+from experiments.deep_active_sampling.query_strategies import STRATEGIES
 from experiments.deep_active_sampling.ood_vimp import (
     MMD_LOCO,
     RF_domain_classifier,
@@ -188,6 +189,33 @@ def test_coreset_and_badge_respect_weights_on_the_first_pick():
         gradient, 1, np.array([0.1, 0.1, 0.1, 9.0]), np.random.default_rng(0)
     )
     assert int(center[0]) == 3
+
+
+def test_digits_stream_rolls_a_disjoint_target():
+    stream = make_digits_stream(
+        n_source=40, n_shift_ref=40, n_pool=30, n_test=20, roll=2, seed=0
+    )
+    assert stream["X"].shape == (110, 64)
+    assert stream["X_test"].shape == (20, 64)
+    assert stream["pool_shifted"].shape == (30,)
+    assert abs(float(stream["pool_shifted"].mean()) - 0.5) < 1e-8
+    assert stream["Y"].min() >= 0 and stream["Y"].max() <= 9
+
+
+def test_every_strategy_returns_a_unique_batch():
+    torch.manual_seed(0)
+    net = EmbeddingNet(6, 3, hidden=8)
+    X = np.random.default_rng(0).normal(size=(10, 6))
+    labeled = X[:2]
+    for name in STRATEGIES:
+        if name == "top_weight":
+            continue
+        picked = build_strategy(name).query(
+            net, X, 3, weights=np.linspace(0.1, 1.0, len(X)), X_labeled=labeled, rng=np.random.default_rng(0)
+        )
+        assert len(picked) == 3, name
+        assert len(set(picked.tolist())) == 3, name
+        assert picked.min() >= 0 and picked.max() < len(X), name
 
 
 def test_sampling_dict_returns_a_curve_per_scheme():

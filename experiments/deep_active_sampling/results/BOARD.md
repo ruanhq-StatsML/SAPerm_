@@ -1,106 +1,55 @@
-# 带分布偏移权重的深度主动采样
+# 手写数字上的准确率路径
 
-查询规则沿用 deep active learning 里的监督策略：random、entropy、margin、least confidence、BALD、cluster-margin、core-set、k-means、BADGE。权重是后加的。样本权重是秩百分位。常数权重不改变原来的排序。
+数据换成 sklearn 的 8×8 手写数字。源分布是原图像。目标分布把每张图沿水平方向滚两个像素，标签不变。参考窗前一半是源，后一半是目标。池子里一半原图、一半滚过的图。测试集全是滚过的图。
 
-参考窗前一半是源分布（T = 0），后一半是目标分布（T = 1）。目标分布把前 3 个坐标平移 1.25 个标准差，并把这 3 个坐标上的类别权重反号。池子里一半是源、一半是目标。测试集全是目标。网络先在源分布上热身，每个方案从同一组参数出发，优化器是不重置的 SGD。
+查询规则接的是 deep active learning 里能在同一个分类网络上算的那些：不确定性、dropout 版、BALD、BatchBALD、core-set、k-center、k-means、cluster-margin、BADGE、baseline、BIM、DeepFool、ALBL。每条规则跑两遍，一遍权重是平的，一遍权重是参考窗上拟合的伪结果残差。VAAL、WAAL、learning-loss、GCN 和半监督那一组要换训练器，没有接进这个网络。
 
-维度权重有三份，再平均成一份：PermuCATE 伪结果风险的条件置换下降、随机森林域分类器的重要度、RBF MMD 的留一坐标下降。`pooled` 用这份合并权重，算每个点离源均值的加权平方距离。`rf`、`mmd`、`po_vimp` 是这三份拆开之后各自的距离。`po_risk` 是把池子里的点都当成 T = 1 之后的逐行伪结果残差，标签在这里是已经观测到的，采样决定的是哪些行进入 SGD。`both` 是合并距离和伪结果残差这两种秩的乘积。
+种子 0, 1。左图是全部规则的平均路径，色带是规则之间的标准差。右图是每条规则终点准确率的差，伪结果权重减去无权重。
 
-两次重复（种子 0, 1）。表里是均值。
+![Test accuracy by round](accuracy_paths.png)
 
-## 维度权重有没有指到平移的坐标
+路径下的面积：无权重 0.206，伪结果权重 0.186。抽到的目标行比例：无权重 0.603，伪结果权重 0.457。池子里这个比例是 0.50。
 
-真正被平移、并且类别规则被反号的坐标是 `[0, 1, 2]`。
+终点准确率几乎一样：无权重 0.223，伪结果权重 0.225。
+终点最高的是 `least_confidence_po`，准确率 0.325，比起点高 +0.225。
 
-| 方法 | 前三名 |
-| --- | --- |
-| PermuCATE | `[1, 0, 2]` |
-| domain forest | `[2, 1, 0]` |
-| MMD-LOCO | `[1, 2, 0]` |
-| pooled | `[1, 0, 2]` |
-
-合并后的前三名里有 3 个落在平移坐标上。
-
-## 采样曲线
-
-准确率的起点是源模型在目标测试集上的表现，每个方案相同。lift 是终点减去起点。shifted 是抽到的行里真正来自目标分布的比例。池子里这个比例是 0.50。
-
-| 方案 | 查询 | 权重 | 终点准确率 | lift | 准确率面积 | 终点损失 | 损失下降 | 目标行比例 |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| entropy_pooled | entropy | pooled | 0.769 | +0.767 | 0.534 | 0.690 | +4.578 | 0.728 |
-| least_confidence_pooled | least_confidence | pooled | 0.758 | +0.756 | 0.541 | 0.712 | +4.556 | 0.741 |
-| random_rf | random | rf | 0.756 | +0.754 | 0.458 | 0.723 | +4.544 | 0.637 |
-| random_pooled | random | pooled | 0.754 | +0.752 | 0.467 | 0.688 | +4.579 | 0.647 |
-| bald_pooled | bald | pooled | 0.752 | +0.750 | 0.494 | 0.711 | +4.556 | 0.653 |
-| coreset_pooled | coreset | pooled | 0.748 | +0.746 | 0.451 | 0.682 | +4.585 | 0.584 |
-| entropy_rf | entropy | rf | 0.733 | +0.731 | 0.528 | 0.749 | +4.518 | 0.778 |
-| entropy_mmd | entropy | mmd | 0.731 | +0.729 | 0.530 | 0.752 | +4.515 | 0.778 |
-| random_mmd | random | mmd | 0.731 | +0.729 | 0.450 | 0.736 | +4.532 | 0.600 |
-| badge_pooled | badge | pooled | 0.721 | +0.719 | 0.479 | 0.790 | +4.477 | 0.544 |
-| top_weight_pooled | top_weight | pooled | 0.719 | +0.717 | 0.515 | 0.725 | +4.542 | 0.753 |
-| kmeans_pooled | kmeans | pooled | 0.713 | +0.710 | 0.414 | 0.826 | +4.442 | 0.463 |
-| bald | bald | uniform | 0.710 | +0.708 | 0.429 | 0.820 | +4.447 | 0.484 |
-| entropy_po_vimp | entropy | po_vimp | 0.706 | +0.704 | 0.476 | 0.804 | +4.463 | 0.706 |
-| random | random | uniform | 0.704 | +0.702 | 0.402 | 0.860 | +4.407 | 0.506 |
-| kmeans | kmeans | uniform | 0.698 | +0.696 | 0.403 | 0.840 | +4.428 | 0.406 |
-| cluster_margin | cluster_margin | uniform | 0.681 | +0.679 | 0.362 | 0.956 | +4.311 | 0.356 |
-| badge | badge | uniform | 0.667 | +0.665 | 0.414 | 0.926 | +4.341 | 0.463 |
-| cluster_margin_pooled | cluster_margin | pooled | 0.631 | +0.629 | 0.326 | 1.028 | +4.240 | 0.334 |
-| coreset | coreset | uniform | 0.623 | +0.621 | 0.364 | 0.964 | +4.304 | 0.331 |
-| margin | margin | uniform | 0.602 | +0.600 | 0.343 | 1.366 | +3.901 | 0.431 |
-| entropy_both | entropy | both | 0.556 | +0.554 | 0.274 | 1.409 | +3.859 | 0.506 |
-| random_po | random | po_risk | 0.523 | +0.521 | 0.280 | 1.227 | +4.041 | 0.341 |
-| least_confidence | least_confidence | uniform | 0.487 | +0.485 | 0.245 | 1.980 | +3.287 | 0.450 |
-| entropy | entropy | uniform | 0.404 | +0.402 | 0.151 | 1.804 | +3.463 | 0.441 |
-| margin_pooled | margin | pooled | 0.390 | +0.388 | 0.200 | 1.479 | +3.789 | 0.344 |
-| entropy_po | entropy | po_risk | 0.196 | +0.194 | 0.027 | 2.185 | +3.083 | 0.244 |
-
-## 准确率路径
-
-列是已经送进 SGD 的池子行数。0 是只在源分布上热身、还没抽池子的时候。之后每列多 32 行。数字是两个种子的平均测试准确率。
-
-| 方案 | 0 | 32 | 64 | 96 | 128 | 160 |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| entropy_pooled | 0.002 | 0.377 | 0.444 | 0.690 | 0.775 | 0.769 |
-| least_confidence_pooled | 0.002 | 0.390 | 0.479 | 0.688 | 0.767 | 0.758 |
-| random_rf | 0.002 | 0.240 | 0.490 | 0.502 | 0.679 | 0.756 |
-| random_pooled | 0.002 | 0.229 | 0.504 | 0.535 | 0.690 | 0.754 |
-| bald_pooled | 0.002 | 0.383 | 0.502 | 0.542 | 0.667 | 0.752 |
-| coreset_pooled | 0.002 | 0.235 | 0.508 | 0.515 | 0.623 | 0.748 |
-| entropy_rf | 0.002 | 0.277 | 0.510 | 0.717 | 0.767 | 0.733 |
-| entropy_mmd | 0.002 | 0.406 | 0.448 | 0.654 | 0.773 | 0.731 |
-| random_mmd | 0.002 | 0.244 | 0.479 | 0.548 | 0.613 | 0.731 |
-| badge_pooled | 0.002 | 0.240 | 0.565 | 0.583 | 0.646 | 0.721 |
-| top_weight_pooled | 0.002 | 0.469 | 0.496 | 0.565 | 0.688 | 0.719 |
-| kmeans_pooled | 0.002 | 0.227 | 0.483 | 0.481 | 0.521 | 0.713 |
-| bald | 0.002 | 0.238 | 0.492 | 0.490 | 0.571 | 0.710 |
-| entropy_po_vimp | 0.002 | 0.479 | 0.500 | 0.490 | 0.556 | 0.706 |
-| random | 0.002 | 0.156 | 0.454 | 0.452 | 0.594 | 0.704 |
-| kmeans | 0.002 | 0.144 | 0.477 | 0.487 | 0.558 | 0.698 |
-| cluster_margin | 0.002 | 0.042 | 0.452 | 0.450 | 0.523 | 0.681 |
-| badge | 0.002 | 0.108 | 0.448 | 0.544 | 0.633 | 0.667 |
-| cluster_margin_pooled | 0.002 | 0.035 | 0.363 | 0.435 | 0.481 | 0.631 |
-| coreset | 0.002 | 0.052 | 0.498 | 0.458 | 0.500 | 0.623 |
-| margin | 0.002 | 0.033 | 0.356 | 0.438 | 0.585 | 0.602 |
-| entropy_both | 0.002 | 0.019 | 0.250 | 0.377 | 0.444 | 0.556 |
-| random_po | 0.002 | 0.008 | 0.379 | 0.394 | 0.356 | 0.523 |
-| least_confidence | 0.002 | 0.008 | 0.204 | 0.377 | 0.390 | 0.487 |
-| entropy | 0.002 | 0.008 | 0.113 | 0.202 | 0.231 | 0.404 |
-| margin_pooled | 0.002 | 0.008 | 0.175 | 0.306 | 0.317 | 0.390 |
-| entropy_po | 0.002 | 0.008 | 0.010 | 0.008 | 0.010 | 0.196 |
-
-## 读这张表
-
-路径上，entropy × 合并权重在第 32 行就已经到 0.377，第 96 行 0.690，第 128 行 0.775，最后 0.769。无权重的 entropy 同期是 0.008、0.202、0.231、0.404。两条路径的终点差是 0.365。只按合并权重取最大的方案第 32 行是 0.469，起步更快，第 96 行被 entropy × 合并权重超过。
-加上合并权重之后，抽到的目标行从 0.430 升到 0.560。权重把查询从源分布的行上挪开了。
-终点准确率也分开了：合并权重平均 0.693，无权重平均 0.620。
-同一条 entropy 规则，无权重终点准确率 0.404、目标行 0.441；乘上合并权重之后是 0.769 和 0.728。
-三份维度权重拆开后只乘在 entropy 上：随机森林 0.733（目标行 0.778），MMD 0.731（目标行 0.778），PermuCATE 0.706（目标行 0.706）。其中终点准确率最高的是随机森林。只按随机森林做加权随机，目标行比例是 0.637；只按 MMD 是 0.600。
-BALD 无权重终点准确率 0.710、目标行 0.484；乘上合并权重是 0.752 和 0.653。Cluster-margin 无权重是 0.681 和 0.356，加权后是 0.631 和 0.334。
-把池子全部当成 T = 1 的伪结果残差，抽到的目标行比例是 0.292。这个权重用了已经观测到的标签，和只看坐标的合并权重不是同一件事。
-只按合并权重取最大的 `top_weight_pooled` 抽到的目标行比例是 0.753，终点准确率 0.719。这是这份权重本身的上限，没有再和不确定性相乘。
-终点准确率最高的是 `entropy_pooled`，0.769，比起点高 +0.767。
-
-CIFAR-100 没有进这次比较。`load_cifar100_arrays` 可以把平坦化的 CIFAR-100 送进同一个 `IndexedArrayDataset`，采样循环吃的就是这个 dataloader。这次用的是上面这个已知平移坐标的流，这样维度权重和抽到的行都能对上号。
+| 方案 | 查询 | 权重 | 起点 | 终点 | lift | 面积 | 目标行 |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| least_confidence_po | least_confidence | po_risk | 0.100 | 0.325 | +0.225 | 0.213 | 0.372 |
+| adversarial_bim_po | adversarial_bim | po_risk | 0.100 | 0.310 | +0.210 | 0.225 | 0.972 |
+| least_confidence | least_confidence | uniform | 0.100 | 0.297 | +0.198 | 0.223 | 0.631 |
+| random_po | random | po_risk | 0.100 | 0.295 | +0.195 | 0.197 | 0.287 |
+| albl | albl | uniform | 0.100 | 0.270 | +0.170 | 0.199 | 0.769 |
+| badge_po | badge | po_risk | 0.100 | 0.265 | +0.165 | 0.207 | 0.347 |
+| entropy_dropout | entropy_dropout | uniform | 0.100 | 0.260 | +0.160 | 0.229 | 0.850 |
+| entropy | entropy | uniform | 0.100 | 0.258 | +0.158 | 0.214 | 0.622 |
+| entropy_po | entropy | po_risk | 0.100 | 0.258 | +0.158 | 0.194 | 0.344 |
+| adversarial_bim | adversarial_bim | uniform | 0.100 | 0.250 | +0.150 | 0.221 | 0.663 |
+| margin_po | margin | po_risk | 0.100 | 0.247 | +0.147 | 0.221 | 0.894 |
+| margin_dropout | margin_dropout | uniform | 0.100 | 0.242 | +0.142 | 0.206 | 0.728 |
+| margin_dropout_po | margin_dropout | po_risk | 0.100 | 0.242 | +0.143 | 0.218 | 0.891 |
+| albl_po | albl | po_risk | 0.100 | 0.242 | +0.142 | 0.188 | 0.584 |
+| batch_bald | batch_bald | uniform | 0.100 | 0.240 | +0.140 | 0.205 | 0.541 |
+| random | random | uniform | 0.100 | 0.232 | +0.133 | 0.196 | 0.503 |
+| batch_bald_po | batch_bald | po_risk | 0.100 | 0.228 | +0.128 | 0.151 | 0.247 |
+| adversarial_deepfool | adversarial_deepfool | uniform | 0.100 | 0.228 | +0.128 | 0.202 | 0.528 |
+| baseline_po | baseline | po_risk | 0.100 | 0.220 | +0.120 | 0.176 | 0.441 |
+| margin | margin | uniform | 0.100 | 0.217 | +0.117 | 0.209 | 0.700 |
+| adversarial_deepfool_po | adversarial_deepfool | po_risk | 0.100 | 0.213 | +0.113 | 0.242 | 0.691 |
+| least_confidence_dropout | least_confidence_dropout | uniform | 0.100 | 0.208 | +0.107 | 0.232 | 0.831 |
+| bald | bald | uniform | 0.100 | 0.200 | +0.100 | 0.199 | 0.538 |
+| coreset | coreset | uniform | 0.100 | 0.200 | +0.100 | 0.170 | 0.419 |
+| kcenter | kcenter | uniform | 0.100 | 0.200 | +0.100 | 0.170 | 0.419 |
+| cluster_margin | cluster_margin | uniform | 0.100 | 0.193 | +0.092 | 0.224 | 0.600 |
+| least_confidence_dropout_po | least_confidence_dropout | po_risk | 0.100 | 0.190 | +0.090 | 0.141 | 0.231 |
+| entropy_dropout_po | entropy_dropout | po_risk | 0.100 | 0.185 | +0.085 | 0.103 | 0.156 |
+| baseline | baseline | uniform | 0.100 | 0.185 | +0.085 | 0.210 | 0.541 |
+| kmeans_po | kmeans | po_risk | 0.100 | 0.182 | +0.082 | 0.173 | 0.475 |
+| bald_po | bald | po_risk | 0.100 | 0.172 | +0.072 | 0.183 | 0.216 |
+| badge | badge | uniform | 0.100 | 0.172 | +0.072 | 0.223 | 0.481 |
+| kmeans | kmeans | uniform | 0.100 | 0.163 | +0.062 | 0.170 | 0.484 |
+| cluster_margin_po | cluster_margin | po_risk | 0.100 | 0.163 | +0.062 | 0.183 | 0.619 |
+| coreset_po | coreset | po_risk | 0.100 | 0.153 | +0.053 | 0.166 | 0.231 |
+| kcenter_po | kcenter | po_risk | 0.100 | 0.153 | +0.053 | 0.166 | 0.231 |
 
 重复次数 2。

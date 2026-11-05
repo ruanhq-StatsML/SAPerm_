@@ -1,11 +1,8 @@
 """Weighted deep active sampling.
 
-Query rules follow the supervised strategies in
-cure-lab/deep-active-learning (entropy, margin, least confidence, core-set,
-k-means, BADGE, random). Each rule takes a sample-weight vector. The weights
-come from the out-of-distribution scores in ``ood_vimp``: PermuCATE
-pseudo-outcome importance, a random-forest domain classifier, and MMD
-leave-one-covariate-out.
+Query rules follow the supervised strategies in cure-lab/deep-active-learning.
+Each rule takes a sample-weight vector. The comparison weight is the per-row
+pseudo-outcome residual from the reference nuisance fit.
 """
 
 from experiments.deep_active_sampling.query_strategies import ACTIVE_SAMPLING_SCHEMES

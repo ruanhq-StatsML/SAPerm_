@@ -20,10 +20,10 @@ from typing import Mapping, Optional
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch import nn
 
 from experiments.deep_active_sampling.data import make_loader
 from experiments.deep_active_sampling.model_registry import default_model_registry
+from experiments.deep_active_sampling.net import EmbeddingNet
 from experiments.deep_active_sampling.ood_vimp import (
     MMD_LOCO,
     RF_domain_classifier,
@@ -36,27 +36,6 @@ from experiments.deep_active_sampling.query_strategies import (
     build_strategy,
     rank_pct,
 )
-
-
-class EmbeddingNet(nn.Module):
-    """Classifier whose forward pass returns ``(logits, embedding)``."""
-
-    def __init__(self, in_dim: int, n_classes: int, hidden: int = 48):
-        super().__init__()
-        self.backbone = nn.Sequential(
-            nn.Linear(in_dim, hidden),
-            nn.ReLU(),
-            nn.Linear(hidden, hidden),
-            nn.ReLU(),
-        )
-        self.head = nn.Linear(hidden, n_classes)
-
-    def forward(self, x):
-        embedding = self.backbone(x)
-        return self.head(embedding), embedding
-
-    def get_embedding_dim(self) -> int:
-        return int(self.head.in_features)
 
 
 def _scheme_seed(seed: int, name: str) -> int:
@@ -284,12 +263,14 @@ def _run_scheme(
         n_take = min(batch_size, pool_idx.size)
         weight_slice = None if sample_weight is None else sample_weight[pool_idx]
         labeled = X_pool[queried] if queried else None
+        labeled_y = Y_pool[queried] if queried else None
         local = strategy.query(
             net,
             X_pool[pool_idx],
             n_take,
             weights=weight_slice,
             X_labeled=labeled,
+            y_labeled=labeled_y,
             rng=rng,
         )
         chosen_raw = pool_idx[np.asarray(local, dtype=int)]

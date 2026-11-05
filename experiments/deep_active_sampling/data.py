@@ -115,6 +115,83 @@ def make_shift_stream(
     }
 
 
+def make_digits_stream(
+    n_source: int = 280,
+    n_shift_ref: int = 280,
+    n_pool: int = 400,
+    n_test: int = 200,
+    roll: int = 2,
+    pool_shift_rate: float = 0.5,
+    seed: int = 0,
+) -> dict:
+    """Sklearn digits, with the target images rolled horizontally.
+
+    Each 8×8 digit is scaled to ``[0, 1]``. Source rows keep the original
+    pixels. Target rows are the same images shifted by ``roll`` columns, so
+    the label is unchanged and the covariate is not. The reference window is
+    source then target. The pool mixes the two. The test set is rolled.
+    """
+    from sklearn.datasets import load_digits
+
+    images, labels = load_digits(return_X_y=True)
+    images = np.asarray(images, dtype=float) / 16.0
+    labels = np.asarray(labels, dtype=np.int64)
+    n_pool_shift = int(round(pool_shift_rate * n_pool))
+    n_pool_source = n_pool - n_pool_shift
+    n_clean = n_source + n_pool_source
+    n_rolled = n_shift_ref + n_pool_shift + n_test
+    if n_clean + n_rolled > len(labels):
+        raise ValueError("digits split asks for more rows than load_digits has")
+    rng = np.random.default_rng(seed)
+    order = rng.permutation(len(labels))
+    clean_idx = order[:n_clean]
+    rolled_idx = order[n_clean : n_clean + n_rolled]
+
+    def take_clean(start, count):
+        idx = clean_idx[start : start + count]
+        return images[idx], labels[idx]
+
+    def take_rolled(start, count):
+        idx = rolled_idx[start : start + count]
+        picture = images[idx].reshape(-1, 8, 8)
+        picture = np.roll(picture, roll, axis=2)
+        return picture.reshape(count, 64), labels[idx]
+
+    X_source, Y_source = take_clean(0, n_source)
+    X_pool_source, Y_pool_source = take_clean(n_source, n_pool_source)
+    X_shift, Y_shift = take_rolled(0, n_shift_ref)
+    X_pool_shift, Y_pool_shift = take_rolled(n_shift_ref, n_pool_shift)
+    X_test, Y_test = take_rolled(n_shift_ref + n_pool_shift, n_test)
+
+    X_pool = np.vstack([X_pool_source, X_pool_shift])
+    Y_pool = np.concatenate([Y_pool_source, Y_pool_shift])
+    pool_shifted = np.concatenate(
+        [np.zeros(n_pool_source, dtype=bool), np.ones(n_pool_shift, dtype=bool)]
+    )
+    perm = rng.permutation(n_pool)
+    X_pool, Y_pool, pool_shifted = X_pool[perm], Y_pool[perm], pool_shifted[perm]
+
+    center = X_source.mean(axis=0)
+    scale = X_source.std(axis=0)
+    scale = np.where(scale < 1e-6, 1.0, scale)
+
+    def standardize(X):
+        return (X - center) / scale
+
+    X = np.vstack([standardize(X_source), standardize(X_shift), standardize(X_pool)])
+    Y = np.concatenate([Y_source, Y_shift, Y_pool])
+    return {
+        "X": X.astype(np.float64),
+        "Y": Y.astype(np.int64),
+        "X_test": standardize(X_test).astype(np.float64),
+        "Y_test": Y_test.astype(np.int64),
+        "ref_batch_size": int(n_source + n_shift_ref),
+        "pool_shifted": pool_shifted,
+        "name": "digits",
+        "roll": int(roll),
+    }
+
+
 def load_cifar100_arrays(root: str, train: bool = True, download: bool = False):
     """Flattened CIFAR-100 images in ``[0, 1]`` and integer labels.
 
