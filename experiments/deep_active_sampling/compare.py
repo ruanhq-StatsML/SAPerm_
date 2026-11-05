@@ -56,6 +56,7 @@ COMPARE_SCHEMES = {
 }
 
 SEEDS = (0, 1)
+QUERY_BATCH = 32
 
 
 def _jsonable(value):
@@ -96,7 +97,7 @@ def run_once(seed: int) -> dict:
     out = deep_active_sampling(
         stream["X"],
         stream["Y"],
-        batch_size=32,
+        batch_size=QUERY_BATCH,
         query_strategy=COMPARE_SCHEMES,
         ref_batch_size=stream["ref_batch_size"],
         X_test=stream["X_test"],
@@ -247,6 +248,25 @@ def render_board(avg: dict, n_seeds: int) -> str:
                 frac=row["frac_shifted"],
             )
         )
+    curve_len = len(next(iter(schemes.values()))["acc_curve"])
+    queried = [i * QUERY_BATCH for i in range(curve_len)]
+    header = "| 方案 | " + " | ".join(str(n) for n in queried) + " |"
+    rule = "| --- | " + " | ".join("---:" for _ in queried) + " |"
+    lines.extend(
+        [
+            "",
+            "## 准确率路径",
+            "",
+            f"列是已经送进 SGD 的池子行数。0 是只在源分布上热身、还没抽池子的时候。之后每列多 {QUERY_BATCH} 行。数字是两个种子的平均测试准确率。",
+            "",
+            header,
+            rule,
+        ]
+    )
+    for name in order:
+        curve = schemes[name]["acc_curve"]
+        cells = " | ".join(f"{value:.3f}" for value in curve)
+        lines.append(f"| {name} | {cells} |")
     if pooled_shift > uniform_shift + 0.02:
         shift_sentence = (
             f"加上合并权重之后，抽到的目标行从 {uniform_shift:.3f} 升到 {pooled_shift:.3f}。"
@@ -310,11 +330,23 @@ def render_board(avg: dict, n_seeds: int) -> str:
         f"只按合并权重取最大的 `top_weight_pooled` 抽到的目标行比例是 {ceiling['frac_shifted']:.3f}，"
         f"终点准确率 {ceiling['acc_final']:.3f}。这是这份权重本身的上限，没有再和不确定性相乘。"
     )
+    early = schemes["entropy_pooled"]["acc_curve"]
+    late_gap = float(early[-1] - schemes["entropy"]["acc_curve"][-1])
+    plain = schemes["entropy"]["acc_curve"]
+    path_sentence = (
+        f"路径上，entropy × 合并权重在第 {QUERY_BATCH} 行就已经到 {early[1]:.3f}，"
+        f"第 {3 * QUERY_BATCH} 行 {early[3]:.3f}，第 {4 * QUERY_BATCH} 行 {early[4]:.3f}，最后 {early[-1]:.3f}。"
+        f"无权重的 entropy 同期是 {plain[1]:.3f}、{plain[3]:.3f}、{plain[4]:.3f}、{plain[-1]:.3f}。"
+        f"两条路径的终点差是 {late_gap:.3f}。"
+        f"只按合并权重取最大的方案第 {QUERY_BATCH} 行是 {schemes['top_weight_pooled']['acc_curve'][1]:.3f}，"
+        f"起步更快，第 {3 * QUERY_BATCH} 行被 entropy × 合并权重超过。"
+    )
     lines.extend(
         [
             "",
             "## 读这张表",
             "",
+            path_sentence,
             shift_sentence,
             acc_sentence,
             entropy_sentence,
