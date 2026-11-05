@@ -98,13 +98,26 @@ def _average(runs: list[dict]) -> dict:
     return {"schemes": schemes}
 
 
+# k-center is the same furthest-first rule as core-set. Counting both would
+# pull the mean toward that one curve.
+_MEAN_SKIP = {"kcenter"}
+
+
 def _group(schemes: dict, weight: str, field: str) -> float:
-    vals = [row[field] for row in schemes.values() if row["weight"] == weight]
+    vals = [
+        row[field]
+        for row in schemes.values()
+        if row["weight"] == weight and row["strategy"] not in _MEAN_SKIP
+    ]
     return float(np.mean(vals)) if vals else float("nan")
 
 
 def _curves_for(schemes: dict, weight: str) -> tuple[list[str], np.ndarray]:
-    rows = [(row["strategy"], np.asarray(row["acc_curve"], dtype=float)) for row in schemes.values() if row["weight"] == weight]
+    rows = [
+        (row["strategy"], np.asarray(row["acc_curve"], dtype=float))
+        for row in schemes.values()
+        if row["weight"] == weight and row["strategy"] not in _MEAN_SKIP
+    ]
     rows.sort(key=lambda item: item[0])
     names = [name for name, _curve in rows]
     stack = np.stack([curve for _name, curve in rows], axis=0)
@@ -132,11 +145,13 @@ def save_accuracy_plot(avg: dict, path: Path) -> None:
         std = stack.std(axis=0)
         path_ax.fill_between(rounds, mean - std, mean + std, color=color, alpha=0.18, linewidth=0)
         path_ax.plot(rounds, mean, color=color, linewidth=2.4, label=label)
+    path_ax.axhline(0.1, color="0.45", linewidth=0.8, linestyle="--", label="Chance")
     path_ax.set_title("Mean test accuracy across query rules")
     path_ax.set_xlabel("Round (0 = source model)")
     path_ax.set_ylabel("Test accuracy")
     path_ax.set_xticks(rounds)
-    path_ax.set_ylim(0.0, 0.45)
+    hi = float(np.max(np.concatenate([uniform.ravel(), weighted.ravel()])))
+    path_ax.set_ylim(0.0, min(1.0, max(0.45, hi + 0.08)))
     path_ax.legend(frameon=False, loc="upper left")
 
     delta = weighted[:, -1] - uniform[:, -1]
@@ -174,11 +189,11 @@ def render_board(avg: dict, n_seeds: int) -> str:
     lines = [
         "# 手写数字上的准确率路径",
         "",
-        "数据换成 sklearn 的 8×8 手写数字。源分布是原图像。目标分布把每张图沿水平方向滚两个像素，标签不变。参考窗前一半是源，后一半是目标。池子里一半原图、一半滚过的图。测试集全是滚过的图。",
+        "数据换成 sklearn 的 8×8 手写数字，像素留在 0 到 1。按源图像逐像素做标准化会把滚进空白边缘的墨水放大到几百，分类器学不动，所以这里不再除以那个标准差。源分布是原图像。目标分布把每张图沿水平方向滚两个像素，标签不变。参考窗前一半是源，后一半是目标。池子里一半原图、一半滚过的图。测试集全是滚过的图。",
         "",
         "查询规则接的是 deep active learning 里能在同一个分类网络上算的那些：不确定性、dropout 版、BALD、BatchBALD、core-set、k-center、k-means、cluster-margin、BADGE、baseline、BIM、DeepFool、ALBL。每条规则跑两遍，一遍权重是平的，一遍权重是参考窗上拟合的伪结果残差。VAAL、WAAL、learning-loss、GCN 和半监督那一组要换训练器，没有接进这个网络。",
         "",
-        f"种子 {', '.join(str(s) for s in SEEDS)}。左图是全部规则的平均路径，色带是规则之间的标准差。右图是每条规则终点准确率的差，伪结果权重减去无权重。",
+        f"种子 {', '.join(str(s) for s in SEEDS)}。左图是各规则的平均路径，色带是规则之间的标准差，虚线是 10 类的随机猜测。k-center 和 core-set 是同一条最远点规则，平均和右图只计 core-set 一次。右图是终点准确率的差，伪结果权重减去无权重。",
         "",
         "![Test accuracy by round](accuracy_paths.png)",
         "",
@@ -205,7 +220,15 @@ def render_board(avg: dict, n_seeds: int) -> str:
                 frac=row["frac_shifted"],
             )
         )
-    lines.extend(["", f"重复次数 {n_seeds}。", ""])
+    lines.extend(
+        [
+            "",
+            "k-center 与 core-set 的数字相同，因为两者都是嵌入上的最远点。上面的平均没有把它算第二次。",
+            "",
+            f"重复次数 {n_seeds}。",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 

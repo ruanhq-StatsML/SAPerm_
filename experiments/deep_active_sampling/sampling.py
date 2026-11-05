@@ -289,6 +289,8 @@ def _run_scheme(
             po_batch.append(float("nan"))
         else:
             po_batch.append(float(np.mean(sample_weight[chosen])))
+        if hasattr(strategy, "observe"):
+            strategy.observe(net, X_pool[chosen], Y_pool[chosen])
         train_loss = _train_epochs(
             net,
             opt,

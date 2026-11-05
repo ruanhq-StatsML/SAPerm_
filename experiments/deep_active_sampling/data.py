@@ -126,10 +126,10 @@ def make_digits_stream(
 ) -> dict:
     """Sklearn digits, with the target images rolled horizontally.
 
-    Each 8×8 digit is scaled to ``[0, 1]``. Source rows keep the original
-    pixels. Target rows are the same images shifted by ``roll`` columns, so
-    the label is unchanged and the covariate is not. The reference window is
-    source then target. The pool mixes the two. The test set is rolled.
+    Each 8×8 digit stays in ``[0, 1]``. Source rows keep the original pixels.
+    Target rows are the same images shifted by ``roll`` columns, so the label
+    is unchanged and the covariate is not. The reference window is source then
+    target. The pool mixes the two. The test set is rolled.
     """
     from sklearn.datasets import load_digits
 
@@ -171,19 +171,16 @@ def make_digits_stream(
     perm = rng.permutation(n_pool)
     X_pool, Y_pool, pool_shifted = X_pool[perm], Y_pool[perm], pool_shifted[perm]
 
-    center = X_source.mean(axis=0)
-    scale = X_source.std(axis=0)
-    scale = np.where(scale < 1e-6, 1.0, scale)
-
-    def standardize(X):
-        return (X - center) / scale
-
-    X = np.vstack([standardize(X_source), standardize(X_shift), standardize(X_pool)])
+    # Pixels are already in [0, 1]. Dividing by the source pixel standard
+    # deviation blows up the border: those pixels are blank in the original
+    # images and carry ink after the roll, so a tiny source scale turns a
+    # one-pixel shift into values of a few hundred.
+    X = np.vstack([X_source, X_shift, X_pool])
     Y = np.concatenate([Y_source, Y_shift, Y_pool])
     return {
         "X": X.astype(np.float64),
         "Y": Y.astype(np.int64),
-        "X_test": standardize(X_test).astype(np.float64),
+        "X_test": X_test.astype(np.float64),
         "Y_test": Y_test.astype(np.int64),
         "ref_batch_size": int(n_source + n_shift_ref),
         "pool_shifted": pool_shifted,

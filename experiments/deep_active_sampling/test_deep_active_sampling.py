@@ -28,6 +28,7 @@ from experiments.deep_active_sampling.query_strategies import (
     entropy_scores,
     top_indices,
 )
+from experiments.deep_active_sampling.query_strategies.albl import ActiveLearningByLearning
 from experiments.deep_active_sampling.sampling import EmbeddingNet, deep_active_sampling
 
 
@@ -200,6 +201,28 @@ def test_digits_stream_rolls_a_disjoint_target():
     assert stream["pool_shifted"].shape == (30,)
     assert abs(float(stream["pool_shifted"].mean()) - 0.5) < 1e-8
     assert stream["Y"].min() >= 0 and stream["Y"].max() <= 9
+    assert float(stream["X"].min()) >= 0.0 and float(stream["X"].max()) <= 1.0
+    assert float(stream["X_test"].max()) <= 1.0
+
+
+def test_albl_rewards_the_querying_network_before_the_step():
+    torch.manual_seed(0)
+    net = EmbeddingNet(4, 2, hidden=8)
+    X = np.random.default_rng(0).normal(size=(8, 4))
+    bandit = ActiveLearningByLearning()
+    picked = bandit.query(net, X, 3, rng=np.random.default_rng(1))
+    arm = bandit.s_idx
+    before = float(bandit.w[arm])
+    pred = net(torch.as_tensor(X[picked], dtype=torch.float32))[0].argmax(dim=1).numpy()
+    bandit.observe(net, X[picked], pred)
+    assert float(bandit.w[arm]) > before
+    wrong = 1 - pred
+    other = ActiveLearningByLearning()
+    other.query(net, X, 3, rng=np.random.default_rng(1))
+    other_before = float(other.w[other.s_idx])
+    other.observe(net, X[picked], wrong)
+    assert float(other.w[other.s_idx]) < float(bandit.w[arm])
+    assert float(other.w[other.s_idx]) != other_before
 
 
 def test_every_strategy_returns_a_unique_batch():
