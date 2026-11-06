@@ -81,11 +81,15 @@ def schemes_with_po_risk(names=None) -> dict:
     return schemes
 
 
-# Default dictionary passed into ``deep_active_sampling``.
-ACTIVE_SAMPLING_SCHEMES = schemes_with_po_risk()
+# One dict for ``one_pass``. Each rule is run twice: a flat weight, then the
+# pseudo-outcome residual. ``top_weight`` only ranks the weight itself, so it
+# is not paired.
+QUERY_STRATEGIES = schemes_with_po_risk()
+ACTIVE_SAMPLING_SCHEMES = QUERY_STRATEGIES
 
 __all__ = [
     "ACTIVE_SAMPLING_SCHEMES",
+    "QUERY_STRATEGIES",
     "STRATEGIES",
     "build_strategy",
     "schemes_with_po_risk",

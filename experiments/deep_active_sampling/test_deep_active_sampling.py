@@ -4,7 +4,15 @@ import numpy as np
 import torch
 from torch import nn
 
-from experiments.deep_active_sampling.data import make_digits_stream, make_shift_stream
+from experiments.deep_active_sampling.data import (
+    continuous_loader,
+    make_digits_stream,
+    make_pendigits_stream,
+    make_satimage_stream,
+    make_shift_stream,
+    make_shifted_feature_stream,
+)
+from experiments.deep_active_sampling.sampling import one_pass
 from experiments.deep_active_sampling.query_strategies import STRATEGIES
 from experiments.deep_active_sampling.ood_vimp import (
     MMD_LOCO,
@@ -205,6 +213,37 @@ def test_digits_stream_rolls_a_disjoint_target():
     assert float(stream["X_test"].max()) <= 1.0
 
 
+def test_shifted_feature_stream_moves_only_named_columns():
+    rng = np.random.default_rng(0)
+    X = rng.random((80, 4))
+    Y = rng.integers(0, 3, size=80)
+    stream = make_shifted_feature_stream(
+        X, Y, shift_columns=[0, 2], shift=0.4,
+        n_source=10, n_shift_ref=10, n_pool=20, n_test=10, seed=1, name="toy",
+    )
+    assert stream["X"].shape == (40, 4)
+    assert stream["X_test"].shape == (10, 4)
+    assert abs(float(stream["pool_shifted"].mean()) - 0.5) < 1e-8
+    assert float(stream["X"][:10].max()) <= 1.0 + 1e-8
+    assert float(stream["X"][10:20, 0].mean()) > float(stream["X"][:10, 0].mean()) + 0.2
+    assert abs(float(stream["X"][10:20, 1].mean()) - float(stream["X"][:10, 1].mean())) < 0.25
+
+
+def test_pendigits_and_satimage_streams_keep_labels_and_shift_features():
+    pen = make_pendigits_stream(n_source=40, n_shift_ref=40, n_pool=20, n_test=16, seed=0)
+    assert pen["X"].shape == (100, 16)
+    assert pen["n_classes"] == 10
+    assert float(pen["X"][:40].min()) >= 0.0 and float(pen["X"][:40].max()) <= 1.0
+    assert float(pen["X"][40:80, 0].mean()) > float(pen["X"][:40, 0].mean()) + 0.15
+    assert abs(float(pen["pool_shifted"].mean()) - 0.5) < 1e-8
+    sat = make_satimage_stream(n_source=40, n_shift_ref=40, n_pool=20, n_test=16, seed=0)
+    assert sat["X"].shape == (100, 36)
+    assert sat["n_classes"] == 6
+    moved = float(sat["X"][40:80, 0].mean() - sat["X"][:40, 0].mean())
+    still = float(sat["X"][40:80, 20].mean() - sat["X"][:40, 20].mean())
+    assert moved > still + 0.8
+
+
 def test_albl_rewards_the_querying_network_before_the_step():
     torch.manual_seed(0)
     net = EmbeddingNet(4, 2, hidden=8)
@@ -239,6 +278,57 @@ def test_every_strategy_returns_a_unique_batch():
         assert len(picked) == 3, name
         assert len(set(picked.tolist())) == 3, name
         assert picked.min() >= 0 and picked.max() < len(X), name
+
+
+def test_query_strategies_dict_pairs_each_rule_with_po_risk():
+    from experiments.deep_active_sampling import QUERY_STRATEGIES
+    from experiments.deep_active_sampling.query_strategies import STRATEGIES
+
+    names = [name for name in STRATEGIES if name != "top_weight"]
+    assert set(QUERY_STRATEGIES) == {name for rule in names for name in (rule, f"{rule}_po")}
+    for name in names:
+        assert QUERY_STRATEGIES[name] == {"strategy": name, "weight": "uniform"}
+        assert QUERY_STRATEGIES[f"{name}_po"] == {"strategy": name, "weight": "po_risk"}
+
+
+def test_continuous_loader_preserves_row_order():
+    stream = make_shift_stream(n_source=12, n_shift_ref=12, n_pool=15, n_test=8, p=4, n_classes=3, seed=0)
+    loader = continuous_loader(stream["X"], stream["Y"], batch_size=7)
+    chunks_x, chunks_y = [], []
+    for x, y, idx in loader:
+        chunks_x.append(x.numpy())
+        chunks_y.append(y.numpy())
+        assert np.array_equal(idx.numpy(), np.arange(idx[0].item(), idx[0].item() + len(idx)))
+    assert np.allclose(np.vstack(chunks_x), stream["X"])
+    assert np.array_equal(np.concatenate(chunks_y), stream["Y"])
+
+
+def test_one_pass_digests_the_loader_into_a_curve():
+    stream = make_shift_stream(
+        n_source=16, n_shift_ref=16, n_pool=20, n_test=12, p=4, n_classes=3, n_shift=1, seed=0
+    )
+    loader = continuous_loader(stream["X"], stream["Y"], batch_size=9)
+    out = one_pass(
+        loader,
+        batch_size=8,
+        query_strategy={"entropy": {"strategy": "entropy", "weight": "po_risk"}},
+        ref_batch_size=stream["ref_batch_size"],
+        X_test=stream["X_test"],
+        Y_test=stream["Y_test"],
+        max_rounds=2,
+        epochs_per_round=1,
+        warm_epochs=1,
+        hidden=8,
+        n_perm=2,
+        rf_estimators=8,
+        seed=0,
+        lr=0.05,
+    )
+    curve = out["schemes"]["entropy"]
+    assert curve["summary"]["n_rounds"] == 2
+    assert curve["acc_curve"].shape == (3,)
+    assert curve["selected_idx"].size == 16
+    assert np.isfinite(curve["acc_curve"]).all()
 
 
 def test_sampling_dict_returns_a_curve_per_scheme():
