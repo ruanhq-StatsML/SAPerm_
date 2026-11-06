@@ -5,12 +5,14 @@ import torch
 from torch import nn
 
 from experiments.deep_active_sampling.data import (
+    continuous_loader,
     make_digits_stream,
     make_pendigits_stream,
     make_satimage_stream,
     make_shift_stream,
     make_shifted_feature_stream,
 )
+from experiments.deep_active_sampling.sampling import one_pass
 from experiments.deep_active_sampling.query_strategies import STRATEGIES
 from experiments.deep_active_sampling.ood_vimp import (
     MMD_LOCO,
@@ -276,6 +278,46 @@ def test_every_strategy_returns_a_unique_batch():
         assert len(picked) == 3, name
         assert len(set(picked.tolist())) == 3, name
         assert picked.min() >= 0 and picked.max() < len(X), name
+
+
+def test_continuous_loader_preserves_row_order():
+    stream = make_shift_stream(n_source=12, n_shift_ref=12, n_pool=15, n_test=8, p=4, n_classes=3, seed=0)
+    loader = continuous_loader(stream["X"], stream["Y"], batch_size=7)
+    chunks_x, chunks_y = [], []
+    for x, y, idx in loader:
+        chunks_x.append(x.numpy())
+        chunks_y.append(y.numpy())
+        assert np.array_equal(idx.numpy(), np.arange(idx[0].item(), idx[0].item() + len(idx)))
+    assert np.allclose(np.vstack(chunks_x), stream["X"])
+    assert np.array_equal(np.concatenate(chunks_y), stream["Y"])
+
+
+def test_one_pass_digests_the_loader_into_a_curve():
+    stream = make_shift_stream(
+        n_source=16, n_shift_ref=16, n_pool=20, n_test=12, p=4, n_classes=3, n_shift=1, seed=0
+    )
+    loader = continuous_loader(stream["X"], stream["Y"], batch_size=9)
+    out = one_pass(
+        loader,
+        batch_size=8,
+        query_strategy={"entropy": {"strategy": "entropy", "weight": "po_risk"}},
+        ref_batch_size=stream["ref_batch_size"],
+        X_test=stream["X_test"],
+        Y_test=stream["Y_test"],
+        max_rounds=2,
+        epochs_per_round=1,
+        warm_epochs=1,
+        hidden=8,
+        n_perm=2,
+        rf_estimators=8,
+        seed=0,
+        lr=0.05,
+    )
+    curve = out["schemes"]["entropy"]
+    assert curve["summary"]["n_rounds"] == 2
+    assert curve["acc_curve"].shape == (3,)
+    assert curve["selected_idx"].size == 16
+    assert np.isfinite(curve["acc_curve"]).all()
 
 
 def test_sampling_dict_returns_a_curve_per_scheme():

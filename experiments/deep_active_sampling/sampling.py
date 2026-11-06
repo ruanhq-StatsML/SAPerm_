@@ -323,6 +323,52 @@ def _run_scheme(
     }
 
 
+def _consume_loader(loader):
+    """Stack one ordered pass back into ``(X, Y)``."""
+    xs = []
+    ys = []
+    for batch in loader:
+        x, y, _idx = batch
+        if torch.is_tensor(x):
+            x = x.detach().cpu().numpy()
+        if torch.is_tensor(y):
+            y = y.detach().cpu().numpy()
+        xs.append(np.asarray(x, dtype=np.float64))
+        ys.append(np.asarray(y).reshape(-1))
+    if not xs:
+        raise ValueError("loader is empty")
+    return np.vstack(xs), np.concatenate(ys)
+
+
+def one_pass(
+    loader,
+    batch_size: int,
+    query_strategy,
+    ref_batch_size: int,
+    X_test,
+    Y_test,
+    **kwargs,
+):
+    """Digest a continuous loader in one pass, then run the sampling loop.
+
+    The loader yields ``(x, y, index)`` in stream order. The first
+    ``ref_batch_size`` rows are the reference window. The rest are the pool.
+    The test set stays outside the loader: it is scored, not trained on.
+    Digits, pen digits, and satimage all enter through this function.
+    """
+    X, Y = _consume_loader(loader)
+    return deep_active_sampling(
+        X,
+        Y,
+        batch_size,
+        query_strategy,
+        ref_batch_size=ref_batch_size,
+        X_test=X_test,
+        Y_test=Y_test,
+        **kwargs,
+    )
+
+
 def deep_active_sampling(
     X,
     Y,

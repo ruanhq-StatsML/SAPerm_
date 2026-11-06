@@ -37,6 +37,10 @@ The training budget above is shared. Seeds are 0 and 1. The band in the figure i
 
 Digits are the sklearn $8\times 8$ images scaled by 16. Target images are rolled two columns to the right and the label is unchanged. Pen digits are the UCI stroke table scaled by 100. The eight horizontal coordinates of a target row, the even columns, are shifted by $+0.25$. Satimage is the OpenML Statlog Landsat table, already standardized to mean zero and unit variance. The first nine bands of a target row are shifted by $+1.25$. The land-cover label is unchanged. In each case the reference is source then target, the pool is mixed half and half, and the test set is target only.
 
+\subsection*{One-pass loader}
+
+The three tables are built by the same function. \texttt{continuous\_loader} yields $(x, y, \mathrm{index})$ in row order and is not shuffled. \texttt{one\_pass} reads that loader once, takes the reference prefix, and leaves the rest as the pool. The test set is not inside the loader. SGD later uses a second, shuffled loader over only the rows that have been queried. Digits, pen digits, and satimage are not separate training programs. They are three streams into this digestion.
+
 \subsection*{What the paths show}
 
 Figure~\ref{fig:po-weight-paths} is the mean test accuracy. Table~\ref{tab:po-weight-summary} averages the rules. Table~\ref{tab:po-weight-delta} is the same comparison one rule at a time.

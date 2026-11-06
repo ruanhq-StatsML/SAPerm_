@@ -13,12 +13,13 @@ from pathlib import Path
 import numpy as np
 
 from experiments.deep_active_sampling.data import (
+    continuous_loader,
     make_digits_stream,
     make_pendigits_stream,
     make_satimage_stream,
 )
 from experiments.deep_active_sampling.query_strategies import schemes_with_po_risk
-from experiments.deep_active_sampling.sampling import deep_active_sampling
+from experiments.deep_active_sampling.sampling import one_pass
 
 HERE = Path(__file__).resolve().parent
 RESULT_DIR = HERE / "results"
@@ -47,9 +48,9 @@ def _mean(values) -> float:
 
 def run_once(stream: dict, seed: int, schemes: dict) -> dict:
     print(f"seed {seed}: {stream['name']}, {len(schemes)} schemes", flush=True)
-    out = deep_active_sampling(
-        stream["X"],
-        stream["Y"],
+    loader = continuous_loader(stream["X"], stream["Y"], batch_size=64)
+    out = one_pass(
+        loader,
         batch_size=32,
         query_strategy=schemes,
         ref_batch_size=stream["ref_batch_size"],
@@ -527,6 +528,13 @@ def write_latex(keys: list[str] | None = None) -> Path:
             "Satimage is the OpenML Statlog Landsat table, already standardized to mean zero and unit variance. "
             "The first nine bands of a target row are shifted by $+1.25$. The land-cover label is unchanged. "
             "In each case the reference is source then target, the pool is mixed half and half, and the test set is target only.",
+            "",
+            r"\subsection*{One-pass loader}",
+            "",
+            r"The three tables are built by the same function. \texttt{continuous\_loader} yields $(x, y, \mathrm{index})$ in row order and is not shuffled. "
+            r"\texttt{one\_pass} reads that loader once, takes the reference prefix, and leaves the rest as the pool. "
+            "The test set is not inside the loader. SGD later uses a second, shuffled loader over only the rows that have been queried. "
+            "Digits, pen digits, and satimage are not separate training programs. They are three streams into this digestion.",
             "",
             r"\subsection*{What the paths show}",
             "",

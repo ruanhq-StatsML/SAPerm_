@@ -38,6 +38,36 @@ def make_loader(X, Y, batch_size: int, seed: int) -> DataLoader:
     )
 
 
+class OrderedStream(Dataset):
+    """Rows in the order they should be digested.
+
+    Item ``i`` is ``(x, y, i)`` with ``x`` left in float64. This loader is
+    not shuffled. The sampler reads it once: a reference prefix, then the pool.
+    """
+
+    def __init__(self, X, Y):
+        self.X = np.asarray(X, dtype=np.float64)
+        self.Y = np.asarray(Y, dtype=np.int64).reshape(-1)
+        if len(self.X) != len(self.Y):
+            raise ValueError("X and Y must have the same number of rows")
+
+    def __len__(self):
+        return int(self.Y.shape[0])
+
+    def __getitem__(self, idx):
+        return self.X[idx], int(self.Y[idx]), int(idx)
+
+
+def continuous_loader(X, Y, batch_size: int = 64) -> DataLoader:
+    """One ordered pass. Batches come out in row order, including the tail."""
+    n = len(np.asarray(Y).reshape(-1))
+    return DataLoader(
+        OrderedStream(X, Y),
+        batch_size=max(1, min(int(batch_size), n)),
+        shuffle=False,
+    )
+
+
 def _classify(X, beta, signal_idx, rng, temperature: float) -> np.ndarray:
     eta = X[:, signal_idx] @ beta
     noise = rng.gumbel(size=eta.shape)
