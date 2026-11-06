@@ -1,11 +1,11 @@
 """Batch monitor for a deployed uplift model.
 
 The randomized slice of a batch is the only place these scores are valid.
-Covariate scores are the FSDS ``MMD`` and HSIC-LOCO. The uplift scores are
-the FSDS R-learner loss and the PermuCATE pseudo-outcome risk, with the
-deployed tau plugged in. Calibration compares predicted uplift with the
-transformed outcome. Sign accuracy uses the true tau and is a simulation
-diagnostic, not an online score.
+Covariate scores are the FSDS ``MMD`` and HSIC-LOCO. The uplift evaluation
+itself is ``evaluate.py``: the script refits tau, and the deployed model is
+scored with ``po_risk`` separately. Calibration compares predicted uplift
+with the transformed outcome. Sign accuracy uses the true tau and is a
+simulation diagnostic, not an online score.
 """
 
 from __future__ import annotations
@@ -15,8 +15,6 @@ import numpy as np
 from experiments.uplift_monitor.fsds_vimp import (
     compute_hsic_loco_batches,
     compute_loco_mmd_batches,
-    po_risk,
-    r_learner_risk,
 )
 
 EXPLORE = 0.30
@@ -63,15 +61,6 @@ def fsds_covariate(x_ref: np.ndarray, x_new: np.ndarray, seed: int) -> dict[str,
     mmd, mmd_vimp, _ = compute_loco_mmd_batches(x_ref, x_new, max_n=200, seed=seed)
     hsic, hsic_vimp, _ = compute_hsic_loco_batches(x_ref, x_new, max_n=200, seed=seed + 1)
     return {"mmd": mmd, "hsic": hsic, "mmd_vimp": mmd_vimp, "hsic_vimp": hsic_vimp}
-
-
-def fsds_uplift_risk(x, y, treat, mu0, mu1, tau, seed: int) -> dict[str, float]:
-    """Plug a deployed uplift into the FSDS R-learner loss and PO-risk."""
-    pi = np.full(len(y), 0.5)
-    return {
-        "r_learner": r_learner_risk(x, y, treat, tau=tau, seed=seed),
-        "po": po_risk(tau, y, treat, mu0, mu1, pi),
-    }
 
 
 def policy_value(y: np.ndarray, treat: np.ndarray, choose: np.ndarray, propensity: float = 0.5) -> float:

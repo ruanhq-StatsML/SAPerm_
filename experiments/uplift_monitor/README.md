@@ -9,10 +9,12 @@ Two regimes start at batch 8.
 - `concept` flips the sign of τ(x) and leaves P(X) alone.
 - `covariate` shifts the first coordinate and leaves τ(x) alone.
 
-The monitor calls the FSDS calculations in `fsds_vimp.py`: `MMD` and `compute_loco_mmd_batches`, `compute_hsic_loco_batches`, the R-learner loss from `vimp_loco_r_risk` with the deployed uplift plugged in as tau, PermuCATE `po_risk`, and `mmd_path` / `summarize_path_nonuniqueness`. Nuisance regressions are logistic and ridge. The original modules `chdir` onto a machine-local path and do not import here. Sign accuracy uses the true τ and is a simulation check, not an online score.
+`evaluate.py` is the uplift evaluation. `r_learner_observed_risk` follows `vimp_loco_r_risk` through `observed_r_risk`: random-forest outcome, logistic propensity, weighted-ridge tau refit on the batch. `permucate_test_po_risk` follows `permuCATE_vimp` through `po_risk_original`: stratified half split, random-forest outcome and pseudo-outcome models. `deployed_po_risk` is the same `po_risk` formula with the already deployed logistic uplift. The call uses MMD and that deployed score. The script refits tau, so its own risk is not the drift call. Forests use 40 trees; the registry default is 150. The LOCO loop and the permutation loop are not run on every batch.
+
+The printed board opens with a call. Covariate fires when late MMD is at least five times the early MMD. Uplift fires when frozen PO-risk rises by 0.25 and exceeds the refit by 0.15.
 
 ```bash
 python3 -m experiments.uplift_monitor
 ```
 
-The reading of the run is `results/BOARD.md`.
+The reading of the saved run is `results/BOARD.md`.

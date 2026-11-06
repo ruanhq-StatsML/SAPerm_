@@ -1,15 +1,15 @@
 \begin{table}[t]
 \centering
-\caption{Uplift monitor using the FSDS scores. MMD and HSIC are \texttt{MMD} and HSIC-LOCO on the randomized slice against the burn-in. R-learner is the FSDS loss with the deployed uplift plugged in as $\tau$. PO-risk is the PermuCATE pseudo-outcome risk. Early is batches 4--7. Late is batches 8--15. Cells are means over four replicates.}
+\caption{Uplift evaluation. R-risk is \texttt{observed\_r\_risk} from \texttt{vimp\_loco\_r\_risk}: a random-forest outcome, a logistic propensity, and a weighted-ridge R-learner refit on the batch. PO script is \texttt{po\_risk\_original} from \texttt{permuCATE\_vimp} on a stratified half-split, with random-forest outcome and pseudo-outcome models. PO frozen and PO refit call the same \texttt{po\_risk} with the already deployed logistic uplift. The call uses MMD and the deployed PO-risk, not the refit script scores. Early is batches 4--7 and late is batches 8--15. Means over four replicates.}
 \label{tab:uplift-monitor}
-\begin{tabular}{llrrrrrr}
+\begin{tabular}{llrrrrrl}
 \toprule
-Scenario & Phase & MMD & HSIC & R-learn stale & R-learn fresh & PO stale & PO fresh \\
+Scenario & Phase & MMD & R-risk & PO script & PO frozen & PO refit & Call \\
 \midrule
-concept & early & 0.0011 & 0.0005 & 0.222 & 0.226 & 0.826 & 0.842 \\
-concept & late & 0.0008 & 0.0005 & 0.306 & 0.242 & 1.478 & 0.946 \\
-covariate & early & 0.0013 & 0.0006 & 0.220 & 0.222 & 0.821 & 0.840 \\
-covariate & late & 0.1055 & 0.0023 & 0.196 & 0.197 & 0.718 & 0.754 \\
+concept & early & 0.0011 & 0.217 & 1.350 & 0.826 & 0.842 &  \\
+concept & late & 0.0008 & 0.215 & 1.807 & 1.478 & 0.946 & uplift \\
+covariate & early & 0.0013 & 0.217 & 1.528 & 0.821 & 0.840 &  \\
+covariate & late & 0.1055 & 0.188 & 1.274 & 0.718 & 0.754 & covariate \\
 \bottomrule
 \end{tabular}
 \end{table}
