@@ -398,36 +398,10 @@ def write_latex(keys: list[str] | None = None) -> Path:
             }
         )
 
-    def _sentence(row) -> str:
-        gap = row["po"] - row["uniform"]
-        if gap > 0.01:
-            return (
-                f"On {row['name'].lower()} the pseudo-outcome weight raises the mean final accuracy "
-                f"from {row['uniform']:.3f} to {row['po']:.3f}."
-            )
-        if gap < -0.01:
-            return (
-                f"On {row['name'].lower()} the pseudo-outcome weight lowers the mean final accuracy "
-                f"from {row['uniform']:.3f} to {row['po']:.3f}."
-            )
-        return (
-            f"On {row['name'].lower()} the two mean final accuracies meet "
-            f"({row['uniform']:.3f} unweighted, {row['po']:.3f} weighted)."
-        )
-
-    notes = []
-    for row in summary_rows:
-        notes.append(_sentence(row))
-        if row["start"] > row["uniform"] - 0.05:
-            notes.append(
-                f"On {row['name'].lower()} the source model already scores {row['start']:.3f} "
-                f"on the target, so the later rounds have little accuracy left to gain."
-            )
-    body = " ".join(notes)
     summary_lines = [
-        r"\begin{table}[t]",
+        r"\begin{table}[H]",
         r"\centering",
-        r"\caption{Mean test accuracy over query rules, two seeds. k-center is omitted because it repeats core-set. The pool is half target rows. Chance is $1/C$.}",
+        r"\caption{Mean over query rules and two seeds. k-center is omitted because it repeats core-set. Share is the fraction of queried pool rows that come from the target. Chance is $1/C$.}",
         r"\label{tab:po-weight-summary}",
         r"\begin{tabular}{lrrrrrrr}",
         r"\toprule",
@@ -443,9 +417,9 @@ def write_latex(keys: list[str] | None = None) -> Path:
 
     header = " & ".join(row["name"] for row in summary_rows)
     delta_lines = [
-        r"\begin{table}[t]",
+        r"\begin{table}[H]",
         r"\centering",
-        r"\caption{Final accuracy with the pseudo-outcome weight minus the unweighted run, in percentage points. Positive means the weight finished higher.}",
+        r"\caption{Final test accuracy with the pseudo-outcome weight minus the unweighted run, in percentage points. Positive means the weight finished higher on that rule.}",
         r"\label{tab:po-weight-delta}",
         r"\begin{tabular}{l" + "r" * len(summary_rows) + "}",
         r"\toprule",
@@ -469,7 +443,13 @@ def write_latex(keys: list[str] | None = None) -> Path:
         ]
     )
 
-    shift_bits = " ".join(f"{row['name']}: {row['shift']}." for row in summary_rows)
+    by_key = {row["key"]: row for row in summary_rows}
+    digits = by_key["digits"]
+    pen = by_key["pendigits"]
+    sat = by_key["satimage"]
+    digit_schemes = next(p for p in payloads if p["dataset"] == "digits")["average"]["schemes"]
+    bim = digit_schemes["adversarial_bim"]
+    bim_po = digit_schemes["adversarial_bim_po"]
     tex = "\n".join(
         [
             r"\documentclass[11pt]{article}",
@@ -477,22 +457,87 @@ def write_latex(keys: list[str] | None = None) -> Path:
             r"\usepackage{booktabs}",
             r"\usepackage{graphicx}",
             r"\usepackage{amsmath}",
+            r"\usepackage{float}",
             r"\begin{document}",
-            r"\section*{Pseudo-outcome weights along the sampling path}",
+            r"\section*{Pseudo-outcome weights for deep active sampling}",
             "",
-            "Each stream uses the same loop. The reference window is source then target. "
-            "The pool is half and half. The test set is target only. Every query rule runs twice "
-            "from the same source-trained network: once with a flat weight, once with the per-row "
-            "pseudo-outcome residual from a nuisance fit that scores pool rows as $T=1$. "
-            "Training is five rounds of SGD, batch size 32, three epochs per round, hidden width 64. "
-            "Seeds are 0 and 1. The band is the standard deviation across rules, not across seeds.",
+            r"\subsection*{Reference window and the online loop}",
             "",
-            shift_bits,
+            "Each stream is one matrix. The first 280 rows are the source domain and the next 280 are the target, so the reference window has 560 rows. "
+            r"Inside that window the domain indicator is $T=0$ on the first half and $T=1$ on the second. "
+            "The remaining 400 rows are the pool, built so that half of them are target rows, and the 200-row test set is target only. "
+            "Labels are already observed. The loop decides which of those rows are allowed into SGD. "
+            "It is not paying for a new label.",
             "",
-            r"\begin{figure}[t]",
+            "A two-layer ReLU network with a linear head, width 64, is warm-started for four epochs on the source half only. "
+            "That state is copied, so every rule starts from the same weights. "
+            "Each copy has its own SGD, with learning rate 0.08, momentum 0.9, and weight decay $10^{-4}$. The optimizer is not reset between rounds. "
+            "Gradients are clipped at norm 5. "
+            "Each of five rounds queries 32 pool rows and then takes three epochs over the cumulative queried set. "
+            "Round 0 in the figure is the warm start, before any pool row is used. "
+            "Test accuracy is the fraction of target test rows whose predicted class matches the label.",
+            "",
+            r"\subsection*{Doubly robust row weight}",
+            "",
+            r"The nuisance is fit on the reference window only. "
+            r"$\mu_0$ and $\mu_1$ are ridge regressions of the integer class code, not of a one-hot label. "
+            r"The propensity $\pi$ is logistic, clipped to $[0.01,\,0.99]$. "
+            r"$\tau$ is a ridge regression of the pseudo-outcome $\phi$ on $X$, not of the class code. "
+            "Dimension importances from PermuCATE, a domain forest, and MMD leave-one-covariate-out are computed and stored. "
+            "They are not the weight plotted here.",
+            "",
+            r"For a row $(X,Y,T)$ the doubly robust pseudo-outcome and its squared residual are",
+            r"\begin{equation}",
+            r"\phi=(Y-\mu_T)\frac{T-\pi}{\pi(1-\pi)}+(\mu_1-\mu_0),",
+            r"\qquad w=(\phi-\tau(X))^2,",
+            r"\label{eq:po-weight}",
+            r"\end{equation}",
+            r"where $\mu_T=\mu_1$ if $T=1$ and $\mu_0$ otherwise. "
+            r"Every pool row is scored with $T=1$, including the source rows in the mixture. "
+            r"A source row whose label sits near $\mu_0$ and away from $\mu_1$ therefore receives a large $w$. "
+            "The sampling weight is this per-row residual. A flat comparison uses no weight at all.",
+            "",
+            r"\subsection*{How the weight changes a query}",
+            "",
+            r"The raw residual is replaced by its rank percentile in $(0,1]$, with ties sharing the average rank. "
+            "That percentile multiplies a higher-is-better acquisition score. "
+            "A constant weight is a constant percentile, so the original ranking is unchanged. "
+            "Uncertainty rules, including the dropout averages and BALD, take the top of score times percentile. "
+            "Random sampling draws without replacement with probability proportional to the percentile. "
+            "Core-set and BADGE multiply distance, or the gradient norm, by the same percentile. "
+            r"BIM and DeepFool use $-\lVert\eta\rVert^2$, so a smaller flip of the predicted class is queried first, and that score is then multiplied by the percentile. "
+            "Cluster-margin shortlists ten times the batch by weighted margin, clusters the pool by average linkage into 20 groups, and round-robins from the smallest cluster. "
+            "BatchBALD is the greedy stand-in: high BALD and low overlap of the mean predictive distribution with rows already chosen. "
+            "The reference implementation calls \\texttt{batchbald\\_redux}, which is not a dependency here. "
+            "Active learning by learning is a bandit over entropy, margin, and core-set. "
+            "Its reward is the accuracy of the batch just returned, measured with the network that queried it, divided by the probability of that arm. "
+            "The update happens before the SGD step, so the model has not yet fit those labels. "
+            "k-center uses the same furthest-first rule as core-set and is left out of every mean below.",
+            "",
+            "VAAL, WAAL, learning-loss, the GCN pair, and the semi-supervised trainers are not in the comparison. They replace the network.",
+            "",
+            r"\subsection*{Three covariate shifts}",
+            "",
+            "The training budget above is shared. Seeds are 0 and 1. "
+            "The band in the figure is the standard deviation across rules, not across seeds. "
+            "Pixels and pen coordinates are left on $[0,1]$. Dividing digit pixels by the source standard deviation blows up blank borders after a roll, so that standardization is not used.",
+            "",
+            "Digits are the sklearn $8\\times 8$ images scaled by 16. Target images are rolled two columns to the right and the label is unchanged. "
+            "Pen digits are the UCI stroke table scaled by 100. The eight horizontal coordinates of a target row, the even columns, are shifted by $+0.25$. "
+            "Satimage is the OpenML Statlog Landsat table, already standardized to mean zero and unit variance. "
+            "The first nine bands of a target row are shifted by $+1.25$. The land-cover label is unchanged. "
+            "In each case the reference is source then target, the pool is mixed half and half, and the test set is target only.",
+            "",
+            r"\subsection*{What the paths show}",
+            "",
+            r"Figure~\ref{fig:po-weight-paths} is the mean test accuracy. "
+            r"Table~\ref{tab:po-weight-summary} averages the rules. "
+            r"Table~\ref{tab:po-weight-delta} is the same comparison one rule at a time.",
+            "",
+            r"\begin{figure}[H]",
             r"\centering",
             rf"\includegraphics[width=\textwidth]{{{figure_name}}}",
-            r"\caption{Mean test accuracy by round. Round 0 is the source model. The dashed line is chance.}",
+            r"\caption{Mean test accuracy by round on the target test set. Round 0 is the source-only warm start. The dashed line is chance, $1/C$. The band is the standard deviation across rules.}",
             r"\label{fig:po-weight-paths}",
             r"\end{figure}",
             "",
@@ -500,7 +545,26 @@ def write_latex(keys: list[str] | None = None) -> Path:
             "",
             *delta_lines,
             "",
-            body,
+            "Scoring the mixed pool as $T=1$ is expected to prefer source rows, and it does. "
+            f"The target share of the queried batch falls from {digits['shift_u']:.3f} to {digits['shift_p']:.3f} on digits, "
+            f"from {pen['shift_u']:.3f} to {pen['shift_p']:.3f} on pen digits, and "
+            f"from {sat['shift_u']:.3f} to {sat['shift_p']:.3f} on satimage. "
+            "The pool rate is 0.50 in every stream.",
+            "",
+            "Target accuracy moves when those source rows are the wrong training data. "
+            f"On digits the unweighted mean ends at {digits['uniform']:.3f} and the weighted mean at {digits['po']:.3f}. "
+            f"The area under the path falls from {digits['auc_u']:.3f} to {digits['auc_p']:.3f}. "
+            f"On pen digits the same shift of the batch changes the endpoint only from {pen['uniform']:.3f} to {pen['po']:.3f}. "
+            f"On satimage the source network already scores {sat['start']:.3f} on the target before any pool row is queried, "
+            f"and the two paths finish at {sat['uniform']:.3f} and {sat['po']:.3f}. "
+            "The residual does what $T=1$ specifies. It does not raise average target accuracy.",
+            "",
+            "The mean hides a few rules that finish higher. "
+            f"On digits, BIM with the weight ends at {bim_po['acc_final']:.3f} with target share {bim_po['frac_shifted']:.3f}, "
+            f"against {bim['acc_final']:.3f} and {bim['frac_shifted']:.3f} unweighted. "
+            "Margin is higher with the weight on both digit streams. "
+            "Least confidence and entropy, with and without dropout, account for most of the loss on digits. "
+            "Those rule-level gains do not change the average.",
             "",
             r"\end{document}",
             "",
