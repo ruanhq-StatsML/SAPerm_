@@ -18,7 +18,7 @@ from experiments.deep_active_sampling.data import (
     make_pendigits_stream,
     make_satimage_stream,
 )
-from experiments.deep_active_sampling.query_strategies import schemes_with_po_risk
+from experiments.deep_active_sampling.query_strategies import QUERY_STRATEGIES
 from experiments.deep_active_sampling.sampling import one_pass
 
 HERE = Path(__file__).resolve().parent
@@ -288,7 +288,7 @@ def _result_dir(key: str) -> Path:
 
 def run_dataset(key: str) -> dict:
     spec = DATASETS[key]
-    schemes = schemes_with_po_risk()
+    schemes = QUERY_STRATEGIES
     runs = []
     n_classes = spec["n_classes"]
     for seed in SEEDS:
@@ -534,7 +534,8 @@ def write_latex(keys: list[str] | None = None) -> Path:
             r"The three tables are built by the same function. \texttt{continuous\_loader} yields $(x, y, \mathrm{index})$ in row order and is not shuffled. "
             r"\texttt{one\_pass} reads that loader once, takes the reference prefix, and leaves the rest as the pool. "
             "The test set is not inside the loader. SGD later uses a second, shuffled loader over only the rows that have been queried. "
-            "Digits, pen digits, and satimage are not separate training programs. They are three streams into this digestion.",
+            "Digits, pen digits, and satimage are not separate training programs. They are three streams into this digestion. "
+            r"The query argument is one dict, \texttt{QUERY\_STRATEGIES}: each rule once with a flat weight and once with the pseudo-outcome residual.",
             "",
             r"\subsection*{What the paths show}",
             "",

@@ -39,7 +39,7 @@ Digits are the sklearn $8\times 8$ images scaled by 16. Target images are rolled
 
 \subsection*{One-pass loader}
 
-The three tables are built by the same function. \texttt{continuous\_loader} yields $(x, y, \mathrm{index})$ in row order and is not shuffled. \texttt{one\_pass} reads that loader once, takes the reference prefix, and leaves the rest as the pool. The test set is not inside the loader. SGD later uses a second, shuffled loader over only the rows that have been queried. Digits, pen digits, and satimage are not separate training programs. They are three streams into this digestion.
+The three tables are built by the same function. \texttt{continuous\_loader} yields $(x, y, \mathrm{index})$ in row order and is not shuffled. \texttt{one\_pass} reads that loader once, takes the reference prefix, and leaves the rest as the pool. The test set is not inside the loader. SGD later uses a second, shuffled loader over only the rows that have been queried. Digits, pen digits, and satimage are not separate training programs. They are three streams into this digestion. The query argument is one dict, \texttt{QUERY\_STRATEGIES}: each rule once with a flat weight and once with the pseudo-outcome residual.
 
 \subsection*{What the paths show}
 

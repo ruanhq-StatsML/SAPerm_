@@ -280,6 +280,17 @@ def test_every_strategy_returns_a_unique_batch():
         assert picked.min() >= 0 and picked.max() < len(X), name
 
 
+def test_query_strategies_dict_pairs_each_rule_with_po_risk():
+    from experiments.deep_active_sampling import QUERY_STRATEGIES
+    from experiments.deep_active_sampling.query_strategies import STRATEGIES
+
+    names = [name for name in STRATEGIES if name != "top_weight"]
+    assert set(QUERY_STRATEGIES) == {name for rule in names for name in (rule, f"{rule}_po")}
+    for name in names:
+        assert QUERY_STRATEGIES[name] == {"strategy": name, "weight": "uniform"}
+        assert QUERY_STRATEGIES[f"{name}_po"] == {"strategy": name, "weight": "po_risk"}
+
+
 def test_continuous_loader_preserves_row_order():
     stream = make_shift_stream(n_source=12, n_shift_ref=12, n_pool=15, n_test=8, p=4, n_classes=3, seed=0)
     loader = continuous_loader(stream["X"], stream["Y"], batch_size=7)

@@ -6,8 +6,10 @@ The nuisance is fit on the reference only. `mu0` and `mu1` are ridge regressions
 
 The network is warm-started on the source half, copied, and then updated with SGD that is not reset between rounds. Each round queries one batch and takes a few epochs over the rows acquired so far.
 
+`QUERY_STRATEGIES` is the dict passed as `query_strategy`. Each registered rule appears twice. The plain name uses a flat weight. The `_po` name uses the pseudo-outcome residual.
+
 ```python
-from experiments.deep_active_sampling import continuous_loader, one_pass
+from experiments.deep_active_sampling import QUERY_STRATEGIES, continuous_loader, one_pass
 from experiments.deep_active_sampling.data import make_digits_stream
 
 stream = make_digits_stream(seed=0)
@@ -15,7 +17,7 @@ loader = continuous_loader(stream["X"], stream["Y"])
 one_pass(
     loader,
     batch_size=32,
-    query_strategy={"entropy": "entropy", "entropy_po": {"strategy": "entropy", "weight": "po_risk"}},
+    query_strategy=QUERY_STRATEGIES,
     ref_batch_size=stream["ref_batch_size"],
     X_test=stream["X_test"],
     Y_test=stream["Y_test"],
