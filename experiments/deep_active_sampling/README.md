@@ -15,17 +15,23 @@ ranking in place. The comparison weight is the per-row pseudo-outcome residual
 from a nuisance fit on the reference window: the first half is domain `T = 0`,
 the second half is domain `T = 1`.
 
-The stream is sklearn digits, with pixels left in `[0, 1]`. Target images are
-rolled two pixels to the right. The test set is rolled. The pool mixes
-original and rolled images. k-center uses the same furthest-first rule as
-core-set, so the reported mean counts that curve once. Active learning by
-learning scores a batch with the network that queried it, before the SGD step.
+The default stream is sklearn digits, with pixels left in `[0, 1]`. Target
+images are rolled two pixels to the right. The test set is rolled. The pool
+mixes original and rolled images. Two further streams use the same loop:
+UCI pen digits with the target strokes translated in $x$, and Statlog
+satimage with the first nine bands of the target offset by $1.25$. k-center
+uses the same furthest-first rule as core-set, so the reported mean counts
+that curve once. Active learning by learning scores a batch with the network
+that queried it, before the SGD step.
 
 ```bash
 python3 -m experiments.deep_active_sampling
+python3 -m experiments.deep_active_sampling pendigits satimage
 ```
 
-The run writes `results/BOARD.md` and `results/accuracy_paths.png`.
+A digits run writes `results/BOARD.md` and `results/accuracy_paths.png`.
+The two extra datasets write `results/pendigits/` and `results/satimage/`,
+and `latex/accuracy_paths.tex` summarizes all three.
 
 ```python
 from OOD_vimp_wrapper import permuCATE_fit_nuisance

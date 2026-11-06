@@ -4,7 +4,13 @@ import numpy as np
 import torch
 from torch import nn
 
-from experiments.deep_active_sampling.data import make_digits_stream, make_shift_stream
+from experiments.deep_active_sampling.data import (
+    make_digits_stream,
+    make_pendigits_stream,
+    make_satimage_stream,
+    make_shift_stream,
+    make_shifted_feature_stream,
+)
 from experiments.deep_active_sampling.query_strategies import STRATEGIES
 from experiments.deep_active_sampling.ood_vimp import (
     MMD_LOCO,
@@ -203,6 +209,37 @@ def test_digits_stream_rolls_a_disjoint_target():
     assert stream["Y"].min() >= 0 and stream["Y"].max() <= 9
     assert float(stream["X"].min()) >= 0.0 and float(stream["X"].max()) <= 1.0
     assert float(stream["X_test"].max()) <= 1.0
+
+
+def test_shifted_feature_stream_moves_only_named_columns():
+    rng = np.random.default_rng(0)
+    X = rng.random((80, 4))
+    Y = rng.integers(0, 3, size=80)
+    stream = make_shifted_feature_stream(
+        X, Y, shift_columns=[0, 2], shift=0.4,
+        n_source=10, n_shift_ref=10, n_pool=20, n_test=10, seed=1, name="toy",
+    )
+    assert stream["X"].shape == (40, 4)
+    assert stream["X_test"].shape == (10, 4)
+    assert abs(float(stream["pool_shifted"].mean()) - 0.5) < 1e-8
+    assert float(stream["X"][:10].max()) <= 1.0 + 1e-8
+    assert float(stream["X"][10:20, 0].mean()) > float(stream["X"][:10, 0].mean()) + 0.2
+    assert abs(float(stream["X"][10:20, 1].mean()) - float(stream["X"][:10, 1].mean())) < 0.25
+
+
+def test_pendigits_and_satimage_streams_keep_labels_and_shift_features():
+    pen = make_pendigits_stream(n_source=40, n_shift_ref=40, n_pool=20, n_test=16, seed=0)
+    assert pen["X"].shape == (100, 16)
+    assert pen["n_classes"] == 10
+    assert float(pen["X"][:40].min()) >= 0.0 and float(pen["X"][:40].max()) <= 1.0
+    assert float(pen["X"][40:80, 0].mean()) > float(pen["X"][:40, 0].mean()) + 0.15
+    assert abs(float(pen["pool_shifted"].mean()) - 0.5) < 1e-8
+    sat = make_satimage_stream(n_source=40, n_shift_ref=40, n_pool=20, n_test=16, seed=0)
+    assert sat["X"].shape == (100, 36)
+    assert sat["n_classes"] == 6
+    moved = float(sat["X"][40:80, 0].mean() - sat["X"][:40, 0].mean())
+    still = float(sat["X"][40:80, 20].mean() - sat["X"][:40, 20].mean())
+    assert moved > still + 0.8
 
 
 def test_albl_rewards_the_querying_network_before_the_step():

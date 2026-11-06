@@ -189,6 +189,153 @@ def make_digits_stream(
     }
 
 
+def _encode_labels(Y) -> np.ndarray:
+    labels = np.asarray(Y).reshape(-1).astype(str)
+    classes = np.unique(labels)
+    index = {name: i for i, name in enumerate(classes)}
+    return np.asarray([index[name] for name in labels], dtype=np.int64)
+
+
+def make_shifted_feature_stream(
+    X,
+    Y,
+    shift_columns,
+    shift: float,
+    n_source: int = 280,
+    n_shift_ref: int = 280,
+    n_pool: int = 400,
+    n_test: int = 200,
+    pool_shift_rate: float = 0.5,
+    seed: int = 0,
+    name: str = "shifted",
+) -> dict:
+    """Disjoint source and target rows. Target columns in ``shift_columns`` move by ``shift``.
+
+    Labels are unchanged. The reference window is source then target. The pool
+    mixes the two. The test set is target only. Features are not rescaled here;
+    the caller puts them on a common scale before the shift.
+    """
+    X = np.asarray(X, dtype=float)
+    Y = _encode_labels(Y)
+    if len(X) != len(Y):
+        raise ValueError("X and Y must have the same number of rows")
+    columns = np.asarray(list(shift_columns), dtype=int)
+    n_pool_shift = int(round(pool_shift_rate * n_pool))
+    n_pool_source = n_pool - n_pool_shift
+    n_clean = n_source + n_pool_source
+    n_moved = n_shift_ref + n_pool_shift + n_test
+    if n_clean + n_moved > len(Y):
+        raise ValueError(f"{name} split asks for more rows than the table has")
+    rng = np.random.default_rng(seed)
+    order = rng.permutation(len(Y))
+    clean_idx = order[:n_clean]
+    moved_idx = order[n_clean : n_clean + n_moved]
+
+    def take(idx):
+        return X[idx], Y[idx]
+
+    def take_shifted(idx):
+        block = np.array(X[idx], dtype=float, copy=True)
+        block[:, columns] += float(shift)
+        return block, Y[idx]
+
+    X_source, Y_source = take(clean_idx[:n_source])
+    X_pool_source, Y_pool_source = take(clean_idx[n_source:])
+    X_shift, Y_shift = take_shifted(moved_idx[:n_shift_ref])
+    X_pool_shift, Y_pool_shift = take_shifted(moved_idx[n_shift_ref : n_shift_ref + n_pool_shift])
+    X_test, Y_test = take_shifted(moved_idx[n_shift_ref + n_pool_shift :])
+
+    X_pool = np.vstack([X_pool_source, X_pool_shift])
+    Y_pool = np.concatenate([Y_pool_source, Y_pool_shift])
+    pool_shifted = np.concatenate(
+        [np.zeros(n_pool_source, dtype=bool), np.ones(n_pool_shift, dtype=bool)]
+    )
+    perm = rng.permutation(n_pool)
+    X_pool, Y_pool, pool_shifted = X_pool[perm], Y_pool[perm], pool_shifted[perm]
+    return {
+        "X": np.vstack([X_source, X_shift, X_pool]).astype(np.float64),
+        "Y": np.concatenate([Y_source, Y_shift, Y_pool]).astype(np.int64),
+        "X_test": X_test.astype(np.float64),
+        "Y_test": Y_test.astype(np.int64),
+        "ref_batch_size": int(n_source + n_shift_ref),
+        "pool_shifted": pool_shifted,
+        "shift_idx": columns,
+        "shift": float(shift),
+        "name": name,
+        "n_classes": int(max(Y.max(), Y_test.max()) + 1),
+    }
+
+
+def _load_openml(name: str):
+    from sklearn.datasets import fetch_openml
+
+    X, Y = fetch_openml(name, version=1, return_X_y=True, as_frame=False, parser="liac-arff")
+    return np.asarray(X, dtype=float), np.asarray(Y)
+
+
+def make_pendigits_stream(
+    n_source: int = 280,
+    n_shift_ref: int = 280,
+    n_pool: int = 400,
+    n_test: int = 200,
+    x_shift: float = 0.25,
+    pool_shift_rate: float = 0.5,
+    seed: int = 0,
+) -> dict:
+    """UCI pen digits. Target strokes are translated along x.
+
+    The sixteen coordinates are scaled by 100 into ``[0, 1]``. The eight
+    x-coordinates (even columns) of a target row then move by ``x_shift``.
+    The digit label stays the same.
+    """
+    X, Y = _load_openml("pendigits")
+    return make_shifted_feature_stream(
+        X / 100.0,
+        Y,
+        shift_columns=list(range(0, X.shape[1], 2)),
+        shift=x_shift,
+        n_source=n_source,
+        n_shift_ref=n_shift_ref,
+        n_pool=n_pool,
+        n_test=n_test,
+        pool_shift_rate=pool_shift_rate,
+        seed=seed,
+        name="pendigits",
+    )
+
+
+def make_satimage_stream(
+    n_source: int = 280,
+    n_shift_ref: int = 280,
+    n_pool: int = 400,
+    n_test: int = 200,
+    band_shift: float = 1.25,
+    n_bands: int = 9,
+    pool_shift_rate: float = 0.5,
+    seed: int = 0,
+) -> dict:
+    """Statlog Landsat (satimage). The OpenML table is already standardized.
+
+    Target rows add ``band_shift`` to the first ``n_bands`` spectral features.
+    The land-cover label stays the same. This is a sensor-offset covariate
+    shift, not a relabeling.
+    """
+    X, Y = _load_openml("satimage")
+    return make_shifted_feature_stream(
+        X,
+        Y,
+        shift_columns=list(range(n_bands)),
+        shift=band_shift,
+        n_source=n_source,
+        n_shift_ref=n_shift_ref,
+        n_pool=n_pool,
+        n_test=n_test,
+        pool_shift_rate=pool_shift_rate,
+        seed=seed,
+        name="satimage",
+    )
+
+
 def load_cifar100_arrays(root: str, train: bool = True, download: bool = False):
     """Flattened CIFAR-100 images in ``[0, 1]`` and integer labels.
 
