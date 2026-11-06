@@ -1,0 +1,65 @@
+loading cooking-time
+  n=50000 p=192
+cooking-time num_184 linear in 59.0s | RF-domain AUC 0.39/F1 0.00, Delta-SH AUC 0.84/F1 0.60, LOCO-MMD AUC 0.19/F1 0.00, PermuCATE AUC 0.47/F1 0.10, LOCO AUC 0.56/F1 0.00, GRF AUC 0.91/F1 0.60, L1_m AUC 0.75/F1 0.60, L1_s AUC 0.76/F1 0.50, KO AUC 0.70/F1 0.50
+cooking-time num_184 nonlinear in 57.6s | RF-domain AUC 0.45/F1 0.10, Delta-SH AUC 0.56/F1 0.30, LOCO-MMD AUC 0.42/F1 0.20, PermuCATE AUC 0.37/F1 0.10, LOCO AUC 0.51/F1 0.00, GRF AUC 0.71/F1 0.20, L1_m AUC 0.65/F1 0.20, L1_s AUC 0.72/F1 0.20, KO AUC 0.63/F1 0.20
+cooking-time num_184 conceptdrift in 57.7s | RF-domain AUC 0.37/F1 0.10, Delta-SH AUC 0.60/F1 0.20, LOCO-MMD AUC 0.28/F1 0.10, PermuCATE AUC 0.56/F1 0.10, LOCO AUC 0.56/F1 0.00, GRF AUC 0.63/F1 0.30, L1_m AUC 0.59/F1 0.20, L1_s AUC 0.65/F1 0.20, KO AUC 0.60/F1 0.20
+cooking-time num_184 covariateshift in 57.1s | RF-domain AUC 0.93/F1 0.20, Delta-SH AUC 0.41/F1 0.00, LOCO-MMD AUC 0.94/F1 0.50, PermuCATE AUC 0.48/F1 0.00, LOCO AUC 0.43/F1 0.00, GRF AUC 0.48/F1 0.00, L1_m AUC 0.50/F1 0.20, L1_s AUC 0.48/F1 0.00, KO AUC 0.51/F1 0.20
+cooking-time num_38 linear in 57.2s | RF-domain AUC 0.69/F1 0.20, Delta-SH AUC 0.93/F1 0.40, LOCO-MMD AUC 0.50/F1 0.20, PermuCATE AUC 0.70/F1 0.30, LOCO AUC 0.53/F1 0.10, GRF AUC 0.92/F1 0.50, L1_m AUC 0.89/F1 0.70, L1_s AUC 0.88/F1 0.80, KO AUC 0.80/F1 0.70
+cooking-time num_38 nonlinear in 59.1s | RF-domain AUC 0.38/F1 0.00, Delta-SH AUC 0.59/F1 0.30, LOCO-MMD AUC 0.41/F1 0.00, PermuCATE AUC 0.53/F1 0.10, LOCO AUC 0.40/F1 0.00, GRF AUC 0.68/F1 0.30, L1_m AUC 0.58/F1 0.20, L1_s AUC 0.59/F1 0.20, KO AUC 0.54/F1 0.10
+cooking-time num_38 conceptdrift in 59.9s | RF-domain AUC 0.50/F1 0.10, Delta-SH AUC 0.66/F1 0.10, LOCO-MMD AUC 0.51/F1 0.10, PermuCATE AUC 0.55/F1 0.10, LOCO AUC 0.60/F1 0.20, GRF AUC 0.67/F1 0.30, L1_m AUC 0.57/F1 0.10, L1_s AUC 0.67/F1 0.10, KO AUC 0.54/F1 0.10
+cooking-time num_38 covariateshift in 58.0s | RF-domain AUC 0.92/F1 0.40, Delta-SH AUC 0.56/F1 0.30, LOCO-MMD AUC 0.93/F1 0.40, PermuCATE AUC 0.44/F1 0.10, LOCO AUC 0.60/F1 0.00, GRF AUC 0.53/F1 0.20, L1_m AUC 0.50/F1 0.10, L1_s AUC 0.58/F1 0.00, KO AUC 0.50/F1 0.10
+cooking-time num_123 linear in 59.1s | RF-domain AUC 0.47/F1 0.00, Delta-SH AUC 0.88/F1 0.40, LOCO-MMD AUC 0.36/F1 0.00, PermuCATE AUC 0.51/F1 0.10, LOCO AUC 0.54/F1 0.10, GRF AUC 0.88/F1 0.50, L1_m AUC 1.00/F1 1.00, L1_s AUC 0.94/F1 0.80, KO AUC 0.90/F1 0.80
+cooking-time num_123 nonlinear in 57.6s | RF-domain AUC 0.34/F1 0.00, Delta-SH AUC 0.73/F1 0.30, LOCO-MMD AUC 0.28/F1 0.00, PermuCATE AUC 0.56/F1 0.10, LOCO AUC 0.48/F1 0.00, GRF AUC 0.86/F1 0.30, L1_m AUC 0.62/F1 0.30, L1_s AUC 0.68/F1 0.30, KO AUC 0.73/F1 0.30
+cooking-time num_123 conceptdrift in 57.9s | RF-domain AUC 0.41/F1 0.00, Delta-SH AUC 0.80/F1 0.30, LOCO-MMD AUC 0.36/F1 0.00, PermuCATE AUC 0.58/F1 0.20, LOCO AUC 0.38/F1 0.10, GRF AUC 0.86/F1 0.40, L1_m AUC 0.54/F1 0.30, L1_s AUC 0.67/F1 0.20, KO AUC 0.53/F1 0.10
+cooking-time num_123 covariateshift in 55.2s | RF-domain AUC 0.90/F1 0.20, Delta-SH AUC 0.51/F1 0.20, LOCO-MMD AUC 0.94/F1 0.60, PermuCATE AUC 0.41/F1 0.00, LOCO AUC 0.42/F1 0.00, GRF AUC 0.68/F1 0.40, L1_m AUC 0.50/F1 0.10, L1_s AUC 0.54/F1 0.20, KO AUC 0.50/F1 0.20
+loading ecom-offers
+  n=50000 p=110
+ecom-offers num_67 linear in 29.0s | RF-domain AUC 0.48/F1 0.00, Delta-SH AUC 0.54/F1 0.00, LOCO-MMD AUC 0.37/F1 0.00, PermuCATE AUC 0.67/F1 0.20, LOCO AUC 0.59/F1 0.10, GRF AUC 0.72/F1 0.00, L1_m AUC 0.52/F1 0.10, L1_s AUC 0.49/F1 0.10, KO AUC 0.48/F1 0.10
+ecom-offers num_67 nonlinear in 31.4s | RF-domain AUC 0.55/F1 0.00, Delta-SH AUC 0.63/F1 0.10, LOCO-MMD AUC 0.34/F1 0.00, PermuCATE AUC 0.65/F1 0.10, LOCO AUC 0.46/F1 0.10, GRF AUC 0.64/F1 0.10, L1_m AUC 0.46/F1 0.00, L1_s AUC 0.50/F1 0.00, KO AUC 0.41/F1 0.00
+ecom-offers num_67 conceptdrift in 29.0s | RF-domain AUC 0.51/F1 0.00, Delta-SH AUC 0.71/F1 0.00, LOCO-MMD AUC 0.45/F1 0.00, PermuCATE AUC 0.52/F1 0.20, LOCO AUC 0.62/F1 0.00, GRF AUC 0.71/F1 0.20, L1_m AUC 0.50/F1 0.00, L1_s AUC 0.50/F1 0.10, KO AUC 0.50/F1 0.00
+ecom-offers num_67 covariateshift in 28.5s | RF-domain AUC 1.00/F1 0.90, Delta-SH AUC 0.62/F1 0.30, LOCO-MMD AUC 1.00/F1 0.90, PermuCATE AUC 0.56/F1 0.10, LOCO AUC 0.35/F1 0.00, GRF AUC 0.82/F1 0.40, L1_m AUC 0.48/F1 0.00, L1_s AUC 0.54/F1 0.20, KO AUC 0.49/F1 0.00
+ecom-offers num_104 linear in 29.3s | RF-domain AUC 0.65/F1 0.00, Delta-SH AUC 0.81/F1 0.40, LOCO-MMD AUC 0.14/F1 0.00, PermuCATE AUC 0.78/F1 0.50, LOCO AUC 0.36/F1 0.00, GRF AUC 0.78/F1 0.30, L1_m AUC 0.65/F1 0.40, L1_s AUC 0.85/F1 0.50, KO AUC 0.54/F1 0.20
+ecom-offers num_104 nonlinear in 29.1s | RF-domain AUC 0.62/F1 0.00, Delta-SH AUC 0.61/F1 0.20, LOCO-MMD AUC 0.27/F1 0.00, PermuCATE AUC 0.48/F1 0.20, LOCO AUC 0.60/F1 0.00, GRF AUC 0.70/F1 0.20, L1_m AUC 0.54/F1 0.30, L1_s AUC 0.67/F1 0.40, KO AUC 0.58/F1 0.40
+ecom-offers num_104 conceptdrift in 28.8s | RF-domain AUC 0.61/F1 0.00, Delta-SH AUC 0.91/F1 0.40, LOCO-MMD AUC 0.35/F1 0.10, PermuCATE AUC 0.48/F1 0.20, LOCO AUC 0.65/F1 0.30, GRF AUC 0.81/F1 0.30, L1_m AUC 0.55/F1 0.20, L1_s AUC 0.69/F1 0.40, KO AUC 0.55/F1 0.20
+ecom-offers num_104 covariateshift in 28.6s | RF-domain AUC 0.97/F1 0.70, Delta-SH AUC 0.79/F1 0.40, LOCO-MMD AUC 0.78/F1 0.10, PermuCATE AUC 0.57/F1 0.30, LOCO AUC 0.54/F1 0.00, GRF AUC 0.73/F1 0.10, L1_m AUC 0.54/F1 0.20, L1_s AUC 0.54/F1 0.20, KO AUC 0.59/F1 0.20
+ecom-offers num_60 linear in 29.3s | RF-domain AUC 0.60/F1 0.00, Delta-SH AUC 0.71/F1 0.20, LOCO-MMD AUC 0.55/F1 0.00, PermuCATE AUC 0.60/F1 0.10, LOCO AUC 0.46/F1 0.00, GRF AUC 0.66/F1 0.20, L1_m AUC 0.49/F1 0.00, L1_s AUC 0.61/F1 0.20, KO AUC 0.43/F1 0.00
+ecom-offers num_60 nonlinear in 29.2s | RF-domain AUC 0.40/F1 0.00, Delta-SH AUC 0.55/F1 0.10, LOCO-MMD AUC 0.49/F1 0.00, PermuCATE AUC 0.60/F1 0.10, LOCO AUC 0.73/F1 0.50, GRF AUC 0.47/F1 0.10, L1_m AUC 0.48/F1 0.00, L1_s AUC 0.58/F1 0.20, KO AUC 0.48/F1 0.00
+ecom-offers num_60 conceptdrift in 28.6s | RF-domain AUC 0.50/F1 0.00, Delta-SH AUC 0.52/F1 0.00, LOCO-MMD AUC 0.54/F1 0.20, PermuCATE AUC 0.50/F1 0.00, LOCO AUC 0.67/F1 0.10, GRF AUC 0.66/F1 0.20, L1_m AUC 0.50/F1 0.00, L1_s AUC 0.51/F1 0.10, KO AUC 0.50/F1 0.00
+ecom-offers num_60 covariateshift in 28.5s | RF-domain AUC 1.00/F1 0.90, Delta-SH AUC 0.64/F1 0.20, LOCO-MMD AUC 0.99/F1 0.80, PermuCATE AUC 0.35/F1 0.10, LOCO AUC 0.42/F1 0.10, GRF AUC 0.82/F1 0.30, L1_m AUC 0.48/F1 0.00, L1_s AUC 0.46/F1 0.00, KO AUC 0.48/F1 0.00
+loading weather
+  n=50000 p=97
+weather num_5 linear in 29.4s | RF-domain AUC 0.45/F1 0.10, Delta-SH AUC 0.86/F1 0.50, LOCO-MMD AUC 0.48/F1 0.10, PermuCATE AUC 0.62/F1 0.20, LOCO AUC 0.54/F1 0.30, GRF AUC 0.92/F1 0.60, L1_m AUC 0.76/F1 0.60, L1_s AUC 0.72/F1 0.60, KO AUC 0.74/F1 0.70
+weather num_5 nonlinear in 27.8s | RF-domain AUC 0.52/F1 0.10, Delta-SH AUC 0.76/F1 0.30, LOCO-MMD AUC 0.51/F1 0.10, PermuCATE AUC 0.61/F1 0.10, LOCO AUC 0.42/F1 0.20, GRF AUC 0.95/F1 0.80, L1_m AUC 0.45/F1 0.20, L1_s AUC 0.47/F1 0.20, KO AUC 0.38/F1 0.20
+weather num_5 conceptdrift in 27.1s | RF-domain AUC 0.49/F1 0.10, Delta-SH AUC 0.82/F1 0.50, LOCO-MMD AUC 0.48/F1 0.10, PermuCATE AUC 0.37/F1 0.20, LOCO AUC 0.53/F1 0.10, GRF AUC 0.81/F1 0.60, L1_m AUC 0.59/F1 0.30, L1_s AUC 0.54/F1 0.40, KO AUC 0.59/F1 0.30
+weather num_5 covariateshift in 26.6s | RF-domain AUC 0.94/F1 0.50, Delta-SH AUC 0.50/F1 0.20, LOCO-MMD AUC 0.98/F1 0.70, PermuCATE AUC 0.46/F1 0.20, LOCO AUC 0.49/F1 0.20, GRF AUC 0.53/F1 0.20, L1_m AUC 0.50/F1 0.10, L1_s AUC 0.34/F1 0.20, KO AUC 0.47/F1 0.10
+weather num_84 linear in 28.1s | RF-domain AUC 0.54/F1 0.10, Delta-SH AUC 0.94/F1 0.50, LOCO-MMD AUC 0.53/F1 0.10, PermuCATE AUC 0.63/F1 0.10, LOCO AUC 0.61/F1 0.30, GRF AUC 0.93/F1 0.50, L1_m AUC 0.83/F1 0.70, L1_s AUC 0.82/F1 0.70, KO AUC 0.79/F1 0.70
+weather num_84 nonlinear in 27.7s | RF-domain AUC 0.55/F1 0.10, Delta-SH AUC 0.73/F1 0.30, LOCO-MMD AUC 0.51/F1 0.10, PermuCATE AUC 0.68/F1 0.30, LOCO AUC 0.45/F1 0.20, GRF AUC 0.77/F1 0.50, L1_m AUC 0.45/F1 0.20, L1_s AUC 0.52/F1 0.20, KO AUC 0.47/F1 0.20
+weather num_84 conceptdrift in 27.5s | RF-domain AUC 0.56/F1 0.10, Delta-SH AUC 0.90/F1 0.60, LOCO-MMD AUC 0.59/F1 0.10, PermuCATE AUC 0.62/F1 0.50, LOCO AUC 0.48/F1 0.10, GRF AUC 0.83/F1 0.60, L1_m AUC 0.57/F1 0.20, L1_s AUC 0.51/F1 0.30, KO AUC 0.51/F1 0.20
+weather num_84 covariateshift in 26.9s | RF-domain AUC 0.96/F1 0.60, Delta-SH AUC 0.49/F1 0.20, LOCO-MMD AUC 0.98/F1 0.70, PermuCATE AUC 0.54/F1 0.20, LOCO AUC 0.31/F1 0.10, GRF AUC 0.61/F1 0.20, L1_m AUC 0.47/F1 0.10, L1_s AUC 0.41/F1 0.20, KO AUC 0.43/F1 0.10
+weather num_98 linear in 27.3s | RF-domain AUC 0.73/F1 0.10, Delta-SH AUC 0.80/F1 0.40, LOCO-MMD AUC 0.79/F1 0.40, PermuCATE AUC 0.61/F1 0.40, LOCO AUC 0.62/F1 0.50, GRF AUC 0.92/F1 0.60, L1_m AUC 0.82/F1 0.70, L1_s AUC 0.83/F1 0.80, KO AUC 0.90/F1 0.80
+weather num_98 nonlinear in 30.7s | RF-domain AUC 0.68/F1 0.00, Delta-SH AUC 0.85/F1 0.30, LOCO-MMD AUC 0.78/F1 0.30, PermuCATE AUC 0.49/F1 0.20, LOCO AUC 0.46/F1 0.20, GRF AUC 0.95/F1 0.50, L1_m AUC 0.53/F1 0.30, L1_s AUC 0.54/F1 0.40, KO AUC 0.46/F1 0.30
+weather num_98 conceptdrift in 28.9s | RF-domain AUC 0.68/F1 0.10, Delta-SH AUC 0.90/F1 0.70, LOCO-MMD AUC 0.79/F1 0.40, PermuCATE AUC 0.63/F1 0.30, LOCO AUC 0.78/F1 0.20, GRF AUC 0.92/F1 0.50, L1_m AUC 0.51/F1 0.30, L1_s AUC 0.62/F1 0.50, KO AUC 0.48/F1 0.30
+weather num_98 covariateshift in 28.5s | RF-domain AUC 0.98/F1 0.80, Delta-SH AUC 0.52/F1 0.20, LOCO-MMD AUC 0.98/F1 0.80, PermuCATE AUC 0.53/F1 0.00, LOCO AUC 0.36/F1 0.10, GRF AUC 0.74/F1 0.30, L1_m AUC 0.42/F1 0.00, L1_s AUC 0.35/F1 0.00, KO AUC 0.51/F1 0.20
+\begin{table}[t]
+\centering
+\caption{TabReD feature-rank benchmark after a planted shift. Each cell is the mean, over nine task$\times$split tables, of selection AUC and top-10 F1 against the ten features that were actually shifted. Linear and nonlinear concept drift add a signal on the new batch. Concept drift replaces the new-batch regression function. Covariate shift moves those features by 1.5 batch-0 standard deviations and leaves $Y$ unchanged. PermuCATE uses $n_{\mathrm{perm}}=50$ and a random-forest regressor for the outcome model and the pseudo-outcome regression.}
+\label{tab:tabred-planted-shift}
+\begin{tabular}{lcccccccc}
+\toprule
+& \multicolumn{2}{c}{Linear} & \multicolumn{2}{c}{Nonlinear} & \multicolumn{2}{c}{Concept drift} & \multicolumn{2}{c}{Covariate shift} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
+Method & AUC & F1 & AUC & F1 & AUC & F1 & AUC & F1 \\
+\midrule
+RF-domain & 0.556 & 0.056 & 0.500 & 0.033 & 0.515 & 0.056 & 0.954 & 0.578 \\
+Delta-Shapley & 0.812 & 0.378 & 0.670 & 0.244 & 0.759 & 0.311 & 0.559 & 0.222 \\
+LOCO-MMD & 0.434 & 0.089 & 0.446 & 0.078 & 0.483 & 0.122 & 0.946 & 0.611 \\
+PermuCATE & 0.621 & 0.222 & 0.552 & 0.144 & 0.536 & 0.200 & 0.482 & 0.111 \\
+LOCO R-risk & 0.533 & 0.156 & 0.502 & 0.133 & 0.586 & 0.122 & 0.437 & 0.056 \\
+GRF & 0.849 & 0.422 & 0.747 & 0.333 & 0.766 & 0.378 & 0.660 & 0.233 \\
+$\ell_1$ misspecified & 0.746 & 0.533 & 0.529 & 0.189 & 0.548 & 0.178 & 0.487 & 0.089 \\
+$\ell_1$ specified & 0.768 & 0.556 & 0.585 & 0.233 & 0.596 & 0.256 & 0.473 & 0.111 \\
+Knockoff & 0.698 & 0.500 & 0.521 & 0.189 & 0.535 & 0.156 & 0.498 & 0.122 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
