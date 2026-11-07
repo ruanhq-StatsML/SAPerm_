@@ -167,7 +167,7 @@ def run_misspec(
     out_dir: str | Path | None = None,
     deltas: tuple[float, ...] = DELTAS,
     replicates: int = 24,
-    n_perm: int = 29,
+    n_perm: int = 150,
     n_perm_cate: int = 5,
     n_per_domain: int = 1000,
     grf_n_estimators: int = 30,
