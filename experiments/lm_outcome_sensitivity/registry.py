@@ -8,6 +8,7 @@ Classifiers return ``P(Y=1 | X)``. ``ridge_classifier`` is binomial ridge
 from __future__ import annotations
 
 import numpy as np
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.neural_network import MLPRegressor
 
@@ -74,8 +75,11 @@ def build_registry(
     mlp_hidden: int = 4,
     mlp_max_iter: int = 80,
     mlp_alpha: float = 1e-5,
+    rf_n_estimators: int = 80,
+    rf_max_depth: int = 6,
+    rf_min_samples_leaf: int = 5,
 ) -> dict:
-    """Build the four learners on the sensitivity grid."""
+    """Build the outcome and propensity learners on the sensitivity grid."""
 
     def fit_lm(x, y, seed=None):
         del seed
@@ -107,11 +111,26 @@ def build_registry(
     def predict_mlp(fitted, x_new):
         return np.asarray(fitted.predict(_design(x_new)), dtype=float).ravel()
 
+    def fit_rf(x, y, seed=None):
+        model = RandomForestRegressor(
+            n_estimators=int(rf_n_estimators),
+            max_depth=int(rf_max_depth),
+            min_samples_leaf=int(rf_min_samples_leaf),
+            n_jobs=1,
+            random_state=_seed(seed),
+        )
+        model.fit(_design(x), _as_1d(y))
+        return model
+
+    def predict_rf(fitted, x_new):
+        return np.asarray(fitted.predict(_design(x_new)), dtype=float).ravel()
+
     logistic_c = 1.0
     ridge_c = 1.0 / float(ridge_alpha)
     return {
         "lm_regressor": {"name": "lm_regressor", "fit": fit_lm, "predict": predict_lm},
         "mlp_regressor": {"name": "mlp_regressor", "fit": fit_mlp, "predict": predict_mlp},
+        "rf_regressor": {"name": "rf_regressor", "fit": fit_rf, "predict": predict_rf},
         "logistic_classifier": _classifier(logistic_c, "logistic_classifier"),
         "ridge_classifier": _classifier(ridge_c, "ridge_classifier"),
     }

@@ -22,6 +22,7 @@ helper ``aggregate_power`` with ``level_feature=0.01`` and
 from __future__ import annotations
 
 import numpy as np
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression, Ridge
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.neural_network import MLPRegressor
@@ -127,7 +128,18 @@ def vimp_loco_r_risk(
     return importance
 
 
-def _grf_estimators(model_outcome: str, model_psm: str, seed: int, mlp_hidden: int, mlp_max_iter: int, mlp_alpha: float, ridge_alpha: float):
+def _grf_estimators(
+    model_outcome: str,
+    model_psm: str,
+    seed: int,
+    mlp_hidden: int,
+    mlp_max_iter: int,
+    mlp_alpha: float,
+    ridge_alpha: float,
+    rf_n_estimators: int = 80,
+    rf_max_depth: int = 6,
+    rf_min_samples_leaf: int = 5,
+):
     if model_outcome == "lm_regressor":
         model_y = LinearRegression()
     elif model_outcome == "mlp_regressor":
@@ -138,6 +150,14 @@ def _grf_estimators(model_outcome: str, model_psm: str, seed: int, mlp_hidden: i
             early_stopping=False,
             learning_rate_init=1e-2,
             tol=1e-3,
+            random_state=_seed(seed),
+        )
+    elif model_outcome == "rf_regressor":
+        model_y = RandomForestRegressor(
+            n_estimators=int(rf_n_estimators),
+            max_depth=int(rf_max_depth),
+            min_samples_leaf=int(rf_min_samples_leaf),
+            n_jobs=1,
             random_state=_seed(seed),
         )
     else:
@@ -169,6 +189,9 @@ def cf_variable_importance(
     mlp_max_iter: int = 80,
     mlp_alpha: float = 1e-5,
     ridge_alpha: float = 0.25,
+    rf_n_estimators: int = 80,
+    rf_max_depth: int = 6,
+    rf_min_samples_leaf: int = 5,
 ) -> np.ndarray:
     from econml.dml import CausalForestDML
 
@@ -183,6 +206,9 @@ def cf_variable_importance(
         mlp_max_iter=mlp_max_iter,
         mlp_alpha=mlp_alpha,
         ridge_alpha=ridge_alpha,
+        rf_n_estimators=rf_n_estimators,
+        rf_max_depth=rf_max_depth,
+        rf_min_samples_leaf=rf_min_samples_leaf,
     )
     forest = CausalForestDML(
         model_y=model_y,
@@ -336,6 +362,9 @@ def _importance(x, y, w, vimp, model_m, model_e, registry, seed, spec) -> np.nda
             mlp_max_iter=spec["mlp_max_iter"],
             mlp_alpha=spec["mlp_alpha"],
             ridge_alpha=spec["ridge_alpha"],
+            rf_n_estimators=spec["rf_n_estimators"],
+            rf_max_depth=spec["rf_max_depth"],
+            rf_min_samples_leaf=spec["rf_min_samples_leaf"],
         )
     if vimp == "permucate":
         return permuCATE_vimp(
@@ -377,6 +406,9 @@ def cfperm_feature_pvals(
     mlp_max_iter: int = 80,
     mlp_alpha: float = 1e-5,
     ridge_alpha: float = 0.25,
+    rf_n_estimators: int = 80,
+    rf_max_depth: int = 6,
+    rf_min_samples_leaf: int = 5,
 ) -> dict:
     """Permute the batch label and return the CFPerm rejection summary."""
     x = _design(x)
@@ -393,6 +425,9 @@ def cfperm_feature_pvals(
         "mlp_max_iter": int(mlp_max_iter),
         "mlp_alpha": float(mlp_alpha),
         "ridge_alpha": float(ridge_alpha),
+        "rf_n_estimators": int(rf_n_estimators),
+        "rf_max_depth": int(rf_max_depth),
+        "rf_min_samples_leaf": int(rf_min_samples_leaf),
     }
     observed = _importance(x, y, w, vimp, model_m, model_e, registry, seed, spec)
     p = observed.size
