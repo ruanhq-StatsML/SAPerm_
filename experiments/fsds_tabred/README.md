@@ -16,11 +16,14 @@ order. Data come from the public Hugging Face mirror (no Kaggle token).
 ## Run
 
 ```bash
-# recommended first pass
-python3 -m experiments.fsds_tabred weather ecom-offers --max-rows 8000
+# recommended first pass (single batch size)
+python3 -m experiments.fsds_tabred weather ecom-offers --max-rows 8000 --batch-size 200
 
-# full suite
+# full suite with batch-size sweep (default: 100 200 400)
 python3 -m experiments.fsds_tabred
+
+# custom sweep
+python3 -m experiments.fsds_tabred --batch-sizes 100 200 400
 ```
 
 Policies compared per dataset:

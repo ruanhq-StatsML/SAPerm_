@@ -209,6 +209,8 @@ def run_dataset(
                 "penalty": kind,
                 "lam": lam,
                 "serve": out["serve"],
+                "batch_size": int(batch_size),
+                "ref_batch_size": int(ref_batch_size),
                 "n": stream["n"],
                 "p": stream["p"],
                 "n_batches": out["n_batches"],
@@ -229,7 +231,10 @@ def run_dataset(
             flush=True,
         )
 
-    dest = Path(out_dir) if out_dir is not None else RESULTS / name
+    if out_dir is not None:
+        dest = Path(out_dir)
+    else:
+        dest = RESULTS / f"b{batch_size}" / name
     dest.mkdir(parents=True, exist_ok=True)
     summary = pd.DataFrame(summary_rows)
     summary.to_csv(dest / "summary.csv", index=False)
@@ -263,7 +268,22 @@ def run_suite(
     return board
 
 
+def _fmt_list(val) -> str:
+    if isinstance(val, str):
+        return val
+    if isinstance(val, (list, tuple, np.ndarray)):
+        try:
+            nums = [float(x) for x in val]
+            if nums and all(abs(x - round(x)) < 1e-9 for x in nums):
+                return str([int(round(x)) for x in nums])
+            return str([round(x, 3) for x in nums])
+        except Exception:
+            return str(list(val))
+    return str(val)
+
+
 def _write_board_md(board: pd.DataFrame, path: Path) -> None:
+    has_batch = "batch_size" in board.columns
     lines = [
         "# FSDS Thompson on TabReD (classification)",
         "",
@@ -273,15 +293,85 @@ def _write_board_md(board: pd.DataFrame, path: Path) -> None:
         "Serve mode: keep only the selected block in the RF predictor (FSDS",
         "avoids high-shift blocks via the λ·w penalty). Reward = negative Brier.",
         "",
-        "| dataset | tag | mean_reward | mean_accuracy | arm_counts | late_w | elapsed_sec |",
-        "| --- | --- | ---: | ---: | --- | --- | ---: |",
     ]
-    for _, r in board.iterrows():
+    if has_batch:
         lines.append(
-            f"| {r['dataset']} | {r['tag']} | {r['mean_reward']:.4f} | "
-            f"{r['mean_accuracy']:.3f} | `{r['arm_counts']}` | `{r.get('late_w', '')}` | "
-            f"{r['elapsed_sec']:.1f} |"
+            "| batch | dataset | tag | mean_reward | mean_accuracy | n_batches | arm_counts | late_w | elapsed_sec |"
         )
+        lines.append(
+            "| ---: | --- | --- | ---: | ---: | ---: | --- | --- | ---: |"
+        )
+    else:
+        lines.append(
+            "| dataset | tag | mean_reward | mean_accuracy | arm_counts | late_w | elapsed_sec |"
+        )
+        lines.append("| --- | --- | ---: | ---: | --- | --- | ---: |")
+    for _, r in board.iterrows():
+        arms = _fmt_list(r.get("arm_counts", ""))
+        late = _fmt_list(r.get("late_w", ""))
+        if has_batch:
+            lines.append(
+                f"| {int(r['batch_size'])} | {r['dataset']} | {r['tag']} | "
+                f"{r['mean_reward']:.4f} | {r['mean_accuracy']:.3f} | "
+                f"{int(r['n_batches'])} | `{arms}` | `{late}` | {r['elapsed_sec']:.1f} |"
+            )
+        else:
+            lines.append(
+                f"| {r['dataset']} | {r['tag']} | {r['mean_reward']:.4f} | "
+                f"{r['mean_accuracy']:.3f} | `{arms}` | `{late}` | "
+                f"{r['elapsed_sec']:.1f} |"
+            )
+    path.write_text("\n".join(lines) + "\n")
+
+
+def _write_batch_compare_md(board: pd.DataFrame, path: Path) -> None:
+    """Pivot mean_reward by batch size for the FSDS vs flat gap."""
+    lines = [
+        "# Batch-size sweep",
+        "",
+        "Mean reward (negative Brier). Higher (less negative) is better.",
+        "",
+    ]
+    tags = ["fsds_vimp", "fsds_logo", "ts_flat", "boot_fsds_vimp"]
+    for dataset, sub in board.groupby("dataset", sort=False):
+        lines.append(f"## {dataset}")
+        lines.append("")
+        batches = sorted(sub["batch_size"].unique())
+        header = "| tag | " + " | ".join(f"b={b}" for b in batches) + " | best |"
+        sep = "| --- | " + " | ".join("---:" for _ in batches) + " | --- |"
+        lines.extend([header, sep])
+        for tag in tags:
+            row = sub[sub["tag"] == tag]
+            if row.empty:
+                continue
+            vals = []
+            for b in batches:
+                hit = row[row["batch_size"] == b]
+                vals.append(float(hit["mean_reward"].iloc[0]) if len(hit) else float("nan"))
+            best_b = batches[int(np.nanargmax(vals))] if vals else "-"
+            cells = " | ".join(f"{v:.4f}" for v in vals)
+            lines.append(f"| {tag} | {cells} | b={best_b} |")
+        # gap vs flat
+        lines.append("")
+        lines.append("Gap vs `ts_flat` (positive = FSDS better):")
+        lines.append("")
+        lines.append("| tag | " + " | ".join(f"b={b}" for b in batches) + " |")
+        lines.append("| --- | " + " | ".join("---:" for _ in batches) + " |")
+        flat = {
+            int(r.batch_size): float(r.mean_reward)
+            for r in sub[sub["tag"] == "ts_flat"].itertuples()
+        }
+        for tag in ("fsds_vimp", "fsds_logo", "boot_fsds_vimp"):
+            row = sub[sub["tag"] == tag]
+            cells = []
+            for b in batches:
+                hit = row[row["batch_size"] == b]
+                if len(hit) == 0 or b not in flat:
+                    cells.append("nan")
+                else:
+                    cells.append(f"{float(hit['mean_reward'].iloc[0]) - flat[b]:+.4f}")
+            lines.append(f"| {tag} | " + " | ".join(cells) + " |")
+        lines.append("")
     path.write_text("\n".join(lines) + "\n")
 
 
@@ -295,21 +385,46 @@ def main(argv: list[str] | None = None) -> None:
     )
     parser.add_argument("--max-rows", type=int, default=8000)
     parser.add_argument("--ref-batch-size", type=int, default=800)
-    parser.add_argument("--batch-size", type=int, default=200)
+    parser.add_argument("--batch-size", type=int, default=None,
+                        help="Single batch size (default: sweep 100,200,400)")
+    parser.add_argument(
+        "--batch-sizes",
+        type=int,
+        nargs="+",
+        default=None,
+        help="Sweep these batch sizes (default: 100 200 400)",
+    )
     parser.add_argument("--n-perm", type=int, default=8)
     parser.add_argument("--seed", type=int, default=2026)
     args = parser.parse_args(argv)
     unknown = [d for d in args.datasets if d not in TASKS]
     if unknown:
         raise SystemExit(f"unknown datasets: {unknown}; choose from {list(TASKS)}")
-    board = run_suite(
-        datasets=args.datasets,
-        max_rows=args.max_rows,
-        ref_batch_size=args.ref_batch_size,
-        batch_size=args.batch_size,
-        n_perm=args.n_perm,
-        seed=args.seed,
-    )
+    if args.batch_sizes is not None:
+        batch_sizes = list(args.batch_sizes)
+    elif args.batch_size is not None:
+        batch_sizes = [args.batch_size]
+    else:
+        batch_sizes = [100, 200, 400]
+
+    frames = []
+    for b in batch_sizes:
+        print(f"\n===== batch_size={b} =====", flush=True)
+        part = run_suite(
+            datasets=args.datasets,
+            max_rows=args.max_rows,
+            ref_batch_size=args.ref_batch_size,
+            batch_size=b,
+            n_perm=args.n_perm,
+            seed=args.seed,
+        )
+        frames.append(part)
+    board = pd.concat(frames, ignore_index=True)
+    RESULTS.mkdir(parents=True, exist_ok=True)
+    board.to_csv(RESULTS / "BOARD.csv", index=False)
+    _write_board_md(board, RESULTS / "BOARD.md")
+    if len(batch_sizes) > 1:
+        _write_batch_compare_md(board, RESULTS / "BOARD_BY_BATCH.md")
     print(board.to_string(index=False), flush=True)
 
 
