@@ -166,7 +166,7 @@ def plot_misspec(summary: pd.DataFrame, path: str | Path) -> None:
 def run_misspec(
     out_dir: str | Path | None = None,
     deltas: tuple[float, ...] = DELTAS,
-    replicates: int = 24,
+    replicates: int = 150,
     n_perm: int = 150,
     n_perm_cate: int = 5,
     n_per_domain: int = 1000,
