@@ -8,7 +8,8 @@ coefficient-shift study: noise sd 10, and either no shift (type I) or a
 shift of 0.8 on ``X5``--``X8`` (power). The outcome model is linear and the
 propensity is logistic. LOCO, GRF, and PermuCATE share that specification.
 The reported run uses 150 label permutations and 150 Monte Carlo replicates.
-GRF uses 30 trees. PermuCATE uses 10 inner permutations of the pseudo-outcome.
+GRF uses 30 trees and draws ``sqrt(p)`` candidate features at each split.
+PermuCATE uses 10 inner permutations of the pseudo-outcome.
 """
 
 from __future__ import annotations
@@ -92,6 +93,7 @@ def _one(task: dict) -> dict:
         n_perm_cate=int(task["n_perm_cate"]),
         sig_ind=SIG_IND,
         grf_n_estimators=int(task["grf_n_estimators"]),
+        grf_max_features=task.get("grf_max_features", "sqrt"),
     )
     return {
         "task_id": task["task_id"],
@@ -106,6 +108,7 @@ def _one(task: dict) -> dict:
         "n_perm": int(task["n_perm"]),
         "n_perm_cate": int(task["n_perm_cate"]),
         "grf_n_estimators": int(task["grf_n_estimators"]),
+        "grf_max_features": str(task.get("grf_max_features", "sqrt")),
         "rejected": int(result["rejected"]),
         "reject_signal": int(result["reject_signal"]),
         "min_p": float(result["min_p"]),
@@ -114,16 +117,19 @@ def _one(task: dict) -> dict:
 
 def summarize(replicates: pd.DataFrame) -> pd.DataFrame:
     keys = ["setting", "vimp", "ratio", "delta", "eps"]
-    out = replicates.groupby(keys, as_index=False).agg(
-        B=("rejected", "size"),
-        n_ref=("n_ref", "first"),
-        n_new=("n_new", "first"),
-        n_perm=("n_perm", "first"),
-        n_perm_cate=("n_perm_cate", "first"),
-        grf_n_estimators=("grf_n_estimators", "first"),
-        rate=("rejected", "mean"),
-        signal_rate=("reject_signal", "mean"),
-    )
+    aggregations = {
+        "B": ("rejected", "size"),
+        "n_ref": ("n_ref", "first"),
+        "n_new": ("n_new", "first"),
+        "n_perm": ("n_perm", "first"),
+        "n_perm_cate": ("n_perm_cate", "first"),
+        "grf_n_estimators": ("grf_n_estimators", "first"),
+        "rate": ("rejected", "mean"),
+        "signal_rate": ("reject_signal", "mean"),
+    }
+    if "grf_max_features" in replicates.columns:
+        aggregations["grf_max_features"] = ("grf_max_features", "first")
+    out = replicates.groupby(keys, as_index=False).agg(**aggregations)
     out["rate_se"] = np.sqrt(out["rate"] * (1.0 - out["rate"]) / out["B"])
     return out.sort_values(["setting", "vimp", "ratio"]).reset_index(drop=True)
 
@@ -135,6 +141,7 @@ def run_imbalance(
     n_perm: int = 150,
     n_perm_cate: int = 10,
     grf_n_estimators: int = 30,
+    grf_max_features: str = "sqrt",
     n_jobs: int = 4,
     base_seed: int = 20261104,
     checkpoint_every: int = 24,
@@ -165,6 +172,7 @@ def run_imbalance(
                             "n_perm": n_perm,
                             "n_perm_cate": n_perm_cate,
                             "grf_n_estimators": grf_n_estimators,
+                            "grf_max_features": grf_max_features,
                             "seed": _seed_for(draw_id, base_seed),
                         }
                     )
@@ -173,6 +181,8 @@ def run_imbalance(
         previous = pd.read_csv(replicate_path)
         if len(previous) and "n_perm" in previous.columns:
             previous = previous[previous["n_perm"] == int(n_perm)]
+            if "grf_max_features" in previous.columns:
+                previous = previous[previous["grf_max_features"].astype(str) == str(grf_max_features)]
             done = {row.task_id: row.to_dict() for row in previous.itertuples(index=False)}
     rows = list(done.values())
     by_replicate: dict[int, list[dict]] = {}
