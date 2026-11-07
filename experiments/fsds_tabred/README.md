@@ -22,9 +22,17 @@ python3 -m experiments.fsds_tabred weather ecom-offers --max-rows 8000 --batch-s
 # full suite with batch-size sweep (default: 100 200 400)
 python3 -m experiments.fsds_tabred
 
+# small-batch online PO-risk (matched po_ref = max(4*batch, 200))
+python3 -m experiments.fsds_tabred --batch-size 50 --merge-board
+
 # custom sweep
-python3 -m experiments.fsds_tabred --batch-sizes 100 200 400
+python3 -m experiments.fsds_tabred --batch-sizes 50 100 200 400
 ```
+
+Online PO-risk uses a matched reference slice
+`po_ref = min(ref, max(4 * batch_size, 200))` so small batches are not drowned
+by an 800-vs-50 domain imbalance. The reward model still fits on the full ref.
+
 
 Policies compared per dataset:
 

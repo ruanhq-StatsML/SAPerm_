@@ -4,22 +4,32 @@ Settings: `max_rows=8000`, `ref=800`, `n_perm=8`, serve=`keep_selected`,
 seed=`2026`. Continuous targets (Weather, Sberbank) median-binarized on the
 first half of the time-ordered stream.
 
-Batch-size sweep: `100 / 200 / 400` (72 / 36 / 18 online steps). See
-`BOARD_BY_BATCH.md`.
+Batch-size sweep: `50 / 100 / 200 / 400`. See `BOARD_BY_BATCH.md`.
+
+## Online PO-risk adjustment (small batches)
+
+For the FSDS penalty only, the reference domain is matched to the batch:
+
+```
+po_ref_size = min(ref_batch_size, max(4 * batch_size, 200))
+```
+
+So `b=50` uses `po_ref=200` (not 800-vs-50). The reward RF still fits on the
+full 800-row reference. Larger batches (`b≥200`) keep `po_ref=800`.
 
 ## Takeaways
 
-1. **Sberbank Housing** remains the clearest FSDS win, and it prefers **smaller
-   batches**. At `b=100` / `b=200`, `boot_fsds_vimp` beats flat by ~+0.008 Brier;
-   at `b=400` the gap collapses (only 18 updates, less room to adapt).
+1. **Sberbank** keeps a clear FSDS lift at small batches: at **`b=50`**,
+   `fsds_logo` / `boot_fsds_vimp` beat flat by **~+0.008** Brier — same order
+   as `b=100/200`. The gap still collapses at `b=400`.
 
-2. **Weather**: `fsds_logo` stays slightly above flat at every batch size
-   (`+0.001–0.003`). Absolute rewards are best at `b=100` (more steps).
-   `sum_VIMP` still over-penalizes block 3 and underperforms on reward, while
-   still flagging that block as the late-shift mass (~66–80%).
+2. **Weather** at `b=50`: flat is slightly best; `fsds_logo` is essentially
+   tied (`−0.0005`). `sum_VIMP` still over-penalizes block 3 (~79% late mass)
+   and underperforms. Absolute rewards remain strong in the small-batch regime.
 
-3. **Ecom / Homesite**: gaps stay small. `b=200` is the sweet spot for LOGO on
-   ecom (`+0.0016` vs flat); homesite is nearly tied across batches.
+3. **Ecom** LOGO prefers small/medium batches (`b=50` best absolute; `b=200`
+   best gap vs flat). **Homesite** LOGO is best at **`b=50`** (`+0.0006`).
 
-4. Practical default: **`batch_size=100` or `200`** with `ref=800`. Going to
-   `400` speeds the run but flattens the FSDS-vs-flat separation on Sberbank.
+4. Practical default for online PO-risk: **`batch_size=50–100`** with matched
+   `po_ref≈4·batch`. Going to `400` speeds the run but flattens FSDS separation
+   on Sberbank.

@@ -49,6 +49,8 @@ def run_policy(
     ntree: int = 40,
     max_features_vimp: int = 80,
     serve: str = "keep_selected",
+    po_ref_mult: int = 4,
+    po_ref_floor: int = 200,
 ) -> dict[str, Any]:
     """Stream one policy.
 
@@ -59,11 +61,17 @@ def run_policy(
       keeps the stabler arm.
     * ``drop_selected`` — predict with all features except the selected block
     * ``full`` — full-feature predictor (attribution-only; rewards identical)
+
+    Online PO-risk uses a *matched* reference slice of size
+    ``min(ref_batch_size, max(po_ref_mult * batch_size, po_ref_floor))``
+    so small batches are not drowned by an 800-vs-50 domain imbalance.
+    The reward RF still fits on the full reference window.
     """
     registry = ModelRegistry(ntree=ntree, nthread=1, positive_class=1, maxit=200).as_dict()
     clf = registry["rf_classifier"]
     X_ref = X[:ref_batch_size]
     y_ref = y[:ref_batch_size]
+    po_ref_size = int(min(ref_batch_size, max(po_ref_mult * batch_size, po_ref_floor)))
     # One RF per arm view, fit once on the reference window.
     arm_fits = []
     full_fit = clf["fit"](X_ref, y_ref, seed=seed)
@@ -89,9 +97,16 @@ def run_policy(
         if lam == 0.0 or penalty_kind in ("none", "flat"):
             w = np.ones(len(blocks), dtype=float) / len(blocks)
         else:
+            # Matched online-PO reference: subsample the fixed early window.
+            rng_po = np.random.default_rng(seed + 10_000 + t)
+            if po_ref_size < len(X_ref):
+                idx = rng_po.choice(len(X_ref), size=po_ref_size, replace=False)
+                X_po, y_po = X_ref[idx], y_ref[idx]
+            else:
+                X_po, y_po = X_ref, y_ref
             w = block_penalty_fast(
-                X_ref,
-                y_ref,
+                X_po,
+                y_po,
                 Xb,
                 yb,
                 blocks,
@@ -138,6 +153,7 @@ def run_policy(
         "penalty_kind": penalty_kind,
         "lam": float(lam),
         "serve": serve,
+        "po_ref_size": int(po_ref_size),
         "n_batches": int(len(path)),
         "elapsed_sec": float(elapsed),
         "mean_reward": float(path["reward"].mean()) if len(path) else float("nan"),
@@ -170,9 +186,11 @@ def run_dataset(
         n_blocks=int(meta["n_blocks"]),
         seed=seed,
     )
+    po_ref_size = int(min(ref_batch_size, max(4 * batch_size, 200)))
     print(
         f"[{name}] n={stream['n']} p={stream['p']} blocks={[len(b) for b in blocks]} "
-        f"mode={meta['block_mode']} thr={stream['threshold']}",
+        f"mode={meta['block_mode']} thr={stream['threshold']} "
+        f"batch={batch_size} po_ref={po_ref_size}",
         flush=True,
     )
 
@@ -211,6 +229,7 @@ def run_dataset(
                 "serve": out["serve"],
                 "batch_size": int(batch_size),
                 "ref_batch_size": int(ref_batch_size),
+                "po_ref_size": int(out["po_ref_size"]),
                 "n": stream["n"],
                 "p": stream["p"],
                 "n_batches": out["n_batches"],
@@ -263,8 +282,13 @@ def run_suite(
         frames.append(out["summary"])
     board = pd.concat(frames, ignore_index=True)
     RESULTS.mkdir(parents=True, exist_ok=True)
-    board.to_csv(RESULTS / "BOARD.csv", index=False)
-    _write_board_md(board, RESULTS / "BOARD.md")
+    # Per-batch folder already holds summaries; avoid clobbering a multi-batch BOARD.
+    batch = kwargs.get("batch_size")
+    if batch is not None:
+        board.to_csv(RESULTS / f"BOARD_b{batch}.csv", index=False)
+    else:
+        board.to_csv(RESULTS / "BOARD.csv", index=False)
+        _write_board_md(board, RESULTS / "BOARD.md")
     return board
 
 
@@ -394,6 +418,11 @@ def main(argv: list[str] | None = None) -> None:
         default=None,
         help="Sweep these batch sizes (default: 100 200 400)",
     )
+    parser.add_argument(
+        "--merge-board",
+        action="store_true",
+        help="Merge this run into the existing results/BOARD.csv before rewriting compares",
+    )
     parser.add_argument("--n-perm", type=int, default=8)
     parser.add_argument("--seed", type=int, default=2026)
     args = parser.parse_args(argv)
@@ -421,9 +450,20 @@ def main(argv: list[str] | None = None) -> None:
         frames.append(part)
     board = pd.concat(frames, ignore_index=True)
     RESULTS.mkdir(parents=True, exist_ok=True)
-    board.to_csv(RESULTS / "BOARD.csv", index=False)
+    board_path = RESULTS / "BOARD.csv"
+    if args.merge_board and board_path.exists():
+        prev = pd.read_csv(board_path)
+        # Drop overlapping (dataset, tag, batch_size) rows then append.
+        keys = ["dataset", "tag", "batch_size"]
+        for k in keys:
+            if k not in prev.columns:
+                prev[k] = np.nan
+        board = pd.concat([prev, board], ignore_index=True)
+        board = board.drop_duplicates(subset=keys, keep="last").reset_index(drop=True)
+        board = board.sort_values(["batch_size", "dataset", "tag"]).reset_index(drop=True)
+    board.to_csv(board_path, index=False)
     _write_board_md(board, RESULTS / "BOARD.md")
-    if len(batch_sizes) > 1:
+    if board["batch_size"].nunique() > 1:
         _write_batch_compare_md(board, RESULTS / "BOARD_BY_BATCH.md")
     print(board.to_string(index=False), flush=True)
 
