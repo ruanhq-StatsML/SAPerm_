@@ -1,0 +1,317 @@
+"""Batch-wise FSDS Thompson sampling on TabReD classification streams."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import time
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import pandas as pd
+
+from experiments.fsds_tabred.blocks import build_blocks, summarize_blocks
+from experiments.fsds_tabred.data_loader import TASKS, ensure_tables, load_task
+from experiments.fsds_tabred.penalty import block_penalty_fast
+from experiments.fsds_tabred.registry import ModelRegistry
+from experiments.fsds_tabred.thompson import POLICIES
+
+RESULTS = Path(__file__).resolve().parent / "results"
+
+DEFAULT_DATASETS = ("weather", "ecom-offers", "sberbank-housing", "homesite-insurance")
+
+
+def _brier_reward(y_true: np.ndarray, p_hat: np.ndarray) -> float:
+    y = np.asarray(y_true, dtype=float).ravel()
+    p = np.asarray(p_hat, dtype=float).ravel()
+    return -float(np.mean((y - p) ** 2))
+
+
+def _accuracy(y_true: np.ndarray, p_hat: np.ndarray, thr: float = 0.5) -> float:
+    y = np.asarray(y_true, dtype=float).ravel()
+    pred = (np.asarray(p_hat, dtype=float).ravel() >= thr).astype(float)
+    return float(np.mean(pred == y))
+
+
+def run_policy(
+    X: np.ndarray,
+    y: np.ndarray,
+    blocks: list[list[int]],
+    *,
+    policy_name: str = "gaussian",
+    penalty_kind: str = "sum_VIMP",
+    lam: float = 1.0,
+    ref_batch_size: int = 800,
+    batch_size: int = 200,
+    n_perm: int = 10,
+    seed: int = 2026,
+    ntree: int = 40,
+    max_features_vimp: int = 80,
+    serve: str = "keep_selected",
+) -> dict[str, Any]:
+    """Stream one policy.
+
+    ``serve`` controls how the chosen arm affects the reward model:
+
+    * ``keep_selected`` — predict with only the selected block (default).
+      FSDS subtracts ``λ · w`` so high-shift blocks are avoided; the policy
+      keeps the stabler arm.
+    * ``drop_selected`` — predict with all features except the selected block
+    * ``full`` — full-feature predictor (attribution-only; rewards identical)
+    """
+    registry = ModelRegistry(ntree=ntree, nthread=1, positive_class=1, maxit=200).as_dict()
+    clf = registry["rf_classifier"]
+    X_ref = X[:ref_batch_size]
+    y_ref = y[:ref_batch_size]
+    # One RF per arm view, fit once on the reference window.
+    arm_fits = []
+    full_fit = clf["fit"](X_ref, y_ref, seed=seed)
+    for b, cols in enumerate(blocks):
+        if serve == "keep_selected":
+            cols_use = list(cols)
+        elif serve == "drop_selected":
+            drop = set(cols)
+            cols_use = [j for j in range(X.shape[1]) if j not in drop]
+        else:
+            cols_use = list(range(X.shape[1]))
+        arm_fits.append((cols_use, clf["fit"](X_ref[:, cols_use], y_ref, seed=seed + b + 1)))
+
+    policy = POLICIES[policy_name](len(blocks))
+    rows = []
+    arm_counts = np.zeros(len(blocks), dtype=int)
+    cum_reward = 0.0
+    t0 = time.time()
+    starts = list(range(ref_batch_size, len(X) - batch_size + 1, batch_size))
+    for t, start in enumerate(starts):
+        Xb = X[start : start + batch_size]
+        yb = y[start : start + batch_size]
+        if lam == 0.0 or penalty_kind in ("none", "flat"):
+            w = np.ones(len(blocks), dtype=float) / len(blocks)
+        else:
+            w = block_penalty_fast(
+                X_ref,
+                y_ref,
+                Xb,
+                yb,
+                blocks,
+                model_registry=registry,
+                kind=penalty_kind,
+                model_m="ridge_regressor",
+                model_e="logistic_classifier",
+                model_tau="ridge_regressor",
+                n_perm=n_perm,
+                seed=seed + t,
+                max_features_vimp=max_features_vimp,
+            )
+        scores = policy.draw(w, lam, seed + t)
+        arm = int(np.argmax(scores))
+        if serve == "full":
+            pred = clf["predict"](full_fit, Xb)
+        else:
+            cols_use, fit_obj = arm_fits[arm]
+            pred = clf["predict"](fit_obj, Xb[:, cols_use])
+        reward = _brier_reward(yb, pred)
+        acc = _accuracy(yb, pred)
+        policy.update(arm, reward)
+        arm_counts[arm] += 1
+        cum_reward += reward
+        rows.append(
+            {
+                "t": t,
+                "start": start,
+                "arm": arm,
+                "reward": reward,
+                "accuracy": acc,
+                "cum_reward": cum_reward,
+                **{f"w{i}": float(w[i]) for i in range(len(blocks))},
+                **{f"s{i}": float(scores[i]) for i in range(len(blocks))},
+            }
+        )
+    elapsed = time.time() - t0
+    path = pd.DataFrame(rows)
+    early = path.head(max(1, len(path) // 3))
+    late = path.tail(max(1, len(path) // 3))
+    w_cols = [c for c in path.columns if c.startswith("w")]
+    return {
+        "policy": policy_name,
+        "penalty_kind": penalty_kind,
+        "lam": float(lam),
+        "serve": serve,
+        "n_batches": int(len(path)),
+        "elapsed_sec": float(elapsed),
+        "mean_reward": float(path["reward"].mean()) if len(path) else float("nan"),
+        "mean_accuracy": float(path["accuracy"].mean()) if len(path) else float("nan"),
+        "final_cum_reward": float(cum_reward),
+        "arm_counts": arm_counts.tolist(),
+        "early_w": [float(early[c].mean()) for c in w_cols] if w_cols else [],
+        "late_w": [float(late[c].mean()) for c in w_cols] if w_cols else [],
+        "path": path,
+    }
+
+
+def run_dataset(
+    name: str,
+    *,
+    data_root: Path | None = None,
+    max_rows: int = 10000,
+    ref_batch_size: int = 800,
+    batch_size: int = 200,
+    n_perm: int = 10,
+    seed: int = 2026,
+    out_dir: Path | None = None,
+) -> dict[str, Any]:
+    stream = load_task(name, data_root=data_root, max_rows=max_rows, as_classification=True)
+    meta = stream["task_meta"]
+    blocks = build_blocks(
+        stream["X"],
+        stream["y"],
+        mode=meta["block_mode"],
+        n_blocks=int(meta["n_blocks"]),
+        seed=seed,
+    )
+    print(
+        f"[{name}] n={stream['n']} p={stream['p']} blocks={[len(b) for b in blocks]} "
+        f"mode={meta['block_mode']} thr={stream['threshold']}",
+        flush=True,
+    )
+
+    configs = [
+        ("gaussian", "sum_VIMP", 1.0, "fsds_vimp"),
+        ("gaussian", "leave_one_group", 1.0, "fsds_logo"),
+        ("gaussian", "none", 0.0, "ts_flat"),
+        ("bootstrap", "sum_VIMP", 1.0, "boot_fsds_vimp"),
+    ]
+
+    summary_rows = []
+    paths = {}
+    for policy_name, kind, lam, tag in configs:
+        print(f"  running {tag} ...", flush=True)
+        out = run_policy(
+            stream["X"],
+            stream["y"],
+            blocks,
+            policy_name=policy_name,
+            penalty_kind=kind,
+            lam=lam,
+            ref_batch_size=ref_batch_size,
+            batch_size=batch_size,
+            n_perm=n_perm,
+            seed=seed,
+            serve="keep_selected",
+        )
+        paths[tag] = out["path"]
+        summary_rows.append(
+            {
+                "dataset": name,
+                "tag": tag,
+                "policy": policy_name,
+                "penalty": kind,
+                "lam": lam,
+                "serve": out["serve"],
+                "n": stream["n"],
+                "p": stream["p"],
+                "n_batches": out["n_batches"],
+                "mean_reward": out["mean_reward"],
+                "mean_accuracy": out["mean_accuracy"],
+                "final_cum_reward": out["final_cum_reward"],
+                "arm_counts": out["arm_counts"],
+                "early_w": out["early_w"],
+                "late_w": out["late_w"],
+                "elapsed_sec": out["elapsed_sec"],
+            }
+        )
+        print(
+            f"    {tag}: mean_reward={out['mean_reward']:.4f} "
+            f"acc={out['mean_accuracy']:.3f} arms={out['arm_counts']} "
+            f"late_w={np.round(out['late_w'], 3).tolist()} "
+            f"({out['elapsed_sec']:.1f}s)",
+            flush=True,
+        )
+
+    dest = Path(out_dir) if out_dir is not None else RESULTS / name
+    dest.mkdir(parents=True, exist_ok=True)
+    summary = pd.DataFrame(summary_rows)
+    summary.to_csv(dest / "summary.csv", index=False)
+    for tag, path in paths.items():
+        path.to_csv(dest / f"path_{tag}.csv", index=False)
+    block_info = {
+        "dataset": name,
+        "feature_cols_head": stream["feature_cols"][:20],
+        "threshold": stream["threshold"],
+        "blocks": summarize_blocks(blocks, stream["feature_cols"]),
+        "task_meta": meta,
+    }
+    (dest / "blocks.json").write_text(json.dumps(block_info, indent=2))
+    return {"summary": summary, "blocks": block_info, "paths": paths}
+
+
+def run_suite(
+    datasets: list[str] | None = None,
+    **kwargs,
+) -> pd.DataFrame:
+    names = list(datasets) if datasets else list(DEFAULT_DATASETS)
+    ensure_tables(kwargs.get("data_root"), names=names)
+    frames = []
+    for name in names:
+        out = run_dataset(name, **kwargs)
+        frames.append(out["summary"])
+    board = pd.concat(frames, ignore_index=True)
+    RESULTS.mkdir(parents=True, exist_ok=True)
+    board.to_csv(RESULTS / "BOARD.csv", index=False)
+    _write_board_md(board, RESULTS / "BOARD.md")
+    return board
+
+
+def _write_board_md(board: pd.DataFrame, path: Path) -> None:
+    lines = [
+        "# FSDS Thompson on TabReD (classification)",
+        "",
+        "Streams are time-ordered. Regression targets (Weather, Sberbank) are",
+        "median-binarized on the first half of the stream. Reward is negative Brier.",
+        "",
+        "Serve mode: keep only the selected block in the RF predictor (FSDS",
+        "avoids high-shift blocks via the λ·w penalty). Reward = negative Brier.",
+        "",
+        "| dataset | tag | mean_reward | mean_accuracy | arm_counts | late_w | elapsed_sec |",
+        "| --- | --- | ---: | ---: | --- | --- | ---: |",
+    ]
+    for _, r in board.iterrows():
+        lines.append(
+            f"| {r['dataset']} | {r['tag']} | {r['mean_reward']:.4f} | "
+            f"{r['mean_accuracy']:.3f} | `{r['arm_counts']}` | `{r.get('late_w', '')}` | "
+            f"{r['elapsed_sec']:.1f} |"
+        )
+    path.write_text("\n".join(lines) + "\n")
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "datasets",
+        nargs="*",
+        default=list(DEFAULT_DATASETS),
+        help=f"TabReD tasks (default: {' '.join(DEFAULT_DATASETS)})",
+    )
+    parser.add_argument("--max-rows", type=int, default=8000)
+    parser.add_argument("--ref-batch-size", type=int, default=800)
+    parser.add_argument("--batch-size", type=int, default=200)
+    parser.add_argument("--n-perm", type=int, default=8)
+    parser.add_argument("--seed", type=int, default=2026)
+    args = parser.parse_args(argv)
+    unknown = [d for d in args.datasets if d not in TASKS]
+    if unknown:
+        raise SystemExit(f"unknown datasets: {unknown}; choose from {list(TASKS)}")
+    board = run_suite(
+        datasets=args.datasets,
+        max_rows=args.max_rows,
+        ref_batch_size=args.ref_batch_size,
+        batch_size=args.batch_size,
+        n_perm=args.n_perm,
+        seed=args.seed,
+    )
+    print(board.to_string(index=False), flush=True)
+
+
+if __name__ == "__main__":
+    main()
