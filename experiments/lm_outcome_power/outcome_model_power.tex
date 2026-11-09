@@ -56,4 +56,44 @@ GRF & linear & 1 & 0.208 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\
 \end{tabular}
 \end{table}
 
+\begin{table}[ht]
+\centering
+\small
+\caption{CFPerm rejection rate as the batch sizes become unbalanced.
+The total sample is fixed at 3{,}000 and the ratio is $n_{\mathrm{new}}/n_{\mathrm{ref}}$.
+Noise level $\sigma=10$. Power is a coefficient shift of $0.8$ on four coordinates; type~I is no shift.
+The outcome model is linear and the propensity model is logistic.
+Each cell uses 150 permutations of the batch label and 73 Monte Carlo replicates.
+GRF uses 30 trees and $\sqrt{p}$ candidate features. PermuCATE uses 10 residual permutations.}
+\label{tab:imbalance}
+\begin{tabular}{cccccccc}
+\toprule
+& & \multicolumn{2}{c}{PermuCATE} & \multicolumn{2}{c}{LOCO} & \multicolumn{2}{c}{GRF} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(lr){7-8}
+ratio & $n_0/n_1$ & power & type I & power & type I & power & type I \\
+\midrule
+0.05 & 2857/143 & 0.137 & 0.110 & 0.164 & 0.068 & 0.096 & 0.137 \\
+0.10 & 2727/273 & 0.137 & 0.096 & 0.192 & 0.110 & 0.123 & 0.041 \\
+0.15 & 2609/391 & 0.151 & 0.096 & 0.205 & 0.068 & 0.096 & 0.055 \\
+0.20 & 2500/500 & 0.205 & 0.082 & 0.274 & 0.096 & 0.247 & 0.041 \\
+0.25 & 2400/600 & 0.219 & 0.096 & 0.288 & 0.082 & 0.288 & 0.082 \\
+0.30 & 2308/692 & 0.247 & 0.041 & 0.342 & 0.027 & 0.521 & 0.137 \\
+0.35 & 2222/778 & 0.301 & 0.110 & 0.329 & 0.096 & 0.534 & 0.164 \\
+0.40 & 2143/857 & 0.438 & 0.137 & 0.397 & 0.110 & 0.534 & 0.151 \\
+0.45 & 2069/931 & 0.479 & 0.068 & 0.589 & 0.082 & 0.699 & 0.096 \\
+0.50 & 2000/1000 & 0.411 & 0.110 & 0.466 & 0.164 & 0.699 & 0.096 \\
+0.55 & 1935/1065 & 0.411 & 0.151 & 0.507 & 0.151 & 0.740 & 0.110 \\
+0.60 & 1875/1125 & 0.493 & 0.041 & 0.521 & 0.041 & 0.740 & 0.137 \\
+0.65 & 1818/1182 & 0.397 & 0.178 & 0.452 & 0.110 & 0.781 & 0.041 \\
+0.70 & 1765/1235 & 0.534 & 0.041 & 0.575 & 0.110 & 0.849 & 0.096 \\
+0.75 & 1714/1286 & 0.397 & 0.096 & 0.493 & 0.068 & 0.849 & 0.055 \\
+0.80 & 1667/1333 & 0.521 & 0.082 & 0.562 & 0.068 & 0.863 & 0.123 \\
+0.85 & 1622/1378 & 0.466 & 0.068 & 0.521 & 0.082 & 0.822 & 0.137 \\
+0.90 & 1579/1421 & 0.411 & 0.068 & 0.493 & 0.055 & 0.808 & 0.110 \\
+0.95 & 1538/1462 & 0.507 & 0.123 & 0.521 & 0.137 & 0.849 & 0.068 \\
+1.00 & 1500/1500 & 0.548 & 0.055 & 0.493 & 0.068 & 0.877 & 0.055 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \end{document}
