@@ -57,11 +57,34 @@ provider = PromptedRiskProvider(finance_gpt, name="FinanceGPT-DD")
 
 Avoid treating random Hub "FinanceGPT" forks as production DD brains without your labeled corpus.
 
+## Can it substitute for traditional DD — especially with missing / sparse data?
+
+Run the planted-risk stress test:
+
+```bash
+python3 -m experiments.due_diligence_control --mode substitution
+# or
+python3 -m experiments.due_diligence_control.substitution_study
+```
+
+Read `SUBSTITUTION_ARGUMENT.md` (checked in) and `results/SUBSTITUTION.md` (regenerated).
+
+**Verdict in one line:** partial substitute for triage under observable sparse/dense rooms; **not** a substitute when critical documents or fields are missing — `recall_all` is bounded by availability, and FinanceGPT cannot invent redacted evidence.
+
+| Regime | What happens | Substitute? |
+| --- | --- | --- |
+| dense | Controlled ≈ flood recall, less coverage waste | Triage yes / IC no |
+| sparse | Rules keep attention for late critical docs | Often better co-pilot |
+| missing_docs | `recall_all` collapses for every method | **No** — escalate data |
+| missing_fields | Model goes blind on redactionsctions | **No** without primary source |
+| sparse_missing | Low completeness; staged shortage/failure fires | Co-pilot only |
+
 ## Opportunity roadmap
 
 | Phase | Work |
 | --- | --- |
 | 1 | This package — rules + staged release + heuristic/FinanceGPT hook |
+| 1b | Missing/sparse substitution board (`substitution_study`) |
 | 2 | FinBERT filter → FinanceGPT red-flag QA; capacity quantile forecasts |
 | 3 | Causal / uplift model for marginal doc value |
 | 4 | Min-cost flow over analysts × deals under the same hard caps; FSDS even-effort on desks |

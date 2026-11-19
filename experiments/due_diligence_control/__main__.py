@@ -1,4 +1,4 @@
-"""Run the due-diligence control factorial board."""
+"""Run due-diligence boards: factorial and/or missing-data substitution study."""
 
 from __future__ import annotations
 
@@ -7,10 +7,16 @@ from pathlib import Path
 
 from .factorial import run_factorial
 from .simulator import SimConfig
+from .substitution_study import StudyConfig, run_substitution_study
 
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument(
+        "--mode",
+        choices=("factorial", "substitution", "both"),
+        default="both",
+    )
     p.add_argument("--days", type=int, default=25)
     p.add_argument("--analysts", type=int, default=24)
     p.add_argument("--deals", type=int, default=8)
@@ -21,10 +27,24 @@ def main(argv=None) -> int:
         default=Path(__file__).resolve().parent / "results",
     )
     args = p.parse_args(argv)
-    cfg = SimConfig(n_days=args.days, n_analysts=args.analysts, n_deals=args.deals)
-    result = run_factorial(seeds=list(args.seeds), base=cfg, results_dir=args.results_dir)
-    print(result.table_md)
-    print(f"Wrote {args.results_dir / 'FACTORIAL.md'}")
+    results = args.results_dir
+
+    if args.mode in ("factorial", "both"):
+        cfg = SimConfig(n_days=args.days, n_analysts=args.analysts, n_deals=args.deals)
+        result = run_factorial(seeds=list(args.seeds), base=cfg, results_dir=results)
+        print(result.table_md)
+        print(f"Wrote {results / 'FACTORIAL.md'}")
+
+    if args.mode in ("substitution", "both"):
+        study = run_substitution_study(
+            seeds=list(args.seeds),
+            cfg=StudyConfig(n_days=min(args.days, 20), n_analysts=16, n_deals=6),
+            results_dir=results,
+        )
+        print(study.table_md)
+        print()
+        print(study.verdict_md)
+        print(f"Wrote {results / 'SUBSTITUTION.md'}")
     return 0
 
 

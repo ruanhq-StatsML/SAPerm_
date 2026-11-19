@@ -19,6 +19,13 @@ class RunMetrics:
     mandate_days: int = 0
     net_value: float = 0.0
     blocked: Dict[str, int] = field(default_factory=dict)
+    # Substitution study (planted risks / missingness).
+    planted_total: int = 0
+    planted_available: int = 0
+    planted_found: int = 0
+    false_ic: int = 0  # IC-ready while an available planted risk is still unread/unfound
+    supply_shortage_events: int = 0
+    matching_failure_events: int = 0
 
     def add_blocked(self, blocked: Dict[str, int]) -> None:
         for k, v in blocked.items():
@@ -48,6 +55,25 @@ class RunMetrics:
             return 0.0
         return self.review_wait_sum / self.review_wait_obs
 
+    @property
+    def recall_available(self) -> float:
+        if self.planted_available <= 0:
+            return 0.0
+        return self.planted_found / self.planted_available
+
+    @property
+    def recall_all(self) -> float:
+        """Includes never-arrived planted docs — hard ceiling under missingness."""
+        if self.planted_total <= 0:
+            return 0.0
+        return self.planted_found / self.planted_total
+
+    @property
+    def false_ic_rate(self) -> float:
+        if self.ic_ready <= 0:
+            return 0.0
+        return self.false_ic / self.ic_ready
+
     def as_dict(self) -> Dict[str, float]:
         return {
             "coverage": float(self.coverage),
@@ -59,6 +85,15 @@ class RunMetrics:
             "mute_rate": self.mute_rate,
             "mean_review_wait": self.mean_review_wait,
             "net_value": self.net_value,
+            "planted_total": float(self.planted_total),
+            "planted_available": float(self.planted_available),
+            "planted_found": float(self.planted_found),
+            "recall_available": self.recall_available,
+            "recall_all": self.recall_all,
+            "false_ic": float(self.false_ic),
+            "false_ic_rate": self.false_ic_rate,
+            "supply_shortage_events": float(self.supply_shortage_events),
+            "matching_failure_events": float(self.matching_failure_events),
         }
 
 
@@ -76,4 +111,10 @@ def merge_metrics(rows: List[RunMetrics]) -> RunMetrics:
         out.mandate_days += m.mandate_days
         out.net_value += m.net_value
         out.add_blocked(m.blocked)
+        out.planted_total += m.planted_total
+        out.planted_available += m.planted_available
+        out.planted_found += m.planted_found
+        out.false_ic += m.false_ic
+        out.supply_shortage_events += m.supply_shortage_events
+        out.matching_failure_events += m.matching_failure_events
     return out

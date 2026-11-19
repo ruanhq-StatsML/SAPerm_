@@ -83,3 +83,42 @@ def test_factorial_smoke():
     result = run_factorial(seeds=[1, 2], base=cfg, results_dir=None)
     assert set(result.by_arm) == {"control", "t1_analyst", "t2_desk", "t3_both"}
     assert result.by_arm["t3_both"].coverage <= result.by_arm["control"].coverage
+
+
+def test_missing_docs_cap_recall_all():
+    from .sparsity import REGIMES
+    from .substitution_study import StudyConfig, run_one
+
+    cfg = StudyConfig(n_days=8, n_analysts=10, n_deals=4, planted_per_deal=3)
+    m = run_one("controlled", REGIMES["missing_docs"], cfg, seed=3)
+    assert m.planted_available < m.planted_total
+    assert m.recall_all <= m.recall_available + 1e-9
+    # Hard ceiling: cannot find more than arrived.
+    assert m.planted_found <= m.planted_available
+
+
+def test_redaction_blinds_model_score():
+    from .model_hooks import HeuristicRiskProvider, score_documents
+    from .types import Document
+
+    p = HeuristicRiskProvider()
+    full = Document(id="1", deal_id="d", kind="x", text="material weakness going concern covenant breach")
+    red = Document(id="2", deal_id="d", kind="x", text="[REDACTED — source field unavailable]", redacted=True)
+    score_documents([full, red], p)
+    assert full.risk_score > red.risk_score
+
+
+def test_substitution_board_smoke():
+    from .substitution_study import StudyConfig, run_substitution_study
+
+    board = run_substitution_study(
+        seeds=[5, 6],
+        regimes=["dense", "missing_docs"],
+        methods=["flood", "controlled"],
+        cfg=StudyConfig(n_days=6, n_analysts=8, n_deals=3, planted_per_deal=2),
+        results_dir=None,
+    )
+    assert len(board.rows) == 4
+    miss_c = next(r for r in board.rows if r.regime == "missing_docs" and r.method == "controlled")
+    dense_c = next(r for r in board.rows if r.regime == "dense" and r.method == "controlled")
+    assert miss_c.metrics.recall_all <= dense_c.metrics.recall_all + 0.05

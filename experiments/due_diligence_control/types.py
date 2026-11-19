@@ -83,6 +83,11 @@ class Document:
     day_arrived: int = 0
     risk_score: float = 0.0  # filled by model hook
     reviewed: bool = False
+    # Ground truth for substitution / missing-data studies.
+    planted_risk: bool = False
+    available: bool = True  # False => never arrives (missing document)
+    redacted: bool = False  # True => fields stripped before the model sees them
+    found: bool = False  # set when a review confirms the planted risk
 
 
 @dataclass
