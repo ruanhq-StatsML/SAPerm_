@@ -46,7 +46,63 @@ DEFAULT_TEXT_CONFIGS = {
         default_instruction="Given a web search query, retrieve relevant passages",
         trust_remote_code=True,
     ),
+    # Language-centric omnimodal embedder (NeurIPS 2025); primary for MOSEI/MELD.
+    "LCO_Omni_3B": EmbeddingModelConfig(
+        name="LCO-Embedding/LCO-Embedding-Omni-3B",
+        pooling="mean",
+        dim=2048,
+        max_length=8192,
+        batch_size=4,
+        trust_remote_code=False,
+    ),
 }
+
+LCO_OMNI_MODEL_ID = "LCO-Embedding/LCO-Embedding-Omni-3B"
+_LCO_OMNI_MODEL = None
+
+
+def get_lco_omni_model(model_id: str = LCO_OMNI_MODEL_ID):
+    """Lazy-load SentenceTransformer LCO-Embedding-Omni-3B (CPU/GPU).
+
+    On CPU we force float16 + low_cpu_mem_usage so a ~3B model fits in
+    ~15–16 GB RAM boxes; CUDA uses bfloat16 when available.
+    """
+    global _LCO_OMNI_MODEL
+    if _LCO_OMNI_MODEL is not None:
+        return _LCO_OMNI_MODEL
+    import torch
+    from sentence_transformers import SentenceTransformer
+
+    if torch.cuda.is_available():
+        dtype = torch.bfloat16
+        kwargs = {"torch_dtype": dtype, "attn_implementation": "sdpa", "low_cpu_mem_usage": True}
+    else:
+        # float16 ≈ half the RAM of float32; required on small CPU VMs.
+        dtype = torch.float16
+        kwargs = {"torch_dtype": dtype, "low_cpu_mem_usage": True}
+    _LCO_OMNI_MODEL = SentenceTransformer(model_id, model_kwargs=kwargs)
+    return _LCO_OMNI_MODEL
+
+
+def extract_lco_omni_embeddings(
+    inputs: Sequence,
+    *,
+    model_id: str = LCO_OMNI_MODEL_ID,
+    batch_size: int = 4,
+) -> np.ndarray:
+    """Encode text strings or multimodal dicts with LCO-Embedding-Omni-3B.
+
+    ``inputs`` may be plain strings or dicts with keys in
+    ``{text, image, audio, video}`` as supported by Sentence Transformers.
+    """
+    model = get_lco_omni_model(model_id=model_id)
+    emb = model.encode(
+        list(inputs),
+        batch_size=int(batch_size),
+        show_progress_bar=True,
+        convert_to_numpy=True,
+    )
+    return np.asarray(emb, dtype=float)
 
 WAVLM_MODEL = "microsoft/wavlm-base-plus"
 VIVIT_MODEL = "google/vivit-b-16x2-kinetics400"

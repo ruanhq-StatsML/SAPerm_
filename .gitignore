@@ -16,3 +16,11 @@ data/
 experiments/multimodal_attribution/results/overnight/*.log
 experiments/multimodal_attribution/results/overnight/power_raw.csv
 experiments/multimodal_attribution/results/overnight/console.log
+experiments/multimodal_attribution/results/emotion_overnight/*.log
+experiments/multimodal_attribution/results/emotion_overnight/power_raw.csv
+experiments/multimodal_attribution/results/emotion_overnight/console.log
+experiments/multimodal_attribution/results/emotion_cache/
+experiments/multimodal_attribution/results/emotion_overnight/*.log
+experiments/multimodal_attribution/results/emotion_overnight/power_raw.csv
+experiments/multimodal_attribution/results/emotion_overnight/console.log
+experiments/multimodal_attribution/results/emotion_cache/

@@ -59,7 +59,7 @@ class DatasetSpec:
     """One overnight board cell family."""
 
     name: str
-    scenario: str  # null | mean_shift | interaction_shift
+    scenario: str  # no_shift | mean_shift | interaction_shift
     band: str = "top30"
     shift_modality: str = "video"  # for mean_shift
     interact_pair: Tuple[str, str] = ("text", "video")  # for interaction_shift
@@ -71,8 +71,8 @@ class DatasetSpec:
 # 8 dataset families — MSR-VTT-style synthetic embeddings covering the
 # shift types + PCA bands that the extraction notebooks target.
 DATASETS: List[DatasetSpec] = [
-    DatasetSpec("msrvtt_null_top30", "null", band="top30"),
-    DatasetSpec("msrvtt_null_pc30_100", "null", band="pc30_100", dims=(160, 160, 160)),
+    DatasetSpec("msrvtt_null_top30", "no_shift", band="top30"),
+    DatasetSpec("msrvtt_null_pc30_100", "no_shift", band="pc30_100", dims=(160, 160, 160)),
     DatasetSpec("msrvtt_mean_video_top30", "mean_shift", band="top30", shift_modality="video"),
     DatasetSpec("msrvtt_mean_audio_top30", "mean_shift", band="top30", shift_modality="audio"),
     DatasetSpec(
@@ -157,7 +157,7 @@ def make_dataset_batch(
             * (new_all[b][:, 0] - new_all[b][:, 0].mean())
         )
         y_new = (y_new - y_new.mean()) / (y_new.std() + 1e-8)
-    elif spec.scenario != "null":
+    elif spec.scenario not in ("null", "no_shift"):
         raise ValueError(spec.scenario)
 
     ref_mods = _subset_mods(ref_all, combo_names)
@@ -191,7 +191,9 @@ def _done_key(dataset: str, combo: str, scenario: str, method: str, rep: int) ->
 def _load_checkpoint(path: Path) -> Tuple[pd.DataFrame, set]:
     if not path.exists():
         return pd.DataFrame(), set()
-    df = pd.read_csv(path)
+    # keep literal "null"/"no_shift" — pandas would otherwise coerce "null" → NaN
+    df = pd.read_csv(path, keep_default_na=False, na_values=[""])
+    df["scenario"] = df["scenario"].replace({"null": "no_shift", "nan": "no_shift"})
     done = {
         _done_key(r.dataset, r.combo, r.scenario, r.method, int(r.rep))
         for r in df.itertuples()

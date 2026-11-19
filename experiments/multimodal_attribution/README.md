@@ -54,6 +54,34 @@ Modality combos: `text_audio`, `text_video`, `audio_video`, `text_audio_video`.
 Progress: `results/overnight/overnight.log`, raw p-values in `power_raw.csv`,
 board in `POWER_BOARD.md`.
 
+### CMU-MOSEI + MELD (PC 31–100, MiniLM, RF outcome)
+
+```bash
+python -m experiments.multimodal_attribution.emotion_overnight \
+  --n 500 --n-rep 120 --n-perm 120 --band pc30_100 \
+  --out-dir experiments/multimodal_attribution/results/emotion_overnight
+```
+
+- **MOSEI**: `vintp/CMU-Mosei-text` (sentiment ∈ [-3,3])
+- **MELD**: official utterance CSVs (~13k; sentiment / 7 emotions)
+- Embeddings: MiniLM text + ASR/prompt channels for audio/video
+- Digestion: `pc30_100` (PC 31–100); outcome / tau: **`rf_regressor`**
+- B=120; checkpoint stacks if you raise `--n-rep` later
+
+### CMU-MOSEI + MELD (LCO-Embedding-Omni-3B, PC 31–100, RF, B=120)
+
+```bash
+python -m experiments.multimodal_attribution.emotion_overnight \
+  --n 500 --n-rep 120 --n-perm 120 --band pc31_100 \
+  --model-key LCO_Omni_3B --max-rows 800 \
+  --out-dir experiments/multimodal_attribution/results/emotion_overnight
+```
+
+- Embeddings: `LCO-Embedding/LCO-Embedding-Omni-3B`
+- Digestion: PCA **PC 31–100**, modality concat, batch **n=500**
+- Outcome / tau / nu: **`rf_regressor`**
+- Monte Carlo: **B=120** (stackable via checkpoint)
+
 ### Optional FSDS detectors
 
 Digestion stays PCA-per-modality + concat. FSDS is opt-in only:

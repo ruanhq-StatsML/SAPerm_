@@ -25,8 +25,40 @@ def test_pca_bands_shapes():
     X = rng.normal(size=(200, 120))
     top, _, _ = pca_band_reduce(X, band="top30", seed=0)
     mid, _, _ = pca_band_reduce(X, band="pc30_100", seed=0)
+    mid31, _, _ = pca_band_reduce(X, band="pc31_100", seed=0)
     assert top.shape == (200, 30)
     assert mid.shape == (200, 70)
+    assert mid31.shape == (200, 70)
+
+
+def test_emotion_batch_pc31_100_rf_ready():
+    """MOSEI/MELD-style pack → PC 31–100 concat without loading LCO."""
+    from experiments.multimodal_attribution.emotion_datasets import sample_emotion_batch
+
+    rng = np.random.default_rng(7)
+    n_ref, n_new, d = 120, 110, 64
+    pack = {
+        "ref": {
+            "text": rng.normal(size=(n_ref, d)),
+            "audio": rng.normal(size=(n_ref, d)),
+            "video": rng.normal(size=(n_ref, d)),
+            "y": rng.uniform(-3, 3, size=n_ref),
+        },
+        "new": {
+            "text": rng.normal(size=(n_new, d)),
+            "audio": rng.normal(size=(n_new, d)),
+            "video": rng.normal(size=(n_new, d)),
+            "y": rng.uniform(-3, 3, size=n_new),
+        },
+    }
+    batch = sample_emotion_batch(
+        pack, n=80, band="pc31_100", seed=3, combo=("text", "audio", "video")
+    )
+    assert batch["X"].shape[0] == 160
+    # d=64 → PC band [30,64) = 34 comps/mod; real LCO dims (2048) yield full 70.
+    assert batch["X"].shape[1] == 3 * 34
+    assert set(batch["modality_indices"]) == {"text", "audio", "video"}
+    assert batch["band"] == "pc31_100"
 
 
 def test_concatenate_assigns_contiguous_modality_blocks():

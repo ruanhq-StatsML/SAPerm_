@@ -96,9 +96,9 @@ def _interaction_pvalue(
         idx_a,
         idx_b,
         model_registry=model_registry,
-        model_m="ridge_regressor",
-        model_tau="ridge_regressor",
-        model_nu="ridge_regressor",
+        model_m="rf_regressor",
+        model_tau="rf_regressor",
+        model_nu="rf_regressor",
         model_e="logistic_classifier",
         seed=seed,
         test_size=0.4,
@@ -116,9 +116,9 @@ def _interaction_pvalue(
             idx_a,
             idx_b,
             model_registry=model_registry,
-            model_m="ridge_regressor",
-            model_tau="ridge_regressor",
-            model_nu="ridge_regressor",
+            model_m="rf_regressor",
+            model_tau="rf_regressor",
+            model_nu="rf_regressor",
             model_e="logistic_classifier",
             seed=seed + k + 1,
             test_size=0.4,
@@ -217,9 +217,9 @@ def _fsds_po_pvalue(batch, n_perm: int = 20, seed: int = 0) -> float:
             Y,
             T,
             model_registry=MODEL_REGISTRY,
-            model_m="ridge_regressor",
-            model_tau="ridge_regressor",
-            model_nu="ridge_regressor",
+            model_m="rf_regressor",
+            model_tau="rf_regressor",
+            model_nu="rf_regressor",
             seed=seed,
             test_size=0.4,
         )
@@ -234,9 +234,9 @@ def _fsds_po_pvalue(batch, n_perm: int = 20, seed: int = 0) -> float:
                 Y,
                 T_perm,
                 model_registry=MODEL_REGISTRY,
-                model_m="ridge_regressor",
-                model_tau="ridge_regressor",
-                model_nu="ridge_regressor",
+                model_m="rf_regressor",
+                model_tau="rf_regressor",
+                model_nu="rf_regressor",
                 seed=seed + k + 1,
                 test_size=0.4,
             )
@@ -408,7 +408,7 @@ def make_batch(
     mean_shift: float,
 ):
     dims = (128, 128, 128) if band == "top30" else (160, 160, 160)
-    if scenario == "null":
+    if scenario in ("null", "no_shift"):
         ref_mods, y_ref = synthesize_multimodal_embeddings(
             n, dims=dims, seed=seed, domain=0, interaction_shift=0.0
         )

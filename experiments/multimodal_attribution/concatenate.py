@@ -16,7 +16,9 @@ from sklearn.preprocessing import StandardScaler
 
 PC_BANDS: Dict[str, Tuple[int, int]] = {
     "top30": (0, 30),
+    # 0-indexed [30, 100) ≡ principal components 31–100 (1-indexed).
     "pc30_100": (30, 100),
+    "pc31_100": (30, 100),
 }
 
 BandSpec = Union[str, Tuple[int, int]]
