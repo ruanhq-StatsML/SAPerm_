@@ -20,7 +20,6 @@ experiments/multimodal_attribution/results/emotion_overnight/*.log
 experiments/multimodal_attribution/results/emotion_overnight/power_raw.csv
 experiments/multimodal_attribution/results/emotion_overnight/console.log
 experiments/multimodal_attribution/results/emotion_cache/
-experiments/multimodal_attribution/results/emotion_overnight/*.log
-experiments/multimodal_attribution/results/emotion_overnight/power_raw.csv
-experiments/multimodal_attribution/results/emotion_overnight/console.log
-experiments/multimodal_attribution/results/emotion_cache/
+experiments/multimodal_attribution/results/concept_drift/*.log
+experiments/multimodal_attribution/results/concept_drift/power_raw.csv
+experiments/multimodal_attribution/results/concept_drift/console.log

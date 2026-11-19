@@ -59,12 +59,13 @@ class DatasetSpec:
     """One overnight board cell family."""
 
     name: str
-    scenario: str  # no_shift | mean_shift | interaction_shift
+    scenario: str  # no_shift | mean_shift | interaction_shift | concept_drift
     band: str = "top30"
     shift_modality: str = "video"  # for mean_shift
     interact_pair: Tuple[str, str] = ("text", "video")  # for interaction_shift
     mean_shift: float = 1.0
     interaction_shift: float = 1.8
+    concept_shift: float = 1.5
     dims: Tuple[int, int, int] = (128, 128, 128)
 
 
@@ -99,6 +100,15 @@ DATASETS: List[DatasetSpec] = [
         band="pc30_100",
         dims=(160, 160, 160),
         interact_pair=("text", "video"),
+    ),
+    # Manual concept drift (keep X, change Y|X) — power board vs CF/RF/DRPerm.
+    DatasetSpec("msrvtt_concept_top30", "concept_drift", band="top30", concept_shift=1.5),
+    DatasetSpec(
+        "msrvtt_concept_pc31_100",
+        "concept_drift",
+        band="pc31_100",
+        dims=(160, 160, 160),
+        concept_shift=1.5,
     ),
 ]
 
@@ -157,6 +167,8 @@ def make_dataset_batch(
             * (new_all[b][:, 0] - new_all[b][:, 0].mean())
         )
         y_new = (y_new - y_new.mean()) / (y_new.std() + 1e-8)
+    elif spec.scenario == "concept_drift":
+        pass  # X unchanged; Y|X drift applied after PCA concat below
     elif spec.scenario not in ("null", "no_shift"):
         raise ValueError(spec.scenario)
 
@@ -165,6 +177,12 @@ def make_dataset_batch(
     X_ref, X_new, indices, _ = concatenate_modalities_pooled(
         ref_mods, new_mods, band=spec.band, seed=seed
     )
+    if spec.scenario == "concept_drift":
+        from experiments.multimodal_attribution.perm_methods import apply_concept_drift
+
+        y_new = apply_concept_drift(
+            X_new, y_new, amount=float(spec.concept_shift), seed=seed + 23
+        )
     X = np.vstack([X_ref, X_new])
     Y = np.concatenate([y_ref, y_new])
     T = np.concatenate([np.zeros(n), np.ones(n)]).astype(int)

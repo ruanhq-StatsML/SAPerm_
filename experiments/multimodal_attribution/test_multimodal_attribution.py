@@ -31,6 +31,40 @@ def test_pca_bands_shapes():
     assert mid31.shape == (200, 70)
 
 
+def test_concept_drift_keeps_X_changes_Y():
+    from experiments.multimodal_attribution.perm_methods import apply_concept_drift
+    from experiments.multimodal_attribution.power_benchmark import make_batch
+
+    null = make_batch(
+        "no_shift", n=40, band="top30", seed=0, interaction_shift=1.5, mean_shift=0.0
+    )
+    drift = make_batch(
+        "concept_drift", n=40, band="top30", seed=0, interaction_shift=1.5, mean_shift=0.0
+    )
+    # Same seed → X blocks match; Y on new domain diverges under concept drift.
+    assert null["df_new"][:, :-1].shape == drift["df_new"][:, :-1].shape
+    assert not np.allclose(null["df_new"][:, -1], drift["df_new"][:, -1])
+    y2 = apply_concept_drift(drift["df_new"][:, :-1], null["df_new"][:, -1], amount=2.0, seed=1)
+    assert y2.shape == (40,)
+
+
+def test_rfperm_drperm_cfperm_smoke():
+    from experiments.multimodal_attribution.perm_methods import CFPerm, DRPerm, RFPerm
+    from experiments.multimodal_attribution.power_benchmark import make_batch
+
+    batch = make_batch(
+        "concept_drift", n=60, band="top30", seed=2, interaction_shift=2.0, mean_shift=0.0
+    )
+    p_rf = RFPerm(batch["df_ref"], batch["df_new"], n_perm=30, seed=0, n_estimators=40)
+    p_dr = DRPerm(
+        batch["X"], batch["Y"], batch["T"], n_perm=8, n_splits=2, seed=0
+    )
+    p_cf = CFPerm(batch["X"], batch["Y"], batch["T"], n_perm=8, seed=0, top_k=4)
+    assert 0.0 < p_rf <= 1.0
+    assert 0.0 < p_dr <= 1.0
+    assert 0.0 < p_cf <= 1.0
+
+
 def test_emotion_batch_pc31_100_rf_ready():
     """MOSEI/MELD-style pack → PC 31–100 concat without loading LCO."""
     from experiments.multimodal_attribution.emotion_datasets import sample_emotion_batch

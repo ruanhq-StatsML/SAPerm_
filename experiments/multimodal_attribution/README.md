@@ -68,6 +68,19 @@ python -m experiments.multimodal_attribution.emotion_overnight \
 - Digestion: `pc30_100` (PC 31–100); outcome / tau: **`rf_regressor`**
 - B=120; checkpoint stacks if you raise `--n-rep` later
 
+### Concept drift (manual `Y|X`) + CFPerm / RFPerm / DRPerm
+
+No attribution — inject concept drift and compare power (outcome = RF):
+
+```bash
+python -m experiments.multimodal_attribution.concept_drift_overnight \
+  --n 500 --n-rep 120 --n-perm 150 \
+  --out-dir experiments/multimodal_attribution/results/concept_drift
+```
+
+Methods: classical TST + **`cfperm` / `rfperm` / `drperm`** (`ruanhq-StatsML/CFPerm`, `RFPerm`).
+Outcome = **`rf_regressor`**. CFPerm/DRPerm **`n_perm=150`**. No attribution — power only.
+
 ### CMU-MOSEI + MELD (LCO-Embedding-Omni-3B, PC 31–100, RF, B=120)
 
 ```bash

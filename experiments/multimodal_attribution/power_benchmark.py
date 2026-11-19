@@ -3,9 +3,13 @@
 Runs the working methods from ``benchmark_methods/benchmark_method_tst.py``
 on MSR-VTT-style PCA-concatenated embeddings, under:
 
-* ``null`` — no shift
-* ``mean_shift`` — additive video-block mean shift
+* ``null`` / ``no_shift`` — no shift (type I)
+* ``mean_shift`` — additive modality-block mean shift
 * ``interaction_shift`` — text×video dependence under the new domain
+* ``concept_drift`` — keep ``X``, manually change ``Y|X`` (power; no attribution)
+
+Also compares **CFPerm / RFPerm / DRPerm** (``ruanhq-StatsML``) with
+``rf_regressor`` outcome models.
 
 Empirical power / type-I error is the fraction of replications with
 ``p < alpha`` (default 0.05).
@@ -58,6 +62,12 @@ from experiments.multimodal_attribution.concatenate import (  # noqa: E402
 )
 from experiments.multimodal_attribution.msrvtt import (  # noqa: E402
     synthesize_multimodal_embeddings,
+)
+from experiments.multimodal_attribution.perm_methods import (  # noqa: E402
+    CFPerm,
+    DRPerm,
+    RFPerm,
+    apply_concept_drift,
 )
 
 
@@ -270,6 +280,7 @@ def build_methods(
     *,
     include_po_interact: bool = False,
     include_fsds: bool = False,
+    include_perm_suite: bool = True,
 ) -> Dict[str, Callable]:
     """Name -> callable(X1, X2, batch) -> p-value."""
 
@@ -329,6 +340,51 @@ def build_methods(
         "c2st_XY": c2st_xy,
         "mmd_rbf": mmd_rbf,
     }
+    if include_perm_suite:
+        # CFPerm / RFPerm / DRPerm — RF outcome; global tests (no attribution).
+        # n_perm defaults to 150 in CFPerm repo; never thin these below that when
+        # the board asks for ≥150.
+        n_perm_cf_dr = max(150, int(n_perm))
+
+        def rfperm(X1, X2, batch):
+            return float(
+                RFPerm(
+                    batch["df_ref"],
+                    batch["df_new"],
+                    n_perm=n_perm_cf_dr,
+                    seed=int(batch.get("seed", 0)),
+                )
+            )
+
+        def drperm(X1, X2, batch):
+            return float(
+                DRPerm(
+                    batch["X"],
+                    batch["Y"],
+                    batch["T"],
+                    n_perm=n_perm_cf_dr,
+                    seed=int(batch.get("seed", 0)),
+                    model_m="rf_regressor",
+                    model_tau="rf_regressor",
+                    model_e="logistic_classifier",
+                )
+            )
+
+        def cfperm(X1, X2, batch):
+            return float(
+                CFPerm(
+                    batch["X"],
+                    batch["Y"],
+                    batch["T"],
+                    n_perm=n_perm_cf_dr,
+                    seed=int(batch.get("seed", 0)),
+                    model_m="rf_regressor",
+                )
+            )
+
+        methods["rfperm"] = rfperm
+        methods["drperm"] = drperm
+        methods["cfperm"] = cfperm
     if include_po_interact:
         # Only attach text×video detectors when those blocks exist on the batch.
         def interact_tv(X1, X2, batch):
@@ -451,6 +507,22 @@ def make_batch(
         )
         return _pack_batch(X_ref, X_new, y_ref, y_new, indices, band, n, seed)
 
+    if scenario == "concept_drift":
+        # Keep X law fixed; manually change Y|X on the new domain (no attribution).
+        ref_mods, y_ref = synthesize_multimodal_embeddings(
+            n, dims=dims, seed=seed, domain=0, interaction_shift=0.0
+        )
+        new_mods, y_new = synthesize_multimodal_embeddings(
+            n, dims=dims, seed=seed + 11, domain=0, interaction_shift=0.0
+        )
+        X_ref, X_new, indices, _ = concatenate_modalities_pooled(
+            ref_mods, new_mods, band=band, seed=seed
+        )
+        y_new = apply_concept_drift(
+            X_new, y_new, amount=float(interaction_shift), seed=seed + 23
+        )
+        return _pack_batch(X_ref, X_new, y_ref, y_new, indices, band, n, seed)
+
     raise ValueError(f"unknown scenario {scenario!r}")
 
 
@@ -467,13 +539,15 @@ def run_power(
     scenarios=None,
     include_po_interact: bool = False,
     include_fsds: bool = False,
+    include_perm_suite: bool = True,
 ):
     if scenarios is None:
-        scenarios = ("null", "mean_shift", "interaction_shift")
+        scenarios = ("null", "mean_shift", "interaction_shift", "concept_drift")
     methods = build_methods(
         n_perm=n_perm,
         include_po_interact=include_po_interact,
         include_fsds=include_fsds,
+        include_perm_suite=include_perm_suite,
     )
     rows = []
     t0 = time.time()
