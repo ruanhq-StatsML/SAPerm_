@@ -1,0 +1,130 @@
+"""Bilateral analyst × deal coverage under hard caps.
+
+Score_ij = ΔV_ij - C_i^fatigue - C_j^congestion - C_ij^redundancy
+
+Model risk scores only enter ΔV (and staged diagnosis). They never bypass
+mute / backlog_hard / frequency caps.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Sequence, Set, Tuple
+
+from .analyst_rules import AnalystPolicyConfig, gate_analyst_deal
+from .desk_rules import DeskBudget, DeskPolicyConfig, apply_sector_dedup, desk_day_budget
+from .staged_dd import StageDecision, advance_stage, decide_next_batch, note_coverage
+from .types import Analyst, ControlFlags, CoverageDecision, Deal, Document
+
+
+@dataclass
+class AllocationResult:
+    decisions: List[CoverageDecision]
+    budgets: Dict[str, DeskBudget]
+    stage_decisions: Dict[str, StageDecision]
+    blocked: Dict[str, int]
+
+
+def _delta_v(a: Analyst, deal: Deal, doc: Document, use_model: bool) -> float:
+    fit = 0.05 + 0.2 * (1.0 - abs(a.expertise - 0.5))  # mild expertise prior
+    if a.desk == deal.sector:
+        fit += 0.08
+    risk = doc.risk_score if use_model else 0.35
+    # High risk raises value of attention — up to a point.
+    return float(fit + 0.4 * risk + 0.05 * deal.value)
+
+
+def allocate_day(
+    day: int,
+    analysts: Dict[str, Analyst],
+    deals: Dict[str, Deal],
+    documents: Dict[str, Document],
+    flags: ControlFlags,
+    analyst_cfg: Optional[AnalystPolicyConfig] = None,
+    desk_cfg: Optional[DeskPolicyConfig] = None,
+    recent_sector: Optional[Sequence[Tuple[str, str, int]]] = None,
+) -> AllocationResult:
+    analyst_cfg = analyst_cfg or AnalystPolicyConfig()
+    desk_cfg = desk_cfg or DeskPolicyConfig()
+    recent_sector = list(recent_sector or [])
+
+    raw = {
+        did: desk_day_budget(deal, desk_cfg, enabled=flags.desk_rules) for did, deal in deals.items()
+    }
+    budgets = apply_sector_dedup(raw, deals, desk_cfg) if flags.desk_rules else raw
+
+    stage_decisions: Dict[str, StageDecision] = {}
+    for did, deal in deals.items():
+        sd = decide_next_batch(deal)
+        stage_decisions[did] = sd
+        if flags.desk_rules and sd.release_coverage >= 0:
+            b = budgets[did]
+            budgets[did] = DeskBudget(
+                b.deal_id,
+                min(b.coverage_budget, sd.release_coverage),
+                b.review_room,
+                b.backlog_days,
+                b.pace_factor,
+                b.reason if sd.release_coverage > 0 else f"stage:{sd.note}",
+            )
+        advance_stage(deal, sd)
+
+    remaining = {did: b.coverage_budget for did, b in budgets.items()}
+    touched_today: Set[str] = {aid for aid, a in analysts.items() if a.touches_by_day.get(day, 0) > 0}
+    blocked: Dict[str, int] = {}
+
+    # Open docs only.
+    open_docs = [d for d in documents.values() if not d.reviewed]
+    scored: List[Tuple[float, str, str, str]] = []  # score, analyst, deal, doc
+
+    for a in analysts.values():
+        for doc in open_docs:
+            deal = deals[doc.deal_id]
+            gate = gate_analyst_deal(
+                a, deal, day, touched_today, recent_sector, analyst_cfg, flags.analyst_rules
+            )
+            if not gate.allow:
+                blocked[gate.reason] = blocked.get(gate.reason, 0) + 1
+                continue
+            if remaining.get(deal.id, 0) <= 0:
+                blocked["desk_budget"] = blocked.get("desk_budget", 0) + 1
+                continue
+            fatigue = 0.015 * sum(a.touches_by_day.get(d, 0) for d in range(max(0, day - 6), day + 1))
+            fatigue += 0.02 * a.consecutive_ignores
+            cong = 0.04 * budgets[deal.id].backlog_days
+            last = a.last_deal_touch_day.get(deal.id)
+            red = 0.04 if last is not None and day - last < 2 else 0.0
+            score = _delta_v(a, deal, doc, flags.use_model_signals) - fatigue - cong - red
+            scored.append((score, a.id, deal.id, doc.id))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    decisions: List[CoverageDecision] = []
+
+    for score, aid, did, doc_id in scored:
+        a = analysts[aid]
+        deal = deals[did]
+        doc = documents[doc_id]
+        if doc.reviewed or remaining.get(did, 0) <= 0:
+            continue
+        gate = gate_analyst_deal(
+            a, deal, day, touched_today, recent_sector, analyst_cfg, flags.analyst_rules
+        )
+        if not gate.allow:
+            blocked[gate.reason] = blocked.get(gate.reason, 0) + 1
+            continue
+        if score <= 0 and flags.analyst_rules and flags.desk_rules:
+            blocked["nonpositive_score"] = blocked.get("nonpositive_score", 0) + 1
+            continue
+
+        doc.reviewed = True
+        remaining[did] -= 1
+        note_coverage(deal, 1)
+        decisions.append(CoverageDecision(aid, did, doc_id, day, score))
+        a.work_items_by_day[day] = a.work_items_by_day.get(day, 0) + 1
+        a.last_deal_touch_day[did] = day
+        recent_sector = list(recent_sector) + [(aid, deal.sector, day)]
+        if aid not in touched_today:
+            a.touches_by_day[day] = a.touches_by_day.get(day, 0) + 1
+            touched_today.add(aid)
+
+    return AllocationResult(decisions, budgets, stage_decisions, blocked)

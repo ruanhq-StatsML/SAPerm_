@@ -1,0 +1,85 @@
+"""Smoke tests for due-diligence control + model hooks."""
+
+from __future__ import annotations
+
+from .analyst_rules import AnalystPolicyConfig, pack_docs
+from .desk_rules import DeskPolicyConfig, desk_day_budget
+from .factorial import run_factorial
+from .model_hooks import HeuristicRiskProvider, PromptedRiskProvider, score_documents
+from .simulator import DueDiligenceSim, SimConfig
+from .staged_dd import StageDiagnosis, decide_next_batch
+from .types import Analyst, AnalystLoad, ControlFlags, Deal, DealStage, Document
+
+
+def test_digest_slots_are_not_touch_count():
+    bundles = pack_docs("a0", ["d1", "d2", "d3", "d4"], AnalystPolicyConfig(max_work_items_per_touch=3))
+    assert len(bundles) == 2
+    assert bundles[0] == ["d1", "d2", "d3"]
+
+
+def test_backlog_throttles_desk():
+    deal = Deal(
+        id="d",
+        sector="sec0",
+        pending_review=40,
+        daily_review_capacity=8,
+        expected_organic_docs_per_day=5.0,
+        days_to_ic=15,
+    )
+    b = desk_day_budget(deal, DeskPolicyConfig(), enabled=True)
+    assert b.reason == "backlog_hard"
+    assert b.coverage_budget == 0
+
+
+def test_staged_matching_failure():
+    deal = Deal(
+        id="d",
+        sector="sec0",
+        stage=DealStage.SCREEN,
+        stage_coverage=40,
+        total_coverage=40,
+        total_flags=10,
+        total_confirmed_risks=1,
+    )
+    d = decide_next_batch(deal)
+    assert d.diagnosis == StageDiagnosis.MATCHING_FAILURE
+    assert d.release_coverage == 0
+
+
+def test_heuristic_flags_risk_lexicon():
+    p = HeuristicRiskProvider()
+    clean = Document(id="1", deal_id="d", kind="x", text="Revenue grew with stable margins.")
+    risky = Document(
+        id="2",
+        deal_id="d",
+        kind="x",
+        text="Material weakness and going concern plus covenant breach litigation.",
+    )
+    score_documents([clean, risky], p)
+    assert risky.risk_score > clean.risk_score
+    assert risky.risk_score >= 0.35
+
+
+def test_prompted_financegpt_hook():
+    provider = PromptedRiskProvider(fn=lambda t: 0.9 if "fraud" in t.lower() else 0.1, name="fake_financegpt")
+    doc = Document(id="1", deal_id="d", kind="x", text="Possible fraud investigation.")
+    score_documents([doc], provider)
+    assert doc.risk_score == 0.9
+
+
+def test_mute_blocks_allocation():
+    from .allocate import allocate_day
+
+    a = Analyst(id="a0", load=AnalystLoad.FRESH, muted_deals={"d0"})
+    deal = Deal(id="d0", sector="sec0", pending_review=0, daily_review_capacity=20, expected_organic_docs_per_day=1)
+    doc = Document(id="doc", deal_id="d0", kind="x", text="litigation risk", risk_score=0.8)
+    out = allocate_day(0, {"a0": a}, {"d0": deal}, {"doc": doc}, ControlFlags(True, True, True))
+    assert out.decisions == []
+    assert out.blocked.get("muted", 0) >= 1
+
+
+def test_factorial_smoke():
+    cfg = SimConfig(n_days=6, n_analysts=12, n_deals=4, n_desks=2)
+    result = run_factorial(seeds=[1, 2], base=cfg, results_dir=None)
+    assert set(result.by_arm) == {"control", "t1_analyst", "t2_desk", "t3_both"}
+    assert result.by_arm["t3_both"].coverage <= result.by_arm["control"].coverage
