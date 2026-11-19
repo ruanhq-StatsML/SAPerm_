@@ -458,8 +458,8 @@ def run_power(
     *,
     n: int = 500,
     band: str = "top30",
-    n_rep: int = 40,
-    n_perm: int = 40,
+    n_rep: int = 120,
+    n_perm: int = 120,
     alpha: float = 0.05,
     seed: int = 0,
     interaction_shift: float = 1.5,
@@ -523,8 +523,8 @@ def _parse_args():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--n", type=int, default=500)
     p.add_argument("--band", choices=("top30", "pc30_100"), default="top30")
-    p.add_argument("--n-rep", type=int, default=40)
-    p.add_argument("--n-perm", type=int, default=40)
+    p.add_argument("--n-rep", type=int, default=120, help="Monte Carlo reps B")
+    p.add_argument("--n-perm", type=int, default=120, help="permutation budget inside each test")
     p.add_argument("--alpha", type=float, default=0.05)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--interaction-shift", type=float, default=1.5)

@@ -30,17 +30,19 @@ plus multimodal interaction detectors on PCA-concatenated embeddings
 
 ```bash
 python -m experiments.multimodal_attribution.power_benchmark \
-  --n 500 --band top30 --n-rep 40 --n-perm 40 --with-po-interact \
+  --n 500 --band top30 --n-rep 120 --n-perm 120 --with-po-interact \
   --out experiments/multimodal_attribution/results/power_board.csv
 ```
 
 ### Overnight: 8 datasets × modality combos × n=500
 
-Nested PO interaction is slow — that is expected. Checkpointed runner:
+Nested PO interaction is slow — that is expected. Use **B=120** reps
+(and 120 permutations). Checkpointed runner — if an earlier pass only did
+40 reps, re-launch with ``--n-rep 120`` and it stacks the missing reps:
 
 ```bash
 python -m experiments.multimodal_attribution.overnight_power \
-  --n 500 --n-rep 40 --n-perm 40 --with-po-interact \
+  --n 500 --n-rep 120 --n-perm 120 --with-po-interact \
   --out-dir experiments/multimodal_attribution/results/overnight
 ```
 
