@@ -1,0 +1,119 @@
+"""Smoke tests for multimodal PCA concat and higher-order PO interactions."""
+
+from __future__ import annotations
+
+import numpy as np
+
+from experiments.deep_active_sampling.model_registry import default_model_registry
+from experiments.deep_active_sampling.ood_vimp import (
+    higher_order_interaction_PO_risk,
+    multimodal_block_attribution,
+    third_order_interaction_PO_risk,
+)
+from experiments.multimodal_attribution.concatenate import (
+    concatenate_modalities,
+    pca_band_reduce,
+)
+from experiments.multimodal_attribution.msrvtt import (
+    build_msrvtt_style_batches,
+    synthesize_multimodal_embeddings,
+)
+
+
+def test_pca_bands_shapes():
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(200, 120))
+    top, _, _ = pca_band_reduce(X, band="top30", seed=0)
+    mid, _, _ = pca_band_reduce(X, band="pc30_100", seed=0)
+    assert top.shape == (200, 30)
+    assert mid.shape == (200, 70)
+
+
+def test_concatenate_assigns_contiguous_modality_blocks():
+    rng = np.random.default_rng(1)
+    mods = {
+        "text": rng.normal(size=(80, 64)),
+        "audio": rng.normal(size=(80, 64)),
+        "video": rng.normal(size=(80, 64)),
+    }
+    X, indices, _ = concatenate_modalities(mods, band="top30", seed=1)
+    assert X.shape[0] == 80
+    assert indices["text"] == list(range(0, 30))
+    assert indices["audio"] == list(range(30, 60))
+    assert indices["video"] == list(range(60, 90))
+    assert X.shape[1] == 90
+
+
+def test_second_order_interaction_returns_finite_dict():
+    batch = build_msrvtt_style_batches(
+        n_per_batch=120,
+        band="top30",
+        seed=2,
+        interaction_shift=1.5,
+        dims=(64, 64, 64),
+    )
+    idx = batch["modality_indices"]
+    registry = default_model_registry(ntree=20, ridge_alpha=1.0)
+    out = higher_order_interaction_PO_risk(
+        batch["X"],
+        batch["Y"],
+        batch["T"],
+        idx["text"],
+        idx["video"],
+        model_registry=registry,
+        model_m="ridge_regressor",
+        model_tau="ridge_regressor",
+        model_nu="ridge_regressor",
+        seed=2,
+        test_size=0.4,
+    )
+    assert "interaction" in out
+    assert np.isfinite(out["interaction"])
+    assert np.isfinite(out["po_whole"])
+
+
+def test_third_order_and_block_attribution_smoke():
+    batch = build_msrvtt_style_batches(
+        n_per_batch=100,
+        band="top30",
+        seed=3,
+        interaction_shift=1.0,
+        dims=(48, 48, 48),
+    )
+    registry = default_model_registry(ntree=15, ridge_alpha=1.0)
+    triple = third_order_interaction_PO_risk(
+        batch["X"],
+        batch["Y"],
+        batch["T"],
+        batch["modality_indices"]["text"],
+        batch["modality_indices"]["audio"],
+        batch["modality_indices"]["video"],
+        model_registry=registry,
+        model_m="ridge_regressor",
+        model_tau="ridge_regressor",
+        model_nu="ridge_regressor",
+        seed=3,
+        test_size=0.4,
+    )
+    assert np.isfinite(triple["interaction"])
+    block = multimodal_block_attribution(
+        batch["X"],
+        batch["Y"],
+        batch["T"],
+        batch["modality_indices"],
+        model_registry=registry,
+        model_m="ridge_regressor",
+        model_tau="ridge_regressor",
+        model_nu="ridge_regressor",
+        seed=3,
+        test_size=0.4,
+    )
+    assert "text__video" in block["pairwise"]
+    assert block["third_order"] is not None
+
+
+def test_synthetic_domains_differ_under_shift():
+    ref, _ = synthesize_multimodal_embeddings(60, seed=0, domain=0, interaction_shift=0.0)
+    new, _ = synthesize_multimodal_embeddings(60, seed=1, domain=1, interaction_shift=2.0)
+    assert ref["text"].shape == new["text"].shape
+    assert not np.allclose(ref["video"].mean(0), new["video"].mean(0))
