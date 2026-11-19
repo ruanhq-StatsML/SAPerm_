@@ -22,6 +22,36 @@ python -m experiments.multimodal_attribution --band top30 --n 500
 python -m experiments.multimodal_attribution --band pc30_100 --n 500 --out /tmp/mm_interaction.json
 ```
 
+## Power board vs classical two-sample tests
+
+Uses the working methods in `benchmark_methods/benchmark_method_tst.py`
+plus multimodal interaction detectors on PCA-concatenated embeddings
+(`benchmark_config.MODEL_REGISTRY` / `model_registry_class`):
+
+```bash
+python -m experiments.multimodal_attribution.power_benchmark \
+  --n 500 --band top30 --n-rep 40 --n-perm 40 --with-po-interact \
+  --out experiments/multimodal_attribution/results/power_board.csv
+```
+
+### Overnight: 8 datasets × modality combos × n=500
+
+Nested PO interaction is slow — that is expected. Checkpointed runner:
+
+```bash
+python -m experiments.multimodal_attribution.overnight_power \
+  --n 500 --n-rep 40 --n-perm 40 --with-po-interact \
+  --out-dir experiments/multimodal_attribution/results/overnight
+```
+
+Datasets: null (top30 / pc30_100), mean shift (video / audio), interaction
+(text×video, text×audio, audio×video, text×video on pc30_100).
+
+Modality combos: `text_audio`, `text_video`, `audio_video`, `text_audio_video`.
+
+Progress: `results/overnight/overnight.log`, raw p-values in `power_raw.csv`,
+board in `POWER_BOARD.md`.
+
 ## Precomputed embeddings
 
 ```bash

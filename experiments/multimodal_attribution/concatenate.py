@@ -146,3 +146,42 @@ def stack_outcome(X: np.ndarray, y) -> np.ndarray:
     if len(X) != len(y):
         raise ValueError("X and y length mismatch")
     return np.hstack([X, y])
+
+
+def concatenate_modalities_pooled(
+    ref_modalities: Mapping[str, np.ndarray],
+    new_modalities: Mapping[str, np.ndarray],
+    band: BandSpec = "top30",
+    *,
+    standardize: bool = True,
+    seed: int = 0,
+) -> Tuple[np.ndarray, np.ndarray, Dict[str, list], Dict[str, dict]]:
+    """Fit each modality PCA on the pooled ref+new sample, then split.
+
+    Avoids the false two-sample signal that appears when PCA is fit on the
+    reference batch alone and then applied to the new batch.
+    """
+    if set(ref_modalities) != set(new_modalities):
+        raise ValueError("ref and new modalities must share the same keys")
+    names = list(ref_modalities.keys())
+    n_ref = None
+    n_new = None
+    pooled = {}
+    for name in names:
+        r = np.asarray(ref_modalities[name], dtype=float)
+        n = np.asarray(new_modalities[name], dtype=float)
+        if r.ndim != 2 or n.ndim != 2:
+            raise ValueError(f"modality {name!r} must be 2-d")
+        if n_ref is None:
+            n_ref, n_new = r.shape[0], n.shape[0]
+        elif r.shape[0] != n_ref or n.shape[0] != n_new:
+            raise ValueError("row counts must be consistent within each batch")
+        if r.shape[1] != n.shape[1]:
+            raise ValueError(f"modality {name!r} width mismatch between batches")
+        pooled[name] = np.vstack([r, n])
+    X_all, indices, fit_state = concatenate_modalities(
+        pooled, band=band, standardize=standardize, seed=seed
+    )
+    X_ref = X_all[:n_ref]
+    X_new = X_all[n_ref:]
+    return X_ref, X_new, indices, fit_state

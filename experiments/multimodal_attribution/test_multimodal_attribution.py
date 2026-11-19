@@ -117,3 +117,15 @@ def test_synthetic_domains_differ_under_shift():
     new, _ = synthesize_multimodal_embeddings(60, seed=1, domain=1, interaction_shift=2.0)
     assert ref["text"].shape == new["text"].shape
     assert not np.allclose(ref["video"].mean(0), new["video"].mean(0))
+
+
+def test_pooled_pca_keeps_batch_sizes():
+    from experiments.multimodal_attribution.concatenate import concatenate_modalities_pooled
+
+    rng = np.random.default_rng(4)
+    ref = {k: rng.normal(size=(50, 40)) for k in ("text", "audio", "video")}
+    new = {k: rng.normal(size=(60, 40)) for k in ("text", "audio", "video")}
+    X_ref, X_new, indices, _ = concatenate_modalities_pooled(ref, new, band="top30", seed=4)
+    assert X_ref.shape == (50, 90)
+    assert X_new.shape == (60, 90)
+    assert indices["video"][-1] == 89
