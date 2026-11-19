@@ -52,6 +52,18 @@ Modality combos: `text_audio`, `text_video`, `audio_video`, `text_audio_video`.
 Progress: `results/overnight/overnight.log`, raw p-values in `power_raw.csv`,
 board in `POWER_BOARD.md`.
 
+### Optional FSDS detectors
+
+Digestion stays PCA-per-modality + concat. FSDS is opt-in only:
+
+```bash
+python -m experiments.multimodal_attribution.power_benchmark --n 500 --with-fsds
+# or overnight:
+python -m experiments.multimodal_attribution.overnight_power --n 500 --with-fsds
+```
+
+Adds `fsds_mmd`, `fsds_hsic`, `fsds_po`, `fsds_rrisk` (from `experiments/uplift_monitor/fsds_vimp.py` + PermuCATE PO).
+
 ## Precomputed embeddings
 
 ```bash

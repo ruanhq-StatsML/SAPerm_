@@ -252,6 +252,7 @@ def run_overnight(
     alpha: float = 0.05,
     seed: int = 0,
     with_po_interact: bool = True,
+    with_fsds: bool = False,
     datasets: Optional[Sequence[DatasetSpec]] = None,
     combos: Optional[Dict[str, Tuple[str, ...]]] = None,
     out_dir: Path = Path("experiments/multimodal_attribution/results/overnight"),
@@ -264,8 +265,10 @@ def run_overnight(
     meta_path = out_dir / "run_meta.json"
     log_path = out_dir / "overnight.log"
 
-    # Classical two-sample suite only; pair detectors are attached per combo below.
-    methods = build_methods(n_perm=n_perm, include_po_interact=False)
+    # Classical suite (+ optional FSDS). Pair detectors attached per combo below.
+    methods = build_methods(
+        n_perm=n_perm, include_po_interact=False, include_fsds=with_fsds
+    )
     from experiments.multimodal_attribution.power_benchmark import (
         _crosscorr_pvalue,
         _interaction_pvalue,
@@ -314,6 +317,7 @@ def run_overnight(
         "alpha": alpha,
         "seed": seed,
         "with_po_interact": with_po_interact,
+        "with_fsds": with_fsds,
         "datasets": [asdict(d) for d in datasets],
         "combos": {k: list(v) for k, v in combos.items()},
         "started_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -435,6 +439,11 @@ def _parse_args():
     p.add_argument("--with-po-interact", action="store_true", default=True)
     p.add_argument("--no-po-interact", action="store_true")
     p.add_argument(
+        "--with-fsds",
+        action="store_true",
+        help="optional FSDS detectors (fsds_mmd / fsds_hsic / fsds_po / fsds_rrisk)",
+    )
+    p.add_argument(
         "--out-dir",
         type=Path,
         default=Path("experiments/multimodal_attribution/results/overnight"),
@@ -463,6 +472,7 @@ def main():
         alpha=args.alpha,
         seed=args.seed,
         with_po_interact=(not args.no_po_interact),
+        with_fsds=args.with_fsds,
         datasets=specs,
         out_dir=args.out_dir,
     )

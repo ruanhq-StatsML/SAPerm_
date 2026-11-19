@@ -44,7 +44,13 @@ from benchmark_method_tst import (  # noqa: E402
 )
 from experiments.deep_active_sampling.ood_vimp import (  # noqa: E402
     higher_order_interaction_PO_risk,
+    permuCATE_calPO,
     rbf_mmd2,
+)
+from experiments.uplift_monitor.fsds_vimp import (  # noqa: E402
+    compute_hsic_loco_batches,
+    compute_loco_mmd_batches,
+    r_learner_risk,
 )
 from experiments.multimodal_attribution.concatenate import (  # noqa: E402
     concatenate_modalities_pooled,
@@ -168,7 +174,103 @@ def _mmd_pvalue(X1, X2, n_perm: int = 50, seed: int = 0) -> float:
     return float((exceed + 1.0) / (n_perm + 1.0))
 
 
-def build_methods(n_perm: int = 40, *, include_po_interact: bool = False) -> Dict[str, Callable]:
+def _fsds_mmd_pvalue(X1, X2, n_perm: int = 40, seed: int = 0) -> float:
+    obs, _, _ = compute_loco_mmd_batches(X1, X2, max_n=min(len(X1), len(X2), 800), seed=seed)
+    rng = np.random.default_rng(seed)
+    Z = np.vstack([X1, X2])
+    n1 = len(X1)
+    exceed = 0
+    for k in range(n_perm):
+        perm = rng.permutation(len(Z))
+        stat, _, _ = compute_loco_mmd_batches(
+            Z[perm[:n1]], Z[perm[n1:]], max_n=min(n1, len(Z) - n1, 800), seed=seed + k + 1
+        )
+        if float(stat) >= float(obs) - 1e-12:
+            exceed += 1
+    return float((exceed + 1.0) / (n_perm + 1.0))
+
+
+def _fsds_hsic_pvalue(X1, X2, n_perm: int = 40, seed: int = 0) -> float:
+    obs, _, _ = compute_hsic_loco_batches(X1, X2, max_n=min(len(X1), len(X2), 800), seed=seed)
+    rng = np.random.default_rng(seed)
+    Z = np.vstack([X1, X2])
+    n1 = len(X1)
+    exceed = 0
+    for k in range(n_perm):
+        perm = rng.permutation(len(Z))
+        stat, _, _ = compute_hsic_loco_batches(
+            Z[perm[:n1]], Z[perm[n1:]], max_n=min(n1, len(Z) - n1, 800), seed=seed + k + 1
+        )
+        if float(stat) >= float(obs) - 1e-12:
+            exceed += 1
+    return float((exceed + 1.0) / (n_perm + 1.0))
+
+
+def _fsds_po_pvalue(batch, n_perm: int = 20, seed: int = 0) -> float:
+    """Optional FSDS / PermuCATE held-out PO risk vs domain-label permutation."""
+    X = batch["X"]
+    Y = batch["Y"]
+    T = np.asarray(batch["T"]).reshape(-1)
+    obs = float(
+        permuCATE_calPO(
+            X,
+            Y,
+            T,
+            model_registry=MODEL_REGISTRY,
+            model_m="ridge_regressor",
+            model_tau="ridge_regressor",
+            model_nu="ridge_regressor",
+            seed=seed,
+            test_size=0.4,
+        )
+    )
+    rng = np.random.default_rng(seed + 3)
+    exceed = 0
+    for k in range(n_perm):
+        T_perm = rng.permutation(T)
+        stat = float(
+            permuCATE_calPO(
+                X,
+                Y,
+                T_perm,
+                model_registry=MODEL_REGISTRY,
+                model_m="ridge_regressor",
+                model_tau="ridge_regressor",
+                model_nu="ridge_regressor",
+                seed=seed + k + 1,
+                test_size=0.4,
+            )
+        )
+        if abs(stat) >= abs(obs) - 1e-12:
+            exceed += 1
+    return float((exceed + 1.0) / (n_perm + 1.0))
+
+
+def _fsds_rrisk_pvalue(batch, n_perm: int = 20, seed: int = 0) -> float:
+    X = batch["X"]
+    Y = batch["Y"]
+    T = np.asarray(batch["T"]).reshape(-1).astype(int)
+    obs = r_learner_risk(X, Y, T, seed=seed)
+    if not np.isfinite(obs):
+        return float("nan")
+    rng = np.random.default_rng(seed + 5)
+    exceed = 0
+    for k in range(n_perm):
+        T_perm = rng.permutation(T)
+        stat = r_learner_risk(X, Y, T_perm, seed=seed + k + 1)
+        if not np.isfinite(stat):
+            continue
+        if float(stat) >= float(obs) - 1e-12:
+            exceed += 1
+    return float((exceed + 1.0) / (n_perm + 1.0))
+
+
+def build_methods(
+    n_perm: int = 40,
+    *,
+    include_po_interact: bool = False,
+    include_fsds: bool = False,
+) -> Dict[str, Callable]:
     """Name -> callable(X1, X2, batch) -> p-value."""
 
     def miles(X1, X2, batch):
@@ -258,6 +360,24 @@ def build_methods(n_perm: int = 40, *, include_po_interact: bool = False) -> Dic
 
         methods["crosscorr_text_video"] = crosscorr_tv
         methods["interact_PO_text_video"] = interact_tv
+    if include_fsds:
+        # Optional FSDS suite (MMD / HSIC LOCO + PO / R-learner risk). Off by default.
+        def fsds_mmd(X1, X2, batch):
+            return _fsds_mmd_pvalue(X1, X2, n_perm=n_perm, seed=int(batch.get("seed", 0)))
+
+        def fsds_hsic(X1, X2, batch):
+            return _fsds_hsic_pvalue(X1, X2, n_perm=n_perm, seed=int(batch.get("seed", 0)))
+
+        def fsds_po(X1, X2, batch):
+            return _fsds_po_pvalue(batch, n_perm=max(12, n_perm // 3), seed=int(batch.get("seed", 0)))
+
+        def fsds_rrisk(X1, X2, batch):
+            return _fsds_rrisk_pvalue(batch, n_perm=max(12, n_perm // 3), seed=int(batch.get("seed", 0)))
+
+        methods["fsds_mmd"] = fsds_mmd
+        methods["fsds_hsic"] = fsds_hsic
+        methods["fsds_po"] = fsds_po
+        methods["fsds_rrisk"] = fsds_rrisk
     return methods
 
 
@@ -346,10 +466,15 @@ def run_power(
     mean_shift: float = 0.75,
     scenarios=None,
     include_po_interact: bool = False,
+    include_fsds: bool = False,
 ):
     if scenarios is None:
         scenarios = ("null", "mean_shift", "interaction_shift")
-    methods = build_methods(n_perm=n_perm, include_po_interact=include_po_interact)
+    methods = build_methods(
+        n_perm=n_perm,
+        include_po_interact=include_po_interact,
+        include_fsds=include_fsds,
+    )
     rows = []
     t0 = time.time()
     for scenario in scenarios:
@@ -410,6 +535,11 @@ def _parse_args():
         help="include nested PermuCATE text×video interaction p-values (slow)",
     )
     p.add_argument(
+        "--with-fsds",
+        action="store_true",
+        help="optional FSDS detectors: fsds_mmd / fsds_hsic / fsds_po / fsds_rrisk",
+    )
+    p.add_argument(
         "--out",
         type=Path,
         default=Path("experiments/multimodal_attribution/results/power_board.csv"),
@@ -429,6 +559,7 @@ def main():
         interaction_shift=args.interaction_shift,
         mean_shift=args.mean_shift,
         include_po_interact=args.with_po_interact,
+        include_fsds=args.with_fsds,
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     table.to_csv(args.out, index=False)
