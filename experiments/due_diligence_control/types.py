@@ -95,6 +95,8 @@ class ControlFlags:
     analyst_rules: bool = True
     desk_rules: bool = True
     use_model_signals: bool = True
+    # v2: refuse IC when completeness / unread critical evidence fails gates.
+    integrity_gate: bool = False
 
 
 @dataclass

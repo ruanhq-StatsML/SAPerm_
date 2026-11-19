@@ -26,6 +26,8 @@ class RunMetrics:
     false_ic: int = 0  # IC-ready while an available planted risk is still unread/unfound
     supply_shortage_events: int = 0
     matching_failure_events: int = 0
+    ic_blocked_integrity: int = 0
+    integrity_refusals: int = 0
 
     def add_blocked(self, blocked: Dict[str, int]) -> None:
         for k, v in blocked.items():
@@ -94,6 +96,8 @@ class RunMetrics:
             "false_ic_rate": self.false_ic_rate,
             "supply_shortage_events": float(self.supply_shortage_events),
             "matching_failure_events": float(self.matching_failure_events),
+            "ic_blocked_integrity": float(self.ic_blocked_integrity),
+            "integrity_refusals": float(self.integrity_refusals),
         }
 
 
@@ -117,4 +121,6 @@ def merge_metrics(rows: List[RunMetrics]) -> RunMetrics:
         out.false_ic += m.false_ic
         out.supply_shortage_events += m.supply_shortage_events
         out.matching_failure_events += m.matching_failure_events
+        out.ic_blocked_integrity += m.ic_blocked_integrity
+        out.integrity_refusals += m.integrity_refusals
     return out

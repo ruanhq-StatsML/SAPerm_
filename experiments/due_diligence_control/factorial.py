@@ -12,10 +12,12 @@ from .types import ControlFlags
 
 
 TREATMENTS = {
-    "control": ControlFlags(False, False, True),
-    "t1_analyst": ControlFlags(True, False, True),
-    "t2_desk": ControlFlags(False, True, True),
-    "t3_both": ControlFlags(True, True, True),
+    "control": ControlFlags(analyst_rules=False, desk_rules=False, use_model_signals=True),
+    "t1_analyst": ControlFlags(analyst_rules=True, desk_rules=False, use_model_signals=True),
+    "t2_desk": ControlFlags(analyst_rules=False, desk_rules=True, use_model_signals=True),
+    "t3_both": ControlFlags(
+        analyst_rules=True, desk_rules=True, use_model_signals=True, integrity_gate=True
+    ),
 }
 
 

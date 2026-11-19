@@ -23,6 +23,7 @@ import numpy as np
 from .allocate import allocate_day
 from .analyst_rules import AnalystPolicyConfig
 from .desk_rules import DeskPolicyConfig
+from .integrity import diagnose_integrity, snapshot_deal
 from .metrics import RunMetrics, merge_metrics
 from .model_hooks import HeuristicRiskProvider, score_documents
 from .sparsity import REGIMES, DataRegime
@@ -42,10 +43,13 @@ REDACTED = "[REDACTED — source field unavailable]"
 
 
 METHODS: Dict[str, ControlFlags] = {
-    "flood": ControlFlags(False, False, True),
-    "controlled": ControlFlags(True, True, True),
-    "rules_blind": ControlFlags(True, True, False),
-    "model_only": ControlFlags(False, False, True),
+    # v1 controlled = rules + model, no IC integrity gate
+    "flood": ControlFlags(False, False, True, False),
+    "controlled_v1": ControlFlags(True, True, True, False),
+    # v2 controlled = rules + model + refuse incomplete IC claims
+    "controlled": ControlFlags(True, True, True, True),
+    "rules_blind": ControlFlags(True, True, False, True),
+    "model_only": ControlFlags(False, False, True, False),
 }
 
 
@@ -233,6 +237,14 @@ def run_one(
             elif sd.diagnosis == StageDiagnosis.MATCHING_FAILURE:
                 metrics.matching_failure_events += 1
 
+        # Integrity-aware diagnosis (fires even when staged DD thresholds idle).
+        for deal in deals.values():
+            sig = diagnose_integrity(deal, corpus, coverage_today=len(alloc.decisions))
+            if sig == "supply_shortage":
+                metrics.supply_shortage_events += 1
+            elif sig == "matching_failure":
+                metrics.matching_failure_events += 1
+
         for dec in alloc.decisions:
             a = analysts[dec.analyst_id]
             deal = deals[dec.deal_id]
@@ -270,11 +282,21 @@ def run_one(
                 a.consecutive_ignores += 1
 
             if deal.total_confirmed_risks >= 2 and deal.total_ic_ready == 0 and rng.random() < 0.4:
+                if flags.integrity_gate:
+                    snap = snapshot_deal(deal, corpus)
+                    if not snap.allow_ic:
+                        metrics.ic_blocked_integrity += 1
+                        metrics.integrity_refusals += 1
+                        # Honest refusal beats a false IC — small positive credit.
+                        metrics.net_value += 0.05
+                        recent_sector.append((a.id, deal.sector, day))
+                        continue
                 deal.total_ic_ready = 1
                 metrics.ic_ready += 1
                 # False confidence: IC while an available planted risk remains unfound.
                 if _unfound_available(deal.id, corpus):
                     metrics.false_ic += 1
+                    metrics.net_value -= 0.8
                 else:
                     metrics.net_value += 1.0
 
@@ -320,16 +342,17 @@ def run_substitution_study(
         f"Seeds={seeds}, days={cfg.n_days}, deals={cfg.n_deals}, "
         f"analysts={cfg.n_analysts}, planted/deal={cfg.planted_per_deal}.",
         "",
-        "| Regime | Method | Coverage | Recall@available | Recall@all | "
-        "False-IC rate | Confirmed/1k | Supply-shortage | Matching-failure | Net |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Regime | Method | Coverage | Recall@avail | Recall@all | "
+        "False-IC | IC-blocked | Confirmed/1k | Shortage | Match-fail | Net |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in board.rows:
         m = row.metrics
         lines.append(
             f"| {row.regime} | {row.method} | {m.coverage} | {m.recall_available:.2f} | "
-            f"{m.recall_all:.2f} | {m.false_ic_rate:.2f} | {m.confirmed_per_1k_coverage:.1f} | "
-            f"{m.supply_shortage_events} | {m.matching_failure_events} | {m.net_value:.1f} |"
+            f"{m.recall_all:.2f} | {m.false_ic_rate:.2f} | {m.ic_blocked_integrity} | "
+            f"{m.confirmed_per_1k_coverage:.1f} | {m.supply_shortage_events} | "
+            f"{m.matching_failure_events} | {m.net_value:.1f} |"
         )
 
     verdict = _verdict(board)
@@ -370,11 +393,20 @@ def _verdict(board: SubstitutionBoard) -> str:
         dense_c = _pick(board, "dense", "controlled")
         dense_f = _pick(board, "dense", "flood")
         lines.append(
-            f"{n}. **Dense data room.** Controlled recall@available={dense_c.recall_available:.2f} "
+            f"{n}. **Dense data room.** Controlled(v2) recall@available={dense_c.recall_available:.2f} "
             f"vs flood={dense_f.recall_available:.2f}, at coverage {dense_c.coverage} vs "
             f"{dense_f.coverage}. Efficiency (confirmed/1k) controlled="
             f"{dense_c.confirmed_per_1k_coverage:.1f} vs flood={dense_f.confirmed_per_1k_coverage:.1f}. "
             "→ OK to replace *undifferentiated reading*, not partner sign-off."
+        )
+        lines.append("")
+        n += 1
+    if _has(board, "dense", "controlled") and _has(board, "dense", "controlled_v1"):
+        v2 = _pick(board, "dense", "controlled")
+        v1 = _pick(board, "dense", "controlled_v1")
+        lines.append(
+            f"{n}. **v2 integrity gate (dense).** False-IC {v1.false_ic_rate:.2f}→{v2.false_ic_rate:.2f}; "
+            f"IC blocked by integrity={v2.ic_blocked_integrity}; net {v1.net_value:.1f}→{v2.net_value:.1f}."
         )
         lines.append("")
         n += 1
@@ -397,8 +429,9 @@ def _verdict(board: SubstitutionBoard) -> str:
             f"{n}. **Missing documents.** recall@all controlled={miss_c.recall_all:.2f}, "
             f"flood={miss_f.recall_all:.2f}. Both collapse toward the availability ceiling "
             f"(available share ≈ {avail:.2f}). "
-            "**No method recovers risks that never arrive.** Substitution fails here; "
-            "the system should raise supply-shortage / escalate alternative data, not claim completeness."
+            f"v2 blocks incomplete IC ({miss_c.ic_blocked_integrity} refusals; "
+            f"false-IC {miss_c.false_ic_rate:.2f} vs flood {miss_f.false_ic_rate:.2f}). "
+            "**No method recovers risks that never arrive** — escalate data, don't claim completeness."
         )
         lines.append("")
         n += 1

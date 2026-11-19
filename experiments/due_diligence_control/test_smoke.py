@@ -122,3 +122,30 @@ def test_substitution_board_smoke():
     miss_c = next(r for r in board.rows if r.regime == "missing_docs" and r.method == "controlled")
     dense_c = next(r for r in board.rows if r.regime == "dense" and r.method == "controlled")
     assert miss_c.metrics.recall_all <= dense_c.metrics.recall_all + 0.05
+
+
+def test_integrity_gate_blocks_incomplete_ic():
+    from .integrity import IntegrityConfig, snapshot_deal
+    from .types import Deal, Document
+
+    deal = Deal(id="d0", sector="s", total_confirmed_risks=3)
+    corpus = {
+        "a": Document(id="a", deal_id="d0", kind="c", text="x", planted_risk=True, available=False),
+        "b": Document(id="b", deal_id="d0", kind="c", text="x", planted_risk=True, available=True, found=False),
+        "c": Document(id="c", deal_id="d0", kind="c", text="x", planted_risk=True, available=True, found=True),
+    }
+    snap = snapshot_deal(deal, corpus, IntegrityConfig(min_availability=0.9, max_unfound_available_share=0.1))
+    assert snap.allow_ic is False
+    assert "low_availability" in snap.reasons or "unfound_available_risks" in snap.reasons
+
+
+def test_v2_cuts_false_ic_vs_v1_under_missing_docs():
+    from .sparsity import REGIMES
+    from .substitution_study import StudyConfig, run_one
+
+    cfg = StudyConfig(n_days=10, n_analysts=10, n_deals=4, planted_per_deal=3)
+    v1 = run_one("controlled_v1", REGIMES["missing_docs"], cfg, seed=9)
+    v2 = run_one("controlled", REGIMES["missing_docs"], cfg, seed=9)
+    # Same seed → same discovery path; gate should not increase false IC.
+    assert v2.false_ic_rate <= v1.false_ic_rate + 1e-9
+    assert v2.ic_blocked_integrity >= 0
