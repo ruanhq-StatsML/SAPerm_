@@ -264,61 +264,46 @@ def run_overnight(
     meta_path = out_dir / "run_meta.json"
     log_path = out_dir / "overnight.log"
 
-    methods = build_methods(n_perm=n_perm, include_po_interact=with_po_interact)
-    # Also attach pair-specific interaction detectors for each combo that has ≥2 mods.
+    # Classical two-sample suite only; pair detectors are attached per combo below.
+    methods = build_methods(n_perm=n_perm, include_po_interact=False)
     from experiments.multimodal_attribution.power_benchmark import (
         _crosscorr_pvalue,
         _interaction_pvalue,
     )
 
     def _add_pair_methods(batch, method_map):
-        names = batch["combo"]
-        idx = batch["modality_indices"]
+        names = list(batch["combo"])
         if len(names) < 2:
             return method_map
-        # Primary pair: first two modalities in the combo.
-        a, b = names[0], names[1]
-        key = f"crosscorr_{a}_{b}"
-
-        def cross_fn(X1, X2, bat, aa=a, bb=b):
-            return _crosscorr_pvalue(
-                X1, X2, bat["modality_indices"][aa], bat["modality_indices"][bb],
-                n_perm=n_perm, seed=int(bat.get("seed", 0)),
-            )
-
         method_map = dict(method_map)
-        method_map[key] = cross_fn
-        if with_po_interact:
+        pairs = [(names[i], names[j]) for i in range(len(names)) for j in range(i + 1, len(names))]
+        for a, b in pairs:
 
-            def po_fn(X1, X2, bat, aa=a, bb=b):
-                return _interaction_pvalue(
-                    bat["X"], bat["Y"], bat["T"],
-                    bat["modality_indices"][aa], bat["modality_indices"][bb],
-                    n_perm=max(12, n_perm // 3),
+            def cross_fn(X1, X2, bat, aa=a, bb=b):
+                return _crosscorr_pvalue(
+                    X1,
+                    X2,
+                    bat["modality_indices"][aa],
+                    bat["modality_indices"][bb],
+                    n_perm=n_perm,
                     seed=int(bat.get("seed", 0)),
                 )
 
-            method_map[f"interact_PO_{a}_{b}"] = po_fn
-        if len(names) >= 3:
-            # Also score text×video when all three are present.
-            if "text" in names and "video" in names:
-                def cross_tv(X1, X2, bat):
-                    return _crosscorr_pvalue(
-                        X1, X2, bat["modality_indices"]["text"], bat["modality_indices"]["video"],
-                        n_perm=n_perm, seed=int(bat.get("seed", 0)),
+            method_map[f"crosscorr_{a}_{b}"] = cross_fn
+            if with_po_interact:
+
+                def po_fn(X1, X2, bat, aa=a, bb=b):
+                    return _interaction_pvalue(
+                        bat["X"],
+                        bat["Y"],
+                        bat["T"],
+                        bat["modality_indices"][aa],
+                        bat["modality_indices"][bb],
+                        n_perm=max(12, n_perm // 3),
+                        seed=int(bat.get("seed", 0)),
                     )
 
-                method_map["crosscorr_text_video"] = cross_tv
-                if with_po_interact:
-                    def po_tv(X1, X2, bat):
-                        return _interaction_pvalue(
-                            bat["X"], bat["Y"], bat["T"],
-                            bat["modality_indices"]["text"], bat["modality_indices"]["video"],
-                            n_perm=max(12, n_perm // 3),
-                            seed=int(bat.get("seed", 0)),
-                        )
-
-                    method_map["interact_PO_text_video"] = po_tv
+                method_map[f"interact_PO_{a}_{b}"] = po_fn
         return method_map
 
     raw_df, done = _load_checkpoint(raw_path)

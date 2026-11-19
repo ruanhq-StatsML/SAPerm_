@@ -213,29 +213,6 @@ def build_methods(n_perm: int = 40, *, include_po_interact: bool = False) -> Dic
     def mmd_rbf(X1, X2, batch):
         return _mmd_pvalue(X1, X2, n_perm=n_perm, seed=int(batch.get("seed", 0)))
 
-    def interact_tv(X1, X2, batch):
-        idx = batch["modality_indices"]
-        return _interaction_pvalue(
-            batch["X"],
-            batch["Y"],
-            batch["T"],
-            idx["text"],
-            idx["video"],
-            n_perm=max(12, n_perm // 3),
-            seed=int(batch.get("seed", 0)),
-        )
-
-    def crosscorr_tv(X1, X2, batch):
-        idx = batch["modality_indices"]
-        return _crosscorr_pvalue(
-            X1,
-            X2,
-            idx["text"],
-            idx["video"],
-            n_perm=n_perm,
-            seed=int(batch.get("seed", 0)),
-        )
-
     methods = {
         "miles11": miles,
         "xu16": xu16,
@@ -249,10 +226,37 @@ def build_methods(n_perm: int = 40, *, include_po_interact: bool = False) -> Dic
         "c2st_X": c2st_x,
         "c2st_XY": c2st_xy,
         "mmd_rbf": mmd_rbf,
-        "crosscorr_text_video": crosscorr_tv,
     }
     if include_po_interact:
-        # Nested PO fits — opt-in; slow relative to classical tests.
+        # Only attach text×video detectors when those blocks exist on the batch.
+        def interact_tv(X1, X2, batch):
+            idx = batch["modality_indices"]
+            if "text" not in idx or "video" not in idx:
+                return float("nan")
+            return _interaction_pvalue(
+                batch["X"],
+                batch["Y"],
+                batch["T"],
+                idx["text"],
+                idx["video"],
+                n_perm=max(12, n_perm // 3),
+                seed=int(batch.get("seed", 0)),
+            )
+
+        def crosscorr_tv(X1, X2, batch):
+            idx = batch["modality_indices"]
+            if "text" not in idx or "video" not in idx:
+                return float("nan")
+            return _crosscorr_pvalue(
+                X1,
+                X2,
+                idx["text"],
+                idx["video"],
+                n_perm=n_perm,
+                seed=int(batch.get("seed", 0)),
+            )
+
+        methods["crosscorr_text_video"] = crosscorr_tv
         methods["interact_PO_text_video"] = interact_tv
     return methods
 

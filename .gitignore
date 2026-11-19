@@ -13,3 +13,6 @@ experiments/primary_driver_10site/latex/*.blg
 data/
 *.egg-info/
 .venv/
+experiments/multimodal_attribution/results/overnight/*.log
+experiments/multimodal_attribution/results/overnight/power_raw.csv
+experiments/multimodal_attribution/results/overnight/console.log
