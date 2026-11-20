@@ -40,6 +40,8 @@ class RunMetrics:
     # v6 reopen after recovery
     abstain_reopened: int = 0
     ic_after_reopen: int = 0
+    # v8 same-day recovery reads
+    same_day_recovery_reads: int = 0
 
     def add_blocked(self, blocked: Dict[str, int]) -> None:
         for k, v in blocked.items():
@@ -119,6 +121,7 @@ class RunMetrics:
             "second_pass_requeues": float(self.second_pass_requeues),
             "abstain_reopened": float(self.abstain_reopened),
             "ic_after_reopen": float(self.ic_after_reopen),
+            "same_day_recovery_reads": float(self.same_day_recovery_reads),
         }
 
 
@@ -153,4 +156,5 @@ def merge_metrics(rows: List[RunMetrics]) -> RunMetrics:
         out.second_pass_requeues += m.second_pass_requeues
         out.abstain_reopened += m.abstain_reopened
         out.ic_after_reopen += m.ic_after_reopen
+        out.same_day_recovery_reads += m.same_day_recovery_reads
     return out

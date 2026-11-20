@@ -1,9 +1,10 @@
 # Substitution under missing / sparse data
 
-# v7 board (adaptive escalation + reopen + dual-look + critical lane)
+# v8 board (same-day recovery micro-pass + adaptive escalate + dual-look)
 
-Repeated shortage pulses raise alt-data / unredact odds (capped). Abstain
-reopens after recovery. Dual-look + critical lane retained. False-IC stays 0.
+Freshly recovered / unredacted critical docs are read the same day (no
+next-day lag). Adaptive escalation, reopen, dual-look, critical lane retained.
+False-IC stays at 0.
 
 
 Planted critical risks per deal; methods must find them under each regime.
@@ -27,55 +28,40 @@ Seeds=[11, 12, 13, 14], days=18, deals=6, analysts=12, planted/deal=3.
 | missing_docs | flood | 612 | 0.81 | 0.40 | 0.38 | 0 | 0 | 0 | 47.4 | 11.0 |
 | missing_docs | controlled_v1 | 317 | 0.89 | 0.44 | 0.12 | 0 | 0 | 0 | 100.9 | 19.0 |
 | missing_docs | controlled_v2 | 318 | 0.83 | 0.42 | 0.00 | 18 | 0 | 0 | 94.3 | 13.7 |
-| missing_docs | controlled | 387 | 0.99 | 0.99 | 0.00 | 26 | 36 | 0 | 183.5 | 65.1 |
-| missing_docs | rules_blind | 413 | 0.99 | 0.99 | 0.00 | 27 | 36 | 0 | 171.9 | 61.9 |
+| missing_docs | controlled | 377 | 1.00 | 1.00 | 0.00 | 23 | 36 | 0 | 191.0 | 67.0 |
+| missing_docs | rules_blind | 405 | 0.99 | 0.99 | 0.00 | 40 | 36 | 0 | 175.3 | 66.9 |
 | missing_docs | model_only | 612 | 0.81 | 0.40 | 0.38 | 0 | 0 | 0 | 47.4 | 11.0 |
 | missing_fields | flood | 648 | 0.33 | 0.33 | 1.00 | 0 | 0 | 0 | 37.0 | 2.3 |
 | missing_fields | controlled_v1 | 285 | 0.28 | 0.28 | 1.00 | 0 | 0 | 0 | 70.2 | 4.7 |
 | missing_fields | controlled_v2 | 294 | 0.28 | 0.28 | 0.00 | 6 | 0 | 0 | 68.0 | 8.4 |
-| missing_fields | controlled | 380 | 0.82 | 0.82 | 0.00 | 35 | 0 | 46 | 155.3 | 48.3 |
-| missing_fields | rules_blind | 400 | 0.79 | 0.79 | 0.00 | 20 | 0 | 47 | 142.5 | 48.6 |
+| missing_fields | controlled | 399 | 0.97 | 0.97 | 0.00 | 32 | 0 | 44 | 175.4 | 62.7 |
+| missing_fields | rules_blind | 434 | 0.99 | 0.99 | 0.00 | 28 | 0 | 46 | 163.6 | 65.5 |
 | missing_fields | model_only | 648 | 0.33 | 0.33 | 1.00 | 0 | 0 | 0 | 37.0 | 2.3 |
 | sparse_missing | flood | 327 | 0.44 | 0.32 | 0.67 | 0 | 0 | 0 | 70.3 | 7.0 |
 | sparse_missing | controlled_v1 | 291 | 0.38 | 0.28 | 0.75 | 0 | 0 | 0 | 68.7 | 5.7 |
 | sparse_missing | controlled_v2 | 281 | 0.33 | 0.24 | 0.00 | 4 | 0 | 0 | 60.5 | 5.9 |
-| sparse_missing | controlled | 347 | 0.69 | 0.69 | 0.00 | 20 | 20 | 14 | 144.1 | 40.7 |
-| sparse_missing | rules_blind | 358 | 0.72 | 0.72 | 0.00 | 25 | 20 | 14 | 145.3 | 42.4 |
+| sparse_missing | controlled | 341 | 0.81 | 0.81 | 0.00 | 46 | 20 | 14 | 170.1 | 49.1 |
+| sparse_missing | rules_blind | 333 | 0.72 | 0.72 | 0.00 | 46 | 20 | 14 | 156.2 | 42.1 |
 | sparse_missing | model_only | 327 | 0.44 | 0.32 | 0.67 | 0 | 0 | 0 | 70.3 | 7.0 |
 
 ## Verdict: can this substitute for traditional due diligence?
 
 ### Short answer
 
-**Partial substitute for triage and attention allocation — not a full substitute for primary-source diligence when evidence is missing.**
+**Strong partial substitute for triage + evidence chase under capacity constraints — still not a full substitute for primary-source accountability when escalation fails.**
 
 ### Evidence from this board
 
-1. **Dense data room.** Controlled(v7) recall@available=0.97 vs flood=0.78, at coverage 345 vs 1080. Efficiency (confirmed/1k) controlled=202.9 vs flood=51.9.
+1. **Dense.** Controlled recall=0.97 vs flood=0.78 at ~1/3 coverage; confirmed/1k 203 vs 52; false-IC=0.
 
-2. **v7 vs v1 (dense).** False-IC 0.75→0.00; abstain=20 with reopen path; net 16.7→55.3.
+2. **Sparse.** Controlled 0.81 beats flood 0.49 (v3 freeze was 0.36).
 
-3. **v7 vs v3 (sparse freeze).** Critical lane + dual-look: sparse recall 0.36→0.81 (beats flood 0.49); false-IC stays 0.
+3. **Missing docs.** Controlled recall_all=1.00 after recovered=36 + same-day reads; false-IC=0. (Ceiling is recovery success — failed alt-data still cannot be invented.)
 
-4. **v7 adaptive escalate+reopen vs v2 (missing_docs).** recall@all 0.42→0.99 via recovered=36; false-IC stays 0.00.
+4. **Missing fields.** Controlled 0.97 after 44 unredacts + same-day re-read; model-only was 0.33.
 
-5. **Missing / redacted fields.** controlled(v7)=0.82 after unredacted=46 vs model-only 0.33.
-
-6. **Worst case (sparse_missing).** Controlled recall@all=0.69, false-IC=0.00. Adaptive persistence helps but cannot invent evidence that never recovers.
-
-### What *can* be substituted
-
-- First-pass screening / prioritization under observable rooms
-- Fatigue / backlog control; soft-halt with critical lane
-- Dual-look on missed critical confirms; reopen after recovery
-- Adaptive escalation persistence under repeated shortage
-
-### What *cannot* be substituted
-
-- Risks that escalation never recovers
-- Legal/partner accountability and primary confirmation interviews
-- IC claims when false-IC risk remains material
+5. **sparse_missing.** Controlled 0.81 (v7 was 0.69) via same-day recovery micro-pass; false-IC=0.
 
 ### Operating rule
 
-Capacity-aware co-pilot: score → allocate → integrity-gate → escalate (persist) → dual-look → reopen. Soft-halt never zeros the critical lane. `recall_all` under missingness is the integrity metric.
+Score → allocate → integrity-gate → escalate (persist) → **same-day critical micro-pass** → dual-look → reopen. Soft-halt never zeros the critical lane. `recall_all` under missingness remains the integrity metric.

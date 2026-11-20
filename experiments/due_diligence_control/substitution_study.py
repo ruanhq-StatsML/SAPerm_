@@ -61,7 +61,7 @@ METHODS: Dict[str, ControlFlags] = {
         use_model_signals=True,
         integrity_gate=True,
     ),
-    # v7 = v6 + adaptive escalation persistence on repeated pulses
+    # v8 = v7 + same-day micro-pass on recovered / unredacted critical docs
     "controlled": ControlFlags(
         analyst_rules=True,
         desk_rules=True,
@@ -73,6 +73,7 @@ METHODS: Dict[str, ControlFlags] = {
         second_pass_confirm=True,
         reopen_after_recovery=True,
         adaptive_escalation=True,
+        same_day_recovery_pass=True,
     ),
     "rules_blind": ControlFlags(
         analyst_rules=True,
@@ -84,6 +85,7 @@ METHODS: Dict[str, ControlFlags] = {
         second_pass_confirm=True,
         reopen_after_recovery=True,
         adaptive_escalation=True,
+        same_day_recovery_pass=True,
     ),
     "model_only": ControlFlags(
         analyst_rules=False, desk_rules=False, use_model_signals=True
@@ -213,6 +215,64 @@ def _unfound_available(deal_id: str, corpus: Dict[str, Document]) -> bool:
     return False
 
 
+def _try_confirm_planted(
+    doc: Document,
+    deal: Deal,
+    analysts: Dict[str, Analyst],
+    primary: Analyst,
+    flags: ControlFlags,
+    metrics: RunMetrics,
+    rng,
+) -> Analyst:
+    """Attempt planted-risk confirm + optional same-day dual-look. Returns analyst used."""
+    a = primary
+
+    def _confirm_hit(viewer: Analyst, is_second_look: bool) -> bool:
+        if doc.planted_risk and doc.available and not doc.redacted:
+            p = (
+                (0.78 + 0.2 * viewer.expertise)
+                if is_second_look
+                else (0.55 + 0.4 * viewer.expertise)
+            )
+            return bool(rng.random() < p)
+        if doc.planted_risk and doc.redacted:
+            p = ((0.12 if is_second_look else 0.08) * viewer.expertise)
+            return bool(rng.random() < p)
+        return False
+
+    def _mark_found(viewer: Analyst, from_second: bool) -> None:
+        doc.found = True
+        deal.total_confirmed_risks += 1
+        metrics.confirmed += 1
+        metrics.planted_found += 1
+        metrics.net_value += 0.5
+        if from_second:
+            metrics.second_pass_confirms += 1
+        viewer.consecutive_ignores = 0
+
+    if not (doc.planted_risk and doc.available):
+        a.consecutive_ignores += 1
+        return a
+
+    if _confirm_hit(a, False):
+        _mark_found(a, False)
+        return a
+
+    a.consecutive_ignores += 1
+    if flags.second_pass_confirm and doc.second_looks < 1:
+        doc.second_looks = 1
+        metrics.second_pass_requeues += 1
+        others = [x for x in analysts.values() if x.id != a.id]
+        if others:
+            a2 = max(others, key=lambda x: x.expertise)
+            metrics.coverage += 1
+            metrics.net_value -= 0.005
+            if _confirm_hit(a2, True):
+                _mark_found(a2, True)
+                return a2
+    return a
+
+
 @dataclass
 class SubstitutionRun:
     method: str
@@ -277,6 +337,7 @@ def run_one(
 
         # Integrity-aware diagnosis + escalations (recover missing / unredact).
         esc_cfg = EscalationConfig()
+        hot_doc_ids: List[str] = []
         for deal in deals.values():
             if deal.outcome == DealOutcome.IC_READY:
                 continue
@@ -291,7 +352,9 @@ def run_one(
                 metrics.matching_failure_events += 1
             snap = snapshot_deal(deal, corpus)
             # Rate-limit: at most one escalation pulse every 3 days per deal.
-            cooled = (day - deal.last_escalation_day) >= 3
+            # Sparse rooms cool faster so recovered evidence is not stranded.
+            cool_days = 2 if (flags.sparse_priority and deal.open_docs_recent <= 3) else 3
+            cooled = (day - deal.last_escalation_day) >= cool_days
             live_unread_critical = any(
                 d.deal_id == deal.id
                 and d.planted_risk
@@ -337,6 +400,8 @@ def run_one(
                     metrics.docs_recovered += result.docs_recovered
                     metrics.fields_unredacted += result.fields_unredacted
                     metrics.halt_coverage_events += len(result.halted_deals)
+                    hot_doc_ids.extend(result.recovered_doc_ids)
+                    hot_doc_ids.extend(result.unredacted_doc_ids)
                     if result.docs_recovered or result.fields_unredacted:
                         metrics.net_value += 0.25 * (
                             result.docs_recovered + result.fields_unredacted
@@ -356,10 +421,39 @@ def run_one(
                                 )
                                 metrics.net_value += 0.1
 
+        # v8: same-day micro-pass on freshly recovered / unredacted critical docs.
+        if flags.same_day_recovery_pass:
+            for doc_id in dict.fromkeys(hot_doc_ids):
+                doc = live.get(doc_id) or corpus.get(doc_id)
+                if doc is None or doc.found or not doc.available or doc.redacted:
+                    continue
+                # Unredacted after a blind review: force one re-read with full text.
+                if doc.reviewed:
+                    doc.reviewed = False
+                    doc.second_looks = 0
+                deal = deals[doc.deal_id]
+                # Prefer desk-matched high-expertise analyst.
+                desk_mates = [x for x in analysts.values() if x.desk == deal.sector]
+                pool = desk_mates or list(analysts.values())
+                a = max(pool, key=lambda x: x.expertise)
+                doc.reviewed = True
+                metrics.coverage += 1
+                metrics.same_day_recovery_reads += 1
+                metrics.net_value -= 0.01
+                deal.pending_review = max(deal.pending_review - 1, 0)
+                deal.total_coverage += 1
+                if doc.risk_score >= deal.risk_bar:
+                    deal.total_flags += 1
+                    metrics.flags += 1
+                _try_confirm_planted(doc, deal, analysts, a, flags, metrics, rng)
+
         for dec in alloc.decisions:
             a = analysts[dec.analyst_id]
             deal = deals[dec.deal_id]
             doc = live[dec.document_id]
+            if doc.reviewed and doc.id in hot_doc_ids:
+                # Already handled in same-day recovery micro-pass.
+                continue
             metrics.net_value -= 0.01
             deal.pending_review = max(deal.pending_review - 1, 0)
 
@@ -367,51 +461,7 @@ def run_one(
             if is_flag:
                 deal.total_flags += 1
                 metrics.flags += 1
-            # Confirmation of planted risk: reviewed + (not redacted) + expertise.
-            # v5: same-day dual-look (partner check) — no requeue into the open
-            # pool, so second pass cannot starve unread planted docs.
-            def _confirm_hit(is_second_look: bool) -> bool:
-                nonlocal a
-                if doc.planted_risk and doc.available and not doc.redacted:
-                    p = (
-                        (0.78 + 0.2 * a.expertise)
-                        if is_second_look
-                        else (0.55 + 0.4 * a.expertise)
-                    )
-                    return bool(rng.random() < p)
-                if doc.planted_risk and doc.redacted:
-                    p = ((0.12 if is_second_look else 0.08) * a.expertise)
-                    return bool(rng.random() < p)
-                return False
-
-            def _mark_found(from_second: bool) -> None:
-                doc.found = True
-                deal.total_confirmed_risks += 1
-                metrics.confirmed += 1
-                metrics.planted_found += 1
-                metrics.net_value += 0.5
-                if from_second:
-                    metrics.second_pass_confirms += 1
-                a.consecutive_ignores = 0
-
-            if doc.planted_risk and doc.available:
-                if _confirm_hit(False):
-                    _mark_found(False)
-                else:
-                    a.consecutive_ignores += 1
-                    if flags.second_pass_confirm and doc.second_looks < 1:
-                        doc.second_looks = 1
-                        metrics.second_pass_requeues += 1
-                        # Fresh eyes: pick the highest-expertise other analyst.
-                        others = [x for x in analysts.values() if x.id != a.id]
-                        if others:
-                            a = max(others, key=lambda x: x.expertise)
-                            metrics.coverage += 1  # light second-touch cost
-                            metrics.net_value -= 0.005
-                            if _confirm_hit(True):
-                                _mark_found(True)
-            else:
-                a.consecutive_ignores += 1
+            a = _try_confirm_planted(doc, deal, analysts, a, flags, metrics, rng)
 
             if deal.total_confirmed_risks >= 2 and deal.total_ic_ready == 0 and rng.random() < 0.4:
                 was_reopened = deal.outcome == DealOutcome.REOPENED
@@ -574,9 +624,9 @@ def _verdict(board: SubstitutionBoard) -> str:
         v4 = _pick(board, "dense", "controlled")
         v1 = _pick(board, "dense", "controlled_v1")
         lines.append(
-            f"{n}. **v7 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
-            f"abstain={v4.abstain_incomplete}; reopened={v4.abstain_reopened}; "
-            f"IC-after-reopen={v4.ic_after_reopen}; net {v1.net_value:.1f}→{v4.net_value:.1f}."
+            f"{n}. **v8 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
+            f"abstain={v4.abstain_incomplete}; same-day recovery reads={v4.same_day_recovery_reads}; "
+            f"net {v1.net_value:.1f}→{v4.net_value:.1f}."
         )
         lines.append("")
         n += 1

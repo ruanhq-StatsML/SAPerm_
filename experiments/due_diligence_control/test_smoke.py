@@ -268,3 +268,14 @@ def test_adaptive_escalation_bumps_rates():
     assert bumped.unredact_success_rate > base.unredact_success_rate
     assert bumped.max_doc_requests >= base.max_doc_requests
     assert bumped.alt_data_success_rate <= base.adaptive_rate_cap
+
+
+def test_v8_same_day_recovery_reads_under_missing():
+    from .sparsity import REGIMES
+    from .substitution_study import StudyConfig, run_one
+
+    cfg = StudyConfig(n_days=18, n_analysts=12, n_deals=6, planted_per_deal=3)
+    v8 = run_one("controlled", REGIMES["sparse_missing"], cfg, seed=11)
+    assert v8.false_ic_rate <= 1e-9
+    assert v8.docs_recovered + v8.fields_unredacted >= 1
+    assert v8.same_day_recovery_reads >= 1

@@ -114,6 +114,8 @@ class ControlFlags:
     reopen_after_recovery: bool = False
     # v7: raise alt-data / unredact odds on repeated escalation pulses.
     adaptive_escalation: bool = False
+    # v8: same-day micro-pass on docs recovered / unredacted this pulse.
+    same_day_recovery_pass: bool = False
 
 
 class DealOutcome:

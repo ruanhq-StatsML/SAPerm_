@@ -64,6 +64,9 @@ class EscalationResult:
     docs_recovered: int = 0
     fields_unredacted: int = 0
     halted_deals: List[str] = field(default_factory=list)
+    # v8: ids touched this pulse for same-day critical micro-pass
+    recovered_doc_ids: List[str] = field(default_factory=list)
+    unredacted_doc_ids: List[str] = field(default_factory=list)
 
 
 def plan_escalations(
@@ -194,6 +197,7 @@ def apply_escalations(
                 deal.pending_review += 1
                 recovered_deals.add(deal.id)
                 out.docs_recovered += 1
+                out.recovered_doc_ids.append(doc.id)
         elif act.kind == "request_unredact" and doc.available and doc.redacted:
             if rng.random() < cfg.unredact_success_rate:
                 doc.redacted = False
@@ -204,6 +208,7 @@ def apply_escalations(
                 score_documents([doc], provider)
                 recovered_deals.add(deal.id)
                 out.fields_unredacted += 1
+                out.unredacted_doc_ids.append(doc.id)
 
     # 2) Soft-halt only deals that did *not* obtain new evidence this pulse.
     for act in actions:
