@@ -44,9 +44,15 @@ def test_concept_drift_keeps_X_changes_Y():
     # Concept drift: identical X across batches; only Y|X on the new domain changes.
     assert np.allclose(drift["df_ref"][:, :-1], drift["df_new"][:, :-1])
     assert not np.allclose(drift["df_ref"][:, -1], drift["df_new"][:, -1])
+    # New Y stays on exist scale (no independent re-zscore) so RFPerm d0 > 0.
+    y_ref = drift["df_ref"][:, -1]
+    y_new = drift["df_new"][:, -1]
+    assert y_new.std() > y_ref.std() + 0.1
     assert null["df_new"][:, :-1].shape == drift["df_new"][:, :-1].shape
-    y2 = apply_concept_drift(drift["df_new"][:, :-1], null["df_new"][:, -1], amount=2.0, seed=1)
+    y2 = apply_concept_drift(drift["df_new"][:, :-1], y_ref, amount=2.0, seed=1)
     assert y2.shape == (40,)
+    # Additive drift on exist scale: mean shift ≈ amount * mean(signal).
+    assert y2.std() > y_ref.std()
 
 
 def test_rfperm_drperm_cfperm_smoke():
@@ -54,14 +60,15 @@ def test_rfperm_drperm_cfperm_smoke():
     from experiments.multimodal_attribution.power_benchmark import make_batch
 
     batch = make_batch(
-        "concept_drift", n=60, band="top30", seed=2, interaction_shift=2.0, mean_shift=0.0
+        "concept_drift", n=80, band="top30", seed=2, interaction_shift=2.0, mean_shift=0.0
     )
-    p_rf = RFPerm(batch["df_ref"], batch["df_new"], n_perm=30, seed=0, n_estimators=40)
+    p_rf = RFPerm(batch["df_ref"], batch["df_new"], n_perm=60, seed=0, n_estimators=80)
     p_dr = DRPerm(
         batch["X"], batch["Y"], batch["T"], n_perm=8, n_splits=2, seed=0
     )
     p_cf = CFPerm(batch["X"], batch["Y"], batch["T"], n_perm=8, seed=0, top_k=4)
-    assert 0.0 < p_rf <= 1.0
+    # Aligned-Y concept drift must inflate new-domain MSE → small RFPerm p.
+    assert p_rf < 0.05
     assert 0.0 < p_dr <= 1.0
     assert 0.0 < p_cf <= 1.0
 

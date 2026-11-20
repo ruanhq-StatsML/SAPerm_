@@ -203,16 +203,20 @@ def apply_concept_drift(
 ) -> np.ndarray:
     """Manual concept drift: keep ``X``, change ``Y|X`` on the new domain.
 
-    ``y ← y + amount * (x0 + 0.5 x1 x2)`` then re-standardize.
+    ``y ← y + amount * (x0 + 0.5 * x1 * x2)``.
+
+    Important: **do not** re-standardize ``y`` independently on the new batch.
+    RFPerm compares OOB loss on the exist domain to prediction loss on the new
+    domain — the new outcome must stay on the **exist Y scale**. Independent
+    z-scoring made ``mean(pred_err) < mean(oob_err)`` (negative d0) so the
+    one-sided test never rejected (spurious power≈0).
     """
-    rng = np.random.default_rng(seed)
+    del seed  # signal is deterministic given X; kept for call-site compatibility
     X_new = np.asarray(X_new, dtype=float)
     y = np.asarray(y_new, dtype=float).reshape(-1).copy()
     p = X_new.shape[1]
-    x0 = X_new[:, 0] if p >= 1 else rng.normal(size=len(y))
+    x0 = X_new[:, 0] if p >= 1 else np.zeros(len(y))
     x1 = X_new[:, 1] if p >= 2 else x0
     x2 = X_new[:, 2] if p >= 3 else x0
     signal = x0 + 0.5 * x1 * x2
-    y = y + float(amount) * signal
-    y = (y - y.mean()) / (y.std() + 1e-8)
-    return y
+    return y + float(amount) * signal
