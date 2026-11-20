@@ -11,5 +11,7 @@ experiments/primary_driver_10site/latex/*.out
 experiments/primary_driver_10site/latex/*.bbl
 experiments/primary_driver_10site/latex/*.blg
 data/
+!fin_kg_posttrain/data/
+!fin_kg_posttrain/data/**
 *.egg-info/
 .venv/

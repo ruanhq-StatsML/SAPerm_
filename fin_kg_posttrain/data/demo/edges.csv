@@ -1,0 +1,10 @@
+src,dst,relation,ratio,amount
+P_WANG,N_DING,直接持股,0.80,
+N_DING,N_RUI,直接持股,0.55,
+N_RUI,N_HENG,直接持股,0.30,
+N_DING,N_HENG,直接持股,0.10,
+N_RUI,N_HENG,最高额保证担保,,200000000
+N_HUA,N_YUAN,直接持股,0.60,
+N_HUA,N_HONG,直接持股,0.20,
+N_YUAN,N_HONG,直接持股,0.40,
+N_YUAN,N_HONG,连带责任担保,,150000000
