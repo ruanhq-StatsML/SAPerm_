@@ -22,7 +22,12 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--model-key", default=DEFAULT_MODEL)
     p.add_argument("--max-rows", type=int, default=700)
-    p.add_argument("--batch-size", type=int, default=2)
+    p.add_argument(
+        "--batch-size",
+        type=int,
+        default=8,
+        help="LCO Omni encode batch size (CPU: 8 is usually ok; drop to 4 if OOM)",
+    )
     p.add_argument("--force", action="store_true")
     args = p.parse_args()
 

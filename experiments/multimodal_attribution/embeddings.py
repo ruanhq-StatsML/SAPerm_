@@ -52,7 +52,7 @@ DEFAULT_TEXT_CONFIGS = {
         pooling="mean",
         dim=2048,
         max_length=8192,
-        batch_size=4,
+        batch_size=8,
         trust_remote_code=False,
     ),
 }
@@ -88,7 +88,7 @@ def extract_lco_omni_embeddings(
     inputs: Sequence,
     *,
     model_id: str = LCO_OMNI_MODEL_ID,
-    batch_size: int = 4,
+    batch_size: int = 8,
 ) -> np.ndarray:
     """Encode text strings or multimodal dicts with LCO-Embedding-Omni-3B.
 

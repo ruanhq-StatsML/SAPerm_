@@ -75,14 +75,49 @@ def _cache_path(dataset: str, split: str, model_key: str) -> Path:
     return CACHE_DIR / f"{dataset}_{split}_{safe}.npz"
 
 
-def _embed_lco_texts(texts: Sequence[str], batch_size: int = 4) -> np.ndarray:
+DEFAULT_LCO_BATCH = 8
+
+
+def _embed_lco_texts(texts: Sequence[str], batch_size: int = DEFAULT_LCO_BATCH) -> np.ndarray:
     return extract_lco_omni_embeddings(list(map(str, texts)), batch_size=batch_size)
 
 
-def _embed_channel(texts: Sequence[str], model_key: str, batch_size: int = 4) -> np.ndarray:
+def _embed_channel(
+    texts: Sequence[str], model_key: str, batch_size: int = DEFAULT_LCO_BATCH
+) -> np.ndarray:
     if model_key in ("LCO_Omni_3B", LCO_MODEL_ID) or "LCO-Embedding" in model_key:
         return _embed_lco_texts(texts, batch_size=batch_size)
     return extract_text_embeddings(list(map(str, texts)), model_key=model_key)
+
+
+def _mod_cache_path(dataset: str, split: str, modality: str, model_key: str) -> Path:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    safe = model_key.replace("/", "_")
+    return CACHE_DIR / f"{dataset}_{split}_{modality}_{safe}.npz"
+
+
+def _load_or_embed_channel(
+    texts: Sequence[str],
+    *,
+    dataset: str,
+    split: str,
+    modality: str,
+    model_key: str,
+    batch_size: int,
+    force: bool = False,
+) -> np.ndarray:
+    """Per-modality checkpoint so a crash / restart does not redo finished channels."""
+    path = _mod_cache_path(dataset, split, modality, model_key)
+    if path.exists() and not force:
+        data = np.load(path, allow_pickle=False)
+        emb = np.asarray(data["emb"], dtype=float)
+        if emb.shape[0] == len(texts):
+            print(f"[cache hit] {path.name} shape={emb.shape}", flush=True)
+            return emb
+    emb = _embed_channel(texts, model_key=model_key, batch_size=batch_size)
+    np.savez(path, emb=emb)
+    print(f"[cache save] {path.name} shape={emb.shape}", flush=True)
+    return emb
 
 
 def build_modality_block(
@@ -90,10 +125,21 @@ def build_modality_block(
     *,
     asr: Optional[Sequence[str]] = None,
     model_key: str = DEFAULT_MODEL,
-    batch_size: int = 4,
+    batch_size: int = DEFAULT_LCO_BATCH,
+    dataset: str = "tmp",
+    split: str = "tmp",
+    force: bool = False,
 ) -> Dict[str, np.ndarray]:
-    """LCO Omni embeddings for text / audio / video channels."""
-    text_emb = _embed_channel(texts, model_key=model_key, batch_size=batch_size)
+    """LCO Omni embeddings for text / audio / video channels (checkpointed)."""
+    text_emb = _load_or_embed_channel(
+        texts,
+        dataset=dataset,
+        split=split,
+        modality="text",
+        model_key=model_key,
+        batch_size=batch_size,
+        force=force,
+    )
     if asr is None:
         audio_inputs = [f"[audio] Spoken utterance: {t}" for t in texts]
     else:
@@ -101,17 +147,37 @@ def build_modality_block(
             f"[audio] {a}" if str(a).strip() else f"[audio] Spoken utterance: {t}"
             for a, t in zip(asr, texts)
         ]
-    audio_emb = _embed_channel(audio_inputs, model_key=model_key, batch_size=batch_size)
+    audio_emb = _load_or_embed_channel(
+        audio_inputs,
+        dataset=dataset,
+        split=split,
+        modality="audio",
+        model_key=model_key,
+        batch_size=batch_size,
+        force=force,
+    )
     video_inputs = [f"[video] Scene dialogue: {t}" for t in texts]
-    video_emb = _embed_channel(video_inputs, model_key=model_key, batch_size=batch_size)
+    video_emb = _load_or_embed_channel(
+        video_inputs,
+        dataset=dataset,
+        split=split,
+        modality="video",
+        model_key=model_key,
+        batch_size=batch_size,
+        force=force,
+    )
     return {"text": text_emb, "audio": audio_emb, "video": video_emb}
+
+
+def _save_split(path: Path, mods: Dict[str, np.ndarray], y: np.ndarray) -> None:
+    np.savez(path, text=mods["text"], audio=mods["audio"], video=mods["video"], y=y)
 
 
 def prepare_mosei_embeddings(
     model_key: str = DEFAULT_MODEL,
     max_rows: Optional[int] = 2000,
     force: bool = False,
-    batch_size: int = 4,
+    batch_size: int = DEFAULT_LCO_BATCH,
 ) -> Dict[str, Dict[str, np.ndarray]]:
     """``{ref,new}`` modality dicts + outcomes for MOSEI train vs test."""
     cache_ref = _cache_path("mosei", "train", model_key)
@@ -122,24 +188,47 @@ def prepare_mosei_embeddings(
         return {"ref": ref, "new": new}
 
     df_tr, df_te = load_mosei_frames(max_rows=max_rows)
-    ref_mods = build_modality_block(
-        df_tr["text"].fillna("").tolist(),
-        asr=df_tr["ASR"].fillna("").tolist() if "ASR" in df_tr.columns else None,
-        model_key=model_key,
-        batch_size=batch_size,
-    )
-    new_mods = build_modality_block(
-        df_te["text"].fillna("").tolist(),
-        asr=df_te["ASR"].fillna("").tolist() if "ASR" in df_te.columns else None,
-        model_key=model_key,
-        batch_size=batch_size,
-    )
     y_ref = np.asarray(df_tr["sentiment"], dtype=float)
     y_new = np.asarray(df_te["sentiment"], dtype=float)
-    np.savez(cache_ref, text=ref_mods["text"], audio=ref_mods["audio"], video=ref_mods["video"], y=y_ref)
-    np.savez(cache_new, text=new_mods["text"], audio=new_mods["audio"], video=new_mods["video"], y=y_new)
-    ref_mods["y"] = y_ref
-    new_mods["y"] = y_new
+
+    if cache_ref.exists() and not force:
+        ref_mods = dict(np.load(cache_ref, allow_pickle=False))
+        print(f"[cache hit] {cache_ref.name}", flush=True)
+    else:
+        ref_mods = build_modality_block(
+            df_tr["text"].fillna("").tolist(),
+            asr=df_tr["ASR"].fillna("").tolist() if "ASR" in df_tr.columns else None,
+            model_key=model_key,
+            batch_size=batch_size,
+            dataset="mosei",
+            split="train",
+            force=force,
+        )
+        _save_split(cache_ref, ref_mods, y_ref)
+        ref_mods["y"] = y_ref
+        print(f"[cache save] {cache_ref.name}", flush=True)
+
+    if cache_new.exists() and not force:
+        new_mods = dict(np.load(cache_new, allow_pickle=False))
+        print(f"[cache hit] {cache_new.name}", flush=True)
+    else:
+        new_mods = build_modality_block(
+            df_te["text"].fillna("").tolist(),
+            asr=df_te["ASR"].fillna("").tolist() if "ASR" in df_te.columns else None,
+            model_key=model_key,
+            batch_size=batch_size,
+            dataset="mosei",
+            split="test",
+            force=force,
+        )
+        _save_split(cache_new, new_mods, y_new)
+        new_mods["y"] = y_new
+        print(f"[cache save] {cache_new.name}", flush=True)
+
+    if "y" not in ref_mods:
+        ref_mods["y"] = y_ref
+    if "y" not in new_mods:
+        new_mods["y"] = y_new
     return {"ref": ref_mods, "new": new_mods}
 
 
@@ -148,7 +237,7 @@ def prepare_meld_embeddings(
     max_rows: Optional[int] = 2000,
     force: bool = False,
     csv_dir: Path = MELD_CSV_DIR,
-    batch_size: int = 4,
+    batch_size: int = DEFAULT_LCO_BATCH,
 ) -> Dict[str, Dict[str, np.ndarray]]:
     cache_ref = _cache_path("meld", "train", model_key)
     cache_new = _cache_path("meld", "test", model_key)
@@ -158,18 +247,45 @@ def prepare_meld_embeddings(
         return {"ref": ref, "new": new}
 
     df_tr, df_te = load_meld_frames(csv_dir=csv_dir, max_rows=max_rows)
-    ref_mods = build_modality_block(
-        df_tr["Utterance"].fillna("").tolist(), model_key=model_key, batch_size=batch_size
-    )
-    new_mods = build_modality_block(
-        df_te["Utterance"].fillna("").tolist(), model_key=model_key, batch_size=batch_size
-    )
     y_ref = np.asarray([_sentiment_meld_to_float(s) for s in df_tr["Sentiment"]], dtype=float)
     y_new = np.asarray([_sentiment_meld_to_float(s) for s in df_te["Sentiment"]], dtype=float)
-    np.savez(cache_ref, text=ref_mods["text"], audio=ref_mods["audio"], video=ref_mods["video"], y=y_ref)
-    np.savez(cache_new, text=new_mods["text"], audio=new_mods["audio"], video=new_mods["video"], y=y_new)
-    ref_mods["y"] = y_ref
-    new_mods["y"] = y_new
+
+    if cache_ref.exists() and not force:
+        ref_mods = dict(np.load(cache_ref, allow_pickle=False))
+        print(f"[cache hit] {cache_ref.name}", flush=True)
+    else:
+        ref_mods = build_modality_block(
+            df_tr["Utterance"].fillna("").tolist(),
+            model_key=model_key,
+            batch_size=batch_size,
+            dataset="meld",
+            split="train",
+            force=force,
+        )
+        _save_split(cache_ref, ref_mods, y_ref)
+        ref_mods["y"] = y_ref
+        print(f"[cache save] {cache_ref.name}", flush=True)
+
+    if cache_new.exists() and not force:
+        new_mods = dict(np.load(cache_new, allow_pickle=False))
+        print(f"[cache hit] {cache_new.name}", flush=True)
+    else:
+        new_mods = build_modality_block(
+            df_te["Utterance"].fillna("").tolist(),
+            model_key=model_key,
+            batch_size=batch_size,
+            dataset="meld",
+            split="test",
+            force=force,
+        )
+        _save_split(cache_new, new_mods, y_new)
+        new_mods["y"] = y_new
+        print(f"[cache save] {cache_new.name}", flush=True)
+
+    if "y" not in ref_mods:
+        ref_mods["y"] = y_ref
+    if "y" not in new_mods:
+        new_mods["y"] = y_new
     return {"ref": ref_mods, "new": new_mods}
 
 
