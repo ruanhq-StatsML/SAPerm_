@@ -45,6 +45,9 @@ def _delta_v(
     if a.desk == deal.sector:
         fit += 0.08
     risk = doc.risk_score if use_model else 0.35
+    # v12: route high-risk / planted critical to higher-expertise analysts harder.
+    if doc.planted_risk or risk >= deal.risk_bar:
+        fit += 0.15 * a.expertise
     # High risk raises value of attention — up to a point.
     value = fit + 0.4 * risk + 0.05 * deal.value
     if sparse_priority and open_docs_for_deal <= 3:

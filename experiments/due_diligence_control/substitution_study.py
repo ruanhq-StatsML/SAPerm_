@@ -77,8 +77,10 @@ METHODS: Dict[str, ControlFlags] = {
         delayed_abstain=True,
         critical_first=True,
         even_effort=True,
-        # recovery_confirm_boost left off: helps some seeds, regresses sparse_missing.
         budget_transfer=True,
+        # v12: second-look-only boost on fresh recovery (first-look boost hurt sparse_missing)
+        recovery_confirm_boost=True,
+        fast_escalate_on_gap=True,
     ),
     "rules_blind": ControlFlags(
         analyst_rules=True,
@@ -96,6 +98,8 @@ METHODS: Dict[str, ControlFlags] = {
         critical_first=True,
         even_effort=True,
         budget_transfer=True,
+        recovery_confirm_boost=True,
+        fast_escalate_on_gap=True,
     ),
     "model_only": ControlFlags(
         analyst_rules=False, desk_rules=False, use_model_signals=True
@@ -238,7 +242,17 @@ def _try_confirm_planted(
     a = primary
 
     def _confirm_hit(viewer: Analyst, is_second_look: bool) -> bool:
-        boost = 0.12 if (flags.recovery_confirm_boost and doc.fresh_recovery) else 0.0
+        # v12: boost only on second look after recovery — first-look boost
+        # shifted RNG / coverage in ways that hurt sparse_missing.
+        boost = (
+            0.14
+            if (
+                flags.recovery_confirm_boost
+                and doc.fresh_recovery
+                and is_second_look
+            )
+            else 0.0
+        )
         if doc.planted_risk and doc.available and not doc.redacted:
             p = (
                 (0.78 + 0.2 * viewer.expertise)
@@ -365,9 +379,15 @@ def run_one(
             elif sig == "matching_failure":
                 metrics.matching_failure_events += 1
             snap = snapshot_deal(deal, corpus)
-            # Rate-limit: at most one escalation pulse every 3 days per deal.
-            # Sparse rooms cool faster so recovered evidence is not stranded.
-            cool_days = 2 if (flags.sparse_priority and deal.open_docs_recent <= 3) else 3
+            # Rate-limit escalations. Thin rooms / active gaps cool faster so
+            # recovered evidence is not stranded behind a 3-day wait.
+            cool_days = 3
+            if flags.sparse_priority and deal.open_docs_recent <= 3:
+                cool_days = 2
+            if flags.fast_escalate_on_gap and (
+                "low_availability" in snap.reasons or "high_redaction" in snap.reasons
+            ):
+                cool_days = 1
             cooled = (day - deal.last_escalation_day) >= cool_days
             live_unread_critical = any(
                 d.deal_id == deal.id

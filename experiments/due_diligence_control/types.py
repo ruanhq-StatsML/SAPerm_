@@ -129,6 +129,8 @@ class ControlFlags:
     recovery_confirm_boost: bool = False
     # v11: move unused budget from IC-ready deals to deals with unread critical.
     budget_transfer: bool = False
+    # v12: shorten escalation cooldown when availability/redaction gap is active.
+    fast_escalate_on_gap: bool = False
 
 
 class DealOutcome:
