@@ -163,6 +163,8 @@ def run_emotion_overnight(
     with_po_interact: bool = True,
     out_dir: Path = Path("experiments/multimodal_attribution/results/emotion_overnight"),
     n_jobs: int = 2,
+    datasets: Sequence[str] | None = None,
+    combos: Sequence[str] | None = None,
 ):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -191,13 +193,26 @@ def run_emotion_overnight(
     }
     meta_path.write_text(json.dumps(meta, indent=2))
 
-    log(f"preparing MOSEI embeddings ({model_key}, max_rows={max_rows})…")
-    packs = {
-        "mosei": prepare_mosei_embeddings(model_key=model_key, max_rows=max_rows),
-        "meld": None,
-    }
-    log(f"preparing MELD embeddings ({model_key}, max_rows={max_rows})…")
-    packs["meld"] = prepare_meld_embeddings(model_key=model_key, max_rows=max_rows)
+    ds_list = list(DATASETS)
+    if datasets:
+        want = {s.strip() for s in datasets if s.strip()}
+        ds_list = [d for d in ds_list if d in want]
+        if not ds_list:
+            raise ValueError(f"no datasets match {sorted(want)}; known={list(DATASETS)}")
+    combo_map = dict(MODALITY_COMBOS)
+    if combos:
+        want_c = {s.strip() for s in combos if s.strip()}
+        combo_map = {k: v for k, v in combo_map.items() if k in want_c}
+        if not combo_map:
+            raise ValueError(f"no combos match {sorted(want_c)}; known={list(MODALITY_COMBOS)}")
+
+    packs: Dict[str, object] = {}
+    if "mosei" in ds_list:
+        log(f"preparing MOSEI embeddings ({model_key}, max_rows={max_rows})…")
+        packs["mosei"] = prepare_mosei_embeddings(model_key=model_key, max_rows=max_rows)
+    if "meld" in ds_list:
+        log(f"preparing MELD embeddings ({model_key}, max_rows={max_rows})…")
+        packs["meld"] = prepare_meld_embeddings(model_key=model_key, max_rows=max_rows)
 
     methods = build_methods(n_perm=n_perm, include_po_interact=False, include_fsds=False)
     raw = _read_raw(raw_path)
@@ -208,14 +223,17 @@ def run_emotion_overnight(
 
     t0 = time.time()
     finished = 0
-    total = len(DATASETS) * len(MODALITY_COMBOS) * n_rep
+    total = len(ds_list) * len(combo_map) * n_rep
     from experiments.multimodal_attribution.parallel_eval import eval_methods_parallel
 
-    log(f"emotion overnight: {total} batches, B={n_rep}, band={band}, RF outcome, n_jobs={n_jobs}")
+    log(
+        f"emotion overnight: {total} batches, B={n_rep}, band={band}, "
+        f"RF outcome, n_jobs={n_jobs}, datasets={ds_list}, combos={list(combo_map)}"
+    )
 
-    for dataset in DATASETS:
+    for dataset in ds_list:
         pack = packs[dataset]
-        for combo_name, combo in MODALITY_COMBOS.items():
+        for combo_name, combo in combo_map.items():
             for rep in range(n_rep):
                 existing = sum(
                     1
@@ -324,6 +342,13 @@ def _parse_args():
         default=Path("experiments/multimodal_attribution/results/emotion_overnight"),
     )
     p.add_argument("--n-jobs", type=int, default=2, help="Joblib workers per rep")
+    p.add_argument("--datasets", nargs="+", default=None, help="Subset: mosei meld")
+    p.add_argument(
+        "--combos",
+        nargs="+",
+        default=None,
+        help="Subset: text_audio text_video audio_video text_audio_video",
+    )
     return p.parse_args()
 
 
@@ -341,6 +366,8 @@ def main():
         with_po_interact=(not args.no_po_interact),
         out_dir=args.out_dir,
         n_jobs=args.n_jobs,
+        datasets=args.datasets,
+        combos=args.combos,
     )
 
 

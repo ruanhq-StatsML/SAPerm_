@@ -56,13 +56,15 @@ MODALITY_COMBOS: Dict[str, Tuple[str, ...]] = {
 # Concept-drift first so a single-process run hits the target scenarios early;
 # null/no_shift cells stay available for type-I calibration.
 DATASETS: List[DatasetSpec] = [
-    DatasetSpec("msrvtt_concept_top30", "concept_drift", band="top30", concept_shift=1.5),
+    # concept_shift kept moderate (+ mid-PC nonlinear noise in apply_concept_drift)
+    # so RFPerm/CF/DR are powered but not floor-saturated at p=1/(n_perm+1).
+    DatasetSpec("msrvtt_concept_top30", "concept_drift", band="top30", concept_shift=0.35),
     DatasetSpec(
         "msrvtt_concept_pc31_100",
         "concept_drift",
         band="pc31_100",
         dims=(160, 160, 160),
-        concept_shift=1.5,
+        concept_shift=0.35,
     ),
     DatasetSpec("msrvtt_null_top30", "no_shift", band="top30"),
     DatasetSpec("msrvtt_null_pc31_100", "no_shift", band="pc31_100", dims=(160, 160, 160)),
@@ -78,6 +80,7 @@ def run(
     seed: int = 0,
     out_dir: Path = Path("experiments/multimodal_attribution/results/concept_drift"),
     scenarios: Optional[Sequence[str]] = None,
+    dataset_names: Optional[Sequence[str]] = None,
     methods_filter: Optional[Sequence[str]] = None,
     n_jobs: int = 2,
 ):
@@ -90,9 +93,14 @@ def run(
     datasets = list(DATASETS)
     if scenarios:
         want = {s.strip() for s in scenarios if s.strip()}
-        datasets = [d for d in DATASETS if d.scenario in want]
+        datasets = [d for d in datasets if d.scenario in want]
         if not datasets:
             raise ValueError(f"no datasets match --scenarios {sorted(want)}")
+    if dataset_names:
+        want_ds = {s.strip() for s in dataset_names if s.strip()}
+        datasets = [d for d in datasets if d.name in want_ds]
+        if not datasets:
+            raise ValueError(f"no datasets match --datasets {sorted(want_ds)}")
 
     def log(msg: str) -> None:
         line = f"[{time.strftime('%H:%M:%S')}] {msg}"
@@ -249,6 +257,12 @@ def main():
         help="Only run these scenarios (e.g. concept_drift). Default: all, concept first.",
     )
     p.add_argument(
+        "--datasets",
+        nargs="+",
+        default=None,
+        help="Only these DatasetSpec.name values (e.g. msrvtt_concept_top30).",
+    )
+    p.add_argument(
         "--methods",
         nargs="+",
         default=None,
@@ -269,6 +283,7 @@ def main():
         seed=args.seed,
         out_dir=args.out_dir,
         scenarios=args.scenarios,
+        dataset_names=args.datasets,
         methods_filter=args.methods,
         n_jobs=args.n_jobs,
     )

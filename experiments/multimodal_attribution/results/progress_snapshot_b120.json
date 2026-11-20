@@ -1,0 +1,371 @@
+{
+  "snapshotted_at": "2026-11-20T17:31:49Z",
+  "new_target_B": 120,
+  "note": "Already-finished reps kept (checkpoint). Jobs retargeted to n_rep=120; will not redo cells with rep>=120.",
+  "boards": [
+    {
+      "name": "MSR_overnight",
+      "path": "experiments/multimodal_attribution/results/overnight/power_raw.csv",
+      "n_rows": 5011,
+      "cells": [
+        {
+          "dataset": "msrvtt_null_top30",
+          "combo": "audio_video",
+          "scenario": "no_shift",
+          "methods": {
+            "bai96": 49,
+            "c2st_X": 49,
+            "c2st_XY": 49,
+            "chen10": 49,
+            "crosscorr_audio_video": 49,
+            "interact_PO_audio_video": 49,
+            "kmmd": 49,
+            "miles11": 49,
+            "mmd_rbf": 49,
+            "pan14": 49,
+            "skk13": 49,
+            "sri08": 49,
+            "xu16": 49,
+            "zwl": 49
+          },
+          "min_rep": 49,
+          "max_rep": 49,
+          "n_methods": 14,
+          "methods_ge_120": 0,
+          "need_to_120": {
+            "bai96": 71,
+            "c2st_X": 71,
+            "c2st_XY": 71,
+            "chen10": 71,
+            "crosscorr_audio_video": 71,
+            "interact_PO_audio_video": 71,
+            "kmmd": 71,
+            "miles11": 71,
+            "mmd_rbf": 71,
+            "pan14": 71,
+            "skk13": 71,
+            "sri08": 71,
+            "xu16": 71,
+            "zwl": 71
+          }
+        },
+        {
+          "dataset": "msrvtt_null_top30",
+          "combo": "text_audio",
+          "scenario": "no_shift",
+          "methods": {
+            "bai96": 149,
+            "c2st_X": 149,
+            "c2st_XY": 149,
+            "cfperm": 12,
+            "chen10": 149,
+            "crosscorr_text_audio": 149,
+            "drperm": 12,
+            "interact_PO_text_audio": 149,
+            "kmmd": 149,
+            "miles11": 149,
+            "mmd_rbf": 149,
+            "pan14": 149,
+            "rfperm": 12,
+            "skk13": 149,
+            "sri08": 149,
+            "xu16": 149,
+            "zwl": 149
+          },
+          "min_rep": 12,
+          "max_rep": 149,
+          "n_methods": 17,
+          "methods_ge_120": 14,
+          "need_to_120": {
+            "cfperm": 108,
+            "drperm": 108,
+            "rfperm": 108
+          }
+        },
+        {
+          "dataset": "msrvtt_null_top30",
+          "combo": "text_audio_video",
+          "scenario": "no_shift",
+          "methods": {
+            "bai96": 3,
+            "c2st_X": 3,
+            "c2st_XY": 3,
+            "chen10": 3,
+            "crosscorr_audio_video": 3,
+            "crosscorr_text_audio": 3,
+            "crosscorr_text_video": 3,
+            "interact_PO_audio_video": 3,
+            "interact_PO_text_audio": 3,
+            "interact_PO_text_video": 3,
+            "kmmd": 3,
+            "miles11": 3,
+            "mmd_rbf": 3,
+            "pan14": 3,
+            "skk13": 3,
+            "sri08": 3,
+            "xu16": 3,
+            "zwl": 3
+          },
+          "min_rep": 3,
+          "max_rep": 3,
+          "n_methods": 18,
+          "methods_ge_120": 0,
+          "need_to_120": {
+            "bai96": 117,
+            "c2st_X": 117,
+            "c2st_XY": 117,
+            "chen10": 117,
+            "crosscorr_audio_video": 117,
+            "crosscorr_text_audio": 117,
+            "crosscorr_text_video": 117,
+            "interact_PO_audio_video": 117,
+            "interact_PO_text_audio": 117,
+            "interact_PO_text_video": 117,
+            "kmmd": 117,
+            "miles11": 117,
+            "mmd_rbf": 117,
+            "pan14": 117,
+            "skk13": 117,
+            "sri08": 117,
+            "xu16": 117,
+            "zwl": 117
+          }
+        },
+        {
+          "dataset": "msrvtt_null_top30",
+          "combo": "text_video",
+          "scenario": "no_shift",
+          "methods": {
+            "bai96": 149,
+            "c2st_X": 149,
+            "c2st_XY": 149,
+            "chen10": 149,
+            "crosscorr_text_video": 149,
+            "interact_PO_text_video": 149,
+            "kmmd": 149,
+            "miles11": 149,
+            "mmd_rbf": 149,
+            "pan14": 149,
+            "skk13": 149,
+            "sri08": 149,
+            "xu16": 149,
+            "zwl": 149
+          },
+          "min_rep": 149,
+          "max_rep": 149,
+          "n_methods": 14,
+          "methods_ge_120": 14,
+          "need_to_120": {}
+        }
+      ]
+    },
+    {
+      "name": "concept_drift",
+      "path": "experiments/multimodal_attribution/results/concept_drift/power_raw.csv",
+      "n_rows": 2090,
+      "cells": [
+        {
+          "dataset": "msrvtt_concept_pc31_100",
+          "combo": "text_audio",
+          "scenario": "concept_drift",
+          "methods": {
+            "rfperm": 149
+          },
+          "min_rep": 149,
+          "max_rep": 149,
+          "n_methods": 1,
+          "methods_ge_120": 1,
+          "need_to_120": {}
+        },
+        {
+          "dataset": "msrvtt_concept_pc31_100",
+          "combo": "text_audio_video",
+          "scenario": "concept_drift",
+          "methods": {
+            "rfperm": 149
+          },
+          "min_rep": 149,
+          "max_rep": 149,
+          "n_methods": 1,
+          "methods_ge_120": 1,
+          "need_to_120": {}
+        },
+        {
+          "dataset": "msrvtt_concept_pc31_100",
+          "combo": "text_video",
+          "scenario": "concept_drift",
+          "methods": {
+            "rfperm": 149
+          },
+          "min_rep": 149,
+          "max_rep": 149,
+          "n_methods": 1,
+          "methods_ge_120": 1,
+          "need_to_120": {}
+        },
+        {
+          "dataset": "msrvtt_concept_top30",
+          "combo": "text_audio",
+          "scenario": "concept_drift",
+          "methods": {
+            "bai96": 31,
+            "c2st_X": 31,
+            "c2st_XY": 31,
+            "cfperm": 31,
+            "chen10": 31,
+            "drperm": 31,
+            "kmmd": 31,
+            "miles11": 31,
+            "mmd_rbf": 31,
+            "pan14": 31,
+            "rfperm": 149,
+            "skk13": 31,
+            "sri08": 31,
+            "xu16": 31,
+            "zwl": 31
+          },
+          "min_rep": 31,
+          "max_rep": 149,
+          "n_methods": 15,
+          "methods_ge_120": 1,
+          "need_to_120": {
+            "bai96": 89,
+            "c2st_X": 89,
+            "c2st_XY": 89,
+            "cfperm": 89,
+            "chen10": 89,
+            "drperm": 89,
+            "kmmd": 89,
+            "miles11": 89,
+            "mmd_rbf": 89,
+            "pan14": 89,
+            "skk13": 89,
+            "sri08": 89,
+            "xu16": 89,
+            "zwl": 89
+          }
+        },
+        {
+          "dataset": "msrvtt_concept_top30",
+          "combo": "text_audio_video",
+          "scenario": "concept_drift",
+          "methods": {
+            "rfperm": 149
+          },
+          "min_rep": 149,
+          "max_rep": 149,
+          "n_methods": 1,
+          "methods_ge_120": 1,
+          "need_to_120": {}
+        },
+        {
+          "dataset": "msrvtt_concept_top30",
+          "combo": "text_video",
+          "scenario": "concept_drift",
+          "methods": {
+            "rfperm": 149
+          },
+          "min_rep": 149,
+          "max_rep": 149,
+          "n_methods": 1,
+          "methods_ge_120": 1,
+          "need_to_120": {}
+        },
+        {
+          "dataset": "msrvtt_null_top30",
+          "combo": "text_audio",
+          "scenario": "no_shift",
+          "methods": {
+            "bai96": 52,
+            "c2st_X": 52,
+            "c2st_XY": 52,
+            "cfperm": 52,
+            "chen10": 52,
+            "drperm": 52,
+            "kmmd": 52,
+            "miles11": 52,
+            "mmd_rbf": 52,
+            "pan14": 52,
+            "skk13": 52,
+            "sri08": 52,
+            "xu16": 52,
+            "zwl": 52
+          },
+          "min_rep": 52,
+          "max_rep": 52,
+          "n_methods": 14,
+          "methods_ge_120": 0,
+          "need_to_120": {
+            "bai96": 68,
+            "c2st_X": 68,
+            "c2st_XY": 68,
+            "cfperm": 68,
+            "chen10": 68,
+            "drperm": 68,
+            "kmmd": 68,
+            "miles11": 68,
+            "mmd_rbf": 68,
+            "pan14": 68,
+            "skk13": 68,
+            "sri08": 68,
+            "xu16": 68,
+            "zwl": 68
+          }
+        }
+      ]
+    },
+    {
+      "name": "emotion_overnight",
+      "path": "experiments/multimodal_attribution/results/emotion_overnight/power_raw.csv",
+      "n_rows": 170,
+      "cells": [
+        {
+          "dataset": "mosei",
+          "combo": "text_audio",
+          "methods": {
+            "bai96": 9,
+            "c2st_X": 9,
+            "c2st_XY": 9,
+            "cfperm": 9,
+            "chen10": 9,
+            "crosscorr_text_audio": 9,
+            "drperm": 9,
+            "interact_PO_text_audio": 9,
+            "kmmd": 9,
+            "miles11": 9,
+            "mmd_rbf": 9,
+            "pan14": 9,
+            "rfperm": 9,
+            "skk13": 9,
+            "sri08": 9,
+            "xu16": 9,
+            "zwl": 9
+          },
+          "min_rep": 9,
+          "max_rep": 9,
+          "n_methods": 17,
+          "methods_ge_120": 0,
+          "need_to_120": {
+            "bai96": 111,
+            "c2st_X": 111,
+            "c2st_XY": 111,
+            "cfperm": 111,
+            "chen10": 111,
+            "crosscorr_text_audio": 111,
+            "drperm": 111,
+            "interact_PO_text_audio": 111,
+            "kmmd": 111,
+            "miles11": 111,
+            "mmd_rbf": 111,
+            "pan14": 111,
+            "rfperm": 111,
+            "skk13": 111,
+            "sri08": 111,
+            "xu16": 111,
+            "zwl": 111
+          }
+        }
+      ]
+    }
+  ]
+}
