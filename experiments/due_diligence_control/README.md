@@ -71,11 +71,11 @@ Read `SUBSTITUTION_ARGUMENT.md` (checked in) and `results/SUBSTITUTION.md` (rege
 
 **Verdict in one line:** partial substitute for triage under observable sparse/dense rooms; **not** a substitute when critical documents or fields are missing — `recall_all` is bounded by availability, and FinanceGPT cannot invent redacted evidence.
 
-### v2 → v12 iteration
+### v2 → v13 iteration
 
-- v2–v11: integrity → escalate → critical lane → dual-look → reopen → adaptive → same-day → delayed abstain → critical-first → budget transfer
-- v12: **fast escalate on gap** (cooldown 1d when low availability / high redaction) + expertise routing for critical + second-look-only recovery boost
-- Methods: `controlled_v1` → `controlled_v2` → `controlled` (v12)
+- v2–v12: integrity → escalate → critical lane → dual-look → reopen → adaptive → same-day → delayed abstain → critical-first → budget transfer → fast escalate / expertise route
+- v13: checked-in **BUSINESS_LOGIC.md** (业务论证); thin-room extra-unredact hook (opt-in, default off)
+- Methods: `controlled_v1` → `controlled_v2` → `controlled` (v13)
 - CI: Python experiment workflow + R 4.x
 
 | Regime | What happens | Substitute? |

@@ -26,6 +26,9 @@ class EscalationConfig:
     adaptive_bump: float = 0.12
     adaptive_rate_cap: float = 0.75
     adaptive_extra_requests: int = 1
+    # v13: under matching_failure in thin rooms, ask to unredact more stubs.
+    # Default 0 — extra>0 lifts sparse_missing but can shuffle missing_fields.
+    matching_failure_extra_unredacts: int = 0
 
 
 def adaptive_config(base: EscalationConfig, pulses_so_far: int) -> EscalationConfig:
@@ -47,6 +50,7 @@ def adaptive_config(base: EscalationConfig, pulses_so_far: int) -> EscalationCon
         adaptive_bump=base.adaptive_bump,
         adaptive_rate_cap=base.adaptive_rate_cap,
         adaptive_extra_requests=base.adaptive_extra_requests,
+        matching_failure_extra_unredacts=base.matching_failure_extra_unredacts,
     )
 
 
@@ -112,7 +116,13 @@ def plan_escalations(
             for d in corpus.values()
             if d.deal_id == deal.id and d.planted_risk and d.available and d.redacted and not d.found
         ]
-        for doc in redacted[: cfg.max_doc_requests]:
+        # Extra unredacts only in thin rooms — dense missing_fields already
+        # clears well at max_doc_requests; flooding unredact requests there
+        # shuffled timing and cut recall in v13 A/B.
+        n_unredact = cfg.max_doc_requests
+        if deal.open_docs_recent <= 2:
+            n_unredact += cfg.matching_failure_extra_unredacts
+        for doc in redacted[:n_unredact]:
             actions.append(
                 EscalationAction(deal.id, "request_unredact", "high_redaction", doc.id)
             )

@@ -299,6 +299,51 @@ def test_recovery_confirm_boost_flag_roundtrip():
     assert d.fresh_recovery is True
 
 
+def test_matching_failure_extra_unredacts_only_when_configured_thin():
+    from .escalation import EscalationConfig, plan_escalations
+    from .integrity import snapshot_deal
+    from .types import Deal, Document
+
+    thin = Deal(
+        id="d0", sector="s", total_confirmed_risks=2, total_coverage=12, open_docs_recent=1
+    )
+    corpus = {
+        f"r{i}": Document(
+            id=f"r{i}",
+            deal_id="d0",
+            kind="c",
+            text="[REDACTED]",
+            planted_risk=True,
+            available=True,
+            redacted=True,
+        )
+        for i in range(4)
+    }
+    snap = snapshot_deal(thin, corpus)
+    base_n = len(
+        [
+            a
+            for a in plan_escalations(thin, snap, corpus, "matching_failure", EscalationConfig())
+            if a.kind == "request_unredact"
+        ]
+    )
+    boosted_n = len(
+        [
+            a
+            for a in plan_escalations(
+                thin,
+                snap,
+                corpus,
+                "matching_failure",
+                EscalationConfig(max_doc_requests=2, matching_failure_extra_unredacts=1),
+            )
+            if a.kind == "request_unredact"
+        ]
+    )
+    assert base_n == 2
+    assert boosted_n >= 3
+
+
 def test_critical_first_prefers_critical_in_crowded_room():
     from .allocate import allocate_day
     from .types import Analyst, AnalystLoad, ControlFlags, Deal, Document
