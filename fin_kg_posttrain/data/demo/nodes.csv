@@ -1,0 +1,8 @@
+id,name,node_type,risk_tag,capital,controller
+P_WANG,王五,person,,,
+N_DING,鼎盛投资,company,,,王五
+N_RUI,瑞丰实业,company,,5000万,
+N_HENG,恒泰地产,company,债务违约,,
+N_HUA,华兴控股集团,company,,,
+N_YUAN,远大科技,company,,1亿,
+N_HONG,宏图新材料,company,失信被执行人,,
