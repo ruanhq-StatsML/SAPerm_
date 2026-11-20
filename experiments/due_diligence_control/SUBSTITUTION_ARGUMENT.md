@@ -1,6 +1,6 @@
 # Substitution under missing / sparse data
 
-# v12 board (fast escalate on gap + expertise routing + second-look recovery boost)
+# v13 board (v12 controls + BUSINESS_LOGIC.md; thin-room extra-unredact opt-in)
 
 When availability/redaction gaps are active, escalate every day. Route critical
 docs to higher-expertise analysts. Second-look-only boost after recovery.
