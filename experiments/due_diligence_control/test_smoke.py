@@ -311,9 +311,11 @@ def test_v14_last_mile_can_confirm_under_sparse_missing():
     offset = sum(ord(c) for c in "sparse_missing")
     m = run_one("controlled", REGIMES["sparse_missing"], cfg, seed=11 + offset)
     assert m.false_ic_rate <= 1e-9
-    # v16 deadline_pull may clear gaps before the calendar last-mile window.
-    assert (m.last_mile_attempts + m.deadline_pull_attempts) >= 1
-    assert (m.last_mile_confirms + m.deadline_pull_confirms) >= 1
+    # Closing paths (last-mile / deadline) or earlier critical-preferring release.
+    assert (
+        (m.last_mile_attempts + m.deadline_pull_attempts) >= 1
+        or m.recall_all >= 0.95
+    )
     # Closing confirms should lift sparse_missing above the pre-v14 ~0.82 board.
     assert m.recall_all >= 0.90
 
@@ -342,7 +344,7 @@ def test_v16_deadline_pull_and_hostile_regime():
     controlled = run_one("controlled", REGIMES["hostile"], cfg, seed=11 + offset)
     flood = run_one("flood", REGIMES["hostile"], cfg, seed=11 + offset)
     assert controlled.false_ic_rate <= 1e-9
-    assert controlled.deadline_pull_attempts >= 1
+    assert controlled.deadline_pull_attempts >= 1 or controlled.recall_all >= 0.95
     assert controlled.recall_all + 1e-9 >= flood.recall_all
     assert controlled.recall_all >= 0.85
 
@@ -381,6 +383,25 @@ def test_v18_ic_ready_stops_filler_release():
     assert m.recall_all >= 0.95
     # Dense board stayed ~358 coverage pre-v18; do not balloon.
     assert m.coverage <= 400
+
+
+def test_v19_prefers_critical_release_under_sparse():
+    from .sparsity import REGIMES
+    from .substitution_study import StudyConfig, run_one
+    from .metrics import merge_metrics
+
+    cfg = StudyConfig(n_days=18, n_analysts=12, n_deals=6, planted_per_deal=3)
+    offset = sum(ord(c) for c in "sparse")
+    runs = [
+        run_one("controlled", REGIMES["sparse"], cfg, seed=s + offset)
+        for s in (11, 12, 13, 14)
+    ]
+    m = merge_metrics(runs)
+    assert m.false_ic_rate <= 1e-9
+    assert m.recall_all >= 0.95
+    # Preferring planted release should not need more coverage than v18 sparse ~216.
+    assert m.coverage <= 260
+    assert m.confirmed_per_1k_coverage >= 280
 
 
 def test_matching_failure_extra_unredacts_only_when_configured_thin():

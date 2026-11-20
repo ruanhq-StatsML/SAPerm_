@@ -50,6 +50,7 @@ FinanceGPT 只打分；规则系统管容量与完整性。
 13. **Deadline-pull（v16/v17）** — `days_to_ic ≤ 6` 时提前拉 stranded critical；v17 只在确有未确认工作量时开火，attempts 只计 look，避免空转。
 14. **Hostile 压测** — 极薄流 + 高缺失/脱敏下 controlled ≫ flood；控制栈的价值在压力态放大。
 15. **IC-ready 停 filler（v18）** — 会上已定的 deal 别再往 live 灌噪声；coverage↓、confirmed/1k↑。
+16. **优先放出 critical（v19）** — Poisson 进室时先放未确认 critical，再放 filler；避免稀薄流把风险文件卡在门外。
 
 ## 4. 判决
 

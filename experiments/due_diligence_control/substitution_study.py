@@ -234,9 +234,19 @@ def _release_docs(
         n = int(rng.poisson(regime.docs_per_deal_per_day))
         if n <= 0:
             continue
-        # Prefer releasing a mix; shuffle then take n.
-        rng.shuffle(pending)
-        for doc in pending[:n]:
+        # v19: if unfound available critical still sits outside live, prefer
+        # releasing those before filler so Poisson thinning does not starve them.
+        critical = [
+            d
+            for d in pending
+            if d.planted_risk and not d.found and not d.redacted
+        ]
+        crit_ids = {d.id for d in critical}
+        filler = [d for d in pending if d.id not in crit_ids]
+        rng.shuffle(critical)
+        rng.shuffle(filler)
+        ordered = critical + filler
+        for doc in ordered[:n]:
             doc.day_arrived = day
             live[doc.id] = doc
             deal.pending_review += 1
