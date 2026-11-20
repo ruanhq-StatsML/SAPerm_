@@ -1,0 +1,31 @@
+{
+  "n_examples": 47,
+  "tasks": [
+    "graph2text",
+    "link_pred",
+    "multi_hop",
+    "single_hop",
+    "temporal"
+  ],
+  "base_model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "lora_config": {
+    "r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "bias": "none",
+    "task_type": "CAUSAL_LM",
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj"
+    ]
+  },
+  "output_dir": "experiments/fin_kg_digestion/results/demo/lora_out",
+  "max_seq_length": 2048,
+  "artifacts": {
+    "triples": "experiments/fin_kg_digestion/results/demo/triples.json",
+    "graph2text": "experiments/fin_kg_digestion/results/demo/graph2text.jsonl",
+    "sft_chat": "experiments/fin_kg_digestion/results/demo/sft_chat.jsonl"
+  }
+}

@@ -434,18 +434,45 @@ def build_lora_config(
     lora_alpha: int = 32,
     lora_dropout: float = 0.05,
     target_modules: Optional[Sequence[str]] = None,
-):
-    """Push digestion output into PEFT LoRAConfig (Qwen/LLaMA-style defaults)."""
-    from peft import LoraConfig, TaskType
+) -> Any:
+    """Push digestion output into PEFT LoRAConfig (Qwen/LLaMA-style defaults).
 
-    return LoraConfig(
-        r=r,
-        lora_alpha=lora_alpha,
-        lora_dropout=lora_dropout,
-        bias="none",
-        task_type=TaskType.CAUSAL_LM,
-        target_modules=list(target_modules or ("q_proj", "k_proj", "v_proj", "o_proj")),
-    )
+    If ``peft`` is not installed, returns a plain dict with the same fields so
+    dry-run digestion still works in lightweight environments.
+    """
+    targets = list(target_modules or ("q_proj", "k_proj", "v_proj", "o_proj"))
+    try:
+        from peft import LoraConfig, TaskType
+
+        return LoraConfig(
+            r=r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+            bias="none",
+            task_type=TaskType.CAUSAL_LM,
+            target_modules=targets,
+        )
+    except ImportError:
+        return {
+            "r": r,
+            "lora_alpha": lora_alpha,
+            "lora_dropout": lora_dropout,
+            "bias": "none",
+            "task_type": "CAUSAL_LM",
+            "target_modules": targets,
+        }
+
+
+def _lora_as_dict(lora_config: Any) -> Dict[str, Any]:
+    if isinstance(lora_config, dict):
+        return dict(lora_config)
+    return {
+        "r": lora_config.r,
+        "lora_alpha": lora_config.lora_alpha,
+        "lora_dropout": lora_config.lora_dropout,
+        "target_modules": list(lora_config.target_modules),
+        "task_type": str(lora_config.task_type),
+    }
 
 
 def push_to_sft_trainer(
@@ -464,13 +491,7 @@ def push_to_sft_trainer(
         "n_examples": len(rows),
         "tasks": sorted({r["task"] for r in rows}),
         "base_model_id": base_model_id,
-        "lora_config": {
-            "r": lora_config.r,
-            "lora_alpha": lora_config.lora_alpha,
-            "lora_dropout": lora_config.lora_dropout,
-            "target_modules": list(lora_config.target_modules),
-            "task_type": str(lora_config.task_type),
-        },
+        "lora_config": _lora_as_dict(lora_config),
         "output_dir": output_dir,
         "max_seq_length": max_seq_length,
     }
@@ -478,9 +499,14 @@ def push_to_sft_trainer(
         return summary
 
     from datasets import Dataset
-    from peft import get_peft_model
+    from peft import LoraConfig, get_peft_model
     from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
     from trl import SFTTrainer
+
+    if isinstance(lora_config, dict):
+        lora_config = build_lora_config()
+        if isinstance(lora_config, dict):
+            raise ImportError("peft is required for --train; pip install peft trl transformers")
 
     def to_text(ex):
         return {"text": render_chat_text(ex["messages"])}
@@ -490,6 +516,7 @@ def push_to_sft_trainer(
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     model = AutoModelForCausalLM.from_pretrained(base_model_id, trust_remote_code=True)
+    assert isinstance(lora_config, LoraConfig)
     model = get_peft_model(model, lora_config)
     args = TrainingArguments(
         output_dir=output_dir,
