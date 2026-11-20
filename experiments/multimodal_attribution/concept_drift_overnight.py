@@ -44,6 +44,7 @@ from experiments.multimodal_attribution.overnight_power import (  # noqa: E402
     DatasetSpec,
     make_dataset_batch,
 )
+from experiments.multimodal_attribution.parallel_eval import eval_methods_parallel  # noqa: E402
 from experiments.multimodal_attribution.power_benchmark import build_methods  # noqa: E402
 
 MODALITY_COMBOS: Dict[str, Tuple[str, ...]] = {
@@ -78,6 +79,7 @@ def run(
     out_dir: Path = Path("experiments/multimodal_attribution/results/concept_drift"),
     scenarios: Optional[Sequence[str]] = None,
     methods_filter: Optional[Sequence[str]] = None,
+    n_jobs: int = 2,
 ):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -141,7 +143,7 @@ def run(
     t0 = time.time()
     log(
         f"concept-drift overnight: {total} batches, methods={method_names}, "
-        f"scenarios={[d.scenario for d in datasets]}, "
+        f"scenarios={[d.scenario for d in datasets]}, n_jobs={n_jobs}, "
         f"compacted raw {before}→{after}"
     )
 
@@ -167,18 +169,19 @@ def run(
                 )
                 X1 = batch["df_ref"][:, :-1]
                 X2 = batch["df_new"][:, :-1]
+                todo = [
+                    (method_name, fn)
+                    for method_name, fn in methods.items()
+                    if done_key(spec.name, combo_name, spec.scenario, method_name, rep) not in done
+                ]
                 rows = []
-                for method_name, fn in methods.items():
-                    key = done_key(spec.name, combo_name, spec.scenario, method_name, rep)
-                    if key in done:
-                        continue
-                    try:
-                        pval = float(fn(X1, X2, batch))
-                    except Exception as exc:  # noqa: BLE001
-                        pval = float("nan")
-                        log(f"ERR {key}: {exc}")
+                for method_name, pval, err in eval_methods_parallel(
+                    todo, X1, X2, batch, n_jobs=n_jobs
+                ):
+                    if err:
+                        log(f"ERR {spec.name}|{combo_name}|{spec.scenario}|{method_name}|{rep}: {err.splitlines()[0]}")
                         with log_path.open("a") as f:
-                            f.write(traceback.format_exc() + "\n")
+                            f.write(err + "\n")
                     rows.append(
                         {
                             "dataset": spec.name,
@@ -194,7 +197,7 @@ def run(
                             "outcome_model": "rf_regressor",
                         }
                     )
-                    done.add(key)
+                    done.add(done_key(spec.name, combo_name, spec.scenario, method_name, rep))
                 if rows:
                     append_rows(raw_path, rows)
                 finished += 1
@@ -251,6 +254,12 @@ def main():
         default=None,
         help="Only run these methods (e.g. rfperm). Skips keys already in power_raw; never overwrites.",
     )
+    p.add_argument(
+        "--n-jobs",
+        type=int,
+        default=2,
+        help="Joblib workers for methods inside each rep (OMP_NUM_THREADS=1).",
+    )
     args = p.parse_args()
     run(
         n=args.n,
@@ -261,6 +270,7 @@ def main():
         out_dir=args.out_dir,
         scenarios=args.scenarios,
         methods_filter=args.methods,
+        n_jobs=args.n_jobs,
     )
 
 

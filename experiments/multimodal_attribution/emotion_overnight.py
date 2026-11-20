@@ -162,6 +162,7 @@ def run_emotion_overnight(
     seed: int = 0,
     with_po_interact: bool = True,
     out_dir: Path = Path("experiments/multimodal_attribution/results/emotion_overnight"),
+    n_jobs: int = 2,
 ):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -208,7 +209,9 @@ def run_emotion_overnight(
     t0 = time.time()
     finished = 0
     total = len(DATASETS) * len(MODALITY_COMBOS) * n_rep
-    log(f"emotion overnight: {total} batches, B={n_rep}, band={band}, RF outcome")
+    from experiments.multimodal_attribution.parallel_eval import eval_methods_parallel
+
+    log(f"emotion overnight: {total} batches, B={n_rep}, band={band}, RF outcome, n_jobs={n_jobs}")
 
     for dataset in DATASETS:
         pack = packs[dataset]
@@ -258,18 +261,19 @@ def run_emotion_overnight(
 
                 X1 = batch["df_ref"][:, :-1]
                 X2 = batch["df_new"][:, :-1]
+                todo = [
+                    (method_name, fn)
+                    for method_name, fn in method_map.items()
+                    if _done_key(dataset, combo_name, method_name, rep) not in done
+                ]
                 rows = []
-                for method_name, fn in method_map.items():
-                    key = _done_key(dataset, combo_name, method_name, rep)
-                    if key in done:
-                        continue
-                    try:
-                        pval = float(fn(X1, X2, batch))
-                    except Exception as exc:  # noqa: BLE001
-                        pval = float("nan")
-                        log(f"ERR {key}: {exc}")
+                for method_name, pval, err in eval_methods_parallel(
+                    todo, X1, X2, batch, n_jobs=n_jobs
+                ):
+                    if err:
+                        log(f"ERR {_done_key(dataset, combo_name, method_name, rep)}: {err.splitlines()[0]}")
                         with log_path.open("a") as f:
-                            f.write(traceback.format_exc() + "\n")
+                            f.write(err + "\n")
                     rows.append(
                         {
                             "dataset": dataset,
@@ -284,7 +288,7 @@ def run_emotion_overnight(
                             "outcome_model": "rf_regressor",
                         }
                     )
-                    done.add(key)
+                    done.add(_done_key(dataset, combo_name, method_name, rep))
                 if rows:
                     _append(raw_path, rows)
                 finished += 1
@@ -319,6 +323,7 @@ def _parse_args():
         type=Path,
         default=Path("experiments/multimodal_attribution/results/emotion_overnight"),
     )
+    p.add_argument("--n-jobs", type=int, default=2, help="Joblib workers per rep")
     return p.parse_args()
 
 
@@ -335,6 +340,7 @@ def main():
         seed=args.seed,
         with_po_interact=(not args.no_po_interact),
         out_dir=args.out_dir,
+        n_jobs=args.n_jobs,
     )
 
 

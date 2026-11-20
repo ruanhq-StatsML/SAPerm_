@@ -235,6 +235,7 @@ def run_overnight(
     datasets: Optional[Sequence[DatasetSpec]] = None,
     combos: Optional[Dict[str, Tuple[str, ...]]] = None,
     out_dir: Path = Path("experiments/multimodal_attribution/results/overnight"),
+    n_jobs: int = 2,
 ):
     datasets = list(datasets or DATASETS)
     combos = dict(combos or MODALITY_COMBOS)
@@ -387,18 +388,25 @@ def run_overnight(
                 method_map = _add_pair_methods(batch, methods)
                 X1 = batch["df_ref"][:, :-1]
                 X2 = batch["df_new"][:, :-1]
+                from experiments.multimodal_attribution.parallel_eval import (
+                    eval_methods_parallel,
+                )
+
+                todo = [
+                    (method_name, fn)
+                    for method_name, fn in method_map.items()
+                    if _done_key(spec.name, combo_name, spec.scenario, method_name, rep)
+                    not in done
+                ]
                 rows = []
-                for method_name, fn in method_map.items():
+                for method_name, pval, err in eval_methods_parallel(
+                    todo, X1, X2, batch, n_jobs=n_jobs
+                ):
                     key = _done_key(spec.name, combo_name, spec.scenario, method_name, rep)
-                    if key in done:
-                        continue
-                    try:
-                        pval = float(fn(X1, X2, batch))
-                    except Exception as exc:  # noqa: BLE001
-                        pval = float("nan")
-                        log(f"ERR {key}: {exc}")
+                    if err:
+                        log(f"ERR {key}: {err.splitlines()[0]}")
                         with log_path.open("a") as f:
-                            f.write(traceback.format_exc() + "\n")
+                            f.write(err + "\n")
                     rows.append(
                         {
                             "dataset": spec.name,
@@ -461,6 +469,7 @@ def _parse_args():
         default=None,
         help="optional subset of dataset names",
     )
+    p.add_argument("--n-jobs", type=int, default=2, help="Joblib workers per rep")
     return p.parse_args()
 
 
@@ -482,6 +491,7 @@ def main():
         with_fsds=args.with_fsds,
         datasets=specs,
         out_dir=args.out_dir,
+        n_jobs=args.n_jobs,
     )
 
 
