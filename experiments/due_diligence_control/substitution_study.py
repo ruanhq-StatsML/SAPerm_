@@ -61,7 +61,7 @@ METHODS: Dict[str, ControlFlags] = {
         use_model_signals=True,
         integrity_gate=True,
     ),
-    # v8 = v7 + same-day micro-pass on recovered / unredacted critical docs
+    # v9 = v8 + delayed abstain (keep hunting before hard stop)
     "controlled": ControlFlags(
         analyst_rules=True,
         desk_rules=True,
@@ -74,18 +74,21 @@ METHODS: Dict[str, ControlFlags] = {
         reopen_after_recovery=True,
         adaptive_escalation=True,
         same_day_recovery_pass=True,
+        delayed_abstain=True,
     ),
     "rules_blind": ControlFlags(
         analyst_rules=True,
         desk_rules=True,
         use_model_signals=False,
         integrity_gate=True,
+        sparse_priority=True,
         auto_escalate=True,
         thin_stream_absorb=True,
         second_pass_confirm=True,
         reopen_after_recovery=True,
         adaptive_escalation=True,
         same_day_recovery_pass=True,
+        delayed_abstain=True,
     ),
     "model_only": ControlFlags(
         analyst_rules=False, desk_rules=False, use_model_signals=True
@@ -470,10 +473,20 @@ def run_one(
                     if not snap.allow_ic:
                         metrics.ic_blocked_integrity += 1
                         metrics.integrity_refusals += 1
-                        deal.outcome = DealOutcome.ABSTAIN_INCOMPLETE
-                        metrics.abstain_incomplete += 1
-                        # Honest abstain beats a false IC.
-                        metrics.net_value += 0.05
+                        deal.integrity_strikes += 1
+                        hard = (
+                            not flags.delayed_abstain
+                            or deal.integrity_strikes >= flags.delayed_abstain_strikes
+                            or snap.availability < 0.5
+                        )
+                        if hard:
+                            deal.outcome = DealOutcome.ABSTAIN_INCOMPLETE
+                            metrics.abstain_incomplete += 1
+                            # Honest abstain beats a false IC.
+                            metrics.net_value += 0.05
+                        else:
+                            # Keep hunting unread critical evidence.
+                            metrics.net_value += 0.01
                         recent_sector.append((a.id, deal.sector, day))
                         continue
                 deal.total_ic_ready = 1

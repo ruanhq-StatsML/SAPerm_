@@ -76,6 +76,7 @@ class Deal:
     open_docs_recent: int = 0  # set by allocator for sparse priority
     last_escalation_day: int = -99
     escalation_pulses: int = 0  # v7: how many times we have escalated this deal
+    integrity_strikes: int = 0  # v9: failed IC attempts before hard abstain
 
 
 @dataclass
@@ -116,6 +117,9 @@ class ControlFlags:
     adaptive_escalation: bool = False
     # v8: same-day micro-pass on docs recovered / unredacted this pulse.
     same_day_recovery_pass: bool = False
+    # v9: require multiple integrity failures before hard abstain (keep hunting).
+    delayed_abstain: bool = False
+    delayed_abstain_strikes: int = 2
 
 
 class DealOutcome:

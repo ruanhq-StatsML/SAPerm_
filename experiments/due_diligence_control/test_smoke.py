@@ -279,3 +279,13 @@ def test_v8_same_day_recovery_reads_under_missing():
     assert v8.false_ic_rate <= 1e-9
     assert v8.docs_recovered + v8.fields_unredacted >= 1
     assert v8.same_day_recovery_reads >= 1
+
+
+def test_v9_delayed_abstain_keeps_false_ic_zero():
+    from .sparsity import REGIMES
+    from .substitution_study import StudyConfig, run_one
+
+    cfg = StudyConfig(n_days=18, n_analysts=12, n_deals=6, planted_per_deal=3)
+    v9 = run_one("controlled", REGIMES["dense"], cfg, seed=11)
+    assert v9.false_ic_rate <= 1e-9
+    assert v9.recall_available >= 0.9
