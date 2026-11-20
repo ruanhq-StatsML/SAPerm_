@@ -71,14 +71,15 @@ Read `SUBSTITUTION_ARGUMENT.md` (checked in) and `results/SUBSTITUTION.md` (rege
 
 **Verdict in one line:** strong co-pilot for triage + evidence chase once evidence is recoverable; **not** a substitute for unrecovered missing docs/fields or partner IC — FinanceGPT cannot invent redacted evidence.
 
-### v2 → v16 iteration
+### v2 → v17 iteration
 
 - v2–v12: integrity → escalate → critical lane → dual-look → reopen → adaptive → same-day → delayed abstain → critical-first → budget transfer → fast escalate / expertise route
 - v13: checked-in **BUSINESS_LOGIC.md** (业务论证); thin-room extra-unredact hook (opt-in, default off)
 - v14: end-of-horizon **last-mile confirm** — force-release stranded available critical + partner looks
 - v15: **clearance IC** — after evidence clears, promote allow_ic deals and reconcile stale abstain stock
 - v16: **deadline_pull** when `days_to_ic ≤ 6`; new **hostile** stress regime
-- Methods: `controlled_v1` → `controlled_v2` → `controlled` (v16)
+- v17: **lean deadline_pull** — skip empty days, count looks only, tighter budget
+- Methods: `controlled_v1` → `controlled_v2` → `controlled` (v17)
 - CI: Python experiment workflow + R 4.x
 
 | Regime | What happens | Substitute? |

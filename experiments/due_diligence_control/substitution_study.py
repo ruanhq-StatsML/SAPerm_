@@ -543,17 +543,26 @@ def run_one(
 
             recent_sector.append((a.id, deal.sector, day))
 
-        # v16 deadline pull: when a deal's IC clock is tight, force-release
-        # stranded critical and take partner looks — before the calendar end window.
+        # v16/v17 deadline pull: when IC clock is tight, force-release stranded
+        # critical and take partner looks. v17: only act when unfound work exists;
+        # count attempts on looks only; tighter daily budget.
         if flags.deadline_pull:
             urgent = [
                 d
                 for d in deals.values()
                 if d.outcome != DealOutcome.IC_READY and d.days_to_ic <= 6
             ]
-            if urgent:
-                pull_budget = 4
-                urgent_ids = {d.id for d in urgent}
+            urgent_ids = {d.id for d in urgent}
+            has_gap = any(
+                doc.planted_risk
+                and doc.available
+                and not doc.redacted
+                and not doc.found
+                and (doc.deal_id in urgent_ids)
+                for doc in corpus.values()
+            )
+            if urgent and has_gap:
+                pull_budget = 3
                 for deal in urgent:
                     stranded = [
                         doc
@@ -565,12 +574,10 @@ def run_one(
                         and not doc.found
                         and doc.id not in live
                     ]
-                    for doc in stranded[:2]:
+                    for doc in stranded[:1]:
                         doc.day_arrived = day
                         live[doc.id] = doc
                         deal.pending_review += 1
-                        # Count the pull itself so thin rooms still register urgency work.
-                        metrics.deadline_pull_attempts += 1
                 candidates = [
                     doc
                     for doc in live.values()
