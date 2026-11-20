@@ -22,6 +22,32 @@ class EscalationConfig:
     alt_data_success_rate: float = 0.35
     # Probability that a redaction is lifted after an unredact request.
     unredact_success_rate: float = 0.40
+    # v7: per additional pulse, bump success rates (capped).
+    adaptive_bump: float = 0.12
+    adaptive_rate_cap: float = 0.75
+    adaptive_extra_requests: int = 1
+
+
+def adaptive_config(base: EscalationConfig, pulses_so_far: int) -> EscalationConfig:
+    """Raise persistence after repeated shortages (desk keeps pushing)."""
+    if pulses_so_far <= 0:
+        return base
+    bump = min(base.adaptive_bump * pulses_so_far, base.adaptive_rate_cap - base.alt_data_success_rate)
+    bump = max(bump, 0.0)
+    return EscalationConfig(
+        max_doc_requests=base.max_doc_requests + (
+            base.adaptive_extra_requests if pulses_so_far >= 1 else 0
+        ),
+        alt_data_success_rate=min(
+            base.alt_data_success_rate + bump, base.adaptive_rate_cap
+        ),
+        unredact_success_rate=min(
+            base.unredact_success_rate + bump, base.adaptive_rate_cap
+        ),
+        adaptive_bump=base.adaptive_bump,
+        adaptive_rate_cap=base.adaptive_rate_cap,
+        adaptive_extra_requests=base.adaptive_extra_requests,
+    )
 
 
 @dataclass

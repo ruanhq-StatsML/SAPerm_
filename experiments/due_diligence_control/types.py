@@ -75,6 +75,7 @@ class Deal:
     outcome: str = "pending"  # DealOutcome
     open_docs_recent: int = 0  # set by allocator for sparse priority
     last_escalation_day: int = -99
+    escalation_pulses: int = 0  # v7: how many times we have escalated this deal
 
 
 @dataclass
@@ -111,6 +112,8 @@ class ControlFlags:
     second_pass_confirm: bool = False
     # v6: after escalation recovers evidence, reopen abstained deals for IC retry.
     reopen_after_recovery: bool = False
+    # v7: raise alt-data / unredact odds on repeated escalation pulses.
+    adaptive_escalation: bool = False
 
 
 class DealOutcome:

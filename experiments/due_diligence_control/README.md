@@ -71,14 +71,15 @@ Read `SUBSTITUTION_ARGUMENT.md` (checked in) and `results/SUBSTITUTION.md` (rege
 
 **Verdict in one line:** partial substitute for triage under observable sparse/dense rooms; **not** a substitute when critical documents or fields are missing — `recall_all` is bounded by availability, and FinanceGPT cannot invent redacted evidence.
 
-### v2 → v6 iteration
+### v2 → v7 iteration
 
 - v2 `integrity.py`: refuse IC when availability / unread critical / redaction fail gates
 - v3 `escalation.py`: request missing docs / unredact, soft-halt filler, recover via alt-data
 - v4: **critical lane** under soft-halt (paused ≠ zero desk budget) + thin-stream absorb + live-gated unfound halt
 - v5: **same-day dual-look** on critical docs that miss first confirm (no open-pool starvation)
 - v6: **reopen abstain** after recovery / integrity clear; IC retry on reopened mandates
-- Methods: `controlled_v1` → `controlled_v2` → `controlled` (v6)
+- v7: **adaptive escalation** — repeated pulses raise alt-data / unredact odds (capped)
+- Methods: `controlled_v1` → `controlled_v2` → `controlled` (v7)
 - CI: Python experiment workflow + R 4.x
 
 | Regime | What happens | Substitute? |

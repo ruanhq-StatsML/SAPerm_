@@ -257,3 +257,14 @@ def test_v6_can_reopen_abstain_under_missing_docs():
     assert v6.false_ic_rate <= 1e-9
     assert v6.docs_recovered >= 1
     assert v6.abstain_reopened + v6.ic_after_reopen + v6.abstain_incomplete >= 1
+
+
+def test_adaptive_escalation_bumps_rates():
+    from .escalation import EscalationConfig, adaptive_config
+
+    base = EscalationConfig()
+    bumped = adaptive_config(base, pulses_so_far=2)
+    assert bumped.alt_data_success_rate > base.alt_data_success_rate
+    assert bumped.unredact_success_rate > base.unredact_success_rate
+    assert bumped.max_doc_requests >= base.max_doc_requests
+    assert bumped.alt_data_success_rate <= base.adaptive_rate_cap

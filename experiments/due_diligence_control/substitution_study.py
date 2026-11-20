@@ -23,7 +23,12 @@ import numpy as np
 from .allocate import allocate_day
 from .analyst_rules import AnalystPolicyConfig
 from .desk_rules import DeskPolicyConfig
-from .escalation import EscalationConfig, apply_escalations, plan_escalations
+from .escalation import (
+    EscalationConfig,
+    adaptive_config,
+    apply_escalations,
+    plan_escalations,
+)
 from .integrity import diagnose_integrity, snapshot_deal
 from .metrics import RunMetrics, merge_metrics
 from .model_hooks import HeuristicRiskProvider, score_documents
@@ -56,7 +61,7 @@ METHODS: Dict[str, ControlFlags] = {
         use_model_signals=True,
         integrity_gate=True,
     ),
-    # v6 = v5 + reopen abstain after escalation recovers enough evidence
+    # v7 = v6 + adaptive escalation persistence on repeated pulses
     "controlled": ControlFlags(
         analyst_rules=True,
         desk_rules=True,
@@ -67,6 +72,7 @@ METHODS: Dict[str, ControlFlags] = {
         thin_stream_absorb=True,
         second_pass_confirm=True,
         reopen_after_recovery=True,
+        adaptive_escalation=True,
     ),
     "rules_blind": ControlFlags(
         analyst_rules=True,
@@ -77,6 +83,7 @@ METHODS: Dict[str, ControlFlags] = {
         thin_stream_absorb=True,
         second_pass_confirm=True,
         reopen_after_recovery=True,
+        adaptive_escalation=True,
     ),
     "model_only": ControlFlags(
         analyst_rules=False, desk_rules=False, use_model_signals=True
@@ -312,14 +319,20 @@ def run_one(
                 diag = sig if sig != "ok" else (
                     "matching_failure" if "high_redaction" in snap.reasons else "supply_shortage"
                 )
-                actions = plan_escalations(deal, snap, corpus, diag, esc_cfg, live=live)
+                pulse_cfg = (
+                    adaptive_config(esc_cfg, deal.escalation_pulses)
+                    if flags.adaptive_escalation
+                    else esc_cfg
+                )
+                actions = plan_escalations(deal, snap, corpus, diag, pulse_cfg, live=live)
                 if actions:
                     metrics.escalations += len(actions)
                     if not abstained:
                         deal.outcome = DealOutcome.ESCALATED
                     deal.last_escalation_day = day
+                    deal.escalation_pulses += 1
                     result = apply_escalations(
-                        actions, corpus, live, deals, rng, day, esc_cfg
+                        actions, corpus, live, deals, rng, day, pulse_cfg
                     )
                     metrics.docs_recovered += result.docs_recovered
                     metrics.fields_unredacted += result.fields_unredacted
@@ -561,7 +574,7 @@ def _verdict(board: SubstitutionBoard) -> str:
         v4 = _pick(board, "dense", "controlled")
         v1 = _pick(board, "dense", "controlled_v1")
         lines.append(
-            f"{n}. **v6 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
+            f"{n}. **v7 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
             f"abstain={v4.abstain_incomplete}; reopened={v4.abstain_reopened}; "
             f"IC-after-reopen={v4.ic_after_reopen}; net {v1.net_value:.1f}→{v4.net_value:.1f}."
         )
@@ -571,7 +584,7 @@ def _verdict(board: SubstitutionBoard) -> str:
         v4 = _pick(board, "missing_docs", "controlled")
         v2 = _pick(board, "missing_docs", "controlled_v2")
         lines.append(
-            f"{n}. **v6 escalation+reopen vs v2 abstain-only (missing_docs).** "
+            f"{n}. **v7 adaptive escalate+reopen vs v2 abstain-only (missing_docs).** "
             f"recall@all {v2.recall_all:.2f}→{v4.recall_all:.2f} via recovered={v4.docs_recovered}; "
             f"reopened={v4.abstain_reopened}; false-IC stays {v4.false_ic_rate:.2f}."
         )
@@ -606,7 +619,7 @@ def _verdict(board: SubstitutionBoard) -> str:
             f"{n}. **Missing documents.** recall@all controlled={miss_c.recall_all:.2f}, "
             f"flood={miss_f.recall_all:.2f}. Both collapse toward the availability ceiling "
             f"(available share ≈ {avail:.2f}). "
-            f"v6 recovers {miss_c.docs_recovered} missing docs via escalation; "
+            f"v7 recovers {miss_c.docs_recovered} missing docs via escalation; "
             f"false-IC {miss_c.false_ic_rate:.2f} vs flood {miss_f.false_ic_rate:.2f}; "
             f"abstain={miss_c.abstain_incomplete}. "
             "Still cannot invent evidence that escalation fails to obtain."
@@ -618,9 +631,9 @@ def _verdict(board: SubstitutionBoard) -> str:
         field_m = _pick(board, "missing_fields", "model_only")
         lines.append(
             f"{n}. **Missing / redacted fields.** Model-only recall@available={field_m.recall_available:.2f}; "
-            f"controlled(v6)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
+            f"controlled(v7)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
             "FinanceGPT is blind on redactions until escalation lifts them; "
-            "v6 requests unredact instead of inventing fields."
+            "v7 requests unredact with adaptive persistence."
         )
         lines.append("")
         n += 1
