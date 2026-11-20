@@ -133,6 +133,8 @@ class ControlFlags:
     fast_escalate_on_gap: bool = False
     # v14: end-of-day last-mile confirm for reviewed-but-unfound critical.
     last_mile_confirm: bool = False
+    # v15: after last-mile clearance, promote allow_ic deals to IC (cut stale abstain).
+    clearance_ic: bool = False
 
 
 class DealOutcome:

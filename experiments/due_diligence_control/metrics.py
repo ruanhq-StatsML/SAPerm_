@@ -45,6 +45,8 @@ class RunMetrics:
     # v14 last-mile confirms
     last_mile_attempts: int = 0
     last_mile_confirms: int = 0
+    # v15 post-clearance IC promotions
+    clearance_ic: int = 0
 
     def add_blocked(self, blocked: Dict[str, int]) -> None:
         for k, v in blocked.items():
@@ -127,6 +129,7 @@ class RunMetrics:
             "same_day_recovery_reads": float(self.same_day_recovery_reads),
             "last_mile_attempts": float(self.last_mile_attempts),
             "last_mile_confirms": float(self.last_mile_confirms),
+            "clearance_ic": float(self.clearance_ic),
         }
 
 
@@ -164,4 +167,5 @@ def merge_metrics(rows: List[RunMetrics]) -> RunMetrics:
         out.same_day_recovery_reads += m.same_day_recovery_reads
         out.last_mile_attempts += m.last_mile_attempts
         out.last_mile_confirms += m.last_mile_confirms
+        out.clearance_ic += m.clearance_ic
     return out

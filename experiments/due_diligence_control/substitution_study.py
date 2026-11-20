@@ -83,6 +83,8 @@ METHODS: Dict[str, ControlFlags] = {
         fast_escalate_on_gap=True,
         # v14: end-of-day last-mile confirm for reviewed-but-unfound critical
         last_mile_confirm=True,
+        # v15: promote cleared deals to IC (cut stale abstain after last-mile)
+        clearance_ic=True,
     ),
     "rules_blind": ControlFlags(
         analyst_rules=True,
@@ -103,6 +105,7 @@ METHODS: Dict[str, ControlFlags] = {
         recovery_confirm_boost=True,
         fast_escalate_on_gap=True,
         last_mile_confirm=True,
+        clearance_ic=True,
     ),
     "model_only": ControlFlags(
         analyst_rules=False, desk_rules=False, use_model_signals=True
@@ -610,6 +613,39 @@ def run_one(
                     a.consecutive_ignores = 0
                 else:
                     a.consecutive_ignores += 1
+
+        # v15 clearance IC: after last-mile (or any late day), if integrity allows
+        # and no available planted remains unfound, reopen abstain and book IC.
+        if flags.clearance_ic and day >= max(0, cfg.n_days - 5):
+            for deal in deals.values():
+                if deal.outcome == DealOutcome.IC_READY or deal.total_ic_ready > 0:
+                    continue
+                if deal.total_confirmed_risks < 2:
+                    continue
+                if _unfound_available(deal.id, corpus):
+                    continue
+                snap = snapshot_deal(deal, corpus)
+                if not snap.allow_ic:
+                    continue
+                if deal.outcome == DealOutcome.ABSTAIN_INCOMPLETE:
+                    deal.outcome = DealOutcome.REOPENED
+                    deal.paused = False
+                    metrics.abstain_reopened += 1
+                    metrics.abstain_incomplete = max(metrics.abstain_incomplete - 1, 0)
+                    metrics.net_value += 0.1
+                deal.total_ic_ready = 1
+                deal.outcome = DealOutcome.IC_READY
+                metrics.ic_ready += 1
+                metrics.clearance_ic += 1
+                # Guard: allow_ic + no unfound available ⇒ not a false IC.
+                metrics.net_value += 1.0
+            if day == cfg.n_days - 1:
+                # Reconcile stock of open abstains (event counter can drift).
+                metrics.abstain_incomplete = sum(
+                    1
+                    for d in deals.values()
+                    if d.outcome == DealOutcome.ABSTAIN_INCOMPLETE
+                )
 
         # v6 end-of-day: reopen abstain if integrity cleared; retry IC on reopened.
         if flags.reopen_after_recovery:

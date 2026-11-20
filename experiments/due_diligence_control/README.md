@@ -71,21 +71,22 @@ Read `SUBSTITUTION_ARGUMENT.md` (checked in) and `results/SUBSTITUTION.md` (rege
 
 **Verdict in one line:** strong co-pilot for triage + evidence chase once evidence is recoverable; **not** a substitute for unrecovered missing docs/fields or partner IC — FinanceGPT cannot invent redacted evidence.
 
-### v2 → v14 iteration
+### v2 → v15 iteration
 
 - v2–v12: integrity → escalate → critical lane → dual-look → reopen → adaptive → same-day → delayed abstain → critical-first → budget transfer → fast escalate / expertise route
 - v13: checked-in **BUSINESS_LOGIC.md** (业务论证); thin-room extra-unredact hook (opt-in, default off)
-- v14: end-of-horizon **last-mile confirm** — force-release stranded available critical + partner looks on unread/reviewed misses
-- Methods: `controlled_v1` → `controlled_v2` → `controlled` (v14)
+- v14: end-of-horizon **last-mile confirm** — force-release stranded available critical + partner looks
+- v15: **clearance IC** — after evidence clears, promote allow_ic deals and reconcile stale abstain stock
+- Methods: `controlled_v1` → `controlled_v2` → `controlled` (v15)
 - CI: Python experiment workflow + R 4.x
 
 | Regime | What happens | Substitute? |
 | --- | --- | --- |
-| dense | Controlled ≥ flood recall, less coverage waste | Triage yes / IC no |
-| sparse | Rules + last-mile keep late critical readable | Strong co-pilot |
+| dense | Controlled ≥ flood recall; clearance fills IC | Triage yes / IC no |
+| sparse | Rules + last-mile + clearance | Strong co-pilot |
 | missing_docs | Escalation recovers; still capped by unrecovered | Escalate data |
-| missing_fields | Model blind until unredact; then last-mile seals | Needs primary source |
-| sparse_missing | Last-mile closes release/confirm gap; false-IC=0 | Strong co-pilot |
+| missing_fields | Unredact then clearance IC | Needs primary source |
+| sparse_missing | Last-mile + clearance; false-IC=0, abstain≈0 | Strong co-pilot |
 
 ## Opportunity roadmap
 

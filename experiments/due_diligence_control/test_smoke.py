@@ -313,6 +313,20 @@ def test_v14_last_mile_can_confirm_under_sparse_missing():
     assert m.recall_all >= 0.90
 
 
+def test_v15_clearance_ic_cuts_stale_abstain():
+    from .sparsity import REGIMES
+    from .substitution_study import StudyConfig, run_one
+
+    cfg = StudyConfig(n_days=18, n_analysts=12, n_deals=6, planted_per_deal=3)
+    offset = sum(ord(c) for c in "sparse_missing")
+    m = run_one("controlled", REGIMES["sparse_missing"], cfg, seed=11 + offset)
+    assert m.false_ic_rate <= 1e-9
+    assert m.clearance_ic >= 1
+    # Stock reconcile + clearance should leave almost no open abstains.
+    assert m.abstain_incomplete <= 2
+    assert m.ic_ready >= 4
+
+
 def test_matching_failure_extra_unredacts_only_when_configured_thin():
     from .escalation import EscalationConfig, plan_escalations
     from .integrity import snapshot_deal
