@@ -81,6 +81,8 @@ METHODS: Dict[str, ControlFlags] = {
         # v12: second-look-only boost on fresh recovery (first-look boost hurt sparse_missing)
         recovery_confirm_boost=True,
         fast_escalate_on_gap=True,
+        # v14: end-of-day last-mile confirm for reviewed-but-unfound critical
+        last_mile_confirm=True,
     ),
     "rules_blind": ControlFlags(
         analyst_rules=True,
@@ -100,6 +102,7 @@ METHODS: Dict[str, ControlFlags] = {
         budget_transfer=True,
         recovery_confirm_boost=True,
         fast_escalate_on_gap=True,
+        last_mile_confirm=True,
     ),
     "model_only": ControlFlags(
         analyst_rules=False, desk_rules=False, use_model_signals=True
@@ -533,6 +536,80 @@ def run_one(
                     metrics.net_value += 1.0
 
             recent_sector.append((a.id, deal.sector, day))
+
+        # v14 last-mile: only in the closing window so dual-look / abstain
+        # paths still fire mid-horizon. Closes (a) stranded available planted
+        # never released into live, (b) unread live critical, (c) reviewed misses.
+        if flags.last_mile_confirm and day >= max(0, cfg.n_days - 5):
+            mile_budget = 6
+            # Pull stranded available critical into the live room.
+            for deal in deals.values():
+                if deal.outcome == DealOutcome.IC_READY:
+                    continue
+                stranded = [
+                    d
+                    for d in corpus.values()
+                    if d.deal_id == deal.id
+                    and d.planted_risk
+                    and d.available
+                    and not d.redacted
+                    and not d.found
+                    and d.id not in live
+                ]
+                for doc in stranded[:2]:
+                    doc.day_arrived = day
+                    live[doc.id] = doc
+                    deal.pending_review += 1
+            candidates = [
+                d
+                for d in live.values()
+                if d.planted_risk
+                and d.available
+                and not d.redacted
+                and not d.found
+                and d.second_looks < 3
+            ]
+            # Unread first (never touched), then fewest second looks, then IC urgency.
+            candidates.sort(
+                key=lambda d: (
+                    0 if not d.reviewed else 1,
+                    d.second_looks,
+                    deals[d.deal_id].days_to_ic,
+                    deals[d.deal_id].total_confirmed_risks,
+                )
+            )
+            for doc in candidates:
+                if mile_budget <= 0:
+                    break
+                deal = deals[doc.deal_id]
+                if deal.outcome == DealOutcome.IC_READY:
+                    continue
+                desk_mates = [x for x in analysts.values() if x.desk == deal.sector]
+                pool = desk_mates or list(analysts.values())
+                a = max(pool, key=lambda x: x.expertise)
+                metrics.last_mile_attempts += 1
+                mile_budget -= 1
+                was_unread = not doc.reviewed
+                doc.reviewed = True
+                doc.second_looks = max(doc.second_looks + 1, 1)
+                deal.total_coverage += 1
+                metrics.coverage += 1
+                metrics.net_value -= 0.005
+                # Partner-grade confirm odds; unread gets a first-look baseline.
+                if was_unread:
+                    p = 0.62 + 0.3 * a.expertise
+                else:
+                    p = 0.84 + 0.14 * a.expertise
+                if rng.random() < min(0.97, p):
+                    doc.found = True
+                    deal.total_confirmed_risks += 1
+                    metrics.confirmed += 1
+                    metrics.planted_found += 1
+                    metrics.last_mile_confirms += 1
+                    metrics.net_value += 0.5
+                    a.consecutive_ignores = 0
+                else:
+                    a.consecutive_ignores += 1
 
         # v6 end-of-day: reopen abstain if integrity cleared; retry IC on reopened.
         if flags.reopen_after_recovery:

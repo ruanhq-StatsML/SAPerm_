@@ -131,6 +131,8 @@ class ControlFlags:
     budget_transfer: bool = False
     # v12: shorten escalation cooldown when availability/redaction gap is active.
     fast_escalate_on_gap: bool = False
+    # v14: end-of-day last-mile confirm for reviewed-but-unfound critical.
+    last_mile_confirm: bool = False
 
 
 class DealOutcome:

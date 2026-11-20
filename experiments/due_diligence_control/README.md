@@ -69,22 +69,23 @@ python3 -m experiments.due_diligence_control.substitution_study
 
 Read `SUBSTITUTION_ARGUMENT.md` (checked in) and `results/SUBSTITUTION.md` (regenerated).
 
-**Verdict in one line:** partial substitute for triage under observable sparse/dense rooms; **not** a substitute when critical documents or fields are missing — `recall_all` is bounded by availability, and FinanceGPT cannot invent redacted evidence.
+**Verdict in one line:** strong co-pilot for triage + evidence chase once evidence is recoverable; **not** a substitute for unrecovered missing docs/fields or partner IC — FinanceGPT cannot invent redacted evidence.
 
-### v2 → v13 iteration
+### v2 → v14 iteration
 
 - v2–v12: integrity → escalate → critical lane → dual-look → reopen → adaptive → same-day → delayed abstain → critical-first → budget transfer → fast escalate / expertise route
 - v13: checked-in **BUSINESS_LOGIC.md** (业务论证); thin-room extra-unredact hook (opt-in, default off)
-- Methods: `controlled_v1` → `controlled_v2` → `controlled` (v13)
+- v14: end-of-horizon **last-mile confirm** — force-release stranded available critical + partner looks on unread/reviewed misses
+- Methods: `controlled_v1` → `controlled_v2` → `controlled` (v14)
 - CI: Python experiment workflow + R 4.x
 
 | Regime | What happens | Substitute? |
 | --- | --- | --- |
-| dense | Controlled ≈ flood recall, less coverage waste | Triage yes / IC no |
-| sparse | Rules keep attention for late critical docs | Often better co-pilot |
-| missing_docs | `recall_all` collapses for every method | **No** — escalate data |
-| missing_fields | Model goes blind on redactionsctions | **No** without primary source |
-| sparse_missing | Low completeness; staged shortage/failure fires | Co-pilot only |
+| dense | Controlled ≥ flood recall, less coverage waste | Triage yes / IC no |
+| sparse | Rules + last-mile keep late critical readable | Strong co-pilot |
+| missing_docs | Escalation recovers; still capped by unrecovered | Escalate data |
+| missing_fields | Model blind until unredact; then last-mile seals | Needs primary source |
+| sparse_missing | Last-mile closes release/confirm gap; false-IC=0 | Strong co-pilot |
 
 ## Opportunity roadmap
 
