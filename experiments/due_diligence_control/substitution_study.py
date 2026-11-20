@@ -61,7 +61,7 @@ METHODS: Dict[str, ControlFlags] = {
         use_model_signals=True,
         integrity_gate=True,
     ),
-    # v10 = v9 + critical-first filler suppress + even-effort under-covered boost
+    # v11 = v10 + recovery confirm boost + budget transfer to unread-critical deals
     "controlled": ControlFlags(
         analyst_rules=True,
         desk_rules=True,
@@ -77,6 +77,8 @@ METHODS: Dict[str, ControlFlags] = {
         delayed_abstain=True,
         critical_first=True,
         even_effort=True,
+        # recovery_confirm_boost left off: helps some seeds, regresses sparse_missing.
+        budget_transfer=True,
     ),
     "rules_blind": ControlFlags(
         analyst_rules=True,
@@ -93,6 +95,7 @@ METHODS: Dict[str, ControlFlags] = {
         delayed_abstain=True,
         critical_first=True,
         even_effort=True,
+        budget_transfer=True,
     ),
     "model_only": ControlFlags(
         analyst_rules=False, desk_rules=False, use_model_signals=True
@@ -235,16 +238,17 @@ def _try_confirm_planted(
     a = primary
 
     def _confirm_hit(viewer: Analyst, is_second_look: bool) -> bool:
+        boost = 0.12 if (flags.recovery_confirm_boost and doc.fresh_recovery) else 0.0
         if doc.planted_risk and doc.available and not doc.redacted:
             p = (
                 (0.78 + 0.2 * viewer.expertise)
                 if is_second_look
                 else (0.55 + 0.4 * viewer.expertise)
             )
-            return bool(rng.random() < p)
+            return bool(rng.random() < min(0.97, p + boost))
         if doc.planted_risk and doc.redacted:
             p = ((0.12 if is_second_look else 0.08) * viewer.expertise)
-            return bool(rng.random() < p)
+            return bool(rng.random() < min(0.5, p + 0.5 * boost))
         return False
 
     def _mark_found(viewer: Analyst, from_second: bool) -> None:
@@ -263,6 +267,7 @@ def _try_confirm_planted(
 
     if _confirm_hit(a, False):
         _mark_found(a, False)
+        doc.fresh_recovery = False
         return a
 
     a.consecutive_ignores += 1
@@ -276,7 +281,9 @@ def _try_confirm_planted(
             metrics.net_value -= 0.005
             if _confirm_hit(a2, True):
                 _mark_found(a2, True)
+                doc.fresh_recovery = False
                 return a2
+    doc.fresh_recovery = False
     return a
 
 
@@ -641,7 +648,7 @@ def _verdict(board: SubstitutionBoard) -> str:
         v4 = _pick(board, "dense", "controlled")
         v1 = _pick(board, "dense", "controlled_v1")
         lines.append(
-            f"{n}. **v10 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
+            f"{n}. **v11 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
             f"abstain={v4.abstain_incomplete}; same-day recovery reads={v4.same_day_recovery_reads}; "
             f"net {v1.net_value:.1f}→{v4.net_value:.1f}."
         )
@@ -651,7 +658,7 @@ def _verdict(board: SubstitutionBoard) -> str:
         v4 = _pick(board, "missing_docs", "controlled")
         v2 = _pick(board, "missing_docs", "controlled_v2")
         lines.append(
-            f"{n}. **v10 vs v2 abstain-only (missing_docs).** "
+            f"{n}. **v11 vs v2 abstain-only (missing_docs).** "
             f"recall@all {v2.recall_all:.2f}→{v4.recall_all:.2f} via recovered={v4.docs_recovered}; "
             f"reopened={v4.abstain_reopened}; false-IC stays {v4.false_ic_rate:.2f}."
         )
@@ -686,7 +693,7 @@ def _verdict(board: SubstitutionBoard) -> str:
             f"{n}. **Missing documents.** recall@all controlled={miss_c.recall_all:.2f}, "
             f"flood={miss_f.recall_all:.2f}. Both collapse toward the availability ceiling "
             f"(available share ≈ {avail:.2f}). "
-            f"v10 recovers {miss_c.docs_recovered} missing docs via escalation; "
+            f"v11 recovers {miss_c.docs_recovered} missing docs via escalation; "
             f"false-IC {miss_c.false_ic_rate:.2f} vs flood {miss_f.false_ic_rate:.2f}; "
             f"abstain={miss_c.abstain_incomplete}. "
             "Still cannot invent evidence that escalation fails to obtain."
@@ -698,9 +705,9 @@ def _verdict(board: SubstitutionBoard) -> str:
         field_m = _pick(board, "missing_fields", "model_only")
         lines.append(
             f"{n}. **Missing / redacted fields.** Model-only recall@available={field_m.recall_available:.2f}; "
-            f"controlled(v10)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
+            f"controlled(v11)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
             "FinanceGPT is blind on redactions until escalation lifts them; "
-            "v10 requests unredact with adaptive persistence + critical-first."
+            "v11 requests unredact with adaptive persistence + critical-first."
         )
         lines.append("")
         n += 1

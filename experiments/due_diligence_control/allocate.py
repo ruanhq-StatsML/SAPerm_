@@ -14,7 +14,15 @@ from typing import Dict, List, Optional, Sequence, Set, Tuple
 from .analyst_rules import AnalystPolicyConfig, gate_analyst_deal
 from .desk_rules import DeskBudget, DeskPolicyConfig, apply_sector_dedup, desk_day_budget
 from .staged_dd import StageDecision, advance_stage, decide_next_batch, note_coverage
-from .types import Analyst, ControlFlags, CoverageDecision, Deal, Document
+from .types import (
+    Analyst,
+    ControlFlags,
+    CoverageDecision,
+    Deal,
+    DealOutcome,
+    DealStage,
+    Document,
+)
 
 
 @dataclass
@@ -140,6 +148,31 @@ def allocate_day(
                 # Prefer under-covered deals that still have live critical.
                 if did in unread_critical_deals or open_by_deal.get(did, 0) > 0:
                     even_boost[did] = 0.22 if did in unread_critical_deals else 0.10
+
+    # v11 budget transfer: IC-ready / closed deals donate spare slots to
+    # deals that still have unread critical evidence.
+    if flags.budget_transfer and unread_critical_deals:
+        spare = 0
+        for did, deal in deals.items():
+            done = deal.outcome == DealOutcome.IC_READY or deal.stage in (
+                DealStage.PASSED,
+                DealStage.CLOSED,
+            )
+            if not done:
+                continue
+            donate = remaining.get(did, 0)
+            if donate > 0:
+                spare += donate
+                remaining[did] = 0
+        if spare > 0:
+            targets = sorted(unread_critical_deals)
+            i = 0
+            while spare > 0 and targets:
+                tid = targets[i % len(targets)]
+                remaining[tid] = remaining.get(tid, 0) + 1
+                spare -= 1
+                i += 1
+                blocked["budget_transfer"] = blocked.get("budget_transfer", 0) + 1
 
     scored: List[Tuple[float, str, str, str]] = []  # score, analyst, deal, doc
 

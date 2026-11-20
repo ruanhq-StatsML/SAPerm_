@@ -195,6 +195,7 @@ def apply_escalations(
                 doc.day_arrived = day
                 live[doc.id] = doc
                 deal.pending_review += 1
+                doc.fresh_recovery = True
                 recovered_deals.add(deal.id)
                 out.docs_recovered += 1
                 out.recovered_doc_ids.append(doc.id)
@@ -206,6 +207,7 @@ def apply_escalations(
                     "related party investigation, and liquidity risk after downgrade."
                 )
                 score_documents([doc], provider)
+                doc.fresh_recovery = True
                 recovered_deals.add(deal.id)
                 out.fields_unredacted += 1
                 out.unredacted_doc_ids.append(doc.id)

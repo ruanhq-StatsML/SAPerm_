@@ -291,6 +291,14 @@ def test_v9_delayed_abstain_keeps_false_ic_zero():
     assert v9.recall_available >= 0.9
 
 
+def test_recovery_confirm_boost_flag_roundtrip():
+    from .types import ControlFlags, Document
+
+    assert ControlFlags(recovery_confirm_boost=True).recovery_confirm_boost is True
+    d = Document(id="x", deal_id="d", kind="c", text="t", fresh_recovery=True)
+    assert d.fresh_recovery is True
+
+
 def test_critical_first_prefers_critical_in_crowded_room():
     from .allocate import allocate_day
     from .types import Analyst, AnalystLoad, ControlFlags, Deal, Document

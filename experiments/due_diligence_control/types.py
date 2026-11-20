@@ -94,6 +94,7 @@ class Document:
     redacted: bool = False  # True => fields stripped before the model sees them
     found: bool = False  # set when a review confirms the planted risk
     second_looks: int = 0  # v5: requeues after a failed critical confirm
+    fresh_recovery: bool = False  # v11: recovered/unredacted this pulse
 
 
 @dataclass
@@ -124,6 +125,10 @@ class ControlFlags:
     critical_first: bool = False
     # v10: mild boost for under-covered deals (desk even-effort).
     even_effort: bool = False
+    # v11: higher confirm odds on freshly recovered/unredacted docs.
+    recovery_confirm_boost: bool = False
+    # v11: move unused budget from IC-ready deals to deals with unread critical.
+    budget_transfer: bool = False
 
 
 class DealOutcome:
