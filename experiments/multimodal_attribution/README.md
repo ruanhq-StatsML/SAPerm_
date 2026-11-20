@@ -12,14 +12,30 @@ leave-out **pseudo-outcome risk** interactions from `OOD_vimp_wrapper`.
 
 ## Pipeline
 
-1. Extract embeddings (notebooks → `embeddings.py`):
-   - text: MiniLM / Qwen-style encoders
-   - audio: WavLM sliding windows
-   - video: ViViT on MSR-VTT clips
-2. Per-modality PCA → keep first 30 PCs **or** PCs 30–100.
+1. Extract embeddings with **LCO-Embedding-Omni-3B** (shared space; one encode per modality):
+   - MSR-VTT: `python -m experiments.multimodal_attribution.prepare_msrvtt_lco`
+   - MOSEI/MELD: `prepare_emotion_embeddings`
+   - Avoid CLIP/WavLM **per-video mean-pool** — it kills the cross-modal structure
+     that block leave-out PO interaction is meant to read.
+2. Per-modality PCA → keep first 30 PCs **or** PCs 31–100.
 3. Horizontal concat; record modality column index blocks (~500 rows / batch).
 4. Second-order: `interaction = po(-m1) + po(-m2) - po(-both)`
 5. Third-order: inclusion–exclusion over the three modality blocks.
+
+### What the 3-modality PO-risk interaction is for
+
+Held-out PO risk `R(S)` = how much batch-shift residual remains after dropping
+modality block set `S`. Pairwise `I_{ab}=R({a})+R({b})-R({a,b})` is large when
+**A and B together** explain more of the domain contrast than either alone
+(synergy, not mere correlation). Third-order `I_{tav}` flags residual
+three-way structure beyond the three pairs. Read the board as:
+
+| pattern | insight |
+|---|---|
+| only `interact_PO_text_video` high | shift lives in text↔video coupling |
+| mean-shift on video, pairs with video light up | marginal video channel moved |
+| concept drift (`Y\|X` only, X fixed) | classical X-TST → null; CF/DRPerm catch `Y\|X`; PO-on-X blocks stay quiet |
+| null board `interact_PO_*` ≈ α | type-I OK — interaction detector calibrated |
 
 ## Quick start (synthetic MSR-VTT-style, no GPU)
 

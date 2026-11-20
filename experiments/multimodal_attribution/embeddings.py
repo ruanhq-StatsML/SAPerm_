@@ -1,10 +1,12 @@
-"""Optional heavy extractors distilled from the embedding notebooks.
+"""Optional heavy extractors for multimodal PO-risk attribution.
 
-Text  — MiniLM / Qwen-style mean pooling (Collections_of_Embeddings)
-Audio — WavLM sliding-window mean (StreamlinedAudioEmbedding_extraction)
-Video — ViViT mean pool over frames (VideoEmbeddingExtraction / MSR-VTT)
+**Preferred (MSR-VTT / MOSEI / MELD):** ``LCO-Embedding-Omni-3B`` via
+``extract_lco_omni_embeddings`` / ``prepare_msrvtt_lco`` — one Omni encode per
+modality (text string / audio path / video path). Do **not** mean-pool CLIP
+frames or WavLM windows at the video level for this pipeline; that collapses
+the cross-modal structure the block leave-out PO interaction needs.
 
-These imports are lazy so the interaction math stays usable without GPU deps.
+Legacy (kept for offline smoke only): MiniLM / WavLM window-mean / ViViT.
 """
 
 from __future__ import annotations
