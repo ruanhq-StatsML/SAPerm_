@@ -69,14 +69,21 @@ def load_done(path: Path) -> Tuple[pd.DataFrame, Set[str]]:
 
 
 def append_rows(path: Path, rows: List[dict]) -> None:
+    """Append rows with an exclusive flock so parallel jobs can share one CSV."""
     if not rows:
         return
+    import fcntl
+
     path.parent.mkdir(parents=True, exist_ok=True)
     chunk = pd.DataFrame(rows)
-    if path.exists():
-        chunk.to_csv(path, mode="a", header=False, index=False)
-    else:
-        chunk.to_csv(path, index=False)
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    with lock_path.open("a") as lock_f:
+        fcntl.flock(lock_f.fileno(), fcntl.LOCK_EX)
+        try:
+            write_header = not path.exists() or path.stat().st_size == 0
+            chunk.to_csv(path, mode="a", header=write_header, index=False)
+        finally:
+            fcntl.flock(lock_f.fileno(), fcntl.LOCK_UN)
 
 
 def rep_methods_done(

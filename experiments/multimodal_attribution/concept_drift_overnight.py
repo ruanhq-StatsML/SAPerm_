@@ -77,6 +77,7 @@ def run(
     seed: int = 0,
     out_dir: Path = Path("experiments/multimodal_attribution/results/concept_drift"),
     scenarios: Optional[Sequence[str]] = None,
+    methods_filter: Optional[Sequence[str]] = None,
 ):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -103,8 +104,14 @@ def run(
         include_fsds=False,
         include_perm_suite=True,
     )
+    if methods_filter:
+        want_m = {m.strip() for m in methods_filter if m.strip()}
+        methods = {k: v for k, v in methods.items() if k in want_m}
+        if not methods:
+            raise ValueError(f"no methods match --methods {sorted(want_m)}")
     method_names = list(methods)
 
+    # Never rewrite finished cells — only compact duplicate keys.
     before, after = compact_raw_csv(raw_path)
     _, done = load_done(raw_path)
 
@@ -118,8 +125,9 @@ def run(
         "methods": method_names,
         "datasets": [asdict(d) for d in datasets],
         "scenarios_filter": list(scenarios) if scenarios else None,
+        "methods_filter": list(methods_filter) if methods_filter else None,
         "combos": {k: list(v) for k, v in MODALITY_COMBOS.items()},
-        "note": "manual concept_drift; CFPerm/RFPerm/DRPerm; save-as-you-go stack",
+        "note": "manual concept_drift; CFPerm/RFPerm/DRPerm; save-as-you-go stack; never overwrite",
         "started_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "compacted_raw": {"before": before, "after": after},
     }
@@ -237,6 +245,12 @@ def main():
         default=None,
         help="Only run these scenarios (e.g. concept_drift). Default: all, concept first.",
     )
+    p.add_argument(
+        "--methods",
+        nargs="+",
+        default=None,
+        help="Only run these methods (e.g. rfperm). Skips keys already in power_raw; never overwrites.",
+    )
     args = p.parse_args()
     run(
         n=args.n,
@@ -246,6 +260,7 @@ def main():
         seed=args.seed,
         out_dir=args.out_dir,
         scenarios=args.scenarios,
+        methods_filter=args.methods,
     )
 
 
