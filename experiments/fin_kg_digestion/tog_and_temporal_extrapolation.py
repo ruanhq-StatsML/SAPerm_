@@ -395,7 +395,14 @@ def mine_temporal_extrapolation(
         cand = [e for e in by_h.get(gold.h, []) if e.time <= t_cut]
         # also same-relation history for this head (control changes etc.)
         same_rel = [e for e in train if e.h == gold.h and e.r == gold.r]
-        hist = sorted(set(cand + same_rel), key=lambda e: e.time)[-history_window:]
+        seen = set()
+        hist_all: List[Edge] = []
+        for e in cand + same_rel:
+            k = (e.h, e.r, e.t, e.time)
+            if k not in seen:
+                seen.add(k)
+                hist_all.append(e)
+        hist = sorted(hist_all, key=lambda e: e.time)[-history_window:]
         hist_txt = "\n".join(
             f"- t={e.time}: {e.h} -[{e.r}]→ {e.t} {e.props}" for e in hist
         ) or "(无历史邻域)"
