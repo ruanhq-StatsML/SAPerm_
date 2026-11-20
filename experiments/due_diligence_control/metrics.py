@@ -47,6 +47,9 @@ class RunMetrics:
     last_mile_confirms: int = 0
     # v15 post-clearance IC promotions
     clearance_ic: int = 0
+    # v16 deadline pulls (pre-IC window)
+    deadline_pull_attempts: int = 0
+    deadline_pull_confirms: int = 0
 
     def add_blocked(self, blocked: Dict[str, int]) -> None:
         for k, v in blocked.items():
@@ -130,6 +133,8 @@ class RunMetrics:
             "last_mile_attempts": float(self.last_mile_attempts),
             "last_mile_confirms": float(self.last_mile_confirms),
             "clearance_ic": float(self.clearance_ic),
+            "deadline_pull_attempts": float(self.deadline_pull_attempts),
+            "deadline_pull_confirms": float(self.deadline_pull_confirms),
         }
 
 
@@ -168,4 +173,6 @@ def merge_metrics(rows: List[RunMetrics]) -> RunMetrics:
         out.last_mile_attempts += m.last_mile_attempts
         out.last_mile_confirms += m.last_mile_confirms
         out.clearance_ic += m.clearance_ic
+        out.deadline_pull_attempts += m.deadline_pull_attempts
+        out.deadline_pull_confirms += m.deadline_pull_confirms
     return out

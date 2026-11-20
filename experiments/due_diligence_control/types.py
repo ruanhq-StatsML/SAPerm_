@@ -135,6 +135,8 @@ class ControlFlags:
     last_mile_confirm: bool = False
     # v15: after last-mile clearance, promote allow_ic deals to IC (cut stale abstain).
     clearance_ic: bool = False
+    # v16: when days_to_ic is tight, pull stranded critical early (not only end window).
+    deadline_pull: bool = False
 
 
 class DealOutcome:

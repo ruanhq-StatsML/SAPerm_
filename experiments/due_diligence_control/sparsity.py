@@ -66,4 +66,13 @@ REGIMES: dict[str, DataRegime] = {
         filler_mult=1.5,
         note="Worst case: sparse + missing docs + redactions.",
     ),
+    # v16 stress: thinner stream + higher missing/redact than sparse_missing.
+    "hostile": DataRegime(
+        "hostile",
+        docs_per_deal_per_day=0.35,
+        missing_doc_rate=0.60,
+        redact_rate=0.45,
+        filler_mult=2.5,
+        note="Hostile data room: very thin + mostly missing/redacted critical.",
+    ),
 }

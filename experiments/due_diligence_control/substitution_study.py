@@ -85,6 +85,8 @@ METHODS: Dict[str, ControlFlags] = {
         last_mile_confirm=True,
         # v15: promote cleared deals to IC (cut stale abstain after last-mile)
         clearance_ic=True,
+        # v16: pull stranded critical when IC deadline is tight
+        deadline_pull=True,
     ),
     "rules_blind": ControlFlags(
         analyst_rules=True,
@@ -106,6 +108,7 @@ METHODS: Dict[str, ControlFlags] = {
         fast_escalate_on_gap=True,
         last_mile_confirm=True,
         clearance_ic=True,
+        deadline_pull=True,
     ),
     "model_only": ControlFlags(
         analyst_rules=False, desk_rules=False, use_model_signals=True
@@ -540,6 +543,78 @@ def run_one(
 
             recent_sector.append((a.id, deal.sector, day))
 
+        # v16 deadline pull: when a deal's IC clock is tight, force-release
+        # stranded critical and take partner looks — before the calendar end window.
+        if flags.deadline_pull:
+            urgent = [
+                d
+                for d in deals.values()
+                if d.outcome != DealOutcome.IC_READY and d.days_to_ic <= 6
+            ]
+            if urgent:
+                pull_budget = 4
+                urgent_ids = {d.id for d in urgent}
+                for deal in urgent:
+                    stranded = [
+                        doc
+                        for doc in corpus.values()
+                        if doc.deal_id == deal.id
+                        and doc.planted_risk
+                        and doc.available
+                        and not doc.redacted
+                        and not doc.found
+                        and doc.id not in live
+                    ]
+                    for doc in stranded[:2]:
+                        doc.day_arrived = day
+                        live[doc.id] = doc
+                        deal.pending_review += 1
+                        # Count the pull itself so thin rooms still register urgency work.
+                        metrics.deadline_pull_attempts += 1
+                candidates = [
+                    doc
+                    for doc in live.values()
+                    if doc.deal_id in urgent_ids
+                    and doc.planted_risk
+                    and doc.available
+                    and not doc.redacted
+                    and not doc.found
+                    and doc.second_looks < 3
+                ]
+                candidates.sort(
+                    key=lambda doc: (
+                        0 if not doc.reviewed else 1,
+                        deals[doc.deal_id].days_to_ic,
+                        doc.second_looks,
+                    )
+                )
+                for doc in candidates:
+                    if pull_budget <= 0:
+                        break
+                    deal = deals[doc.deal_id]
+                    desk_mates = [x for x in analysts.values() if x.desk == deal.sector]
+                    pool = desk_mates or list(analysts.values())
+                    a = max(pool, key=lambda x: x.expertise)
+                    metrics.deadline_pull_attempts += 1
+                    pull_budget -= 1
+                    was_unread = not doc.reviewed
+                    doc.reviewed = True
+                    doc.second_looks = max(doc.second_looks + 1, 1)
+                    deal.total_coverage += 1
+                    metrics.coverage += 1
+                    metrics.net_value -= 0.005
+                    p = (0.62 + 0.3 * a.expertise) if was_unread else (0.84 + 0.14 * a.expertise)
+                    if rng.random() < min(0.97, p):
+                        doc.found = True
+                        deal.total_confirmed_risks += 1
+                        metrics.confirmed += 1
+                        metrics.planted_found += 1
+                        metrics.deadline_pull_confirms += 1
+                        metrics.net_value += 0.5
+                        a.consecutive_ignores = 0
+                    else:
+                        a.consecutive_ignores += 1
+
         # v14 last-mile: only in the closing window so dual-look / abstain
         # paths still fire mid-horizon. Closes (a) stranded available planted
         # never released into live, (b) unread live critical, (c) reviewed misses.
@@ -614,12 +689,18 @@ def run_one(
                 else:
                     a.consecutive_ignores += 1
 
-        # v15 clearance IC: after last-mile (or any late day), if integrity allows
-        # and no available planted remains unfound, reopen abstain and book IC.
-        if flags.clearance_ic and day >= max(0, cfg.n_days - 5):
-            for deal in deals.values():
-                if deal.outcome == DealOutcome.IC_READY or deal.total_ic_ready > 0:
-                    continue
+        # v15 clearance IC: after last-mile (or deadline-urgent deals), if integrity
+        # allows and no available planted remains unfound, book IC.
+        if flags.clearance_ic:
+            late = day >= max(0, cfg.n_days - 5)
+            clearance_deals = [
+                d
+                for d in deals.values()
+                if d.outcome != DealOutcome.IC_READY
+                and d.total_ic_ready == 0
+                and (late or (flags.deadline_pull and d.days_to_ic <= 6))
+            ]
+            for deal in clearance_deals:
                 if deal.total_confirmed_risks < 2:
                     continue
                 if _unfound_available(deal.id, corpus):

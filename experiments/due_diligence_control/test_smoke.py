@@ -307,9 +307,10 @@ def test_v14_last_mile_can_confirm_under_sparse_missing():
     offset = sum(ord(c) for c in "sparse_missing")
     m = run_one("controlled", REGIMES["sparse_missing"], cfg, seed=11 + offset)
     assert m.false_ic_rate <= 1e-9
-    assert m.last_mile_attempts >= 1
-    assert m.last_mile_confirms >= 1
-    # Last-mile should lift sparse_missing above the pre-v14 ~0.82 board.
+    # v16 deadline_pull may clear gaps before the calendar last-mile window.
+    assert (m.last_mile_attempts + m.deadline_pull_attempts) >= 1
+    assert (m.last_mile_confirms + m.deadline_pull_confirms) >= 1
+    # Closing confirms should lift sparse_missing above the pre-v14 ~0.82 board.
     assert m.recall_all >= 0.90
 
 
@@ -325,6 +326,21 @@ def test_v15_clearance_ic_cuts_stale_abstain():
     # Stock reconcile + clearance should leave almost no open abstains.
     assert m.abstain_incomplete <= 2
     assert m.ic_ready >= 4
+
+
+def test_v16_deadline_pull_and_hostile_regime():
+    from .sparsity import REGIMES
+    from .substitution_study import StudyConfig, run_one
+
+    assert "hostile" in REGIMES
+    cfg = StudyConfig(n_days=18, n_analysts=12, n_deals=6, planted_per_deal=3)
+    offset = sum(ord(c) for c in "hostile")
+    controlled = run_one("controlled", REGIMES["hostile"], cfg, seed=11 + offset)
+    flood = run_one("flood", REGIMES["hostile"], cfg, seed=11 + offset)
+    assert controlled.false_ic_rate <= 1e-9
+    assert controlled.deadline_pull_attempts >= 1
+    assert controlled.recall_all + 1e-9 >= flood.recall_all
+    assert controlled.recall_all >= 0.85
 
 
 def test_matching_failure_extra_unredacts_only_when_configured_thin():
