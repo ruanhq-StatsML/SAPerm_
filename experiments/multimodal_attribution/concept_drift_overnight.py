@@ -7,7 +7,7 @@ CFPerm / DRPerm use ``n_perm=150`` (``ruanhq-StatsML/CFPerm`` default).
 
 ```bash
 python -m experiments.multimodal_attribution.concept_drift_overnight \\
-  --n 500 --n-rep 120 --n-perm 150 \\
+  --n 500 --n-rep 150 --n-perm 150 \\
   --out-dir experiments/multimodal_attribution/results/concept_drift
 ```
 """
@@ -109,7 +109,7 @@ def _summarize(raw: pd.DataFrame, alpha: float, out_dir: Path) -> None:
 def run(
     *,
     n: int = 500,
-    n_rep: int = 120,
+    n_rep: int = 150,
     n_perm: int = 150,
     alpha: float = 0.05,
     seed: int = 0,
@@ -231,7 +231,7 @@ def run(
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--n", type=int, default=500)
-    p.add_argument("--n-rep", type=int, default=120)
+    p.add_argument("--n-rep", type=int, default=150)
     p.add_argument("--n-perm", type=int, default=150, help="CFPerm/DRPerm/RFPerm permutations (min 150)")
     p.add_argument("--alpha", type=float, default=0.05)
     p.add_argument("--seed", type=int, default=0)

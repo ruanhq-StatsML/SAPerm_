@@ -30,7 +30,7 @@ plus multimodal interaction detectors on PCA-concatenated embeddings
 
 ```bash
 python -m experiments.multimodal_attribution.power_benchmark \
-  --n 500 --band top30 --n-rep 120 --n-perm 120 --with-po-interact \
+  --n 500 --band top30 --n-rep 150 --n-perm 120 --with-po-interact \
   --out experiments/multimodal_attribution/results/power_board.csv
 ```
 
@@ -38,11 +38,11 @@ python -m experiments.multimodal_attribution.power_benchmark \
 
 Nested PO interaction is slow — that is expected. Use **B=120** reps
 (and 120 permutations). Checkpointed runner — if an earlier pass only did
-40 reps, re-launch with ``--n-rep 120`` and it stacks the missing reps:
+40 reps, re-launch with ``--n-rep 150`` and it stacks the missing reps:
 
 ```bash
 python -m experiments.multimodal_attribution.overnight_power \
-  --n 500 --n-rep 120 --n-perm 120 --with-po-interact \
+  --n 500 --n-rep 150 --n-perm 120 --with-po-interact \
   --out-dir experiments/multimodal_attribution/results/overnight
 ```
 
@@ -58,7 +58,7 @@ board in `POWER_BOARD.md`.
 
 ```bash
 python -m experiments.multimodal_attribution.emotion_overnight \
-  --n 500 --n-rep 120 --n-perm 120 --band pc30_100 \
+  --n 500 --n-rep 150 --n-perm 120 --band pc30_100 \
   --out-dir experiments/multimodal_attribution/results/emotion_overnight
 ```
 
@@ -74,7 +74,7 @@ No attribution — inject concept drift and compare power (outcome = RF):
 
 ```bash
 python -m experiments.multimodal_attribution.concept_drift_overnight \
-  --n 500 --n-rep 120 --n-perm 150 \
+  --n 500 --n-rep 150 --n-perm 150 \
   --out-dir experiments/multimodal_attribution/results/concept_drift
 ```
 
@@ -85,7 +85,7 @@ Outcome = **`rf_regressor`**. CFPerm/DRPerm **`n_perm=150`**. No attribution —
 
 ```bash
 python -m experiments.multimodal_attribution.emotion_overnight \
-  --n 500 --n-rep 120 --n-perm 120 --band pc31_100 \
+  --n 500 --n-rep 150 --n-perm 120 --band pc31_100 \
   --model-key LCO_Omni_3B --max-rows 800 \
   --out-dir experiments/multimodal_attribution/results/emotion_overnight
 ```

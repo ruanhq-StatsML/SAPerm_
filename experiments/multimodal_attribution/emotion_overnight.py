@@ -2,7 +2,7 @@
 
 ```bash
 python -m experiments.multimodal_attribution.emotion_overnight \\
-  --n 500 --n-rep 120 --n-perm 120 --band pc31_100 \\
+  --n 500 --n-rep 150 --n-perm 120 --band pc31_100 \\
   --model-key LCO_Omni_3B --max-rows 800 \\
   --out-dir experiments/multimodal_attribution/results/emotion_overnight
 ```
@@ -153,7 +153,7 @@ def _interaction_pvalue_rf(X, Y, T, idx_a, idx_b, *, n_perm=40, seed=0, model_re
 def run_emotion_overnight(
     *,
     n: int = DEFAULT_BATCH,
-    n_rep: int = 120,
+    n_rep: int = 150,
     n_perm: int = 120,
     band: str = DEFAULT_BAND,
     model_key: str = DEFAULT_MODEL,
@@ -305,7 +305,7 @@ def run_emotion_overnight(
 def _parse_args():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--n", type=int, default=DEFAULT_BATCH)
-    p.add_argument("--n-rep", type=int, default=120)
+    p.add_argument("--n-rep", type=int, default=150)
     p.add_argument("--n-perm", type=int, default=120)
     p.add_argument("--band", default=DEFAULT_BAND, choices=("top30", "pc30_100", "pc31_100"))
     p.add_argument("--model-key", default=DEFAULT_MODEL)

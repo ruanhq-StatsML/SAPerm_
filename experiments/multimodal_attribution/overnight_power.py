@@ -7,7 +7,7 @@ modality-combo, rep) so a restart can resume.
 Example
 -------
 python -m experiments.multimodal_attribution.overnight_power \\
-  --n 500 --n-rep 120 --n-perm 120 --with-po-interact \\
+  --n 500 --n-rep 150 --n-perm 120 --with-po-interact \\
   --out-dir experiments/multimodal_attribution/results/overnight
 
 If an earlier run finished fewer reps, re-launch with a larger ``--n-rep``;
@@ -270,7 +270,7 @@ def _summarize(raw: pd.DataFrame, alpha: float, out_dir: Path) -> pd.DataFrame:
 def run_overnight(
     *,
     n: int = 500,
-    n_rep: int = 120,
+    n_rep: int = 150,
     n_perm: int = 120,
     alpha: float = 0.05,
     seed: int = 0,
@@ -455,7 +455,7 @@ def run_overnight(
 def _parse_args():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--n", type=int, default=500)
-    p.add_argument("--n-rep", type=int, default=120, help="Monte Carlo reps B (stackable via checkpoint)")
+    p.add_argument("--n-rep", type=int, default=150, help="Monte Carlo reps B (stackable via checkpoint)")
     p.add_argument("--n-perm", type=int, default=120, help="permutation budget inside each test")
     p.add_argument("--alpha", type=float, default=0.05)
     p.add_argument("--seed", type=int, default=0)
