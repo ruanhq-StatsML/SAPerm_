@@ -120,6 +120,10 @@ class ControlFlags:
     # v9: require multiple integrity failures before hard abstain (keep hunting).
     delayed_abstain: bool = False
     delayed_abstain_strikes: int = 2
+    # v10: while unread non-redacted critical sits live, suppress filler for that deal.
+    critical_first: bool = False
+    # v10: mild boost for under-covered deals (desk even-effort).
+    even_effort: bool = False
 
 
 class DealOutcome:

@@ -289,3 +289,49 @@ def test_v9_delayed_abstain_keeps_false_ic_zero():
     v9 = run_one("controlled", REGIMES["dense"], cfg, seed=11)
     assert v9.false_ic_rate <= 1e-9
     assert v9.recall_available >= 0.9
+
+
+def test_critical_first_prefers_critical_in_crowded_room():
+    from .allocate import allocate_day
+    from .types import Analyst, AnalystLoad, ControlFlags, Deal, Document
+
+    a = Analyst(id="a0", load=AnalystLoad.FRESH, desk="sec0", expertise=0.8)
+    deal = Deal(
+        id="d0",
+        sector="sec0",
+        pending_review=0,
+        daily_review_capacity=20,
+        expected_organic_docs_per_day=1,
+    )
+    docs = {
+        "c": Document(
+            id="c",
+            deal_id="d0",
+            kind="c",
+            text="material weakness going concern",
+            risk_score=0.9,
+            planted_risk=True,
+            available=True,
+        )
+    }
+    # Crowded room: ≥8 open docs so soft critical-first engages.
+    for i in range(8):
+        docs[f"f{i}"] = Document(
+            id=f"f{i}",
+            deal_id="d0",
+            kind="f",
+            text=f"ordinary update {i}",
+            risk_score=0.2,
+            planted_risk=False,
+        )
+    flags = ControlFlags(
+        analyst_rules=True,
+        desk_rules=True,
+        use_model_signals=True,
+        critical_first=True,
+        thin_stream_absorb=True,
+    )
+    out = allocate_day(0, {"a0": a}, {"d0": deal}, docs, flags)
+    assert out.decisions
+    assert out.decisions[0].document_id == "c"
+    assert out.blocked.get("critical_first", 0) >= 1

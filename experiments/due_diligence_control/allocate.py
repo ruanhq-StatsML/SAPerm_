@@ -101,6 +101,20 @@ def allocate_day(
             if not (d.planted_risk or risk >= deal.risk_bar):
                 continue
         open_docs.append(d)
+
+    raw_open_by_deal: Dict[str, int] = {}
+    for d in open_docs:
+        raw_open_by_deal[d.deal_id] = raw_open_by_deal.get(d.deal_id, 0) + 1
+
+    # v10 critical-first (soft): when a crowded deal (≥4 open) still has unread
+    # non-redacted planted critical, penalize filler scores instead of hard-gating
+    # — preserves sparse thin-stream recall while clearing dense rooms first.
+    unread_critical_deals: Set[str] = set()
+    if flags.critical_first:
+        for d in open_docs:
+            if d.planted_risk and d.available and not d.redacted and not d.found:
+                unread_critical_deals.add(d.deal_id)
+
     open_by_deal: Dict[str, int] = {}
     for d in open_docs:
         open_by_deal[d.deal_id] = open_by_deal.get(d.deal_id, 0) + 1
@@ -115,6 +129,17 @@ def allocate_day(
                 continue
             if n_open <= 4 or deals[did].paused:
                 remaining[did] = max(remaining.get(did, 0), n_open)
+
+    # v10 even-effort: score bump only (no free remaining — that diluted sparse).
+    even_boost: Dict[str, float] = {did: 0.0 for did in deals}
+    if flags.even_effort:
+        coverages = [d.total_coverage for d in deals.values()]
+        mean_cov = sum(coverages) / max(len(coverages), 1)
+        for did, deal in deals.items():
+            if deal.total_coverage < mean_cov - 1:
+                # Prefer under-covered deals that still have live critical.
+                if did in unread_critical_deals or open_by_deal.get(did, 0) > 0:
+                    even_boost[did] = 0.22 if did in unread_critical_deals else 0.10
 
     scored: List[Tuple[float, str, str, str]] = []  # score, analyst, deal, doc
 
@@ -147,7 +172,18 @@ def allocate_day(
                 - fatigue
                 - cong
                 - red
+                + even_boost.get(deal.id, 0.0)
             )
+            # Soft critical-first: only in truly dense rooms (≥8 open) so sparse
+            # thin streams keep their v9 recall.
+            if flags.critical_first and deal.id in unread_critical_deals:
+                crowded = raw_open_by_deal.get(deal.id, 0) >= 8
+                if crowded:
+                    if doc.planted_risk and not doc.redacted:
+                        score += 0.35
+                    elif not doc.planted_risk:
+                        score -= 0.55
+                        blocked["critical_first"] = blocked.get("critical_first", 0) + 1
             scored.append((score, a.id, deal.id, doc.id))
 
     scored.sort(key=lambda x: x[0], reverse=True)

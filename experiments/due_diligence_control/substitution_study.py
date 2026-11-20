@@ -61,7 +61,7 @@ METHODS: Dict[str, ControlFlags] = {
         use_model_signals=True,
         integrity_gate=True,
     ),
-    # v9 = v8 + delayed abstain (keep hunting before hard stop)
+    # v10 = v9 + critical-first filler suppress + even-effort under-covered boost
     "controlled": ControlFlags(
         analyst_rules=True,
         desk_rules=True,
@@ -75,6 +75,8 @@ METHODS: Dict[str, ControlFlags] = {
         adaptive_escalation=True,
         same_day_recovery_pass=True,
         delayed_abstain=True,
+        critical_first=True,
+        even_effort=True,
     ),
     "rules_blind": ControlFlags(
         analyst_rules=True,
@@ -89,6 +91,8 @@ METHODS: Dict[str, ControlFlags] = {
         adaptive_escalation=True,
         same_day_recovery_pass=True,
         delayed_abstain=True,
+        critical_first=True,
+        even_effort=True,
     ),
     "model_only": ControlFlags(
         analyst_rules=False, desk_rules=False, use_model_signals=True
@@ -637,7 +641,7 @@ def _verdict(board: SubstitutionBoard) -> str:
         v4 = _pick(board, "dense", "controlled")
         v1 = _pick(board, "dense", "controlled_v1")
         lines.append(
-            f"{n}. **v8 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
+            f"{n}. **v10 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
             f"abstain={v4.abstain_incomplete}; same-day recovery reads={v4.same_day_recovery_reads}; "
             f"net {v1.net_value:.1f}→{v4.net_value:.1f}."
         )
@@ -647,7 +651,7 @@ def _verdict(board: SubstitutionBoard) -> str:
         v4 = _pick(board, "missing_docs", "controlled")
         v2 = _pick(board, "missing_docs", "controlled_v2")
         lines.append(
-            f"{n}. **v7 adaptive escalate+reopen vs v2 abstain-only (missing_docs).** "
+            f"{n}. **v10 vs v2 abstain-only (missing_docs).** "
             f"recall@all {v2.recall_all:.2f}→{v4.recall_all:.2f} via recovered={v4.docs_recovered}; "
             f"reopened={v4.abstain_reopened}; false-IC stays {v4.false_ic_rate:.2f}."
         )
@@ -682,7 +686,7 @@ def _verdict(board: SubstitutionBoard) -> str:
             f"{n}. **Missing documents.** recall@all controlled={miss_c.recall_all:.2f}, "
             f"flood={miss_f.recall_all:.2f}. Both collapse toward the availability ceiling "
             f"(available share ≈ {avail:.2f}). "
-            f"v7 recovers {miss_c.docs_recovered} missing docs via escalation; "
+            f"v10 recovers {miss_c.docs_recovered} missing docs via escalation; "
             f"false-IC {miss_c.false_ic_rate:.2f} vs flood {miss_f.false_ic_rate:.2f}; "
             f"abstain={miss_c.abstain_incomplete}. "
             "Still cannot invent evidence that escalation fails to obtain."
@@ -694,9 +698,9 @@ def _verdict(board: SubstitutionBoard) -> str:
         field_m = _pick(board, "missing_fields", "model_only")
         lines.append(
             f"{n}. **Missing / redacted fields.** Model-only recall@available={field_m.recall_available:.2f}; "
-            f"controlled(v7)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
+            f"controlled(v10)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
             "FinanceGPT is blind on redactions until escalation lifts them; "
-            "v7 requests unredact with adaptive persistence."
+            "v10 requests unredact with adaptive persistence + critical-first."
         )
         lines.append("")
         n += 1
