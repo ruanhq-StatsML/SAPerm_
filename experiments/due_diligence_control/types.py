@@ -109,6 +109,8 @@ class ControlFlags:
     thin_stream_absorb: bool = False
     # v5: requeue critical docs once after a failed confirm (second analyst look).
     second_pass_confirm: bool = False
+    # v6: after escalation recovers evidence, reopen abstained deals for IC retry.
+    reopen_after_recovery: bool = False
 
 
 class DealOutcome:
@@ -116,6 +118,7 @@ class DealOutcome:
     IC_READY = "ic_ready"
     ABSTAIN_INCOMPLETE = "abstain_incomplete"
     ESCALATED = "escalated"
+    REOPENED = "reopened"  # v6: abstain lifted after recovery
 
 
 @dataclass

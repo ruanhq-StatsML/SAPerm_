@@ -56,7 +56,7 @@ METHODS: Dict[str, ControlFlags] = {
         use_model_signals=True,
         integrity_gate=True,
     ),
-    # v5 = v4 + second-pass confirm on critical docs that miss first look
+    # v6 = v5 + reopen abstain after escalation recovers enough evidence
     "controlled": ControlFlags(
         analyst_rules=True,
         desk_rules=True,
@@ -66,6 +66,7 @@ METHODS: Dict[str, ControlFlags] = {
         auto_escalate=True,
         thin_stream_absorb=True,
         second_pass_confirm=True,
+        reopen_after_recovery=True,
     ),
     "rules_blind": ControlFlags(
         analyst_rules=True,
@@ -75,6 +76,7 @@ METHODS: Dict[str, ControlFlags] = {
         auto_escalate=True,
         thin_stream_absorb=True,
         second_pass_confirm=True,
+        reopen_after_recovery=True,
     ),
     "model_only": ControlFlags(
         analyst_rules=False, desk_rules=False, use_model_signals=True
@@ -266,10 +268,14 @@ def run_one(
             elif sd.diagnosis == StageDiagnosis.MATCHING_FAILURE:
                 metrics.matching_failure_events += 1
 
-        # Integrity-aware diagnosis + v3 escalations (recover missing / unredact).
+        # Integrity-aware diagnosis + escalations (recover missing / unredact).
         esc_cfg = EscalationConfig()
         for deal in deals.values():
-            if deal.outcome in (DealOutcome.IC_READY, DealOutcome.ABSTAIN_INCOMPLETE):
+            if deal.outcome == DealOutcome.IC_READY:
+                continue
+            # v6: abstained deals still escalate / may reopen after recovery.
+            abstained = deal.outcome == DealOutcome.ABSTAIN_INCOMPLETE
+            if abstained and not flags.reopen_after_recovery:
                 continue
             sig = diagnose_integrity(deal, corpus, coverage_today=len(alloc.decisions))
             if sig == "supply_shortage":
@@ -309,7 +315,8 @@ def run_one(
                 actions = plan_escalations(deal, snap, corpus, diag, esc_cfg, live=live)
                 if actions:
                     metrics.escalations += len(actions)
-                    deal.outcome = DealOutcome.ESCALATED
+                    if not abstained:
+                        deal.outcome = DealOutcome.ESCALATED
                     deal.last_escalation_day = day
                     result = apply_escalations(
                         actions, corpus, live, deals, rng, day, esc_cfg
@@ -321,6 +328,20 @@ def run_one(
                         metrics.net_value += 0.25 * (
                             result.docs_recovered + result.fields_unredacted
                         )
+                        # v6: reopen abstain once integrity clears after recovery.
+                        if flags.reopen_after_recovery and abstained:
+                            snap2 = snapshot_deal(deal, corpus)
+                            if snap2.allow_ic or (
+                                snap2.availability >= 0.75
+                                and snap2.redaction_share <= 0.30
+                            ):
+                                deal.outcome = DealOutcome.REOPENED
+                                deal.paused = False
+                                metrics.abstain_reopened += 1
+                                metrics.abstain_incomplete = max(
+                                    metrics.abstain_incomplete - 1, 0
+                                )
+                                metrics.net_value += 0.1
 
         for dec in alloc.decisions:
             a = analysts[dec.analyst_id]
@@ -380,6 +401,7 @@ def run_one(
                 a.consecutive_ignores += 1
 
             if deal.total_confirmed_risks >= 2 and deal.total_ic_ready == 0 and rng.random() < 0.4:
+                was_reopened = deal.outcome == DealOutcome.REOPENED
                 if flags.integrity_gate:
                     snap = snapshot_deal(deal, corpus)
                     if not snap.allow_ic:
@@ -394,6 +416,8 @@ def run_one(
                 deal.total_ic_ready = 1
                 deal.outcome = DealOutcome.IC_READY
                 metrics.ic_ready += 1
+                if was_reopened:
+                    metrics.ic_after_reopen += 1
                 # False confidence: IC while an available planted risk remains unfound.
                 if _unfound_available(deal.id, corpus):
                     metrics.false_ic += 1
@@ -402,6 +426,34 @@ def run_one(
                     metrics.net_value += 1.0
 
             recent_sector.append((a.id, deal.sector, day))
+
+        # v6 end-of-day: reopen abstain if integrity cleared; retry IC on reopened.
+        if flags.reopen_after_recovery:
+            for deal in deals.values():
+                if deal.outcome == DealOutcome.ABSTAIN_INCOMPLETE:
+                    snap = snapshot_deal(deal, corpus)
+                    if snap.allow_ic:
+                        deal.outcome = DealOutcome.REOPENED
+                        deal.paused = False
+                        metrics.abstain_reopened += 1
+                        metrics.abstain_incomplete = max(metrics.abstain_incomplete - 1, 0)
+                        metrics.net_value += 0.1
+                if (
+                    deal.outcome == DealOutcome.REOPENED
+                    and deal.total_ic_ready == 0
+                    and deal.total_confirmed_risks >= 2
+                ):
+                    snap = snapshot_deal(deal, corpus)
+                    if snap.allow_ic and rng.random() < 0.55:
+                        deal.total_ic_ready = 1
+                        deal.outcome = DealOutcome.IC_READY
+                        metrics.ic_ready += 1
+                        metrics.ic_after_reopen += 1
+                        if _unfound_available(deal.id, corpus):
+                            metrics.false_ic += 1
+                            metrics.net_value -= 0.8
+                        else:
+                            metrics.net_value += 1.0
 
         recent_sector = [r for r in recent_sector if day - r[2] < 7]
 
@@ -509,9 +561,9 @@ def _verdict(board: SubstitutionBoard) -> str:
         v4 = _pick(board, "dense", "controlled")
         v1 = _pick(board, "dense", "controlled_v1")
         lines.append(
-            f"{n}. **v5 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
-            f"abstain={v4.abstain_incomplete}; second-pass confirms={v4.second_pass_confirms}; "
-            f"net {v1.net_value:.1f}→{v4.net_value:.1f}."
+            f"{n}. **v6 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
+            f"abstain={v4.abstain_incomplete}; reopened={v4.abstain_reopened}; "
+            f"IC-after-reopen={v4.ic_after_reopen}; net {v1.net_value:.1f}→{v4.net_value:.1f}."
         )
         lines.append("")
         n += 1
@@ -519,9 +571,9 @@ def _verdict(board: SubstitutionBoard) -> str:
         v4 = _pick(board, "missing_docs", "controlled")
         v2 = _pick(board, "missing_docs", "controlled_v2")
         lines.append(
-            f"{n}. **v5 escalation vs v2 abstain-only (missing_docs).** "
+            f"{n}. **v6 escalation+reopen vs v2 abstain-only (missing_docs).** "
             f"recall@all {v2.recall_all:.2f}→{v4.recall_all:.2f} via recovered={v4.docs_recovered}; "
-            f"false-IC stays {v4.false_ic_rate:.2f}."
+            f"reopened={v4.abstain_reopened}; false-IC stays {v4.false_ic_rate:.2f}."
         )
         lines.append("")
         n += 1
@@ -554,7 +606,7 @@ def _verdict(board: SubstitutionBoard) -> str:
             f"{n}. **Missing documents.** recall@all controlled={miss_c.recall_all:.2f}, "
             f"flood={miss_f.recall_all:.2f}. Both collapse toward the availability ceiling "
             f"(available share ≈ {avail:.2f}). "
-            f"v5 recovers {miss_c.docs_recovered} missing docs via escalation; "
+            f"v6 recovers {miss_c.docs_recovered} missing docs via escalation; "
             f"false-IC {miss_c.false_ic_rate:.2f} vs flood {miss_f.false_ic_rate:.2f}; "
             f"abstain={miss_c.abstain_incomplete}. "
             "Still cannot invent evidence that escalation fails to obtain."
@@ -566,9 +618,9 @@ def _verdict(board: SubstitutionBoard) -> str:
         field_m = _pick(board, "missing_fields", "model_only")
         lines.append(
             f"{n}. **Missing / redacted fields.** Model-only recall@available={field_m.recall_available:.2f}; "
-            f"controlled(v5)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
+            f"controlled(v6)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
             "FinanceGPT is blind on redactions until escalation lifts them; "
-            "v5 requests unredact instead of inventing fields."
+            "v6 requests unredact instead of inventing fields."
         )
         lines.append("")
         n += 1

@@ -245,3 +245,15 @@ def test_v5_second_pass_can_confirm_critical():
     v5 = run_one("controlled", REGIMES["dense"], cfg, seed=11)
     assert v5.second_pass_requeues >= 1
     assert v5.false_ic_rate <= 1e-9
+
+
+def test_v6_can_reopen_abstain_under_missing_docs():
+    from .sparsity import REGIMES
+    from .substitution_study import StudyConfig, run_one
+
+    cfg = StudyConfig(n_days=18, n_analysts=12, n_deals=6, planted_per_deal=3)
+    v6 = run_one("controlled", REGIMES["missing_docs"], cfg, seed=11)
+    # Escalation + reopen should keep false-IC at 0; reopen or recover should fire.
+    assert v6.false_ic_rate <= 1e-9
+    assert v6.docs_recovered >= 1
+    assert v6.abstain_reopened + v6.ic_after_reopen + v6.abstain_incomplete >= 1

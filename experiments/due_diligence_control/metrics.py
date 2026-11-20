@@ -37,6 +37,9 @@ class RunMetrics:
     # v5 second-pass confirms
     second_pass_confirms: int = 0
     second_pass_requeues: int = 0
+    # v6 reopen after recovery
+    abstain_reopened: int = 0
+    ic_after_reopen: int = 0
 
     def add_blocked(self, blocked: Dict[str, int]) -> None:
         for k, v in blocked.items():
@@ -114,6 +117,8 @@ class RunMetrics:
             "halt_coverage_events": float(self.halt_coverage_events),
             "second_pass_confirms": float(self.second_pass_confirms),
             "second_pass_requeues": float(self.second_pass_requeues),
+            "abstain_reopened": float(self.abstain_reopened),
+            "ic_after_reopen": float(self.ic_after_reopen),
         }
 
 
@@ -146,4 +151,6 @@ def merge_metrics(rows: List[RunMetrics]) -> RunMetrics:
         out.halt_coverage_events += m.halt_coverage_events
         out.second_pass_confirms += m.second_pass_confirms
         out.second_pass_requeues += m.second_pass_requeues
+        out.abstain_reopened += m.abstain_reopened
+        out.ic_after_reopen += m.ic_after_reopen
     return out
