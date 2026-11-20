@@ -34,6 +34,9 @@ class RunMetrics:
     docs_recovered: int = 0
     fields_unredacted: int = 0
     halt_coverage_events: int = 0
+    # v5 second-pass confirms
+    second_pass_confirms: int = 0
+    second_pass_requeues: int = 0
 
     def add_blocked(self, blocked: Dict[str, int]) -> None:
         for k, v in blocked.items():
@@ -109,6 +112,8 @@ class RunMetrics:
             "docs_recovered": float(self.docs_recovered),
             "fields_unredacted": float(self.fields_unredacted),
             "halt_coverage_events": float(self.halt_coverage_events),
+            "second_pass_confirms": float(self.second_pass_confirms),
+            "second_pass_requeues": float(self.second_pass_requeues),
         }
 
 
@@ -139,4 +144,6 @@ def merge_metrics(rows: List[RunMetrics]) -> RunMetrics:
         out.docs_recovered += m.docs_recovered
         out.fields_unredacted += m.fields_unredacted
         out.halt_coverage_events += m.halt_coverage_events
+        out.second_pass_confirms += m.second_pass_confirms
+        out.second_pass_requeues += m.second_pass_requeues
     return out

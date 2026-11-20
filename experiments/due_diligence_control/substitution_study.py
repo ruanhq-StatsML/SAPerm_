@@ -56,7 +56,7 @@ METHODS: Dict[str, ControlFlags] = {
         use_model_signals=True,
         integrity_gate=True,
     ),
-    # v4 = integrity + escalate + sparse priority + critical lane + thin-stream absorb
+    # v5 = v4 + second-pass confirm on critical docs that miss first look
     "controlled": ControlFlags(
         analyst_rules=True,
         desk_rules=True,
@@ -65,6 +65,7 @@ METHODS: Dict[str, ControlFlags] = {
         sparse_priority=True,
         auto_escalate=True,
         thin_stream_absorb=True,
+        second_pass_confirm=True,
     ),
     "rules_blind": ControlFlags(
         analyst_rules=True,
@@ -73,6 +74,7 @@ METHODS: Dict[str, ControlFlags] = {
         integrity_gate=True,
         auto_escalate=True,
         thin_stream_absorb=True,
+        second_pass_confirm=True,
     ),
     "model_only": ControlFlags(
         analyst_rules=False, desk_rules=False, use_model_signals=True
@@ -332,27 +334,48 @@ def run_one(
                 deal.total_flags += 1
                 metrics.flags += 1
             # Confirmation of planted risk: reviewed + (not redacted) + expertise.
-            if doc.planted_risk and doc.available and not doc.redacted:
-                p_confirm = 0.55 + 0.4 * a.expertise
-                if rng.random() < p_confirm:
-                    doc.found = True
-                    deal.total_confirmed_risks += 1
-                    metrics.confirmed += 1
-                    metrics.planted_found += 1
-                    metrics.net_value += 0.5
-                    a.consecutive_ignores = 0
+            # v5: same-day dual-look (partner check) — no requeue into the open
+            # pool, so second pass cannot starve unread planted docs.
+            def _confirm_hit(is_second_look: bool) -> bool:
+                nonlocal a
+                if doc.planted_risk and doc.available and not doc.redacted:
+                    p = (
+                        (0.78 + 0.2 * a.expertise)
+                        if is_second_look
+                        else (0.55 + 0.4 * a.expertise)
+                    )
+                    return bool(rng.random() < p)
+                if doc.planted_risk and doc.redacted:
+                    p = ((0.12 if is_second_look else 0.08) * a.expertise)
+                    return bool(rng.random() < p)
+                return False
+
+            def _mark_found(from_second: bool) -> None:
+                doc.found = True
+                deal.total_confirmed_risks += 1
+                metrics.confirmed += 1
+                metrics.planted_found += 1
+                metrics.net_value += 0.5
+                if from_second:
+                    metrics.second_pass_confirms += 1
+                a.consecutive_ignores = 0
+
+            if doc.planted_risk and doc.available:
+                if _confirm_hit(False):
+                    _mark_found(False)
                 else:
                     a.consecutive_ignores += 1
-            elif doc.planted_risk and doc.redacted:
-                # Human might still catch a redacted stub with small probability.
-                if rng.random() < 0.08 * a.expertise:
-                    doc.found = True
-                    deal.total_confirmed_risks += 1
-                    metrics.confirmed += 1
-                    metrics.planted_found += 1
-                    metrics.net_value += 0.5
-                else:
-                    a.consecutive_ignores += 1
+                    if flags.second_pass_confirm and doc.second_looks < 1:
+                        doc.second_looks = 1
+                        metrics.second_pass_requeues += 1
+                        # Fresh eyes: pick the highest-expertise other analyst.
+                        others = [x for x in analysts.values() if x.id != a.id]
+                        if others:
+                            a = max(others, key=lambda x: x.expertise)
+                            metrics.coverage += 1  # light second-touch cost
+                            metrics.net_value -= 0.005
+                            if _confirm_hit(True):
+                                _mark_found(True)
             else:
                 a.consecutive_ignores += 1
 
@@ -486,8 +509,8 @@ def _verdict(board: SubstitutionBoard) -> str:
         v4 = _pick(board, "dense", "controlled")
         v1 = _pick(board, "dense", "controlled_v1")
         lines.append(
-            f"{n}. **v4 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
-            f"abstain={v4.abstain_incomplete}; recovered={v4.docs_recovered}; "
+            f"{n}. **v5 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
+            f"abstain={v4.abstain_incomplete}; second-pass confirms={v4.second_pass_confirms}; "
             f"net {v1.net_value:.1f}→{v4.net_value:.1f}."
         )
         lines.append("")
@@ -496,7 +519,7 @@ def _verdict(board: SubstitutionBoard) -> str:
         v4 = _pick(board, "missing_docs", "controlled")
         v2 = _pick(board, "missing_docs", "controlled_v2")
         lines.append(
-            f"{n}. **v4 escalation vs v2 abstain-only (missing_docs).** "
+            f"{n}. **v5 escalation vs v2 abstain-only (missing_docs).** "
             f"recall@all {v2.recall_all:.2f}→{v4.recall_all:.2f} via recovered={v4.docs_recovered}; "
             f"false-IC stays {v4.false_ic_rate:.2f}."
         )
@@ -513,13 +536,13 @@ def _verdict(board: SubstitutionBoard) -> str:
         delta = ""
         if sparse_v2 is not None:
             delta = (
-                f" v4 lifts sparse recall vs the soft-halt freeze "
-                f"({sparse_v2.recall_available:.2f}→{sparse_c.recall_available:.2f} vs v2)."
+                f" Second-pass + critical lane: "
+                f"{sparse_v2.recall_available:.2f}→{sparse_c.recall_available:.2f} vs v2."
             )
         lines.append(
             f"{n}. **Sparse filings.** Controlled recall@available={sparse_c.recall_available:.2f} "
-            f"(flood={sparse_f.recall_available:.2f}). Thin-stream absorb + critical lane "
-            f"keep arriving docs readable under soft-halt.{delta}"
+            f"(flood={sparse_f.recall_available:.2f}). Thin-stream absorb, critical lane, "
+            f"and second-pass confirm keep arriving docs readable.{delta}"
         )
         lines.append("")
         n += 1
@@ -531,7 +554,7 @@ def _verdict(board: SubstitutionBoard) -> str:
             f"{n}. **Missing documents.** recall@all controlled={miss_c.recall_all:.2f}, "
             f"flood={miss_f.recall_all:.2f}. Both collapse toward the availability ceiling "
             f"(available share ≈ {avail:.2f}). "
-            f"v4 recovers {miss_c.docs_recovered} missing docs via escalation; "
+            f"v5 recovers {miss_c.docs_recovered} missing docs via escalation; "
             f"false-IC {miss_c.false_ic_rate:.2f} vs flood {miss_f.false_ic_rate:.2f}; "
             f"abstain={miss_c.abstain_incomplete}. "
             "Still cannot invent evidence that escalation fails to obtain."
@@ -543,9 +566,9 @@ def _verdict(board: SubstitutionBoard) -> str:
         field_m = _pick(board, "missing_fields", "model_only")
         lines.append(
             f"{n}. **Missing / redacted fields.** Model-only recall@available={field_m.recall_available:.2f}; "
-            f"controlled(v4)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
+            f"controlled(v5)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
             "FinanceGPT is blind on redactions until escalation lifts them; "
-            "v4 requests unredact instead of inventing fields."
+            "v5 requests unredact instead of inventing fields."
         )
         lines.append("")
         n += 1

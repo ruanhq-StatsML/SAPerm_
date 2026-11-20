@@ -91,6 +91,7 @@ class Document:
     available: bool = True  # False => never arrives (missing document)
     redacted: bool = False  # True => fields stripped before the model sees them
     found: bool = False  # set when a review confirms the planted risk
+    second_looks: int = 0  # v5: requeues after a failed critical confirm
 
 
 @dataclass
@@ -106,6 +107,8 @@ class ControlFlags:
     auto_escalate: bool = False
     # v4: absorb thin streams (raise desk remaining to cover live open docs).
     thin_stream_absorb: bool = False
+    # v5: requeue critical docs once after a failed confirm (second analyst look).
+    second_pass_confirm: bool = False
 
 
 class DealOutcome:
