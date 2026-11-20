@@ -22,7 +22,7 @@ import time
 import traceback
 from dataclasses import asdict
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -52,9 +52,9 @@ MODALITY_COMBOS: Dict[str, Tuple[str, ...]] = {
     "text_audio_video": ("text", "audio", "video"),
 }
 
+# Concept-drift first so a single-process run hits the target scenarios early;
+# null/no_shift cells stay available for type-I calibration.
 DATASETS: List[DatasetSpec] = [
-    DatasetSpec("msrvtt_null_top30", "no_shift", band="top30"),
-    DatasetSpec("msrvtt_null_pc31_100", "no_shift", band="pc31_100", dims=(160, 160, 160)),
     DatasetSpec("msrvtt_concept_top30", "concept_drift", band="top30", concept_shift=1.5),
     DatasetSpec(
         "msrvtt_concept_pc31_100",
@@ -63,6 +63,8 @@ DATASETS: List[DatasetSpec] = [
         dims=(160, 160, 160),
         concept_shift=1.5,
     ),
+    DatasetSpec("msrvtt_null_top30", "no_shift", band="top30"),
+    DatasetSpec("msrvtt_null_pc31_100", "no_shift", band="pc31_100", dims=(160, 160, 160)),
 ]
 
 
@@ -74,12 +76,20 @@ def run(
     alpha: float = 0.05,
     seed: int = 0,
     out_dir: Path = Path("experiments/multimodal_attribution/results/concept_drift"),
+    scenarios: Optional[Sequence[str]] = None,
 ):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     raw_path = out_dir / "power_raw.csv"
     log_path = out_dir / "overnight.log"
     meta_path = out_dir / "run_meta.json"
+
+    datasets = list(DATASETS)
+    if scenarios:
+        want = {s.strip() for s in scenarios if s.strip()}
+        datasets = [d for d in DATASETS if d.scenario in want]
+        if not datasets:
+            raise ValueError(f"no datasets match --scenarios {sorted(want)}")
 
     def log(msg: str) -> None:
         line = f"[{time.strftime('%H:%M:%S')}] {msg}"
@@ -106,7 +116,8 @@ def run(
         "seed": seed,
         "outcome_model": "rf_regressor",
         "methods": method_names,
-        "datasets": [asdict(d) for d in DATASETS],
+        "datasets": [asdict(d) for d in datasets],
+        "scenarios_filter": list(scenarios) if scenarios else None,
         "combos": {k: list(v) for k, v in MODALITY_COMBOS.items()},
         "note": "manual concept_drift; CFPerm/RFPerm/DRPerm; save-as-you-go stack",
         "started_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -117,15 +128,16 @@ def run(
         d["dims"] = list(d["dims"])
     meta_path.write_text(json.dumps(meta, indent=2))
 
-    total = len(DATASETS) * len(MODALITY_COMBOS) * n_rep
+    total = len(datasets) * len(MODALITY_COMBOS) * n_rep
     finished = 0
     t0 = time.time()
     log(
         f"concept-drift overnight: {total} batches, methods={method_names}, "
+        f"scenarios={[d.scenario for d in datasets]}, "
         f"compacted raw {before}→{after}"
     )
 
-    for spec in DATASETS:
+    for spec in datasets:
         for combo_name, combo in MODALITY_COMBOS.items():
             for rep in range(n_rep):
                 if rep_methods_done(
@@ -219,6 +231,12 @@ def main():
         type=Path,
         default=Path("experiments/multimodal_attribution/results/concept_drift"),
     )
+    p.add_argument(
+        "--scenarios",
+        nargs="+",
+        default=None,
+        help="Only run these scenarios (e.g. concept_drift). Default: all, concept first.",
+    )
     args = p.parse_args()
     run(
         n=args.n,
@@ -227,6 +245,7 @@ def main():
         alpha=args.alpha,
         seed=args.seed,
         out_dir=args.out_dir,
+        scenarios=args.scenarios,
     )
 
 
