@@ -1,3 +1,9 @@
+## Checkpoint / stacking
+
+- Power boards append each finished `(dataset, combo, method, rep)` immediately.
+- Re-launch with a larger `--n-rep` to **stack**; finished cells are skipped (CSV deduped on resume).
+- LCO embeddings checkpoint **per modality** under `results/emotion_cache/`.
+
 # Multimodal higher-order interaction attribution
 
 Concatenate **text / audio / video** embeddings (MSR-VTT style), keep a PCA
@@ -66,7 +72,7 @@ python -m experiments.multimodal_attribution.emotion_overnight \
 - **MELD**: official utterance CSVs (~13k; sentiment / 7 emotions)
 - Embeddings: MiniLM text + ASR/prompt channels for audio/video
 - Digestion: `pc30_100` (PC 31–100); outcome / tau: **`rf_regressor`**
-- B=120; checkpoint stacks if you raise `--n-rep` later
+- B=150; checkpoint stacks if you raise `--n-rep` later
 
 ### Concept drift (manual `Y|X`) + CFPerm / RFPerm / DRPerm
 
@@ -93,7 +99,7 @@ python -m experiments.multimodal_attribution.emotion_overnight \
 - Embeddings: `LCO-Embedding/LCO-Embedding-Omni-3B`
 - Digestion: PCA **PC 31–100**, modality concat, batch **n=500**
 - Outcome / tau / nu: **`rf_regressor`**
-- Monte Carlo: **B=120** (stackable via checkpoint)
+- Monte Carlo: **B=150** (stackable via checkpoint)
 
 ### Optional FSDS detectors
 

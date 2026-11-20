@@ -41,6 +41,14 @@ from experiments.multimodal_attribution.concatenate import (  # noqa: E402
 from experiments.multimodal_attribution.msrvtt import (  # noqa: E402
     synthesize_multimodal_embeddings,
 )
+from experiments.multimodal_attribution.checkpoint_utils import (  # noqa: E402
+    append_rows as _append_rows,
+    compact_raw_csv,
+    done_key as _done_key,
+    load_done as _load_checkpoint,
+    rep_methods_done,
+    summarize_power,
+)
 from experiments.multimodal_attribution.power_benchmark import (  # noqa: E402
     build_methods,
 )
@@ -202,69 +210,13 @@ def make_dataset_batch(
     }
 
 
-def _done_key(dataset: str, combo: str, scenario: str, method: str, rep: int) -> str:
-    return f"{dataset}|{combo}|{scenario}|{method}|{rep}"
-
-
-def _load_checkpoint(path: Path) -> Tuple[pd.DataFrame, set]:
-    if not path.exists():
-        return pd.DataFrame(), set()
-    # keep literal "null"/"no_shift" — pandas would otherwise coerce "null" → NaN
-    df = pd.read_csv(path, keep_default_na=False, na_values=[""])
-    df["scenario"] = df["scenario"].replace({"null": "no_shift", "nan": "no_shift"})
-    done = {
-        _done_key(r.dataset, r.combo, r.scenario, r.method, int(r.rep))
-        for r in df.itertuples()
-    }
-    return df, done
-
-
-def _append_rows(path: Path, rows: List[dict]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    chunk = pd.DataFrame(rows)
-    if path.exists():
-        chunk.to_csv(path, mode="a", header=False, index=False)
-    else:
-        chunk.to_csv(path, index=False)
-
-
 def _summarize(raw: pd.DataFrame, alpha: float, out_dir: Path) -> pd.DataFrame:
-    if raw.empty:
-        return raw
-    summary = (
-        raw.groupby(["dataset", "combo", "scenario", "method"], as_index=False)
-        .agg(
-            power_or_typeI=("pvalue", lambda s: float(np.mean(np.asarray(s, float) < alpha))),
-            mean_p=("pvalue", "mean"),
-            n_rep=("pvalue", "count"),
-        )
+    return summarize_power(
+        raw,
+        alpha=alpha,
+        out_dir=out_dir,
+        title="Overnight multimodal power board (save-as-you-go, stackable n_rep)",
     )
-    summary.to_csv(out_dir / "power_summary.csv", index=False)
-    # Wide board per dataset×combo
-    lines = [
-        "# Overnight multimodal power board",
-        "",
-        f"- alpha = {alpha}",
-        f"- rows in raw = {len(raw)}",
-        "",
-    ]
-    for (dataset, combo), sub in summary.groupby(["dataset", "combo"]):
-        pivot = sub.pivot(index="method", columns="scenario", values="power_or_typeI")
-        lines.append(f"## `{dataset}` / `{combo}`")
-        lines.append("")
-        cols = [c for c in ("null", "mean_shift", "interaction_shift") if c in pivot.columns]
-        if not cols:
-            cols = list(pivot.columns)
-        pivot = pivot[cols]
-        header = "| method | " + " | ".join(cols) + " |"
-        sep = "|---|" + "|".join(["---:"] * len(cols)) + "|"
-        lines.extend([header, sep])
-        for method, row in pivot.iterrows():
-            cells = " | ".join(f"{row[c]:.3f}" for c in cols)
-            lines.append(f"| {method} | {cells} |")
-        lines.append("")
-    (out_dir / "POWER_BOARD.md").write_text("\n".join(lines))
-    return summary
 
 
 def run_overnight(
@@ -288,14 +240,29 @@ def run_overnight(
     meta_path = out_dir / "run_meta.json"
     log_path = out_dir / "overnight.log"
 
-    # Classical suite (+ optional FSDS). Pair detectors attached per combo below.
+    # Classical suite (+ optional FSDS). CF/RF/DRPerm live on the concept-drift board.
+    # Pair detectors attached per combo below.
     methods = build_methods(
-        n_perm=n_perm, include_po_interact=False, include_fsds=with_fsds
+        n_perm=n_perm,
+        include_po_interact=False,
+        include_fsds=with_fsds,
+        include_perm_suite=False,
     )
     from experiments.multimodal_attribution.power_benchmark import (
         _crosscorr_pvalue,
         _interaction_pvalue,
     )
+
+    def _expected_methods(combo_mods: Sequence[str]) -> List[str]:
+        names = list(methods)
+        mods = list(combo_mods)
+        for i in range(len(mods)):
+            for j in range(i + 1, len(mods)):
+                a, b = mods[i], mods[j]
+                names.append(f"crosscorr_{a}_{b}")
+                if with_po_interact:
+                    names.append(f"interact_PO_{a}_{b}")
+        return names
 
     def _add_pair_methods(batch, method_map):
         names = list(batch["combo"])
@@ -332,6 +299,8 @@ def run_overnight(
                 method_map[f"interact_PO_{a}_{b}"] = po_fn
         return method_map
 
+    # Compact accidental duplicate appends from earlier restarts, then resume.
+    before, after = compact_raw_csv(raw_path)
     raw_df, done = _load_checkpoint(raw_path)
     meta = {
         "n": n,
@@ -363,7 +332,8 @@ def run_overnight(
 
     log(
         f"overnight start: {len(datasets)} datasets × {len(combos)} combos × "
-        f"{n_rep} reps = {total_cells} batches; methods≈{len(methods)}+"
+        f"{n_rep} reps = {total_cells} batches; methods≈{len(methods)}+ "
+        f"(compacted raw {before}→{after})"
     )
 
     for spec in datasets:
@@ -378,21 +348,31 @@ def run_overnight(
                     log(f"skip {spec.name}/{combo_name}: interact pair absent")
                     continue
 
-            for rep in range(n_rep):
-                # Resume: if all methods for this rep already logged, skip building.
-                probe = _done_key(spec.name, combo_name, spec.scenario, "__probe__", rep)
-                # Check any method presence for this rep.
-                any_done = any(
-                    _done_key(spec.name, combo_name, spec.scenario, m, rep) in done
-                    for m in list(methods) + ["crosscorr_text_audio", "interact_PO_text_audio"]
+            expected = _expected_methods(combo_mods)
+            already = sum(
+                1
+                for rep in range(n_rep)
+                if rep_methods_done(
+                    done,
+                    dataset=spec.name,
+                    combo=combo_name,
+                    scenario=spec.scenario,
+                    methods=expected,
+                    rep=rep,
                 )
-                # More robust: count existing method rows for this cell.
-                existing = [
-                    k for k in done
-                    if k.startswith(f"{spec.name}|{combo_name}|{spec.scenario}|")
-                    and k.endswith(f"|{rep}")
-                ]
-                if len(existing) >= len(methods):
+            )
+            if already:
+                log(f"resume {spec.name}/{combo_name}: {already}/{n_rep} reps already saved — stacking the rest")
+            for rep in range(n_rep):
+                # Stackable resume: skip fully finished reps; only fill missing methods/reps.
+                if rep_methods_done(
+                    done,
+                    dataset=spec.name,
+                    combo=combo_name,
+                    scenario=spec.scenario,
+                    methods=expected,
+                    rep=rep,
+                ):
                     finished_reps += 1
                     continue
 
@@ -436,7 +416,7 @@ def run_overnight(
                 elapsed = time.time() - t0
                 log(
                     f"{spec.name}/{combo_name} rep {rep + 1}/{n_rep} "
-                    f"({finished_reps} batches elapsed={elapsed/3600:.2f}h)"
+                    f"(+{len(rows)} methods, {finished_reps} cells, elapsed={elapsed/3600:.2f}h)"
                 )
                 # Refresh summary periodically.
                 if finished_reps % 5 == 0:

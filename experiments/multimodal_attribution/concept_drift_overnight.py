@@ -1,9 +1,10 @@
 """Concept-drift power board: CFPerm / RFPerm / DRPerm (+ classical TST).
 
 No feature attribution — manually inject ``Y|X`` drift, keep ``X`` fixed, compare
-power at B=120 with ``rf_regressor`` outcome models.
+power with ``rf_regressor`` outcome models.
 
-CFPerm / DRPerm use ``n_perm=150`` (``ruanhq-StatsML/CFPerm`` default).
+Save-as-you-go + stackable ``n_rep`` (raise B later; checkpoint skips finished cells).
+CFPerm / DRPerm use ``n_perm=150``.
 
 ```bash
 python -m experiments.multimodal_attribution.concept_drift_overnight \\
@@ -19,12 +20,11 @@ import json
 import sys
 import time
 import traceback
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
-import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -32,6 +32,14 @@ if str(ROOT) not in sys.path:
 if str(ROOT / "benchmark_methods") not in sys.path:
     sys.path.insert(0, str(ROOT / "benchmark_methods"))
 
+from experiments.multimodal_attribution.checkpoint_utils import (  # noqa: E402
+    append_rows,
+    compact_raw_csv,
+    done_key,
+    load_done,
+    rep_methods_done,
+    summarize_power,
+)
 from experiments.multimodal_attribution.overnight_power import (  # noqa: E402
     DatasetSpec,
     make_dataset_batch,
@@ -58,54 +66,6 @@ DATASETS: List[DatasetSpec] = [
 ]
 
 
-def _read_raw(path: Path) -> pd.DataFrame:
-    if not path.exists():
-        return pd.DataFrame()
-    return pd.read_csv(path, keep_default_na=False, na_values=[""])
-
-
-def _done_key(dataset: str, combo: str, scenario: str, method: str, rep: int) -> str:
-    return f"{dataset}|{combo}|{scenario}|{method}|{rep}"
-
-
-def _append(path: Path, rows: List[dict]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    chunk = pd.DataFrame(rows)
-    if path.exists():
-        chunk.to_csv(path, mode="a", header=False, index=False)
-    else:
-        chunk.to_csv(path, index=False)
-
-
-def _summarize(raw: pd.DataFrame, alpha: float, out_dir: Path) -> None:
-    if raw.empty:
-        return
-    summary = (
-        raw.groupby(["dataset", "combo", "scenario", "method"], as_index=False)
-        .agg(
-            power=("pvalue", lambda s: float(np.mean(np.asarray(s, float) < alpha))),
-            mean_p=("pvalue", "mean"),
-            n_rep=("pvalue", "count"),
-        )
-    )
-    summary.to_csv(out_dir / "power_summary.csv", index=False)
-    lines = [
-        "# Concept-drift power board (CFPerm / RFPerm / DRPerm, RF outcome, B→120, n_perm=150)",
-        "",
-        "_No attribution — manual `Y|X` drift only. Outcome = `rf_regressor`._",
-        "",
-    ]
-    for (ds, combo, scen), sub in summary.groupby(["dataset", "combo", "scenario"]):
-        lines.append(f"## `{ds}` / `{combo}` / `{scen}`")
-        lines.append("")
-        lines.append("| method | power | mean p | n_rep |")
-        lines.append("|---|---:|---:|---:|")
-        for r in sub.sort_values("power", ascending=False).itertuples():
-            lines.append(f"| {r.method} | {r.power:.3f} | {r.mean_p:.3f} | {int(r.n_rep)} |")
-        lines.append("")
-    (out_dir / "POWER_BOARD.md").write_text("\n".join(lines))
-
-
 def run(
     *,
     n: int = 500,
@@ -127,13 +87,17 @@ def run(
         with log_path.open("a") as f:
             f.write(line + "\n")
 
-    # Classical + CF/RF/DRPerm; NO interact_PO attribution.
     methods = build_methods(
         n_perm=n_perm,
         include_po_interact=False,
         include_fsds=False,
         include_perm_suite=True,
     )
+    method_names = list(methods)
+
+    before, after = compact_raw_csv(raw_path)
+    _, done = load_done(raw_path)
+
     meta = {
         "n": n,
         "n_rep": n_rep,
@@ -141,37 +105,37 @@ def run(
         "alpha": alpha,
         "seed": seed,
         "outcome_model": "rf_regressor",
-        "methods": list(methods),
+        "methods": method_names,
         "datasets": [asdict(d) for d in DATASETS],
         "combos": {k: list(v) for k, v in MODALITY_COMBOS.items()},
-        "note": "manual concept_drift; CFPerm/RFPerm/DRPerm; no attribution",
+        "note": "manual concept_drift; CFPerm/RFPerm/DRPerm; save-as-you-go stack",
         "started_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "compacted_raw": {"before": before, "after": after},
     }
     for d in meta["datasets"]:
         d["interact_pair"] = list(d["interact_pair"])
         d["dims"] = list(d["dims"])
     meta_path.write_text(json.dumps(meta, indent=2))
 
-    raw = _read_raw(raw_path)
-    done = {
-        _done_key(r.dataset, r.combo, r.scenario, r.method, int(r.rep))
-        for r in raw.itertuples()
-    } if not raw.empty else set()
-
     total = len(DATASETS) * len(MODALITY_COMBOS) * n_rep
     finished = 0
     t0 = time.time()
-    log(f"concept-drift overnight: {total} batches, methods={list(methods)}")
+    log(
+        f"concept-drift overnight: {total} batches, methods={method_names}, "
+        f"compacted raw {before}→{after}"
+    )
 
     for spec in DATASETS:
         for combo_name, combo in MODALITY_COMBOS.items():
             for rep in range(n_rep):
-                existing = sum(
-                    1
-                    for m in methods
-                    if _done_key(spec.name, combo_name, spec.scenario, m, rep) in done
-                )
-                if existing >= len(methods):
+                if rep_methods_done(
+                    done,
+                    dataset=spec.name,
+                    combo=combo_name,
+                    scenario=spec.scenario,
+                    methods=method_names,
+                    rep=rep,
+                ):
                     finished += 1
                     continue
 
@@ -185,7 +149,7 @@ def run(
                 X2 = batch["df_new"][:, :-1]
                 rows = []
                 for method_name, fn in methods.items():
-                    key = _done_key(spec.name, combo_name, spec.scenario, method_name, rep)
+                    key = done_key(spec.name, combo_name, spec.scenario, method_name, rep)
                     if key in done:
                         continue
                     try:
@@ -212,16 +176,31 @@ def run(
                     )
                     done.add(key)
                 if rows:
-                    _append(raw_path, rows)
+                    append_rows(raw_path, rows)
                 finished += 1
                 log(
                     f"{spec.name}/{combo_name} rep {rep+1}/{n_rep} "
-                    f"({finished}/{total}, elapsed={((time.time()-t0)/3600):.2f}h)"
+                    f"(+{len(rows)} methods, {finished}/{total}, "
+                    f"elapsed={((time.time()-t0)/3600):.2f}h)"
                 )
                 if finished % 3 == 0:
-                    _summarize(_read_raw(raw_path), alpha, out_dir)
+                    raw_now, _ = load_done(raw_path)
+                    summarize_power(
+                        raw_now,
+                        alpha=alpha,
+                        out_dir=out_dir,
+                        title="Concept-drift power board (CF/RF/DRPerm, RF, n_perm=150)",
+                        highlight=("cfperm", "rfperm", "drperm"),
+                    )
 
-    _summarize(_read_raw(raw_path), alpha, out_dir)
+    raw_final, _ = load_done(raw_path)
+    summarize_power(
+        raw_final,
+        alpha=alpha,
+        out_dir=out_dir,
+        title="Concept-drift power board (CF/RF/DRPerm, RF, n_perm=150)",
+        highlight=("cfperm", "rfperm", "drperm"),
+    )
     meta["finished_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     meta["elapsed_sec"] = time.time() - t0
     meta_path.write_text(json.dumps(meta, indent=2))
