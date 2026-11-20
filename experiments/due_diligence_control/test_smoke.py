@@ -404,6 +404,25 @@ def test_v19_prefers_critical_release_under_sparse():
     assert m.confirmed_per_1k_coverage >= 280
 
 
+def test_v20_stops_filler_once_readable_critical_found():
+    from .sparsity import REGIMES
+    from .substitution_study import StudyConfig, run_one
+    from .metrics import merge_metrics
+
+    cfg = StudyConfig(n_days=18, n_analysts=12, n_deals=6, planted_per_deal=3)
+    offset = sum(ord(c) for c in "missing_fields")
+    runs = [
+        run_one("controlled", REGIMES["missing_fields"], cfg, seed=s + offset)
+        for s in (11, 12, 13, 14)
+    ]
+    m = merge_metrics(runs)
+    assert m.false_ic_rate <= 1e-9
+    assert m.recall_all >= 0.95
+    # Pre-v20 missing_fields coverage ~334; v20 should not exceed that.
+    assert m.coverage <= 340
+    assert m.confirmed_per_1k_coverage >= 200
+
+
 def test_matching_failure_extra_unredacts_only_when_configured_thin():
     from .escalation import EscalationConfig, plan_escalations
     from .integrity import snapshot_deal

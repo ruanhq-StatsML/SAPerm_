@@ -211,8 +211,17 @@ def _release_docs(
 ) -> None:
     """Poisson-thin the available corpus into the live data room."""
     for deal in deals.values():
-        # v18: once IC-ready, stop pouring filler into the room (critical-only if any).
-        if deal.outcome == DealOutcome.IC_READY or deal.total_ic_ready > 0:
+        # v18/v20: once IC-ready — or all available planted already found —
+        # stop pouring filler into the room (critical-only remainder if any).
+        planted = [
+            d for d in corpus.values() if d.deal_id == deal.id and d.planted_risk and d.available
+        ]
+        all_found = bool(planted) and all(d.found or d.redacted for d in planted)
+        if (
+            deal.outcome == DealOutcome.IC_READY
+            or deal.total_ic_ready > 0
+            or all_found
+        ):
             pending = [
                 d
                 for d in corpus.values()
@@ -222,6 +231,7 @@ def _release_docs(
                 and not d.reviewed
                 and d.planted_risk
                 and not d.found
+                and not d.redacted
             ]
         else:
             pending = [

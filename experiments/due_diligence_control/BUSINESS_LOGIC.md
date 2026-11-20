@@ -51,6 +51,7 @@ FinanceGPT 只打分；规则系统管容量与完整性。
 14. **Hostile 压测** — 极薄流 + 高缺失/脱敏下 controlled ≫ flood；控制栈的价值在压力态放大。
 15. **IC-ready 停 filler（v18）** — 会上已定的 deal 别再往 live 灌噪声；coverage↓、confirmed/1k↑。
 16. **优先放出 critical（v19）** — Poisson 进室时先放未确认 critical，再放 filler；避免稀薄流把风险文件卡在门外。
+17. **可读 critical 齐了就停 filler（v20）** — 不必等 IC 裁定；证据读完后别再烧注意力。
 
 ## 4. 判决
 
