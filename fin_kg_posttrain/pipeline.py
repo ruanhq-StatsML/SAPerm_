@@ -1,16 +1,12 @@
 """
-整体逻辑骨架（今晚 polish 主入口，先别跑训练）
-================================================
+Demo/solver CSV → ShareGPT（单测用）。
 
-边列表 CSV
-  → FinGraph
-  → TaskSampler（穿透 / 反向 / 担保风险 / 拒答 / 阈值 DPO）
-  → Solver GT（乘积穿透 + 环截断 + 红线）
-  → ShareGPT JSONL（system + human子图 + gpt<think>）
-  → dataset_info snippet → LLaMA-Factory
+正式训练数据请走 real-world 桥：
+  python fine_tuning_kg_representation.py --corpus equity_evaluation
+  → bridge_to_ft.build_representation
+  → ft_text_*.csv → fine_tuning_data_wrapper_* → embedding CSV
 
-目标体量心智模型：本文件 + graph/penetration + tasks/sample ≈ 你说的 ~300 行骨架。
-数值红线：中间 4 位小数，最终 2 位；50% / 20% / 5%。
+本模块保留给：已有 nodes/edges CSV（含 realworld 导出的图）再灌 ShareGPT。
 """
 
 from __future__ import annotations
