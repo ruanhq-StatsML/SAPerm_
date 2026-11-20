@@ -56,7 +56,7 @@ METHODS: Dict[str, ControlFlags] = {
         use_model_signals=True,
         integrity_gate=True,
     ),
-    # v3 = integrity + sparse priority + auto-escalate missing/redacted evidence
+    # v4 = integrity + escalate + sparse priority + critical lane + thin-stream absorb
     "controlled": ControlFlags(
         analyst_rules=True,
         desk_rules=True,
@@ -64,6 +64,7 @@ METHODS: Dict[str, ControlFlags] = {
         integrity_gate=True,
         sparse_priority=True,
         auto_escalate=True,
+        thin_stream_absorb=True,
     ),
     "rules_blind": ControlFlags(
         analyst_rules=True,
@@ -71,6 +72,7 @@ METHODS: Dict[str, ControlFlags] = {
         use_model_signals=False,
         integrity_gate=True,
         auto_escalate=True,
+        thin_stream_absorb=True,
     ),
     "model_only": ControlFlags(
         analyst_rules=False, desk_rules=False, use_model_signals=True
@@ -275,17 +277,34 @@ def run_one(
             snap = snapshot_deal(deal, corpus)
             # Rate-limit: at most one escalation pulse every 3 days per deal.
             cooled = (day - deal.last_escalation_day) >= 3
+            live_unread_critical = any(
+                d.deal_id == deal.id
+                and d.planted_risk
+                and not d.reviewed
+                and not d.found
+                for d in live.values()
+            )
+            live_filler = sum(
+                1
+                for d in live.values()
+                if d.deal_id == deal.id and not d.reviewed and not d.planted_risk
+            )
+            unfound_live = (
+                "unfound_available_risks" in snap.reasons
+                and deal.total_coverage >= 8
+                and (live_unread_critical or live_filler >= 3)
+            )
             need_escalate = cooled and (
                 sig in ("supply_shortage", "matching_failure")
                 or "low_availability" in snap.reasons
                 or "high_redaction" in snap.reasons
-                or ("unfound_available_risks" in snap.reasons and deal.total_coverage >= 8)
+                or unfound_live
             )
             if flags.auto_escalate and need_escalate:
                 diag = sig if sig != "ok" else (
                     "matching_failure" if "high_redaction" in snap.reasons else "supply_shortage"
                 )
-                actions = plan_escalations(deal, snap, corpus, diag, esc_cfg)
+                actions = plan_escalations(deal, snap, corpus, diag, esc_cfg, live=live)
                 if actions:
                     metrics.escalations += len(actions)
                     deal.outcome = DealOutcome.ESCALATED
@@ -464,33 +483,43 @@ def _verdict(board: SubstitutionBoard) -> str:
         lines.append("")
         n += 1
     if _has(board, "dense", "controlled") and _has(board, "dense", "controlled_v1"):
-        v3 = _pick(board, "dense", "controlled")
+        v4 = _pick(board, "dense", "controlled")
         v1 = _pick(board, "dense", "controlled_v1")
         lines.append(
-            f"{n}. **v3 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v3.false_ic_rate:.2f}; "
-            f"abstain={v3.abstain_incomplete}; recovered={v3.docs_recovered}; "
-            f"net {v1.net_value:.1f}→{v3.net_value:.1f}."
+            f"{n}. **v4 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v4.false_ic_rate:.2f}; "
+            f"abstain={v4.abstain_incomplete}; recovered={v4.docs_recovered}; "
+            f"net {v1.net_value:.1f}→{v4.net_value:.1f}."
         )
         lines.append("")
         n += 1
     if _has(board, "missing_docs", "controlled") and _has(board, "missing_docs", "controlled_v2"):
-        v3 = _pick(board, "missing_docs", "controlled")
+        v4 = _pick(board, "missing_docs", "controlled")
         v2 = _pick(board, "missing_docs", "controlled_v2")
         lines.append(
-            f"{n}. **v3 escalation vs v2 abstain-only (missing_docs).** "
-            f"recall@all {v2.recall_all:.2f}→{v3.recall_all:.2f} via recovered={v3.docs_recovered}; "
-            f"false-IC stays {v3.false_ic_rate:.2f}."
+            f"{n}. **v4 escalation vs v2 abstain-only (missing_docs).** "
+            f"recall@all {v2.recall_all:.2f}→{v4.recall_all:.2f} via recovered={v4.docs_recovered}; "
+            f"false-IC stays {v4.false_ic_rate:.2f}."
         )
         lines.append("")
         n += 1
     if _has(board, "sparse", "controlled") and _has(board, "sparse", "flood"):
         sparse_c = _pick(board, "sparse", "controlled")
         sparse_f = _pick(board, "sparse", "flood")
+        sparse_v2 = (
+            _pick(board, "sparse", "controlled_v2")
+            if _has(board, "sparse", "controlled_v2")
+            else None
+        )
+        delta = ""
+        if sparse_v2 is not None:
+            delta = (
+                f" v4 lifts sparse recall vs the soft-halt freeze "
+                f"({sparse_v2.recall_available:.2f}→{sparse_c.recall_available:.2f} vs v2)."
+            )
         lines.append(
             f"{n}. **Sparse filings.** Controlled recall@available={sparse_c.recall_available:.2f} "
-            f"(flood={sparse_f.recall_available:.2f}). With thin streams, rules + model "
-            "usually match or beat flood on recall *per unit attention*, because noise "
-            "does not exhaust analyst caps before critical docs arrive."
+            f"(flood={sparse_f.recall_available:.2f}). Thin-stream absorb + critical lane "
+            f"keep arriving docs readable under soft-halt.{delta}"
         )
         lines.append("")
         n += 1
@@ -502,7 +531,7 @@ def _verdict(board: SubstitutionBoard) -> str:
             f"{n}. **Missing documents.** recall@all controlled={miss_c.recall_all:.2f}, "
             f"flood={miss_f.recall_all:.2f}. Both collapse toward the availability ceiling "
             f"(available share ≈ {avail:.2f}). "
-            f"v3 recovers {miss_c.docs_recovered} missing docs via escalation; "
+            f"v4 recovers {miss_c.docs_recovered} missing docs via escalation; "
             f"false-IC {miss_c.false_ic_rate:.2f} vs flood {miss_f.false_ic_rate:.2f}; "
             f"abstain={miss_c.abstain_incomplete}. "
             "Still cannot invent evidence that escalation fails to obtain."
@@ -514,9 +543,9 @@ def _verdict(board: SubstitutionBoard) -> str:
         field_m = _pick(board, "missing_fields", "model_only")
         lines.append(
             f"{n}. **Missing / redacted fields.** Model-only recall@available={field_m.recall_available:.2f}; "
-            f"controlled(v3)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
+            f"controlled(v4)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
             "FinanceGPT is blind on redactions until escalation lifts them; "
-            "v3 requests unredact instead of inventing fields."
+            "v4 requests unredact instead of inventing fields."
         )
         lines.append("")
         n += 1

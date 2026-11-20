@@ -32,8 +32,12 @@ def backlog_days(deal: Deal) -> float:
 
 
 def review_room(deal: Deal, cfg: DeskPolicyConfig) -> int:
-    if deal.stage in (DealStage.PASSED, DealStage.CLOSED) or deal.paused:
+    if deal.stage in (DealStage.PASSED, DealStage.CLOSED):
         return 0
+    # Soft-halt (paused) keeps a narrow critical lane. Zeroing room entirely
+    # froze planted/high-risk recovery under sparse (v3 regression).
+    if deal.paused:
+        return max(int(cfg.max_new_flags_per_open_mandate * 0.35), 1)
     clearable = max(deal.daily_review_capacity - deal.expected_organic_docs_per_day, 0.0)
     headcount = max(deal.openings - deal.filled, 0) * cfg.max_new_flags_per_open_mandate
     room = min(clearable, max(headcount - deal.pending_review, 0.0))
@@ -69,6 +73,10 @@ def desk_day_budget(deal: Deal, cfg: DeskPolicyConfig, enabled: bool = True) -> 
         return DeskBudget(deal.id, 0, 0, bd, 0.0, "closed")
     room = review_room(deal, cfg)
     pace = pace_factor(deal, cfg)
+    # Soft-halt: ignore pacing collapse so the critical lane still fires.
+    if deal.paused:
+        coverage = max(int(room / max(0.25, 0.2) * max(pace, 0.5)), 2)
+        return DeskBudget(deal.id, coverage, room, bd, max(pace, 0.5), "critical_lane")
     # Translate review room into coverage impressions (docs pushed to analysts).
     coverage = int(room / max(0.25, 0.2) * pace)  # ~4–5 docs per review slot
     reason = "ok"

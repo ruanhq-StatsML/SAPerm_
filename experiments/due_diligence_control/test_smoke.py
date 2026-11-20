@@ -178,3 +178,59 @@ def test_escalation_planner_requests_missing():
     kinds = {a.kind for a in actions}
     assert "request_missing_docs" in kinds
     assert "halt_broad_coverage" in kinds
+
+
+def test_paused_keeps_critical_lane_budget():
+    from .desk_rules import DeskPolicyConfig, desk_day_budget
+
+    deal = Deal(
+        id="d",
+        sector="sec0",
+        pending_review=2,
+        daily_review_capacity=8,
+        expected_organic_docs_per_day=1.0,
+        days_to_ic=15,
+        paused=True,
+    )
+    b = desk_day_budget(deal, DeskPolicyConfig(), enabled=True)
+    assert b.reason == "critical_lane"
+    assert b.coverage_budget >= 2
+    assert b.review_room >= 1
+
+
+def test_unfound_halt_requires_live_pressure():
+    from .escalation import plan_escalations
+    from .integrity import snapshot_deal
+    from .types import Deal, Document
+
+    deal = Deal(id="d0", sector="s", total_confirmed_risks=2, total_coverage=12)
+    corpus = {
+        "a": Document(
+            id="a", deal_id="d0", kind="c", text="x",
+            planted_risk=True, available=True, found=False,
+        ),
+        "b": Document(
+            id="b", deal_id="d0", kind="c", text="x",
+            planted_risk=True, available=True, found=True,
+        ),
+    }
+    snap = snapshot_deal(deal, corpus)
+    # Latent unfound only — no live docs → no soft-halt.
+    actions = plan_escalations(deal, snap, corpus, "ok", live={})
+    assert not any(a.kind == "halt_broad_coverage" for a in actions)
+    # Live unread critical → soft-halt.
+    live = {"a": corpus["a"]}
+    actions2 = plan_escalations(deal, snap, corpus, "ok", live=live)
+    assert any(a.kind == "halt_broad_coverage" for a in actions2)
+
+
+def test_v4_sparse_recall_not_frozen_vs_v2():
+    from .sparsity import REGIMES
+    from .substitution_study import StudyConfig, run_one
+
+    cfg = StudyConfig(n_days=14, n_analysts=10, n_deals=4, planted_per_deal=3)
+    v4 = run_one("controlled", REGIMES["sparse"], cfg, seed=17)
+    v2 = run_one("controlled_v2", REGIMES["sparse"], cfg, seed=17)
+    # Critical lane + thin-stream absorb should not collapse below v2.
+    assert v4.recall_available + 1e-9 >= v2.recall_available - 0.05
+    assert v4.false_ic_rate <= v2.false_ic_rate + 1e-9

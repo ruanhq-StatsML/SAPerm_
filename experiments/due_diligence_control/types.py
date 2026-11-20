@@ -104,6 +104,8 @@ class ControlFlags:
     sparse_priority: bool = False
     # v3: escalate missing/redacted evidence instead of only abstaining.
     auto_escalate: bool = False
+    # v4: absorb thin streams (raise desk remaining to cover live open docs).
+    thin_stream_absorb: bool = False
 
 
 class DealOutcome:

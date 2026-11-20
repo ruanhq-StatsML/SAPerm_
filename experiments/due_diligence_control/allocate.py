@@ -44,6 +44,9 @@ def _delta_v(
         value += 0.35 * risk
         if doc.planted_risk and not doc.redacted:
             value += 0.2
+        # Prefer anything live over empty attention when the stream is thin.
+        if open_docs_for_deal <= 2:
+            value += 0.15
     return float(value)
 
 
@@ -103,6 +106,15 @@ def allocate_day(
         open_by_deal[d.deal_id] = open_by_deal.get(d.deal_id, 0) + 1
     for did, deal in deals.items():
         deal.open_docs_recent = open_by_deal.get(did, 0)
+
+    # v4 thin-stream absorb: when the live room is thin, raise remaining so
+    # arriving docs are not left unread behind a pacing / sector cap.
+    if flags.thin_stream_absorb:
+        for did, n_open in open_by_deal.items():
+            if n_open <= 0:
+                continue
+            if n_open <= 4 or deals[did].paused:
+                remaining[did] = max(remaining.get(did, 0), n_open)
 
     scored: List[Tuple[float, str, str, str]] = []  # score, analyst, deal, doc
 

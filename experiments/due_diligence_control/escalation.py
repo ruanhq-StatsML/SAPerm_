@@ -46,8 +46,10 @@ def plan_escalations(
     corpus: Dict[str, Document],
     diagnosis: str,
     cfg: Optional[EscalationConfig] = None,
+    live: Optional[Dict[str, Document]] = None,
 ) -> List[EscalationAction]:
     cfg = cfg or EscalationConfig()
+    live = live or {}
     actions: List[EscalationAction] = []
 
     if diagnosis == "supply_shortage" or "low_availability" in snap.reasons:
@@ -63,9 +65,17 @@ def plan_escalations(
             actions.append(
                 EscalationAction(deal.id, "alt_data", "seek_alternative_channel", doc.id)
             )
-        actions.append(
-            EscalationAction(deal.id, "halt_broad_coverage", "supply_shortage_no_blind_spend")
+        # Only soft-halt when there is something to withhold (filler in room)
+        # or missing evidence to chase — not on a thin stream with no filler.
+        live_filler = sum(
+            1
+            for d in live.values()
+            if d.deal_id == deal.id and not d.reviewed and not d.planted_risk
         )
+        if missing or live_filler >= 2:
+            actions.append(
+                EscalationAction(deal.id, "halt_broad_coverage", "supply_shortage_no_blind_spend")
+            )
 
     if diagnosis == "matching_failure" or "high_redaction" in snap.reasons:
         redacted = [
@@ -77,15 +87,31 @@ def plan_escalations(
             actions.append(
                 EscalationAction(deal.id, "request_unredact", "high_redaction", doc.id)
             )
-        actions.append(
-            EscalationAction(deal.id, "halt_broad_coverage", "matching_failure_retarget")
-        )
+        if redacted:
+            actions.append(
+                EscalationAction(deal.id, "halt_broad_coverage", "matching_failure_retarget")
+            )
 
-    # Only after some reading has happened — don't freeze a fresh deal.
+    # Soft-halt only when unread critical (or wasteful filler) is *live*.
+    # Latent planted docs still waiting to arrive must not freeze the mandate.
     if "unfound_available_risks" in snap.reasons and deal.total_coverage >= 8:
-        actions.append(
-            EscalationAction(deal.id, "halt_broad_coverage", "finish_unread_critical_first")
+        live_unread_critical = any(
+            d.deal_id == deal.id
+            and d.planted_risk
+            and d.available
+            and not d.reviewed
+            and not d.found
+            for d in live.values()
         )
+        live_filler = sum(
+            1
+            for d in live.values()
+            if d.deal_id == deal.id and not d.reviewed and not d.planted_risk
+        )
+        if live_unread_critical or live_filler >= 3:
+            actions.append(
+                EscalationAction(deal.id, "halt_broad_coverage", "finish_unread_critical_first")
+            )
 
     # Deduplicate by (kind, target).
     seen = set()
