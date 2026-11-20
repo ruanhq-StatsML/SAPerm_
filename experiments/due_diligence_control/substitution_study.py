@@ -211,11 +211,24 @@ def _release_docs(
 ) -> None:
     """Poisson-thin the available corpus into the live data room."""
     for deal in deals.values():
-        pending = [
-            d
-            for d in corpus.values()
-            if d.deal_id == deal.id and d.available and d.id not in live and not d.reviewed
-        ]
+        # v18: once IC-ready, stop pouring filler into the room (critical-only if any).
+        if deal.outcome == DealOutcome.IC_READY or deal.total_ic_ready > 0:
+            pending = [
+                d
+                for d in corpus.values()
+                if d.deal_id == deal.id
+                and d.available
+                and d.id not in live
+                and not d.reviewed
+                and d.planted_risk
+                and not d.found
+            ]
+        else:
+            pending = [
+                d
+                for d in corpus.values()
+                if d.deal_id == deal.id and d.available and d.id not in live and not d.reviewed
+            ]
         if not pending:
             continue
         n = int(rng.poisson(regime.docs_per_deal_per_day))

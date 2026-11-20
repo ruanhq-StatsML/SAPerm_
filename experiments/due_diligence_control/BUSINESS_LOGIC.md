@@ -31,7 +31,7 @@ FinanceGPT 只打分；规则系统管容量与完整性。
 
 操作规则：
 
-**Score → Allocate → Integrity-gate → Escalate → Same-day micro-pass → Dual-look → Reopen**
+**Score → Allocate → Integrity-gate → Escalate → Same-day micro-pass → Dual-look → Reopen → Deadline-pull → Last-mile → Clearance IC**
 
 ## 3. 逐步论证
 
@@ -45,18 +45,25 @@ FinanceGPT 只打分；规则系统管容量与完整性。
 8. **Delayed abstain + Reopen** — Abstain 是 hold 状态，不是坟场。
 9. **Dense 才 critical-first；Sparse 别硬抄** — 政策按 regime 切换。
 10. **Fast escalate on gap（v12）** — 可得性/脱敏缺口活跃时每天可升级，别卡 3 天冷却。
+11. **Last-mile（v14）** — 收官窗口把「已可得但未进 live / 未确认」的 critical 强制放出并做合伙人级确认；sparse_missing 的残差常是确认缺口不是可得性。
+12. **Clearance IC（v15）** — 证据清干净后把 allow_ic 的 deal 推进 IC，并校准 abstain 存量；别让已确认风险烂在 incomplete 状态。
+13. **Deadline-pull（v16/v17）** — `days_to_ic ≤ 6` 时提前拉 stranded critical；v17 只在确有未确认工作量时开火，attempts 只计 look，避免空转。
+14. **Hostile 压测** — 极薄流 + 高缺失/脱敏下 controlled ≫ flood；控制栈的价值在压力态放大。
+15. **IC-ready 停 filler（v18）** — 会上已定的 deal 别再往 live 灌噪声；coverage↓、confirmed/1k↑。
 
 ## 4. 判决
 
 可替代「筛查 + 注意力分配 + 证据追讨」的前半段尽调；  
 **不可替代**「主源确认 + 合伙人对 IC 负责」。
 
-度量完整性用 `recall_all` + false-IC，不用「读了多少页」。
+度量完整性用 `recall_all` + false-IC，不用「读了多少页」。  
+收官效率另看 deadline_pull confirms/attempts 与 residual abstain。
 
 ## 5. 落地话术
 
 1. 模型是红旗雷达，不是自动签字。
 2. 规则是 desk 产能与 IC 诚实性的闸门。
 3. Soft-halt = 停垃圾阅读，不停关键通道。
-4. Abstain / escalate / reopen = 标准运营状态机。
+4. Abstain / escalate / reopen / clearance = 标准运营状态机。
 5. Alt-data 也要不来 → 继续拒绝 complete diligence 宣称，不补全叙事。
+6. IC 临近 → deadline-pull；收官 → last-mile；证据齐 → clearance IC。
