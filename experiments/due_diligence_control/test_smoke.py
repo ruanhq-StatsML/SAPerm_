@@ -90,10 +90,10 @@ def test_missing_docs_cap_recall_all():
     from .substitution_study import StudyConfig, run_one
 
     cfg = StudyConfig(n_days=8, n_analysts=10, n_deals=4, planted_per_deal=3)
-    m = run_one("controlled", REGIMES["missing_docs"], cfg, seed=3)
+    # v2 abstain-only: availability stays below total when escalations are off.
+    m = run_one("controlled_v2", REGIMES["missing_docs"], cfg, seed=3)
     assert m.planted_available < m.planted_total
     assert m.recall_all <= m.recall_available + 1e-9
-    # Hard ceiling: cannot find more than arrived.
     assert m.planted_found <= m.planted_available
 
 
@@ -115,13 +115,14 @@ def test_substitution_board_smoke():
         seeds=[5, 6],
         regimes=["dense", "missing_docs"],
         methods=["flood", "controlled"],
-        cfg=StudyConfig(n_days=6, n_analysts=8, n_deals=3, planted_per_deal=2),
+        cfg=StudyConfig(n_days=8, n_analysts=8, n_deals=3, planted_per_deal=2),
         results_dir=None,
     )
     assert len(board.rows) == 4
-    miss_c = next(r for r in board.rows if r.regime == "missing_docs" and r.method == "controlled")
     dense_c = next(r for r in board.rows if r.regime == "dense" and r.method == "controlled")
-    assert miss_c.metrics.recall_all <= dense_c.metrics.recall_all + 0.05
+    miss_c = next(r for r in board.rows if r.regime == "missing_docs" and r.method == "controlled")
+    assert dense_c.metrics.coverage > 0
+    assert miss_c.metrics.false_ic_rate <= 0.05 + 1e-9
 
 
 def test_integrity_gate_blocks_incomplete_ic():
@@ -145,7 +146,35 @@ def test_v2_cuts_false_ic_vs_v1_under_missing_docs():
 
     cfg = StudyConfig(n_days=10, n_analysts=10, n_deals=4, planted_per_deal=3)
     v1 = run_one("controlled_v1", REGIMES["missing_docs"], cfg, seed=9)
-    v2 = run_one("controlled", REGIMES["missing_docs"], cfg, seed=9)
-    # Same seed → same discovery path; gate should not increase false IC.
+    v2 = run_one("controlled_v2", REGIMES["missing_docs"], cfg, seed=9)
     assert v2.false_ic_rate <= v1.false_ic_rate + 1e-9
     assert v2.ic_blocked_integrity >= 0
+
+
+def test_v3_escalation_can_recover_missing_docs():
+    from .sparsity import REGIMES
+    from .substitution_study import StudyConfig, run_one
+
+    cfg = StudyConfig(n_days=14, n_analysts=10, n_deals=4, planted_per_deal=3)
+    v3 = run_one("controlled", REGIMES["missing_docs"], cfg, seed=21)
+    v2 = run_one("controlled_v2", REGIMES["missing_docs"], cfg, seed=21)
+    assert v3.docs_recovered >= 1
+    assert v3.false_ic_rate <= v2.false_ic_rate + 1e-9
+    assert v3.escalations >= 1
+
+
+def test_escalation_planner_requests_missing():
+    from .escalation import plan_escalations
+    from .integrity import snapshot_deal
+    from .types import Deal, Document
+
+    deal = Deal(id="d0", sector="s", total_confirmed_risks=2)
+    corpus = {
+        "m": Document(id="m", deal_id="d0", kind="c", text="x", planted_risk=True, available=False),
+        "a": Document(id="a", deal_id="d0", kind="c", text="x", planted_risk=True, available=True, found=True),
+    }
+    snap = snapshot_deal(deal, corpus)
+    actions = plan_escalations(deal, snap, corpus, "supply_shortage")
+    kinds = {a.kind for a in actions}
+    assert "request_missing_docs" in kinds
+    assert "halt_broad_coverage" in kinds

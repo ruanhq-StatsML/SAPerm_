@@ -71,12 +71,13 @@ Read `SUBSTITUTION_ARGUMENT.md` (checked in) and `results/SUBSTITUTION.md` (rege
 
 **Verdict in one line:** partial substitute for triage under observable sparse/dense rooms; **not** a substitute when critical documents or fields are missing — `recall_all` is bounded by availability, and FinanceGPT cannot invent redacted evidence.
 
-### v2 iteration
+### v2 / v3 iteration
 
-- `integrity.py` refuses IC when availability / unread critical share / redaction share fail gates
-- `controlled` now enables `integrity_gate` (compare to `controlled_v1`)
-- Integrity-aware supply-shortage / matching-failure counters
-- CI: Python experiment workflow + R versions that current macOS runners can download
+- v2 `integrity.py`: refuse IC when availability / unread critical / redaction fail gates
+- v3 `escalation.py`: request missing docs / unredact, halt broad coverage, recover via alt-data
+- v3 sparse priority in allocator; deal outcomes `ic_ready` / `abstain_incomplete` / `escalated`
+- Methods: `controlled_v1` → `controlled_v2` → `controlled` (v3)
+- CI: Python experiment workflow + R 4.x
 
 | Regime | What happens | Substitute? |
 | --- | --- | --- |

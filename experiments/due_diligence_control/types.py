@@ -72,6 +72,9 @@ class Deal:
     paused: bool = False
     risk_bar: float = 0.45  # model score above this is a "flag"
     value: float = 1.0
+    outcome: str = "pending"  # DealOutcome
+    open_docs_recent: int = 0  # set by allocator for sparse priority
+    last_escalation_day: int = -99
 
 
 @dataclass
@@ -97,6 +100,17 @@ class ControlFlags:
     use_model_signals: bool = True
     # v2: refuse IC when completeness / unread critical evidence fails gates.
     integrity_gate: bool = False
+    # v3: boost high-risk / critical docs when the room is thin.
+    sparse_priority: bool = False
+    # v3: escalate missing/redacted evidence instead of only abstaining.
+    auto_escalate: bool = False
+
+
+class DealOutcome:
+    PENDING = "pending"
+    IC_READY = "ic_ready"
+    ABSTAIN_INCOMPLETE = "abstain_incomplete"
+    ESCALATED = "escalated"
 
 
 @dataclass

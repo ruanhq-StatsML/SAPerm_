@@ -23,12 +23,13 @@ import numpy as np
 from .allocate import allocate_day
 from .analyst_rules import AnalystPolicyConfig
 from .desk_rules import DeskPolicyConfig
+from .escalation import EscalationConfig, apply_escalations, plan_escalations
 from .integrity import diagnose_integrity, snapshot_deal
 from .metrics import RunMetrics, merge_metrics
 from .model_hooks import HeuristicRiskProvider, score_documents
 from .sparsity import REGIMES, DataRegime
 from .staged_dd import StageDiagnosis
-from .types import Analyst, AnalystLoad, ControlFlags, Deal, DealStage, Document
+from .types import Analyst, AnalystLoad, ControlFlags, Deal, DealOutcome, DealStage, Document
 
 
 PLANTED_TEXT = (
@@ -43,13 +44,37 @@ REDACTED = "[REDACTED — source field unavailable]"
 
 
 METHODS: Dict[str, ControlFlags] = {
-    # v1 controlled = rules + model, no IC integrity gate
-    "flood": ControlFlags(False, False, True, False),
-    "controlled_v1": ControlFlags(True, True, True, False),
-    # v2 controlled = rules + model + refuse incomplete IC claims
-    "controlled": ControlFlags(True, True, True, True),
-    "rules_blind": ControlFlags(True, True, False, True),
-    "model_only": ControlFlags(False, False, True, False),
+    "flood": ControlFlags(
+        analyst_rules=False, desk_rules=False, use_model_signals=True
+    ),
+    "controlled_v1": ControlFlags(
+        analyst_rules=True, desk_rules=True, use_model_signals=True
+    ),
+    "controlled_v2": ControlFlags(
+        analyst_rules=True,
+        desk_rules=True,
+        use_model_signals=True,
+        integrity_gate=True,
+    ),
+    # v3 = integrity + sparse priority + auto-escalate missing/redacted evidence
+    "controlled": ControlFlags(
+        analyst_rules=True,
+        desk_rules=True,
+        use_model_signals=True,
+        integrity_gate=True,
+        sparse_priority=True,
+        auto_escalate=True,
+    ),
+    "rules_blind": ControlFlags(
+        analyst_rules=True,
+        desk_rules=True,
+        use_model_signals=False,
+        integrity_gate=True,
+        auto_escalate=True,
+    ),
+    "model_only": ControlFlags(
+        analyst_rules=False, desk_rules=False, use_model_signals=True
+    ),
 }
 
 
@@ -237,13 +262,44 @@ def run_one(
             elif sd.diagnosis == StageDiagnosis.MATCHING_FAILURE:
                 metrics.matching_failure_events += 1
 
-        # Integrity-aware diagnosis (fires even when staged DD thresholds idle).
+        # Integrity-aware diagnosis + v3 escalations (recover missing / unredact).
+        esc_cfg = EscalationConfig()
         for deal in deals.values():
+            if deal.outcome in (DealOutcome.IC_READY, DealOutcome.ABSTAIN_INCOMPLETE):
+                continue
             sig = diagnose_integrity(deal, corpus, coverage_today=len(alloc.decisions))
             if sig == "supply_shortage":
                 metrics.supply_shortage_events += 1
             elif sig == "matching_failure":
                 metrics.matching_failure_events += 1
+            snap = snapshot_deal(deal, corpus)
+            # Rate-limit: at most one escalation pulse every 3 days per deal.
+            cooled = (day - deal.last_escalation_day) >= 3
+            need_escalate = cooled and (
+                sig in ("supply_shortage", "matching_failure")
+                or "low_availability" in snap.reasons
+                or "high_redaction" in snap.reasons
+                or ("unfound_available_risks" in snap.reasons and deal.total_coverage >= 8)
+            )
+            if flags.auto_escalate and need_escalate:
+                diag = sig if sig != "ok" else (
+                    "matching_failure" if "high_redaction" in snap.reasons else "supply_shortage"
+                )
+                actions = plan_escalations(deal, snap, corpus, diag, esc_cfg)
+                if actions:
+                    metrics.escalations += len(actions)
+                    deal.outcome = DealOutcome.ESCALATED
+                    deal.last_escalation_day = day
+                    result = apply_escalations(
+                        actions, corpus, live, deals, rng, day, esc_cfg
+                    )
+                    metrics.docs_recovered += result.docs_recovered
+                    metrics.fields_unredacted += result.fields_unredacted
+                    metrics.halt_coverage_events += len(result.halted_deals)
+                    if result.docs_recovered or result.fields_unredacted:
+                        metrics.net_value += 0.25 * (
+                            result.docs_recovered + result.fields_unredacted
+                        )
 
         for dec in alloc.decisions:
             a = analysts[dec.analyst_id]
@@ -287,11 +343,14 @@ def run_one(
                     if not snap.allow_ic:
                         metrics.ic_blocked_integrity += 1
                         metrics.integrity_refusals += 1
-                        # Honest refusal beats a false IC — small positive credit.
+                        deal.outcome = DealOutcome.ABSTAIN_INCOMPLETE
+                        metrics.abstain_incomplete += 1
+                        # Honest abstain beats a false IC.
                         metrics.net_value += 0.05
                         recent_sector.append((a.id, deal.sector, day))
                         continue
                 deal.total_ic_ready = 1
+                deal.outcome = DealOutcome.IC_READY
                 metrics.ic_ready += 1
                 # False confidence: IC while an available planted risk remains unfound.
                 if _unfound_available(deal.id, corpus):
@@ -304,6 +363,9 @@ def run_one(
 
         recent_sector = [r for r in recent_sector if day - r[2] < 7]
 
+    # Recount after escalations may have recovered docs / lifted redactions.
+    metrics.planted_available = sum(1 for d in corpus.values() if d.planted_risk and d.available)
+    metrics.planted_found = sum(1 for d in corpus.values() if d.planted_risk and d.found)
     return metrics
 
 
@@ -343,16 +405,16 @@ def run_substitution_study(
         f"analysts={cfg.n_analysts}, planted/deal={cfg.planted_per_deal}.",
         "",
         "| Regime | Method | Coverage | Recall@avail | Recall@all | "
-        "False-IC | IC-blocked | Confirmed/1k | Shortage | Match-fail | Net |",
+        "False-IC | Abstain | Recovered | Unredacted | Confirmed/1k | Net |",
         "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in board.rows:
         m = row.metrics
         lines.append(
             f"| {row.regime} | {row.method} | {m.coverage} | {m.recall_available:.2f} | "
-            f"{m.recall_all:.2f} | {m.false_ic_rate:.2f} | {m.ic_blocked_integrity} | "
-            f"{m.confirmed_per_1k_coverage:.1f} | {m.supply_shortage_events} | "
-            f"{m.matching_failure_events} | {m.net_value:.1f} |"
+            f"{m.recall_all:.2f} | {m.false_ic_rate:.2f} | {m.abstain_incomplete} | "
+            f"{m.docs_recovered} | {m.fields_unredacted} | "
+            f"{m.confirmed_per_1k_coverage:.1f} | {m.net_value:.1f} |"
         )
 
     verdict = _verdict(board)
@@ -402,11 +464,22 @@ def _verdict(board: SubstitutionBoard) -> str:
         lines.append("")
         n += 1
     if _has(board, "dense", "controlled") and _has(board, "dense", "controlled_v1"):
-        v2 = _pick(board, "dense", "controlled")
+        v3 = _pick(board, "dense", "controlled")
         v1 = _pick(board, "dense", "controlled_v1")
         lines.append(
-            f"{n}. **v2 integrity gate (dense).** False-IC {v1.false_ic_rate:.2f}→{v2.false_ic_rate:.2f}; "
-            f"IC blocked by integrity={v2.ic_blocked_integrity}; net {v1.net_value:.1f}→{v2.net_value:.1f}."
+            f"{n}. **v3 vs v1 (dense).** False-IC {v1.false_ic_rate:.2f}→{v3.false_ic_rate:.2f}; "
+            f"abstain={v3.abstain_incomplete}; recovered={v3.docs_recovered}; "
+            f"net {v1.net_value:.1f}→{v3.net_value:.1f}."
+        )
+        lines.append("")
+        n += 1
+    if _has(board, "missing_docs", "controlled") and _has(board, "missing_docs", "controlled_v2"):
+        v3 = _pick(board, "missing_docs", "controlled")
+        v2 = _pick(board, "missing_docs", "controlled_v2")
+        lines.append(
+            f"{n}. **v3 escalation vs v2 abstain-only (missing_docs).** "
+            f"recall@all {v2.recall_all:.2f}→{v3.recall_all:.2f} via recovered={v3.docs_recovered}; "
+            f"false-IC stays {v3.false_ic_rate:.2f}."
         )
         lines.append("")
         n += 1
@@ -429,9 +502,10 @@ def _verdict(board: SubstitutionBoard) -> str:
             f"{n}. **Missing documents.** recall@all controlled={miss_c.recall_all:.2f}, "
             f"flood={miss_f.recall_all:.2f}. Both collapse toward the availability ceiling "
             f"(available share ≈ {avail:.2f}). "
-            f"v2 blocks incomplete IC ({miss_c.ic_blocked_integrity} refusals; "
-            f"false-IC {miss_c.false_ic_rate:.2f} vs flood {miss_f.false_ic_rate:.2f}). "
-            "**No method recovers risks that never arrive** — escalate data, don't claim completeness."
+            f"v3 recovers {miss_c.docs_recovered} missing docs via escalation; "
+            f"false-IC {miss_c.false_ic_rate:.2f} vs flood {miss_f.false_ic_rate:.2f}; "
+            f"abstain={miss_c.abstain_incomplete}. "
+            "Still cannot invent evidence that escalation fails to obtain."
         )
         lines.append("")
         n += 1
@@ -440,9 +514,9 @@ def _verdict(board: SubstitutionBoard) -> str:
         field_m = _pick(board, "missing_fields", "model_only")
         lines.append(
             f"{n}. **Missing / redacted fields.** Model-only recall@available={field_m.recall_available:.2f}; "
-            f"controlled={field_c.recall_available:.2f}. When risk language is stripped, FinanceGPT-class "
-            "scores go blind. Rules still save capacity, but **cannot invent missing fields** — "
-            "humans must pull primary sources."
+            f"controlled(v3)={field_c.recall_available:.2f} after unredacted={field_c.fields_unredacted}. "
+            "FinanceGPT is blind on redactions until escalation lifts them; "
+            "v3 requests unredact instead of inventing fields."
         )
         lines.append("")
         n += 1

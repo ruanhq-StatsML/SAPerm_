@@ -28,6 +28,12 @@ class RunMetrics:
     matching_failure_events: int = 0
     ic_blocked_integrity: int = 0
     integrity_refusals: int = 0
+    # v3 escalation / abstain
+    abstain_incomplete: int = 0
+    escalations: int = 0
+    docs_recovered: int = 0
+    fields_unredacted: int = 0
+    halt_coverage_events: int = 0
 
     def add_blocked(self, blocked: Dict[str, int]) -> None:
         for k, v in blocked.items():
@@ -98,6 +104,11 @@ class RunMetrics:
             "matching_failure_events": float(self.matching_failure_events),
             "ic_blocked_integrity": float(self.ic_blocked_integrity),
             "integrity_refusals": float(self.integrity_refusals),
+            "abstain_incomplete": float(self.abstain_incomplete),
+            "escalations": float(self.escalations),
+            "docs_recovered": float(self.docs_recovered),
+            "fields_unredacted": float(self.fields_unredacted),
+            "halt_coverage_events": float(self.halt_coverage_events),
         }
 
 
@@ -123,4 +134,9 @@ def merge_metrics(rows: List[RunMetrics]) -> RunMetrics:
         out.matching_failure_events += m.matching_failure_events
         out.ic_blocked_integrity += m.ic_blocked_integrity
         out.integrity_refusals += m.integrity_refusals
+        out.abstain_incomplete += m.abstain_incomplete
+        out.escalations += m.escalations
+        out.docs_recovered += m.docs_recovered
+        out.fields_unredacted += m.fields_unredacted
+        out.halt_coverage_events += m.halt_coverage_events
     return out

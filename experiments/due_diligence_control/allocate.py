@@ -25,13 +25,26 @@ class AllocationResult:
     blocked: Dict[str, int]
 
 
-def _delta_v(a: Analyst, deal: Deal, doc: Document, use_model: bool) -> float:
+def _delta_v(
+    a: Analyst,
+    deal: Deal,
+    doc: Document,
+    use_model: bool,
+    sparse_priority: bool = False,
+    open_docs_for_deal: int = 0,
+) -> float:
     fit = 0.05 + 0.2 * (1.0 - abs(a.expertise - 0.5))  # mild expertise prior
     if a.desk == deal.sector:
         fit += 0.08
     risk = doc.risk_score if use_model else 0.35
     # High risk raises value of attention — up to a point.
-    return float(fit + 0.4 * risk + 0.05 * deal.value)
+    value = fit + 0.4 * risk + 0.05 * deal.value
+    if sparse_priority and open_docs_for_deal <= 3:
+        # Thin room: lean harder into high-risk / planted critical docs.
+        value += 0.35 * risk
+        if doc.planted_risk and not doc.redacted:
+            value += 0.2
+    return float(value)
 
 
 def allocate_day(
@@ -73,8 +86,24 @@ def allocate_day(
     touched_today: Set[str] = {aid for aid, a in analysts.items() if a.touches_by_day.get(day, 0) > 0}
     blocked: Dict[str, int] = {}
 
-    # Open docs only.
-    open_docs = [d for d in documents.values() if not d.reviewed]
+    # Soft halt (paused): still allow high-risk / planted critical docs through;
+    # block low-signal filler so escalation does not freeze the whole mandate.
+    open_docs = []
+    for d in documents.values():
+        if d.reviewed:
+            continue
+        deal = deals[d.deal_id]
+        if deal.paused:
+            risk = d.risk_score if flags.use_model_signals else 0.35
+            if not (d.planted_risk or risk >= deal.risk_bar):
+                continue
+        open_docs.append(d)
+    open_by_deal: Dict[str, int] = {}
+    for d in open_docs:
+        open_by_deal[d.deal_id] = open_by_deal.get(d.deal_id, 0) + 1
+    for did, deal in deals.items():
+        deal.open_docs_recent = open_by_deal.get(did, 0)
+
     scored: List[Tuple[float, str, str, str]] = []  # score, analyst, deal, doc
 
     for a in analysts.values():
@@ -94,7 +123,19 @@ def allocate_day(
             cong = 0.04 * budgets[deal.id].backlog_days
             last = a.last_deal_touch_day.get(deal.id)
             red = 0.04 if last is not None and day - last < 2 else 0.0
-            score = _delta_v(a, deal, doc, flags.use_model_signals) - fatigue - cong - red
+            score = (
+                _delta_v(
+                    a,
+                    deal,
+                    doc,
+                    flags.use_model_signals,
+                    sparse_priority=flags.sparse_priority,
+                    open_docs_for_deal=open_by_deal.get(deal.id, 0),
+                )
+                - fatigue
+                - cong
+                - red
+            )
             scored.append((score, a.id, deal.id, doc.id))
 
     scored.sort(key=lambda x: x[0], reverse=True)
