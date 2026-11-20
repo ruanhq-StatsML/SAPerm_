@@ -1,11 +1,11 @@
 """CFPerm / RFPerm / DRPerm wrappers for multimodal concept-drift power boards.
 
 Aligned with ``ruanhq-StatsML/CFPerm`` (``DRPerm``, CFPerm-style global test) and
-``ruanhq-StatsML/RFPerm`` (OOB vs new-domain prediction-error perm test).
+``ruanhq-StatsML/RFPerm`` (``Python/RFPerm_randomForest.py`` + ``R/perm_oobtest.R``).
 
 These are **global** hypothesis tests for distribution / concept shift — **not**
 feature attribution. Outcome / tau models default to ``rf_regressor``.
-Default ``n_perm=150`` for CFPerm / DRPerm (per user / CFPerm repo default).
+Default ``n_perm=150`` for CFPerm / DRPerm / RFPerm.
 """
 
 from __future__ import annotations
@@ -14,12 +14,14 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import KFold, train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 
 from benchmark_config import MODEL_REGISTRY
+from experiments.multimodal_attribution.vendor.rfperm_core import (  # noqa: E402
+    RFPerm as _RFPermOfficial,
+    mse_loss,
+    perm_test_oob_vs_pred,
+)
 
 DEFAULT_N_PERM = 150
 
@@ -35,10 +37,6 @@ def _adapter(registry, name: str):
     return spec.fit, spec.predict
 
 
-def mse_loss(y_hat, y) -> np.ndarray:
-    return (np.asarray(y_hat, dtype=float).reshape(-1) - np.asarray(y, dtype=float).reshape(-1)) ** 2
-
-
 def perm_test_means(
     mse_a: np.ndarray,
     mse_b: np.ndarray,
@@ -46,70 +44,32 @@ def perm_test_means(
     n_perm: int = DEFAULT_N_PERM,
     seed: int = 0,
 ) -> float:
-    """One-sided permutation p-value: mean(mse_a) > mean(mse_b)?"""
-    rng = np.random.default_rng(seed)
-    a = np.asarray(mse_a, dtype=float).reshape(-1)
-    b = np.asarray(mse_b, dtype=float).reshape(-1)
-    obs = float(np.mean(a) - np.mean(b))
-    pooled = np.concatenate([a, b])
-    n_a = a.size
-    exceed = 0
-    for _ in range(n_perm):
-        perm = rng.permutation(pooled)
-        dif = float(np.mean(perm[:n_a]) - np.mean(perm[n_a:]))
-        if dif >= obs - 1e-12:
-            exceed += 1
-    return float((exceed + 1.0) / (n_perm + 1.0))
+    """One-sided: mean(mse_a) > mean(mse_b)? (a=pred/test, b=oob/ref)."""
+    return perm_test_oob_vs_pred(mse_b, mse_a, n_perm=n_perm, seed=seed)
 
 
 def RFPerm(
     df_exist,
     df_new,
+    loss=None,
     *,
-    loss=mse_loss,
     n_perm: int = DEFAULT_N_PERM,
     seed: int = 0,
-    n_estimators: int = 120,
+    n_estimators: int = 150,
 ) -> float:
-    """RF OOB vs new-domain prediction-error permutation test (``ruanhq-StatsML/RFPerm``).
+    """RF OOB vs new-domain prediction-error test (``ruanhq-StatsML/RFPerm``).
 
-    Fit RF on the existing batch; compare OOB losses to losses on the new batch.
+    Thin wrapper over ``vendor.rfperm_core.RFPerm`` (official Python + R semantics).
     """
-    if isinstance(df_exist, np.ndarray):
-        df_exist = pd.DataFrame(df_exist)
-        df_new = pd.DataFrame(df_new)
-    X_exist = np.asarray(df_exist.iloc[:, :-1], dtype=float)
-    Y_exist = _as_1d(df_exist.iloc[:, -1])
-    X_new = np.asarray(df_new.iloc[:, :-1], dtype=float)
-    Y_new = _as_1d(df_new.iloc[:, -1])
-    n_exist, _p = X_exist.shape
-    leaf = max(1, int(round(np.sqrt(n_exist) / 2.0)))
-    pipe = Pipeline(
-        [
-            ("scaler", StandardScaler()),
-            (
-                "RF",
-                RandomForestRegressor(
-                    n_estimators=int(n_estimators),
-                    min_samples_leaf=leaf,
-                    max_features=0.33,
-                    oob_score=True,
-                    bootstrap=True,
-                    random_state=int(seed),
-                    n_jobs=1,
-                ),
-            ),
-        ]
-    )
-    pipe.fit(X_exist, Y_exist)
-    rf = pipe.named_steps["RF"]
-    y_oob = np.asarray(rf.oob_prediction_, dtype=float)
-    y_hat_new = np.asarray(pipe.predict(X_new), dtype=float)
-    return perm_test_means(
-        loss(y_hat_new, Y_new),
-        loss(y_oob, Y_exist),
-        n_perm=n_perm,
-        seed=seed + 17,
+    return float(
+        _RFPermOfficial(
+            df_exist,
+            df_new,
+            loss=loss or mse_loss,
+            n_perm=int(n_perm),
+            seed=int(seed),
+            n_estimators=int(n_estimators),
+        )
     )
 
 

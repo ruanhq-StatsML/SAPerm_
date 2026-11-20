@@ -41,9 +41,10 @@ def test_concept_drift_keeps_X_changes_Y():
     drift = make_batch(
         "concept_drift", n=40, band="top30", seed=0, interaction_shift=1.5, mean_shift=0.0
     )
-    # Same seed → X blocks match; Y on new domain diverges under concept drift.
+    # Concept drift: identical X across batches; only Y|X on the new domain changes.
+    assert np.allclose(drift["df_ref"][:, :-1], drift["df_new"][:, :-1])
+    assert not np.allclose(drift["df_ref"][:, -1], drift["df_new"][:, -1])
     assert null["df_new"][:, :-1].shape == drift["df_new"][:, :-1].shape
-    assert not np.allclose(null["df_new"][:, -1], drift["df_new"][:, -1])
     y2 = apply_concept_drift(drift["df_new"][:, :-1], null["df_new"][:, -1], amount=2.0, seed=1)
     assert y2.shape == (40,)
 

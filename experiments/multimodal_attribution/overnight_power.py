@@ -176,7 +176,9 @@ def make_dataset_batch(
         )
         y_new = (y_new - y_new.mean()) / (y_new.std() + 1e-8)
     elif spec.scenario == "concept_drift":
-        pass  # X unchanged; Y|X drift applied after PCA concat below
+        # Keep multimodal X fixed across batches; only Y|X changes after PCA.
+        new_all = {k: np.array(v, copy=True) for k, v in ref_all.items()}
+        y_new = np.array(y_ref, copy=True)
     elif spec.scenario not in ("null", "no_shift"):
         raise ValueError(spec.scenario)
 
@@ -188,6 +190,8 @@ def make_dataset_batch(
     if spec.scenario == "concept_drift":
         from experiments.multimodal_attribution.perm_methods import apply_concept_drift
 
+        # Identical design matrix; drift only the new-domain outcome.
+        X_new = np.array(X_ref, copy=True)
         y_new = apply_concept_drift(
             X_new, y_new, amount=float(spec.concept_shift), seed=seed + 23
         )

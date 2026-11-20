@@ -508,16 +508,16 @@ def make_batch(
         return _pack_batch(X_ref, X_new, y_ref, y_new, indices, band, n, seed)
 
     if scenario == "concept_drift":
-        # Keep X law fixed; manually change Y|X on the new domain (no attribution).
+        # Keep X fixed; manually change Y|X on the new domain (no attribution).
         ref_mods, y_ref = synthesize_multimodal_embeddings(
             n, dims=dims, seed=seed, domain=0, interaction_shift=0.0
         )
-        new_mods, y_new = synthesize_multimodal_embeddings(
-            n, dims=dims, seed=seed + 11, domain=0, interaction_shift=0.0
-        )
+        new_mods = {k: np.array(v, copy=True) for k, v in ref_mods.items()}
+        y_new = np.array(y_ref, copy=True)
         X_ref, X_new, indices, _ = concatenate_modalities_pooled(
             ref_mods, new_mods, band=band, seed=seed
         )
+        X_new = np.array(X_ref, copy=True)
         y_new = apply_concept_drift(
             X_new, y_new, amount=float(interaction_shift), seed=seed + 23
         )
