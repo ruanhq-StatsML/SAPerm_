@@ -1,25 +1,25 @@
 # overnight power board
 
-_rows=5081 after dedupe; α=0.05_
+_rows=5249 after dedupe; α=0.05_
 
 ## `msrvtt_null_top30` / `audio_video` / `no_shift`
 
 | method | power | mean p | n_rep |
 |---|---:|---:|---:|
-| skk13 | 1.000 | 0.000 | 55 |
-| zwl | 0.218 | 0.361 | 55 |
-| pan14 | 0.145 | 0.479 | 55 |
-| mmd_rbf | 0.109 | 0.490 | 55 |
-| bai96 | 0.109 | 0.483 | 55 |
-| sri08 | 0.109 | 0.490 | 55 |
-| miles11 | 0.091 | 0.472 | 55 |
-| kmmd | 0.073 | 0.450 | 55 |
-| c2st_X | 0.036 | 0.524 | 55 |
-| c2st_XY | 0.036 | 0.537 | 55 |
-| crosscorr_audio_video | 0.018 | 0.557 | 55 |
-| xu16 | 0.018 | 0.493 | 55 |
-| interact_PO_audio_video | 0.000 | 0.501 | 55 |
-| chen10 | 0.000 | 0.834 | 55 |
+| skk13 | 1.000 | 0.000 | 67 |
+| zwl | 0.209 | 0.365 | 67 |
+| mmd_rbf | 0.119 | 0.464 | 67 |
+| pan14 | 0.119 | 0.464 | 67 |
+| bai96 | 0.104 | 0.455 | 67 |
+| sri08 | 0.104 | 0.463 | 67 |
+| miles11 | 0.075 | 0.462 | 67 |
+| kmmd | 0.060 | 0.458 | 67 |
+| c2st_X | 0.045 | 0.497 | 67 |
+| c2st_XY | 0.030 | 0.533 | 67 |
+| crosscorr_audio_video | 0.030 | 0.551 | 67 |
+| xu16 | 0.030 | 0.475 | 67 |
+| interact_PO_audio_video | 0.015 | 0.509 | 67 |
+| chen10 | 0.000 | 0.824 | 67 |
 
 ## `msrvtt_null_top30` / `text_audio` / `no_shift`
 
