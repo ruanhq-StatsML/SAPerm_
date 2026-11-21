@@ -94,11 +94,13 @@ def permuCATE_fit_nuisance(
     model_nu_multi: str = "multinomial_classifier",
     clip_e: float = 1e-2,
     seed: int = 2026,
+    fit_nu: bool = True,
 ):
     """Fit outcome, propensity, pseudo-outcome regression, and conditional models.
 
     The conditional model for coordinate ``j`` is ``X_j | X_{-j}``. Discrete
-    columns are label-encoded on a copy before that regression.
+    columns are label-encoded on a copy before that regression. Set
+    ``fit_nu=False`` when only held-out PO risk is needed (block interactions).
     """
     if model_registry is None:
         model_registry = MODEL_REGISTRY
@@ -131,21 +133,25 @@ def permuCATE_fit_nuisance(
     tau_est = pred_tau(model_tau_fit, X_model)
 
     nu_model = {}
-    for j in range(p):
-        if feature_types[j] == "continuous":
-            nu_name = model_nu
-        elif feature_types[j] == "binary":
-            nu_name = model_nu_bi
-        else:
-            nu_name = model_nu_multi
-        fit_nu, pred_nu = _adapter(model_registry, nu_name)
-        design = np.delete(X_model, j, axis=1)
-        nu_fit = fit_nu(design, X_model[:, j], seed=seed + j + 100)
-        nu_model[j] = {
-            "model_nu_name": nu_name,
-            "model_nu": {"fit": fit_nu, "predict": pred_nu},
-            "model_nu_fit": nu_fit,
-        }
+    if fit_nu:
+        for j in range(p):
+            design = np.delete(X_model, j, axis=1)
+            if design.shape[1] == 0:
+                # Intercept-only designs have no leave-one-out covariates.
+                continue
+            if feature_types[j] == "continuous":
+                nu_name = model_nu
+            elif feature_types[j] == "binary":
+                nu_name = model_nu_bi
+            else:
+                nu_name = model_nu_multi
+            fit_nu_fn, pred_nu = _adapter(model_registry, nu_name)
+            nu_fit = fit_nu_fn(design, X_model[:, j], seed=seed + j + 100)
+            nu_model[j] = {
+                "model_nu_name": nu_name,
+                "model_nu": {"fit": fit_nu_fn, "predict": pred_nu},
+                "model_nu_fit": nu_fit,
+            }
 
     return {
         "model_outcome0": {"fit": fit_m, "predict": pred_m},
@@ -214,8 +220,13 @@ def permuCATE_calPO(
     test_size: float = 0.5,
     seed: int = 0,
     clip_e: float = 0.01,
+    fit_nu: bool = False,
 ):
-    """Held-out pseudo-outcome risk of a nuisance fit on the complementary split."""
+    """Held-out pseudo-outcome risk of a nuisance fit on the complementary split.
+
+    Conditional ``X_j | X_{-j}`` models are skipped by default because this
+    statistic only needs outcome / propensity / tau fits.
+    """
     if model_registry is None:
         model_registry = MODEL_REGISTRY
     X = np.asarray(X, dtype=float)
@@ -237,6 +248,7 @@ def permuCATE_calPO(
         model_nu_multi=model_nu_multi,
         clip_e=clip_e,
         seed=seed,
+        fit_nu=fit_nu,
     )
     scored = po_risk_inference(X_test, Y_test, W_test, outputs)
     return float(scored["po_risk"])
@@ -605,3 +617,239 @@ def cauchy_combine_pval(p_values) -> float:
         raise ValueError("p_values is empty")
     statistic = float(np.mean(np.tan(np.pi * (0.5 - p))))
     return float(0.5 - np.arctan(statistic) / np.pi)
+
+
+# ---------------------------------------------------------------------------
+# Multimodal higher-order interaction (block leave-out on PO risk)
+# ---------------------------------------------------------------------------
+
+def _as_index_list(indices) -> list[int]:
+    if indices is None:
+        return []
+    return sorted({int(i) for i in np.asarray(indices, dtype=int).reshape(-1)})
+
+
+def _drop_feature_blocks(X, *blocks) -> np.ndarray:
+    """Delete the union of modality index blocks from ``X``.
+
+    If every column is dropped, return a constant intercept so the nuisance
+    fits still have a design matrix (pure-outcome baseline risk).
+    """
+    drop = []
+    for block in blocks:
+        drop.extend(_as_index_list(block))
+    drop = sorted(set(drop))
+    X = np.asarray(X, dtype=float)
+    if not drop:
+        return X
+    kept = np.delete(X, drop, axis=1)
+    if kept.shape[1] == 0:
+        return np.ones((X.shape[0], 1), dtype=float)
+    return kept
+
+
+def _po_kwargs(
+    model_registry=None,
+    model_m: str = "rf_regressor",
+    model_e: str = "logistic_classifier",
+    model_tau: str = "rf_regressor",
+    model_nu: str = "rf_regressor",
+    model_nu_bi: str = "logistic_classifier",
+    model_nu_multi: str = "multinomial_classifier",
+    test_size: float = 0.5,
+    seed: int = 0,
+    clip_e: float = 0.01,
+):
+    if model_registry is None:
+        model_registry = MODEL_REGISTRY
+    return {
+        "model_registry": model_registry,
+        "model_m": model_m,
+        "model_e": model_e,
+        "model_tau": model_tau,
+        "model_nu": model_nu,
+        "model_nu_bi": model_nu_bi,
+        "model_nu_multi": model_nu_multi,
+        "test_size": test_size,
+        "seed": seed,
+        "clip_e": clip_e,
+    }
+
+
+def higher_order_interaction_PO_risk(
+    X,
+    Y,
+    T,
+    modality1_feature_indice,
+    modality2_feature_indice,
+    model_registry=None,
+    model_m: str = "rf_regressor",
+    model_e: str = "logistic_classifier",
+    model_tau: str = "rf_regressor",
+    model_nu: str = "rf_regressor",
+    model_nu_bi: str = "logistic_classifier",
+    model_nu_multi: str = "multinomial_classifier",
+    n_perm: int = 100,
+    test_size: float = 0.5,
+    seed: int = 0,
+    clip_e: float = 0.01,
+    normalize: bool = False,
+):
+    """Second-order multimodal interaction via block leave-out PO risk.
+
+    ``X_modality1`` drops modality-1 columns (keeps the rest), likewise for
+    modality 2 and both. The interaction term matches the sketch::
+
+        interaction = po(-m1) + po(-m2) - po(-both)
+
+    ``n_perm`` / ``normalize`` are accepted for API compatibility with the
+    PermuCATE wrappers; this statistic does not permute coordinates.
+    """
+    del n_perm, normalize
+    config = _po_kwargs(
+        model_registry=model_registry,
+        model_m=model_m,
+        model_e=model_e,
+        model_tau=model_tau,
+        model_nu=model_nu,
+        model_nu_bi=model_nu_bi,
+        model_nu_multi=model_nu_multi,
+        test_size=test_size,
+        seed=seed,
+        clip_e=clip_e,
+    )
+    X = np.asarray(X, dtype=float)
+    Y = _as_1d(Y)
+    T = _as_1d(T).astype(int)
+    X_m1 = _drop_feature_blocks(X, modality1_feature_indice)
+    X_m2 = _drop_feature_blocks(X, modality2_feature_indice)
+    X_both = _drop_feature_blocks(X, modality1_feature_indice, modality2_feature_indice)
+    po_whole = permuCATE_calPO(X, Y, T, **config)
+    po_mo1 = permuCATE_calPO(X_m1, Y, T, **config)
+    po_mo2 = permuCATE_calPO(X_m2, Y, T, **config)
+    po_both = permuCATE_calPO(X_both, Y, T, **config)
+    interaction_term = float(po_mo1 + po_mo2 - po_both)
+    return {
+        "po_whole": float(po_whole),
+        "po_without_modality1": float(po_mo1),
+        "po_without_modality2": float(po_mo2),
+        "po_without_both": float(po_both),
+        "interaction": interaction_term,
+        "interaction_vs_full": float(interaction_term - po_whole),
+    }
+
+
+def third_order_interaction_PO_risk(
+    X,
+    Y,
+    T,
+    modality1_feature_indice,
+    modality2_feature_indice,
+    modality3_feature_indice,
+    model_registry=None,
+    model_m: str = "rf_regressor",
+    model_e: str = "logistic_classifier",
+    model_tau: str = "rf_regressor",
+    model_nu: str = "rf_regressor",
+    model_nu_bi: str = "logistic_classifier",
+    model_nu_multi: str = "multinomial_classifier",
+    n_perm: int = 100,
+    test_size: float = 0.5,
+    seed: int = 0,
+    clip_e: float = 0.01,
+    normalize: bool = False,
+):
+    """Third-order multimodal interaction via inclusion-exclusion on PO risk.
+
+    With ``R(S)`` = held-out PO risk after dropping modality block set ``S``::
+
+        I_123 = R({1}) + R({2}) + R({3})
+              - R({1,2}) - R({1,3}) - R({2,3})
+              + R({1,2,3})
+    """
+    del n_perm, normalize
+    config = _po_kwargs(
+        model_registry=model_registry,
+        model_m=model_m,
+        model_e=model_e,
+        model_tau=model_tau,
+        model_nu=model_nu,
+        model_nu_bi=model_nu_bi,
+        model_nu_multi=model_nu_multi,
+        test_size=test_size,
+        seed=seed,
+        clip_e=clip_e,
+    )
+    X = np.asarray(X, dtype=float)
+    Y = _as_1d(Y)
+    T = _as_1d(T).astype(int)
+    m1, m2, m3 = modality1_feature_indice, modality2_feature_indice, modality3_feature_indice
+    po_whole = permuCATE_calPO(X, Y, T, **config)
+    po1 = permuCATE_calPO(_drop_feature_blocks(X, m1), Y, T, **config)
+    po2 = permuCATE_calPO(_drop_feature_blocks(X, m2), Y, T, **config)
+    po3 = permuCATE_calPO(_drop_feature_blocks(X, m3), Y, T, **config)
+    po12 = permuCATE_calPO(_drop_feature_blocks(X, m1, m2), Y, T, **config)
+    po13 = permuCATE_calPO(_drop_feature_blocks(X, m1, m3), Y, T, **config)
+    po23 = permuCATE_calPO(_drop_feature_blocks(X, m2, m3), Y, T, **config)
+    po123 = permuCATE_calPO(_drop_feature_blocks(X, m1, m2, m3), Y, T, **config)
+    interaction = float(po1 + po2 + po3 - po12 - po13 - po23 + po123)
+    return {
+        "po_whole": float(po_whole),
+        "po_without_m1": float(po1),
+        "po_without_m2": float(po2),
+        "po_without_m3": float(po3),
+        "po_without_m12": float(po12),
+        "po_without_m13": float(po13),
+        "po_without_m23": float(po23),
+        "po_without_m123": float(po123),
+        "interaction": interaction,
+        "interaction_vs_full": float(interaction - po_whole),
+    }
+
+
+def multimodal_block_attribution(
+    X,
+    Y,
+    T,
+    modality_indices: dict,
+    model_registry=None,
+    seed: int = 0,
+    **po_kwargs,
+):
+    """Pairwise (and optional 3-way) PO-risk interactions across modality blocks.
+
+    ``modality_indices`` maps modality name -> column index list in ``X``.
+    """
+    names = list(modality_indices.keys())
+    if len(names) < 2:
+        raise ValueError("need at least two modalities")
+    pairwise = {}
+    for i, a in enumerate(names):
+        for b in names[i + 1 :]:
+            pairwise[f"{a}__{b}"] = higher_order_interaction_PO_risk(
+                X,
+                Y,
+                T,
+                modality_indices[a],
+                modality_indices[b],
+                model_registry=model_registry,
+                seed=seed,
+                **po_kwargs,
+            )
+    third = None
+    if len(names) >= 3:
+        a, b, c = names[:3]
+        third = {
+            f"{a}__{b}__{c}": third_order_interaction_PO_risk(
+                X,
+                Y,
+                T,
+                modality_indices[a],
+                modality_indices[b],
+                modality_indices[c],
+                model_registry=model_registry,
+                seed=seed,
+                **po_kwargs,
+            )
+        }
+    return {"pairwise": pairwise, "third_order": third, "modalities": names}
