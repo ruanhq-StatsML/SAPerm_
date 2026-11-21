@@ -81,11 +81,28 @@ List powers on the hierarchy, then read across:
 |---|---|---|
 | **Detection** | CF/DR/RF power on combos | Can we *tell* the batch’s label law moved? |
 | **Decision mechanism** | $\mathrm{sign}(I_{\mathrm{cal}})$ + PO leave-outs | *How* do modalities combine inside that label law? |
+| **Dominant modality** | $\arg\max_m \mathrm{power}_m$ | Which *single* channel carries the detectable cue? |
 
 Positive interaction without fusion lift = mechanism claim without detectability payoff (weak for delivery).
 Fusion lift without matched sign = we detect something, but do not know if the label head is synergistic or conflicting.
 
 **Delivery quantity:** cells where matched signed power and fusion lift **co-move** with $\mathrm{sign}(\lambda)$.
+
+### Dominant modality (extra insight under antagonism)
+
+Empirically for $\lambda=-1.8$ on text×audio (`n_sample=300`, `n_rep=24`):
+
+| combo | CFPerm power |
+|---|---:|
+| text | **0.75** ← dominant |
+| audio | 0.00 |
+| text_audio | 0.54 |
+| TAV | 0.62 |
+| fusion lift | **−0.21** |
+
+Reading: $I_{\mathrm{cal}}≪0$ says the label head is in **conflict**; the dominant-modality table says **trust text, do not early-fuse audio**.
+TAV cannot rescue that — third channel ≠ fix for antagonism.
+Under $\lambda>0$ we expect the opposite pattern: no single dominates as hard, fusion lift $>0$.
 
 ---
 

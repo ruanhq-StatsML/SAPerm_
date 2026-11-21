@@ -6,11 +6,13 @@ _α=0.05; auto-generated from `power_raw.csv` / `signed_I_raw.csv`_
 
 | Quantity | Meaning |
 |---|---|
+| `n` / `n_sample` | samples **per domain** (not Monte Carlo size) |
+| `n_rep` / `B` | Monte Carlo reps estimating power |
 | `power_a` / `power_b` | CF/DR/RF power on each single modality |
-| `power_pair` | power on the planted pair concat |
-| `power_tav` | power on text+audio+video |
+| `power_pair` / `power_tav` | power on planted pair / full TAV concat |
+| **dominant modality** | $\arg\max_m$ single-modality power |
 | `pair_minus_max_single` | **fusion lift** vs better single |
-| `I_cal=I-PO(full)` | **calibrated** interaction (raw $I$ is often $+$-biased) |
+| `I_cal=I-PO(full)` | **calibrated** interaction (raw $I$ often $+$-biased) |
 | `signed_power_matched` | $P(\mathrm{reject}\wedge \mathrm{sign}(I_{cal})=\mathrm{sign}(\lambda))$ |
 
 ### Insight hypothesis
@@ -26,13 +28,13 @@ _α=0.05; auto-generated from `power_raw.csv` / `signed_I_raw.csv`_
 
 | pair | λ | a | b | pair | TAV | pair−max₁ | TAV−pair | I_cal | frac+(cal) | matched signed-pow | n |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| text_audio | -1.80 | 0.90 | 0.00 | 0.54 | 0.62 | -0.36 | +0.08 | -14.937 | 0.08 | 0.00 | 24 |
+| text_audio | -1.80 | 0.75 | 0.00 | 0.54 | 0.62 | -0.21 | +0.08 | -14.937 | 0.08 | 0.00 | 24 |
 
 ### drperm
 
 | pair | λ | a | b | pair | TAV | pair−max₁ | TAV−pair | I_cal | frac+(cal) | matched signed-pow | n |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| text_audio | -1.80 | 0.30 | 0.00 | 0.00 | 0.00 | -0.30 | +0.00 | -14.937 | 0.08 | 0.00 | 24 |
+| text_audio | -1.80 | 0.17 | 0.00 | 0.00 | 0.00 | -0.17 | +0.00 | -14.937 | 0.08 | 0.00 | 24 |
 
 ### rfperm
 
