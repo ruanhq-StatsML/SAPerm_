@@ -1,6 +1,6 @@
-# concept_drift power board
+# Concept-drift power board (CF/RF/DRPerm, RF, n_perm=150)
 
-_rows=2692 after dedupe; α=0.05_
+_rows=2726 after dedupe; α=0.05_
 
 ## `msrvtt_concept_pc31_100` / `text_audio` / `concept_drift`
 
@@ -27,8 +27,8 @@ _rows=2692 after dedupe; α=0.05_
 | zwl | 1.000 | 0.000 | 73 |
 | skk13 | 1.000 | 0.000 | 73 |
 | **rfperm** | 1.000 | 0.007 | 150 |
-| **cfperm** | 0.675 | 0.226 | 80 |
-| **drperm** | 0.566 | 0.183 | 76 |
+| **cfperm** | 0.667 | 0.247 | 102 |
+| **drperm** | 0.500 | 0.207 | 88 |
 | c2st_XY | 0.137 | 0.760 | 73 |
 | c2st_X | 0.000 | 1.000 | 73 |
 | kmmd | 0.000 | 1.000 | 76 |

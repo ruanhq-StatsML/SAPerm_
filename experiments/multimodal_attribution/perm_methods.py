@@ -10,6 +10,7 @@ Default ``n_perm=150`` for CFPerm / DRPerm / RFPerm.
 
 from __future__ import annotations
 
+import os
 from typing import Optional
 
 import numpy as np
@@ -24,6 +25,14 @@ from experiments.multimodal_attribution.vendor.rfperm_core import (  # noqa: E40
 )
 
 DEFAULT_N_PERM = 150
+
+
+def _perm_n_jobs() -> int:
+    """Inner permutation parallelism for CF/DR (env ``CFDR_PERM_JOBS``, default 2)."""
+    try:
+        return max(1, int(os.environ.get("CFDR_PERM_JOBS", "2")))
+    except ValueError:
+        return 2
 
 
 def _as_1d(y) -> np.ndarray:
@@ -122,12 +131,22 @@ def DRPerm(
 
     obs = _po_risk(W, seed)
     rng = np.random.default_rng(seed + 301)
-    exceed = 0
-    for b in range(n_perm):
-        W_perm = rng.permutation(W)
-        stat = _po_risk(W_perm, seed + 500 + b)
-        if stat >= obs - 1e-12:
-            exceed += 1
+    # Pre-draw permutations so parallel workers are deterministic given seed.
+    W_perms = [rng.permutation(W) for _ in range(int(n_perm))]
+    jobs = _perm_n_jobs()
+
+    def _one(b: int) -> bool:
+        return _po_risk(W_perms[b], seed + 500 + b) >= obs - 1e-12
+
+    if jobs == 1 or int(n_perm) <= 1:
+        exceed = sum(1 for b in range(int(n_perm)) if _one(b))
+    else:
+        from joblib import Parallel, delayed
+
+        flags = Parallel(n_jobs=jobs, prefer="processes")(
+            delayed(_one)(b) for b in range(int(n_perm))
+        )
+        exceed = int(sum(bool(f) for f in flags))
     return float((exceed + 1.0) / (n_perm + 1.0))
 
 
@@ -185,12 +204,21 @@ def CFPerm(
 
     obs = float(np.max(_imp(W, seed)))
     rng = np.random.default_rng(seed + 77)
-    exceed = 0
-    for b in range(n_perm):
-        W_perm = rng.permutation(W)
-        stat = float(np.max(_imp(W_perm, seed + 100 + b)))
-        if stat >= obs - 1e-12:
-            exceed += 1
+    W_perms = [rng.permutation(W) for _ in range(int(n_perm))]
+    jobs = _perm_n_jobs()
+
+    def _one(b: int) -> bool:
+        return float(np.max(_imp(W_perms[b], seed + 100 + b))) >= obs - 1e-12
+
+    if jobs == 1 or int(n_perm) <= 1:
+        exceed = sum(1 for b in range(int(n_perm)) if _one(b))
+    else:
+        from joblib import Parallel, delayed
+
+        flags = Parallel(n_jobs=jobs, prefer="processes")(
+            delayed(_one)(b) for b in range(int(n_perm))
+        )
+        exceed = int(sum(bool(f) for f in flags))
     return float((exceed + 1.0) / (n_perm + 1.0))
 
 
@@ -198,25 +226,26 @@ def apply_concept_drift(
     X_new: np.ndarray,
     y_new: np.ndarray,
     *,
-    amount: float = 1.5,
+    amount: float = 0.35,
+    noise: float = 0.70,
     seed: int = 0,
 ) -> np.ndarray:
     """Manual concept drift: keep ``X``, change ``Y|X`` on the new domain.
 
-    ``y ← y + amount * (x0 + 0.5 * x1 * x2)``.
-
-    Important: **do not** re-standardize ``y`` independently on the new batch.
-    RFPerm compares OOB loss on the exist domain to prediction loss on the new
-    domain — the new outcome must stay on the **exist Y scale**. Independent
-    z-scoring made ``mean(pred_err) < mean(oob_err)`` (negative d0) so the
-    one-sided test never rejected (spurious power≈0).
+    Uses a **mid-PC nonlinear** signal (not the leading PC) plus outcome noise so
+    the DGP is not trivial for RFPerm (amount=1.5 on PC0 hit the p=1/(n_perm+1)
+    floor every rep). Still **no independent re-zscore** — new ``Y`` stays on the
+    exist scale so OOB-vs-pred MSE stays aligned for RFPerm.
     """
-    del seed  # signal is deterministic given X; kept for call-site compatibility
+    rng = np.random.default_rng(int(seed))
     X_new = np.asarray(X_new, dtype=float)
     y = np.asarray(y_new, dtype=float).reshape(-1).copy()
     p = X_new.shape[1]
-    x0 = X_new[:, 0] if p >= 1 else np.zeros(len(y))
-    x1 = X_new[:, 1] if p >= 2 else x0
-    x2 = X_new[:, 2] if p >= 3 else x0
-    signal = x0 + 0.5 * x1 * x2
-    return y + float(amount) * signal
+    # Prefer mid-band coords when PCA concat is wide; fall back gracefully.
+    i0 = min(5, max(0, p - 1))
+    i1 = min(11, max(0, p - 1))
+    i2 = min(17, max(0, p - 1))
+    x0, x1, x2 = X_new[:, i0], X_new[:, i1], X_new[:, i2]
+    signal = np.tanh(x0) + 0.5 * x1 * x2 + 0.25 * np.sin(x0 + x1)
+    y = y + float(amount) * signal + float(noise) * rng.normal(size=len(y))
+    return y

@@ -110,13 +110,13 @@ DATASETS: List[DatasetSpec] = [
         interact_pair=("text", "video"),
     ),
     # Manual concept drift (keep X, change Y|X) — power board vs CF/RF/DRPerm.
-    DatasetSpec("msrvtt_concept_top30", "concept_drift", band="top30", concept_shift=1.5),
+    DatasetSpec("msrvtt_concept_top30", "concept_drift", band="top30", concept_shift=0.35),
     DatasetSpec(
         "msrvtt_concept_pc31_100",
         "concept_drift",
         band="pc31_100",
         dims=(160, 160, 160),
-        concept_shift=1.5,
+        concept_shift=0.35,
     ),
 ]
 

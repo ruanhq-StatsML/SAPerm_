@@ -5,9 +5,9 @@ msrvtt_concept_pc31_100,text_video,concept_drift,rfperm,0.6933333333333334,0.046
 msrvtt_concept_top30,text_audio,concept_drift,bai96,0.0,1.0,76
 msrvtt_concept_top30,text_audio,concept_drift,c2st_X,0.0,1.0,73
 msrvtt_concept_top30,text_audio,concept_drift,c2st_XY,0.136986301369863,0.7595028576612538,73
-msrvtt_concept_top30,text_audio,concept_drift,cfperm,0.675,0.22582781456953643,80
+msrvtt_concept_top30,text_audio,concept_drift,cfperm,0.6666666666666666,0.2466958678157097,102
 msrvtt_concept_top30,text_audio,concept_drift,chen10,0.0,0.9999999337567096,76
-msrvtt_concept_top30,text_audio,concept_drift,drperm,0.5657894736842105,0.18255489717671664,76
+msrvtt_concept_top30,text_audio,concept_drift,drperm,0.5,0.20730789562561489,88
 msrvtt_concept_top30,text_audio,concept_drift,kmmd,0.0,1.0,76
 msrvtt_concept_top30,text_audio,concept_drift,miles11,0.0,1.0,73
 msrvtt_concept_top30,text_audio,concept_drift,mmd_rbf,0.0,1.0,76

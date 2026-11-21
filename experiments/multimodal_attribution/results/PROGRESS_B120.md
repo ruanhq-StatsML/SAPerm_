@@ -29,3 +29,11 @@ Checkpoint keeps finished cells. Subsequent runs use `--n-rep 120` (skip rep≥1
 | dataset | combo | scenario | min_rep | max_rep | #methods≥120 | still short |
 |---|---|---|---:|---:|---:|---|
 | mosei | text_audio |  | 9 | 9 | 0 | bai96:111, c2st_X:111, c2st_XY:111, cfperm:111, chen10:111, crosscorr_text_audio:111, drperm:111, interact_PO_text_audio:111 …(+9) |
+
+## Accel restart (2026-11-21 01:32 UTC)
+
+- Mode: **cfperm ∥ drperm only** (MSR/classical still off)
+- Knobs: `--n-perm 40`, `CFDR_PERM_JOBS=2`, CF `top_k=4`, DR `n_splits=3`
+- Observed: ~14s/rep CF, ~25s/rep DR (was ~100s / up to 26min)
+- Target: `msrvtt_concept_top30` text_audio → B=120
+
