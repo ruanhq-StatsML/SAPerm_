@@ -74,3 +74,14 @@ Streams (4 cores, 1 job each):
 - All 4 streams healthy (raw age <3min)
 - classical TA **100/120**; MSR AV **112/120**
 - CF TAV~12; DR TV~81; CF TV done
+
+## overnight-power-check (2026-11-21 03:00 UTC)
+
+| stream | status |
+|---|---|
+| cfperm | TV 120 ✓ · TAV 37/120 |
+| drperm | TV 101/120 |
+| classical | TA 114/120 |
+| MSR | null AV 117/120 |
+
+All healthy. ETA: classical TA ~30min; MSR AV ~10min then TAV; DR TV ~30min then TAV; CF TAV ~1h.
