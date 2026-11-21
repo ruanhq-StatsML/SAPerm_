@@ -1,47 +1,106 @@
-# Cross-modal readout: modality-specific vs signed interactions
+# Cross-modal readout: PO-risk proportion + signed interactions
 
-## 1. Two different questions
+Delivery narrative for the two intuitive objects. Both come from the same
+block leave-out on **pseudo-outcome (PO) risk**
+(`higher_order_interaction_PO_risk` in `ood_vimp.py`).
 
-| Question | Object | Sign? |
+Notation (fixed batch, domain indicator $T$):
+
+| symbol | meaning |
+|---|---|
+| $\mathrm{PO}(\mathrm{full})$ | PO risk with all modalities kept |
+| $\mathrm{PO}(-m)$ | drop modality block $m$ only |
+| $\mathrm{PO}(-m_1,-m_2)$ | drop both blocks |
+
+Higher PO risk $\Rightarrow$ worse domain / outcome calibration on the held-out fold
+(more “drift signal left unexplained”).
+
+---
+
+## A. Modality-specific **PO-risk proportion**（很直观）
+
+**Question:** of the detectable domain gap, how much sits on modality $m$?
+
+Define the leave-out lift of $m$:
+
+\[
+\Delta_m \;=\; \mathrm{PO}(-m) - \mathrm{PO}(\mathrm{full}).
+\]
+
+- $\Delta_m > 0$: dropping $m$ **hurts** → $m$ carries useful domain/outcome structure.
+- Share (report as proportion, optionally clipped at 0):
+
+\[
+\pi_m \;=\; \frac{\Delta_m}{\sum_{m'\in\mathcal{M}} \Delta_{m'}}
+\quad\text{(or vs a fixed baseline $\mathrm{PO}(-\mathrm{all})$)}.
+\]
+
+**How we read boards today**
+
+| Board | What $\pi_m$ looks like in practice |
+|---|---|
+| `mean_shift` (shift only video / only audio) | $\pi_{\text{shifted}}$ dominates; others near 0 |
+| concept-drift **combo power** T×A vs T×V | not $\pi_m$ itself, but a *detectability proxy*: T×A > T×V for CF/DR $\Rightarrow$ text+audio carries more usable mass under this DGP |
+
+**Delivery line:** “modality-specific PO-risk proportion = share of leave-out lift.”
+
+---
+
+## B. Cross-modal **interaction**（正 / 负）
+
+**Question:** do $m_1$ and $m_2$ move the gap **beyond** the sum of singles?
+
+\[
+I(m_1,m_2)
+\;=\;
+\mathrm{PO}(-m_1)+\mathrm{PO}(-m_2)-\mathrm{PO}(-m_1,-m_2).
+\]
+
+| Sign of $I$ | Reading |
+|---|---|
+| **$I>0$ (正)** | synergistic: the pair does extra joint work; dropping them one-at-a-time understates the joint leave-out |
+| **$I<0$ (负)** | antagonistic / redundant cancellation: singles overstate what the joint drop does |
+| $I\approx 0$ | approximately additive (no 2nd-order structure) |
+
+Inference today: `interact_PO_{a}_{b}` = permutation p-value on $|I|$
+(domain-label shuffle). **Sign for the narrative comes from the point estimate of $I$**,
+not from the p-value. Companion detector: `crosscorr_{a}_{b}` =
+$|\mathrm{corr}_{\mathrm{new}}-\mathrm{corr}_{\mathrm{ref}}|$ on block means
+(dependence change in $X$).
+
+**DGP that isolates this:** `interaction_shift` on `interact_pair`
+(`_apply_pair_interaction` + product term in $Y$). Null type-I for
+`interact_PO_*` / `crosscorr_*` is the overnight `no_shift` board (≈α so far).
+
+**Delivery line:** “cross-modal interaction = signed PO inclusion–exclusion; report $I$ and $p(|I|)$.”
+
+---
+
+## C. Do **not** conflate with T×A / T×V combo power
+
+| Object | Table | Is it signed attribution? |
 |---|---|---|
-| **Modality-specific proportion** | How much detectable drift lives in one modality *block* (text / audio / video)? | Direction of that block’s additive shift (or its share of risk drop when the block is kept). |
-| **Modality interaction (+/−)** | Does the *joint* of two modalities move the domain gap beyond the sum of singles? | **+** synergistic / amplifying; **−** antagonistic / cancelling. |
+| Combo detectability | concept-drift T×A / T×V / TAV power | **No** — coverage only |
+| PO-risk proportion $\pi_m$ | leave-out $\Delta_m$ (mean_shift + PO exports) | direction via $\Delta_m$ |
+| Interaction $I(m_1,m_2)$ | `interact_PO_*` (+ `crosscorr_*`) under `interaction_shift` | **Yes** — sign of $I$ |
 
-Do **not** read the concept-drift combo table (T×A vs T×V) as signed attribution. That table answers a third, simpler question: *with the same $Y\mid X$ drift, which modality subset makes CF/RF/DRPerm more powerful?*
+Under concept drift, $X$ is fixed; classical TST ≈0 is expected. CF/RF/DRPerm
+read $Y\mid X$. That supports the **proportion / coverage** story, not $I$.
 
-## 2. What our finished T×A / T×V numbers say
+---
 
-Under **concept drift** ($X$ identical across domains; only $Y\mid X$ changes):
+## D. Delivery checklist (收数)
 
-| | CFPerm | DRPerm | RFPerm |
-|---|---:|---:|---:|
-| T×A | 0.60 | 0.40 | 1.00 |
-| T×V | 0.34 | 0.22 | 0.99 |
+| Cell | Status |
+|---|---|
+| CF/DR/RF T×A, T×V concept power @ B=120 | **done** |
+| CF/DR/RF TAV concept power @ B=120 | **done** |
+| Classical T×A / T×V concept @ B=120 | **done** (power≈0) |
+| Classical TAV concept | **stacking** (~58/120) |
+| Null type-I CF/DR (T×A) | done (~53); SKK13/ZWL inflated |
+| Null `interact_PO` / `crosscorr` on T×A, T×V, A×V | **done** @ ≥120 (≈α) |
+| Null TAV with all three pair detectors | **stacking** (~23/120) |
+| `interaction_shift` power (signed $I$) | **next board after null TAV** |
 
-- **Modality-subset “proportion” (detectability):** text+audio carries a larger share of the *usable* signal for CF/DR than text+video on this DGP (PCA top-30, `concept_shift=0.35`). RFPerm saturates both.
-- **Classical TST ≈ 0** on both combos: expected — they look at $X$, and $X$ did not move.
-- This is **not** yet a signed text×audio interaction estimate; it is combo-wise global power.
-
-## 3. Where signed interactions live (board design)
-
-Standardized DGPs in `DatasetSpec`:
-
-1. **`mean_shift`** — modality-specific: add a constant to one block (e.g. video).  
-   - “Proportion” ≈ power when that modality is in the combo vs left out.  
-   - Sign of the shift = direction of the modality-specific effect on $X$.
-
-2. **`interaction_shift`** — inject a product term on a pair $(a,b)$ into $X$ and into $Y$.  
-   - Detectors: `crosscorr_*` (dependence change) and `interact_PO_*`  
-     with PO interaction  
-     $\mathrm{PO}(-a)+\mathrm{PO}(-b)-\mathrm{PO}(-a,-b)$.  
-   - **Positive interaction:** leaving out both modalities hurts *less* than the sum of single leave-outs would predict in the inclusion–exclusion sense used here — the joint structure is doing extra work (synergy toward domain/outcome risk).  
-   - **Negative interaction:** the opposite — the pair cancels; joint leave-out pattern indicates antagonism.
-
-3. **`concept_drift`** — no $X$ interaction by construction; mid-PC nonlinear $Y\mid X$ (includes a product of PCA coords). Combo power ranks which modality *supports* that regression signal after concat.
-
-## 4. Practical reading rule
-
-- Report **T×A / T×V power** as cross-modal *coverage / detectability*.  
-- Report **mean_shift** boards as modality-specific proportions.  
-- Report **interact_PO / crosscorr** (with sign of the PO interaction statistic, not only the p-value) as positive vs negative modality interactions.  
-- Always pair with **type-I** on null: CF/DR ≈ α; SKK13/ZWL inflated.
+Artifacts: `POLISHED_CROSS_MODAL_TA_TV.md`, `latex/cross_modal_TA_TV.tex`,
+`latex/cross_modal_interpretation.tex`, this note.

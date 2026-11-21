@@ -1,39 +1,28 @@
-% Interpretation note: modality-specific vs signed cross-modal interactions
-\begin{table}[t]
-\centering
-\small
-\caption{How to read cross-modal boards: modality-specific mass vs signed interactions.}
-\label{tab:cross-modal-interpretation}
-\begin{tabular}{p{2.4cm}p{5.4cm}p{5.0cm}}
-\toprule
-Layer & What moves & How to read sign / mass \\
-\midrule
-Modality-specific
-  & Additive shift in one block
-    (e.g.\ video mean shift)
-  & ``Proportion'' $=$ share of detectable
-    drift carried by that block alone;
-    sign of the mean shift is the direction
-    of the modality effect on $X$ (or on $Y$
-    if the outcome channel moves). \\
-\addlinespace
-Pairwise interaction
-  & Cross term $a\!\times\!b$ in $X$ and/or $Y$
-    (text$\times$audio, text$\times$video, \ldots)
-  & \textbf{Positive:} co-movement of the two
-    modalities \emph{amplifies} domain gap /
-    outcome risk.
-    \textbf{Negative:} co-movement \emph{cancels}
-    or reverses the gap (antagonistic). \\
-\addlinespace
-Combo power
-  (this board)
-  & Same concept drift, different modality
-    subsets (T$\times$A vs T$\times$V)
-  & Not a signed attribution; compares
-    \emph{detectability} when the design
-    keeps only those blocks.
-    Empirically T$\times$A $>$ T$\times$V for CF/DR. \\
-\bottomrule
-\end{tabular}
-\end{table}
+\paragraph{PO-risk proportion.}
+For modality $m$, the leave-out lift
+$\Delta_m=\mathrm{PO}(-m)-\mathrm{PO}(\mathrm{full})$
+measures how much domain/outcome structure sits on that block.
+The modality-specific proportion is the normalized share
+$\pi_m=\Delta_m/\sum_{m'}\Delta_{m'}$
+(clip negative lifts at zero if desired).
+Under \texttt{mean\_shift}, $\pi_m$ concentrates on the shifted modality;
+under concept drift, T$\times$A vs.\ T$\times$V power is only a detectability proxy for the same idea.
+
+\paragraph{Signed cross-modal interaction.}
+The second-order PO interaction is the inclusion--exclusion term
+\[
+I(m_1,m_2)=\mathrm{PO}(-m_1)+\mathrm{PO}(-m_2)-\mathrm{PO}(-m_1,-m_2).
+\]
+$I>0$ is synergistic (joint structure beyond the sum of singles);
+$I<0$ is antagonistic / cancelling;
+$I\approx 0$ is additive.
+\texttt{interact\_PO\_*} reports a permutation $p$-value on $|I|$;
+the sign for interpretation is that of the point estimate $I$.
+\texttt{crosscorr\_*} is a companion test on
+$|\mathrm{corr}_{\mathrm{new}}-\mathrm{corr}_{\mathrm{ref}}|$ of block means.
+The isolating DGP is \texttt{interaction\_shift} on a chosen \texttt{interact\_pair}.
+
+\paragraph{Separation from combo power.}
+T$\times$A / T$\times$V / TAV concept-drift powers are coverage / detectability,
+not signed attribution. Classical two-sample tests on $X$ stay near zero when
+only $Y\mid X$ moves; CF/RF/DRPerm are the relevant readers for that board.
