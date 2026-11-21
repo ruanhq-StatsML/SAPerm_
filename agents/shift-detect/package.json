@@ -2,7 +2,7 @@
   "name": "shift-detect",
   "private": true,
   "type": "module",
-  "description": "Distribution-shift attribution agent for the SAPerm / ruanhq-StatsML stack",
+  "description": "Trustworthy LLM eval + distribution-shift attribution agent (SAPerm / ruanhq-StatsML)",
   "scripts": {
     "check": "tsc --noEmit",
     "dev": "agent-sdk dev"
