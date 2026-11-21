@@ -1,0 +1,383 @@
+{
+  "config": {
+    "B": 150,
+    "n_perm": 120,
+    "n_doc": 120,
+    "pca_k": 24,
+    "n_estimators": 40,
+    "n_max": 2000,
+    "seed": 2026,
+    "scenarios": [
+      "null_shift",
+      "sentiment_meta",
+      "train_vs_heldout"
+    ],
+    "meta_blocks": {
+      "spacy_style": [
+        "n_tokens",
+        "n_sents",
+        "avg_token_len",
+        "avg_sent_len",
+        "punct_ratio",
+        "exclam_ratio",
+        "question_ratio",
+        "type_token_ratio",
+        "stopword_ratio"
+      ],
+      "spacy_syntax": [
+        "pos_noun",
+        "pos_verb",
+        "pos_adj",
+        "pos_adv",
+        "pos_propn",
+        "pos_pron",
+        "verb_noun_ratio"
+      ],
+      "spacy_ner": [
+        "ent_density",
+        "ent_count",
+        "ent_person",
+        "ent_org",
+        "ent_gpe",
+        "ent_date"
+      ],
+      "vader_sent": [
+        "vader_compound",
+        "vader_pos",
+        "vader_neu",
+        "vader_neg",
+        "vader_polar_gap"
+      ],
+      "discourse": [
+        "digit_ratio",
+        "upper_ratio",
+        "url_like",
+        "negation_cues"
+      ],
+      "structure_cues": [
+        "avg_dep_depth",
+        "clause_like_ratio",
+        "hedge_cues",
+        "intensifier_cues",
+        "repeat_char_ratio",
+        "flesch_proxy"
+      ]
+    },
+    "meta_dim": 37,
+    "packages": [
+      "spacy:en_core_web_sm",
+      "vaderSentiment",
+      "sklearn.RF"
+    ],
+    "elapsed_sec": 5196.282250881195
+  },
+  "summary": {
+    "table": [
+      {
+        "scenario": "null_shift",
+        "feature_set": "embed",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.02666666666666667,
+          "DRPerm": 0.07333333333333333,
+          "CFPerm": 0.02666666666666667
+        },
+        "mean_p": {
+          "RFPerm": 0.6053443526170799,
+          "DRPerm": 0.5347107438016528,
+          "CFPerm": 0.5480440771349862
+        },
+        "mean_stat": {
+          "RFPerm": -0.006863758893184173,
+          "DRPerm": 0.007169829887232358,
+          "CFPerm": 0.00011090752974531696
+        }
+      },
+      {
+        "scenario": "null_shift",
+        "feature_set": "embed_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.02666666666666667,
+          "DRPerm": 0.07333333333333333,
+          "CFPerm": 0.06
+        },
+        "mean_p": {
+          "RFPerm": 0.6135537190082645,
+          "DRPerm": 0.4857300275482094,
+          "CFPerm": 0.55366391184573
+        },
+        "mean_stat": {
+          "RFPerm": -0.008052314840403637,
+          "DRPerm": 0.0076717586264254565,
+          "CFPerm": 9.351501445207628e-05
+        }
+      },
+      {
+        "scenario": "sentiment_meta",
+        "feature_set": "embed",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.02,
+          "DRPerm": 0.0,
+          "CFPerm": 0.02
+        },
+        "mean_p": {
+          "RFPerm": 0.5844077134986225,
+          "DRPerm": 0.9540495867768596,
+          "CFPerm": 0.5830853994490358
+        },
+        "mean_stat": {
+          "RFPerm": -0.0051623376914294835,
+          "DRPerm": 0.005440539826554242,
+          "CFPerm": 9.146183131396557e-05
+        }
+      },
+      {
+        "scenario": "sentiment_meta",
+        "feature_set": "embed_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.08,
+          "DRPerm": 0.0,
+          "CFPerm": 0.02666666666666667
+        },
+        "mean_p": {
+          "RFPerm": 0.4596694214876033,
+          "DRPerm": 1.0,
+          "CFPerm": 0.5555922865013775
+        },
+        "mean_stat": {
+          "RFPerm": 0.0032026875697451105,
+          "DRPerm": 0.0013686768932737437,
+          "CFPerm": 6.371372010829194e-05
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "feature_set": "embed",
+        "B": 150,
+        "power": {
+          "RFPerm": 1.0,
+          "DRPerm": 1.0,
+          "CFPerm": 0.7666666666666667
+        },
+        "mean_p": {
+          "RFPerm": 0.008264462809917354,
+          "DRPerm": 0.008264462809917354,
+          "CFPerm": 0.2312396694214877
+        },
+        "mean_stat": {
+          "RFPerm": 0.3235467120932111,
+          "DRPerm": 0.02163166169922365,
+          "CFPerm": 0.028928493349155187
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "feature_set": "embed_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 1.0,
+          "DRPerm": 1.0,
+          "CFPerm": 0.9933333333333333
+        },
+        "mean_p": {
+          "RFPerm": 0.008264462809917354,
+          "DRPerm": 0.008264462809917354,
+          "CFPerm": 0.014876033057851235
+        },
+        "mean_stat": {
+          "RFPerm": 0.32207987370967195,
+          "DRPerm": 0.02217585904427932,
+          "CFPerm": 0.06005526275512956
+        }
+      }
+    ],
+    "deltas": [
+      {
+        "scenario": "null_shift",
+        "delta_power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.033333333333333326
+        }
+      },
+      {
+        "scenario": "sentiment_meta",
+        "delta_power": {
+          "RFPerm": 0.06,
+          "DRPerm": 0.0,
+          "CFPerm": 0.006666666666666668
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "delta_power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.22666666666666657
+        }
+      }
+    ]
+  },
+  "po_risk_note": "DRPerm PO-risk = E[\u03c4(X)^2], \u03c4\u2248(Y\u2212\u03bc(X))(W\u2212e(X)). If adding M shrinks residual batch\u2013outcome dependence, DRPerm power may drop (better nuisance adjustment). If M exposes concept signal that Z missed, power rises. Both are scientifically informative for incremental value.",
+  "rows_tail": [
+    {
+      "scenario": "train_vs_heldout",
+      "feature_set": "embed_meta",
+      "RFPerm": {
+        "method": "RFPerm",
+        "statistic": 0.2869403656230468,
+        "p_value": 0.008264462809917356,
+        "reject": true
+      },
+      "DRPerm": {
+        "method": "DRPerm",
+        "statistic": 0.019925854129247574,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "po_risk": 0.019925854129247574,
+        "mu_hat_mean": 0.49538799758928437,
+        "e_hat_mean": 0.5120059733805138
+      },
+      "CFPerm": {
+        "method": "CFPerm_loco_block",
+        "statistic": 0.06414478337414037,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "n_test_features": 37
+      }
+    },
+    {
+      "scenario": "train_vs_heldout",
+      "feature_set": "embed_meta",
+      "RFPerm": {
+        "method": "RFPerm",
+        "statistic": 0.34505322264831984,
+        "p_value": 0.008264462809917356,
+        "reject": true
+      },
+      "DRPerm": {
+        "method": "DRPerm",
+        "statistic": 0.021710687480070344,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "po_risk": 0.021710687480070344,
+        "mu_hat_mean": 0.536169970135733,
+        "e_hat_mean": 0.5088242625430125
+      },
+      "CFPerm": {
+        "method": "CFPerm_loco_block",
+        "statistic": 0.09458121298380308,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "n_test_features": 37
+      }
+    },
+    {
+      "scenario": "train_vs_heldout",
+      "feature_set": "embed_meta",
+      "RFPerm": {
+        "method": "RFPerm",
+        "statistic": 0.2649741537682583,
+        "p_value": 0.008264462809917356,
+        "reject": true
+      },
+      "DRPerm": {
+        "method": "DRPerm",
+        "statistic": 0.019276680532198606,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "po_risk": 0.019276680532198606,
+        "mu_hat_mean": 0.5117987666353935,
+        "e_hat_mean": 0.5258959790191892
+      },
+      "CFPerm": {
+        "method": "CFPerm_loco_block",
+        "statistic": 0.12193460331033869,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "n_test_features": 37
+      }
+    },
+    {
+      "scenario": "train_vs_heldout",
+      "feature_set": "embed_meta",
+      "RFPerm": {
+        "method": "RFPerm",
+        "statistic": 0.29740945283098374,
+        "p_value": 0.008264462809917356,
+        "reject": true
+      },
+      "DRPerm": {
+        "method": "DRPerm",
+        "statistic": 0.02313220310417997,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "po_risk": 0.02313220310417997,
+        "mu_hat_mean": 0.4725017741577702,
+        "e_hat_mean": 0.48529239879469654
+      },
+      "CFPerm": {
+        "method": "CFPerm_loco_block",
+        "statistic": 0.06177283648995462,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "n_test_features": 37
+      }
+    },
+    {
+      "scenario": "train_vs_heldout",
+      "feature_set": "embed_meta",
+      "RFPerm": {
+        "method": "RFPerm",
+        "statistic": 0.30523106402916034,
+        "p_value": 0.008264462809917356,
+        "reject": true
+      },
+      "DRPerm": {
+        "method": "DRPerm",
+        "statistic": 0.01998935531310029,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "po_risk": 0.01998935531310029,
+        "mu_hat_mean": 0.5298455684027229,
+        "e_hat_mean": 0.4854798508782884
+      },
+      "CFPerm": {
+        "method": "CFPerm_loco_block",
+        "statistic": 0.054190200512713754,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "n_test_features": 37
+      }
+    },
+    {
+      "scenario": "train_vs_heldout",
+      "feature_set": "embed_meta",
+      "RFPerm": {
+        "method": "RFPerm",
+        "statistic": 0.4053741815321168,
+        "p_value": 0.008264462809917356,
+        "reject": true
+      },
+      "DRPerm": {
+        "method": "DRPerm",
+        "statistic": 0.025504980438498543,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "po_risk": 0.025504980438498543,
+        "mu_hat_mean": 0.4827784427640392,
+        "e_hat_mean": 0.47997913493777467
+      },
+      "CFPerm": {
+        "method": "CFPerm_loco_block",
+        "statistic": 0.05667153794556013,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "n_test_features": 37
+      }
+    }
+  ]
+}
