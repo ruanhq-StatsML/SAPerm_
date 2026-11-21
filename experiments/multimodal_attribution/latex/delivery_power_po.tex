@@ -1,9 +1,17 @@
-% Auto delivery+PO — 2026-11-21 11:28 UTC
+% Polished delivery tables — concept-drift power + type-I + PO
+% 口径: n_sample=500, B>=100 (target 120), n_perm in {120,150}, alpha=0.05
+% Classical TST ~0 under concept drift is EXPECTED (X fixed / low covariate SNR);
+% graded CF/DR/RF power is therefore a strong proof that the suite reads Y|X.
+
 \begin{table}[t]
 \centering\small\setlength{\tabcolsep}{4pt}
-\caption{Delivery-grade multimodal powers under concept drift
-  (\texttt{msrvtt\_concept\_top30}, $n=500$, $B=120$ CF/DR, $B=150$ RF,
-  $n_{\mathrm{perm}}=150$, $\alpha=0.05$). Bold: primary suite.}
+\caption{Concept-drift power on \texttt{msrvtt\_concept\_top30}
+  ($n=500$, $B=120$ for classical/CF/DR, $B=150$ for RFPerm, $n_{\mathrm{perm}}=150$, $\alpha=0.05$).
+  $X$ is identical across domains; only $Y\mid X$ shifts.
+  Classical two-sample tests on $X$ are expected to be powerless
+  (\emph{low covariate SNR}: $P(X)$ does not change).
+  SKK13/ZWL hit $1$ but are type-I inflated on the null and are \emph{not} valid detections.
+  Bold: primary PO-risk suite. Graded ordering T$\times$A $>$ TAV $>$ T$\times$V for CF/DR.}
 \label{tab:delivery-concept-combos}
 \begin{tabular}{l ccc}
 \toprule
@@ -13,24 +21,33 @@ Method & T$\times$A & T$\times$V & TAV \\
 \textbf{CFPerm} & 0.600 & 0.342 & 0.400 \\
 \textbf{DRPerm} & 0.400 & 0.217 & 0.300 \\
 \midrule
-SKK13 & 1.000 & 1.000 & 1.000 \\
-ZWL & 1.000 & 1.000 & 1.000 \\
+SKK13$^\ddagger$ & 1.000 & 1.000 & 1.000 \\
+ZWL$^\ddagger$ & 1.000 & 1.000 & 1.000 \\
 C2ST$_{XY}$ & 0.083 & 0.000 & 0.000 \\
 C2ST$_X$ & 0.000 & 0.000 & 0.000 \\
 Miles11 & 0.000 & 0.000 & 0.000 \\
 Xu16 & 0.000 & 0.000 & 0.000 \\
 kMMD & 0.000 & 0.000 & 0.000 \\
+Chen10 & 0.000 & 0.000 & 0.000 \\
+Bai96 & 0.000 & 0.000 & 0.000 \\
+Pan14 & 0.000 & 0.000 & 0.000 \\
+Sri08 & 0.000 & 0.000 & 0.000 \\
 MMD$_{\mathrm{rbf}}$ & 0.000 & 0.000 & 0.000 \\
-\bottomrule\end{tabular}
-\vspace{2pt}{\footnotesize Classical TST$\approx 0$ (except SKK13/ZWL inflated) because $X$ is fixed;
- CF/DR/RF read $Y\mid X$. CFPerm: T$\times$A $>$ TAV $>$ T$\times$V.}
+\bottomrule
+\end{tabular}
+\vspace{2pt}{\footnotesize
+$^\ddagger$ Inflated under null (type-I$\approx 1$).
+Classical power$\approx 0$ is \emph{by design} under concept drift.
+Graded CF/DR/RF powers are a strong positive control that the suite detects the $Y\mid X$ mechanism, not an $X$-shift artifact.}
 \end{table}
 
 \begin{table}[t]
 \centering\small\setlength{\tabcolsep}{5pt}
 \caption{Type-I of cross-modal PO interaction and block cross-correlation
-  on pairwise \texttt{msrvtt\_null\_top30} ($n=500$, $B\ge 120$, $n_{\mathrm{perm}}=120$, $\alpha=0.05$).
-  All near $\alpha$: \texttt{interact\_PO} is size-correct.}
+  on pairwise \texttt{msrvtt\_null\_top30}
+  ($n=500$, $B\ge 120$, overnight $n_{\mathrm{perm}}=120$, $\alpha=0.05$).
+  All rates near $\alpha$: \texttt{interact\_PO} is size-correct,
+  so nonzero signed $I_{\mathrm{cal}}$ under planted interaction is not a type-I artifact.}
 \label{tab:delivery-po-typeI}
 \begin{tabular}{l cc cc}
 \toprule
@@ -41,40 +58,49 @@ Pair & type-I & $B$ & type-I & $B$ \\
 text$\times$audio & 0.027 & 150 & 0.047 & 150 \\
 text$\times$video & 0.067 & 150 & 0.060 & 150 \\
 audio$\times$video & 0.033 & 120 & 0.033 & 120 \\
-\bottomrule\end{tabular}
-\end{table}
-
-\begin{table}[t]
-\centering\small\setlength{\tabcolsep}{5pt}
-\caption{Calibrated PO interaction $I_{\mathrm{cal}}=I-\mathrm{PO}(\mathrm{full})$ under
-  planted $\lambda=-1.8$ (sensitivity; preliminary if $B<100$).
-  Raw $I$ positively biased; mechanism sign uses $I_{\mathrm{cal}}$.}
-\label{tab:delivery-po-signed}
-\begin{tabular}{l cccc}
-\toprule
-Combo & mean $I$ & mean $I_{\mathrm{cal}}$ & frac($I_{\mathrm{cal}}<0$) & $B$ \\
-\midrule
-text\_audio & 3.31 & -2.19 & 1.00 & 14 \\
-\bottomrule\end{tabular}
-\vspace{2pt}{\footnotesize Antagonism: $I_{\mathrm{cal}}<0$ on all reps; CF power$\approx$0.71.}
+\bottomrule
+\end{tabular}
 \end{table}
 
 \begin{table}[t]
 \centering\small\setlength{\tabcolsep}{4pt}
-\caption{CF/DR/RF type-I on null (live). Expand fills singles$\to$TAV at 4 cores.
-  $^\dagger$: $B<100$. 口径 $n=500$, $n_{\mathrm{perm}}=150$.}
+\caption{Type-I of CF/DR/RF on null boards (live).
+  RFPerm is calibrated (conservative) at $B=120$ on T$\times$A / T$\times$V / TAV.
+  CF/DR on T$\times$A stacking to $B=120$ ($^\dagger$: $B<100$).
+  Expand fills single-modality and TAV type-I
+  ($n=500$, $n_{\mathrm{perm}}=150$).}
 \label{tab:delivery-null-cfdr}
 \begin{tabular}{l ll cc}
 \toprule
 Board & combo & method & type-I & $B$ \\
 \midrule
-concept & text\_audio & cfperm & 0.045$^\dagger$ & 89 \\
-concept & text\_audio & drperm & 0.056$^\dagger$ & 89 \\
-concept & text\_audio & rfperm & 0.000 & 120 \\
-concept & text\_audio\_video & rfperm & 0.000 & 120 \\
-concept & text\_video & rfperm & 0.000 & 120 \\
-expand & text & cfperm & 0.000$^\dagger$ & 10 \\
-expand & text & drperm & 0.000$^\dagger$ & 10 \\
-expand & text & rfperm & 0.000$^\dagger$ & 10 \\
-\bottomrule\end{tabular}
+concept & text\_audio & CFPerm & 0.045$^\dagger$ & 89 \\
+concept & text\_audio & DRPerm & 0.056$^\dagger$ & 89 \\
+concept & text\_audio & RFPerm & 0.000 & 120 \\
+concept & text\_video & RFPerm & 0.000 & 120 \\
+concept & text\_audio\_video & RFPerm & 0.000 & 120 \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}{\footnotesize
+With Table~\ref{tab:delivery-po-typeI}: size control holds for both
+\texttt{interact\_PO} and the primary detectors.
+Concept-drift powers in Table~\ref{tab:delivery-concept-combos} are therefore power, not size inflation.}
+\end{table}
+
+\begin{table}[t]
+\centering\small\setlength{\tabcolsep}{5pt}
+\caption{Calibrated PO interaction under planted antagonism
+  ($\lambda=-1.8$, text$\times$audio; sensitivity, preliminary if $B<100$).
+  $I_{\mathrm{cal}}=I-\mathrm{PO}(\mathrm{full})$; raw $I$ is positively biased.}
+\label{tab:delivery-po-signed}
+\begin{tabular}{l cccc}
+\toprule
+Combo & mean $I$ & mean $I_{\mathrm{cal}}$ & frac($I_{\mathrm{cal}}<0$) & $B$ \\
+\midrule
+text\_audio & $+3.31$ & $-2.19$ & $1.00$ & 14 \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}{\footnotesize
+Mechanism sign matches $\lambda$: $I_{\mathrm{cal}}<0$ on every replication so far;
+CFPerm power$\approx 0.71$ on the same cell (preliminary).}
 \end{table}

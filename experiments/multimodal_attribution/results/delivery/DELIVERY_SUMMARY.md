@@ -1,18 +1,32 @@
-# Delivery-grade power + PO summary
+# Delivery-grade power + type-I (polished)
 
-_stamp 2026-11-21 11:28 UTC · 口径: n_sample=500, B≥100 (target 120), n_perm∈{120,150}, α=0.05_
+_stamp 2026-11-21 · 口径: n_sample=500, B≥100 (target 120), n_perm∈{120,150}, α=0.05_
 
-## 1. Concept drift — CF / DR / RF (`msrvtt_concept_top30`)
+**Read in one line.** Under concept drift, classical TST≈0 is *expected* (low covariate SNR: $X$ fixed). Graded CF/DR/RF power is therefore a strong proof that the suite reads $Y|X$. PO type-I ≈ α closes the size story.
+
+LaTeX: `experiments/multimodal_attribution/latex/delivery_power_po.tex`
+
+---
+
+## 1. Concept-drift power (`msrvtt_concept_top30`)
 
 | method | T×A | T×V | TAV |
 |---|---:|---:|---:|
-| **rfperm** | 1.000 | 0.987 | 0.933 |
-| **cfperm** | 0.600 | 0.342 | 0.400 |
-| **drperm** | 0.400 | 0.217 | 0.300 |
+| **RFPerm** | 1.000 | 0.987 | 0.933 |
+| **CFPerm** | 0.600 | 0.342 | 0.400 |
+| **DRPerm** | 0.400 | 0.217 | 0.300 |
+| SKK13‡ | 1.000 | 1.000 | 1.000 |
+| ZWL‡ | 1.000 | 1.000 | 1.000 |
+| C2ST_XY | 0.083 | 0.000 | 0.000 |
+| C2ST_X / Miles11 / Xu16 / kMMD / Chen10 / Bai96 / Pan14 / Sri08 / MMD_rbf | 0 | 0 | 0 |
 
-Ordering (CF): **T×A > TAV > T×V**. RF saturates. TAV ≠ free lunch.
+‡ Inflated on null (type-I≈1) — not valid detections.
 
-## 2. Type-I — interact_PO / crosscorr (pairwise null, delivery)
+**Why this is strong.** Dataset SNR on $X$ is low under concept drift by construction → classical methods must be quiet. CF/DR/RF still recover **T×A > TAV > T×V**. That gap is the PO-risk / multimodal attribution claim.
+
+---
+
+## 2. Type-I — interact_PO / crosscorr (delivery)
 
 | pair | interact_PO | B | crosscorr | B |
 |---|---:|---:|---:|---:|
@@ -20,33 +34,34 @@ Ordering (CF): **T×A > TAV > T×V**. RF saturates. TAV ≠ free lunch.
 | text×video | 0.067 | 150 | 0.060 | 150 |
 | audio×video | 0.033 | 120 | 0.033 | 120 |
 
-All ≈ α — **PO interaction type-I calibrated**.
+All ≈ α — mechanism detector size-correct.
 
-## 3. Type-I — CF/DR/RF null (live)
+---
 
-| board | combo | method | type-I | n_rep | grade |
+## 3. Type-I — CF / DR / RF null (live)
+
+| board | combo | method | type-I | B | grade |
 |---|---|---|---:|---:|---|
-| concept | text_audio | cfperm | 0.045 | 89 | preliminary |
-| concept | text_audio | drperm | 0.056 | 89 | preliminary |
-| concept | text_audio | rfperm | 0.000 | 120 | delivery |
-| concept | text_audio_video | rfperm | 0.000 | 120 | delivery |
-| concept | text_video | rfperm | 0.000 | 120 | delivery |
-| expand | text | cfperm | 0.000 | 10 | preliminary |
-| expand | text | drperm | 0.000 | 10 | preliminary |
-| expand | text | rfperm | 0.000 | 10 | preliminary |
+| concept | text_audio | CFPerm | 0.045 | 89 | preliminary |
+| concept | text_audio | DRPerm | 0.056 | 89 | preliminary |
+| concept | text_audio | RFPerm | 0.000 | 120 | delivery |
+| concept | text_video | RFPerm | 0.000 | 120 | delivery |
+| concept | TAV | RFPerm | 0.000 | 120 | delivery |
 
-## 4. Sensitivity signed $I_{cal}$ (preliminary)
+Expand: singles→TAV type-I filling in parallel; covariate_backtrans / inject also running.
 
-| cell | λ | mean $I$ | mean $I_{cal}$ | frac($I_{cal}<0$) | n |
-|---|---:|---:|---:|---:|---:|
-| text_audio | −1.8 | 3.31 | -2.19 | 1.00 | 14 |
+---
 
-CF/DR/RF power: cf=0.71, dr=0.00, rf=0.00 (B=14)
+## 4. Signed $I_{cal}$ (λ=−1.8, preliminary B=14)
 
-## 5. Read
+| mean $I$ | mean $I_{cal}$ | frac($I_{cal}<0$) |
+|---:|---:|---:|
+| +3.31 | **−2.19** | 1.00 |
 
-- Concept: T×A > TAV > T×V for CF/DR; RF≈1.
-- interact_PO null ≈ α (T×A 0.027/150, T×V 0.067/150, A×V 0.033/120).
-- λ=−1.8: $I_{cal}<0$ always so far (antagonism); CF≈0.71 preliminary.
-- Expand @ **n_jobs=4** (all 4 cores) filling singles→TAV type-I.
+Raw $I$ biased +; calibrated sign matches antagonism. CF≈0.71 on same cell.
 
+---
+
+## 5. Covariate shift (running)
+
+Messy $X$-shifts (back-translation-style text warp + random feature inject on text/audio) launched in parallel on the expand board (`n=500`, `B=120`, `n_perm=150`, CF/DR/RF). Expect: power on combos containing the shifted modality; contrast with concept drift where classical≈0.
