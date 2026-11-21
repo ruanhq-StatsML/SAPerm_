@@ -1,0 +1,38 @@
+% Big summary: all methods — concept-drift power + null type-I
+% 口径: n=500, alpha=0.05; dagger if B<100
+\begin{table}[t]
+\centering\scriptsize\setlength{\tabcolsep}{2.5pt}
+\caption{Full benchmark summary on \texttt{msrvtt\_concept\_top30} / null.
+  Left: power under concept drift ($X$ fixed, $Y\mid X$ shifts; $n=500$, $B=120$ CF/DR/classical, $B=150$ RF, $n_{\mathrm{perm}}=150$).
+  Right: type-I on \texttt{msrvtt\_null\_top30} (overnight classical $B\ge 120$; CF/DR stacking, RF $B=120$).
+  Classical power$\approx 0$ is expected (low covariate SNR). SKK13/ZWL$^\ddagger$ are null-inflated.
+  Bold: primary PO-risk suite. $^\dagger$: $B<100$.}
+\label{tab:full-benchmark-power-typeI}
+\begin{tabular}{l ccc @{\hspace{1.0em}} ccc}
+\toprule
+& \multicolumn{3}{c}{\textbf{Power} (concept drift)} & \multicolumn{3}{c}{\textbf{Type-I} (null)} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Method & T$\times$A & T$\times$V & TAV & T$\times$A & T$\times$V & TAV \\
+\midrule
+\textbf{RFPerm} & 1.000 & 0.987 & 0.933 & 0.000 & 0.000 & 0.000 \\
+\textbf{CFPerm} & 0.600 & 0.342 & 0.400 & 0.045$^\dagger$ & --- & --- \\
+\textbf{DRPerm} & 0.400 & 0.217 & 0.300 & 0.056$^\dagger$ & --- & --- \\
+\midrule
+SKK13$^\ddagger$ & 1.000 & 1.000 & 1.000 & 1.000$^\ddagger$ & 1.000$^\ddagger$ & 1.000$^\ddagger$ \\
+ZWL$^\ddagger$ & 1.000 & 1.000 & 1.000 & 0.153$^\ddagger$ & 0.207$^\ddagger$ & 0.184$^\ddagger$ \\
+C2ST$_{XY}$ & 0.083 & 0.000 & 0.000 & 0.033 & 0.053 & 0.105$^\dagger$ \\
+C2ST$_X$ & 0.000 & 0.000 & 0.000 & 0.040 & 0.033 & 0.053$^\dagger$ \\
+Miles11 & 0.000 & 0.000 & 0.000 & 0.033 & 0.067 & 0.053$^\dagger$ \\
+Xu16 & 0.000 & 0.000 & 0.000 & 0.033 & 0.033 & 0.053$^\dagger$ \\
+kMMD & 0.000 & 0.000 & 0.000 & 0.067 & 0.080 & 0.184$^\dagger$ \\
+Chen10 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000$^\dagger$ \\
+Bai96 & 0.000 & 0.000 & 0.000 & 0.060 & 0.073 & 0.079$^\dagger$ \\
+Pan14 & 0.000 & 0.000 & 0.000 & 0.060 & 0.093 & 0.000$^\dagger$ \\
+Sri08 & 0.000 & 0.000 & 0.000 & 0.060 & 0.073 & 0.026$^\dagger$ \\
+MMD$_{\mathrm{rbf}}$ & 0.000 & 0.000 & 0.000 & 0.060 & 0.053 & 0.105$^\dagger$ \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}{\footnotesize
+$^\ddagger$ SKK13/ZWL: invalid (type-I$\approx 1$ on null).
+ Classical$\approx 0$ under concept drift confirms low $X$-SNR; graded CF/DR/RF is the positive proof.}
+\end{table}

@@ -68,12 +68,15 @@ class DatasetSpec:
 
     name: str
     scenario: str  # no_shift | mean_shift | interaction_shift | concept_drift
+    #            | covariate_backtrans | covariate_inject
     band: str = "top30"
-    shift_modality: str = "video"  # for mean_shift
+    shift_modality: str = "video"  # for mean_shift / covariate_*
     interact_pair: Tuple[str, str] = ("text", "video")  # for interaction_shift
     mean_shift: float = 1.0
     interaction_shift: float = 1.8
     concept_shift: float = 1.5
+    covariate_amount: float = 1.0  # back-translation / inject strength
+    inject_frac: float = 0.25  # fraction of dims overwritten under inject
     dims: Tuple[int, int, int] = (128, 128, 128)
 
 
@@ -110,13 +113,13 @@ DATASETS: List[DatasetSpec] = [
         interact_pair=("text", "video"),
     ),
     # Manual concept drift (keep X, change Y|X) — power board vs CF/RF/DRPerm.
-    DatasetSpec("msrvtt_concept_top30", "concept_drift", band="top30", concept_shift=1.5),
+    DatasetSpec("msrvtt_concept_top30", "concept_drift", band="top30", concept_shift=0.35),
     DatasetSpec(
         "msrvtt_concept_pc31_100",
         "concept_drift",
         band="pc31_100",
         dims=(160, 160, 160),
-        concept_shift=1.5,
+        concept_shift=0.35,
     ),
 ]
 
@@ -145,6 +148,52 @@ def _apply_pair_interaction(
     shared = rng.normal(size=(n, 1))
     out[a][:, :8] = out[a][:, :8] + amount * shared
     out[b][:, :8] = out[b][:, :8] + amount * shared * out[a][:, :1]
+    return out
+
+
+def _apply_backtrans_covariate(
+    mods: Dict[str, np.ndarray],
+    modality: str,
+    amount: float,
+    seed: int,
+) -> Dict[str, np.ndarray]:
+    """Simulate back-translation-style covariate shift on one modality.
+
+    Mirrors ``benchmark_translation`` / TRT back-translation boards: same label
+    semantics, but the *text* (or chosen) embedding lives in a rotated + noisy
+    representation space (emb → emb_backtrans). Audio/video stay put.
+    """
+    rng = np.random.default_rng(seed)
+    out = {k: np.array(v, copy=True) for k, v in mods.items()}
+    x = out[modality]
+    d = x.shape[1]
+    q, _ = np.linalg.qr(rng.normal(size=(d, d)))
+    # Partial isometry + isotropic noise — embedding-space domain gap.
+    mix = float(np.clip(0.35 * amount, 0.15, 0.85))
+    out[modality] = (1.0 - mix) * x + mix * (x @ q) + (0.35 * amount) * rng.normal(size=x.shape)
+    return out
+
+
+def _apply_random_inject(
+    mods: Dict[str, np.ndarray],
+    modality: str,
+    amount: float,
+    inject_frac: float,
+    seed: int,
+) -> Dict[str, np.ndarray]:
+    """Random feature / token-style injection into a modality block.
+
+    Overwrites a random fraction of coordinates with noise scaled by ``amount``
+    (covariate pollution; classical TST on X should light up; PO interaction
+    should stay near null unless Y is also rewritten).
+    """
+    rng = np.random.default_rng(seed)
+    out = {k: np.array(v, copy=True) for k, v in mods.items()}
+    x = out[modality]
+    d = x.shape[1]
+    k = max(1, int(round(float(inject_frac) * d)))
+    cols = rng.choice(d, size=k, replace=False)
+    out[modality][:, cols] = amount * rng.normal(size=(x.shape[0], k))
     return out
 
 
@@ -179,6 +228,29 @@ def make_dataset_batch(
         # Keep multimodal X fixed across batches; only Y|X changes after PCA.
         new_all = {k: np.array(v, copy=True) for k, v in ref_all.items()}
         y_new = np.array(y_ref, copy=True)
+    elif spec.scenario == "covariate_backtrans":
+        # Like emb vs emb_backtrans with shared rating: warp X_mod, keep Y from
+        # the *pre-warp* content latent (y_new already from independent draw —
+        # re-anchor to a content-matched outcome by copying structure from ref
+        # latent mix so P(Y)≈P(Y_ref) while P(X_text) shifts).
+        new_all = {k: np.array(v, copy=True) for k, v in ref_all.items()}
+        y_new = np.array(y_ref, copy=True)
+        new_all = _apply_backtrans_covariate(
+            new_all,
+            spec.shift_modality,
+            float(spec.covariate_amount),
+            seed=seed + 29,
+        )
+    elif spec.scenario == "covariate_inject":
+        new_all = {k: np.array(v, copy=True) for k, v in ref_all.items()}
+        y_new = np.array(y_ref, copy=True)
+        new_all = _apply_random_inject(
+            new_all,
+            spec.shift_modality,
+            float(spec.covariate_amount),
+            float(spec.inject_frac),
+            seed=seed + 31,
+        )
     elif spec.scenario not in ("null", "no_shift"):
         raise ValueError(spec.scenario)
 
@@ -344,9 +416,10 @@ def run_overnight(
     for spec in datasets:
         for combo_name, combo_mods in combos.items():
             # Skip combos that don't contain the shift target modality when relevant.
-            if spec.scenario == "mean_shift" and spec.shift_modality not in combo_mods:
-                log(f"skip {spec.name}/{combo_name}: mean-shift modality absent")
-                continue
+            if spec.scenario in ("mean_shift", "covariate_backtrans", "covariate_inject"):
+                if spec.shift_modality not in combo_mods:
+                    log(f"skip {spec.name}/{combo_name}: shift modality absent")
+                    continue
             if spec.scenario == "interaction_shift":
                 a, b = spec.interact_pair
                 if a not in combo_mods or b not in combo_mods:

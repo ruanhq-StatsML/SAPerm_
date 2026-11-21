@@ -1,0 +1,4 @@
+dataset,combo,scenario,method,rate,n_rep,mean_p,grade,n_sample
+msrvtt_null_top30,text,no_shift,cfperm,0.0,8,0.6630794701986755,preliminary,500
+msrvtt_null_top30,text,no_shift,drperm,0.0,8,0.5670529801324503,preliminary,500
+msrvtt_null_top30,text,no_shift,rfperm,0.0,8,0.5943708609271523,preliminary,500
