@@ -1,6 +1,6 @@
-# concept_drift power board
+# Concept-drift power board (CF/RF/DRPerm, RF, n_perm=150)
 
-_rows=2566 after dedupe; α=0.05_
+_rows=2608 after dedupe; α=0.05_
 
 ## `msrvtt_concept_pc31_100` / `text_audio` / `concept_drift`
 
@@ -24,21 +24,21 @@ _rows=2566 after dedupe; α=0.05_
 
 | method | power | mean p | n_rep |
 |---|---:|---:|---:|
-| zwl | 1.000 | 0.000 | 66 |
-| skk13 | 1.000 | 0.000 | 66 |
+| zwl | 1.000 | 0.000 | 69 |
+| skk13 | 1.000 | 0.000 | 69 |
 | **rfperm** | 1.000 | 0.007 | 150 |
-| **cfperm** | 0.712 | 0.204 | 66 |
-| **drperm** | 0.606 | 0.181 | 66 |
-| c2st_XY | 0.152 | 0.734 | 66 |
-| c2st_X | 0.000 | 1.000 | 66 |
-| kmmd | 0.000 | 1.000 | 66 |
-| chen10 | 0.000 | 1.000 | 66 |
-| bai96 | 0.000 | 1.000 | 66 |
-| miles11 | 0.000 | 1.000 | 66 |
-| pan14 | 0.000 | 1.000 | 66 |
-| mmd_rbf | 0.000 | 1.000 | 66 |
-| sri08 | 0.000 | 1.000 | 66 |
-| xu16 | 0.000 | 1.000 | 66 |
+| **cfperm** | 0.710 | 0.205 | 69 |
+| **drperm** | 0.594 | 0.179 | 69 |
+| c2st_XY | 0.145 | 0.746 | 69 |
+| c2st_X | 0.000 | 1.000 | 69 |
+| kmmd | 0.000 | 1.000 | 69 |
+| chen10 | 0.000 | 1.000 | 69 |
+| bai96 | 0.000 | 1.000 | 69 |
+| miles11 | 0.000 | 1.000 | 69 |
+| pan14 | 0.000 | 1.000 | 69 |
+| mmd_rbf | 0.000 | 1.000 | 69 |
+| sri08 | 0.000 | 1.000 | 69 |
+| xu16 | 0.000 | 1.000 | 69 |
 
 ## `msrvtt_concept_top30` / `text_audio_video` / `concept_drift`
 
