@@ -1,16 +1,13 @@
-# Notation / 口径对齐
+# Notation / 口径（aligned to main boards）
 
-| Symbol | Meaning | Sensitivity run default |
+| Symbol | Meaning | This sensitivity run |
 |---|---|---|
-| **n** / **n_sample** | Observations **per domain** (ref batch and new batch each have size $n$) | 300 |
-| **n_rep** / **B** | Independent Monte Carlo replications used to estimate **power** | 24 (target) |
-| **n_perm** | Label / domain permutations inside one CF/DR/RF (or PO) test | 32 (PO: 12) |
-| **α** | Rejection level | 0.05 |
-| **power** | $\widehat{\mathbb{P}}(p<\alpha)$ over `n_rep` | — |
-| **$I$** | raw $\mathrm{PO}(-a)+\mathrm{PO}(-b)-\mathrm{PO}(-a,-b)$ | often $+$-biased |
-| **$I_{cal}$** | $I-\mathrm{PO}(\mathrm{full})$ | signed mechanism |
-| **fusion lift** | `power_pair − max(power_a, power_b)` | — |
-| **dominant modality** | $\arg\max_{m\in\{a,b\}}$ `power_m` | — |
+| **n / n_sample** | samples **per domain** | **500** |
+| **n_rep / B** | Monte Carlo reps for power | **120** |
+| **n_perm** | permutations inside CF/DR/RF | **150** |
+| **n_perm_po** | permutations for signed PO \|I\| | 50 |
+| **α** | reject level | 0.05 |
+| **power** | fraction of B reps with p<α | — |
 
-**Do not** write bare `n` in power tables for the replication count — that was ambiguous.
-Use **`n_rep`** for Monte Carlo size and **`n_sample`** (or header `n=…`) for sample size.
+**Delivery rule:** do not treat a cell as final unless **B ≥ 100** (target 120).
+Pilot `sensitivity_b24_nperm32` (n=300,B=24,n_perm=32) is exploratory only.
