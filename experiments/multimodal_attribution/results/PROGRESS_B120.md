@@ -85,3 +85,14 @@ Streams (4 cores, 1 job each):
 | MSR | null AV 117/120 |
 
 All healthy. ETA: classical TA ~30min; MSR AV ~10min then TAV; DR TV ~30min then TAV; CF TAV ~1h.
+
+## classical-msr-restored-check (2026-11-21 03:27 UTC)
+
+| stream | status |
+|---|---|
+| classical | **TA B=120 done** · TV ~14/120 · n_jobs=8 |
+| MSR | **null AV B=120 done** · TAV from 4 · n_jobs=8 |
+| cfperm | TAV 71/120 · CFDR_PERM_JOBS=4 |
+| drperm | TV 120 ✓ · TAV ~5/120 · CFDR_PERM_JOBS=4 |
+
+All healthy. Focus remaining TV/TAV fill.
