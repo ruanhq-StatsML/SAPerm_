@@ -1,0 +1,15 @@
+dataset,combo,scenario,method,power,n_rep,mean_p,n_sample,grade
+msrvtt_concept_pc31_100,text_audio,concept_drift,rfperm,0.6466666666666666,150,0.06097130242825607,500,delivery
+msrvtt_concept_pc31_100,text_audio_video,concept_drift,rfperm,0.5733333333333334,150,0.06883002207505519,500,delivery
+msrvtt_concept_pc31_100,text_video,concept_drift,rfperm,0.6933333333333334,150,0.04609271523178808,500,delivery
+msrvtt_concept_top30,text_audio,concept_drift,cfperm,0.6,120,0.28204921122058907,500,delivery
+msrvtt_concept_top30,text_audio,concept_drift,drperm,0.4,120,0.2567005868734184,500,delivery
+msrvtt_concept_top30,text_audio,concept_drift,rfperm,1.0,150,0.006622516556291391,500,delivery
+msrvtt_concept_top30,text_audio_video,concept_drift,cfperm,0.4,120,0.4083333333333333,500,delivery
+msrvtt_concept_top30,text_audio_video,concept_drift,drperm,0.3,120,0.30569105691056914,500,delivery
+msrvtt_concept_top30,text_audio_video,concept_drift,rfperm,0.9333333333333333,150,0.017748344370860925,500,delivery
+msrvtt_concept_top30,text_video,concept_drift,cfperm,0.3416666666666667,120,0.45995934959349594,500,delivery
+msrvtt_concept_top30,text_video,concept_drift,drperm,0.21666666666666667,120,0.3483739837398374,500,delivery
+msrvtt_concept_top30,text_video,concept_drift,rfperm,0.9866666666666667,150,0.011214128035320087,500,delivery
+msrvtt_null_top30,text_audio,no_shift,cfperm,0.05555555555555555,54,0.5126318371351485,500,thin
+msrvtt_null_top30,text_audio,no_shift,drperm,0.037037037037037035,54,0.5171694873681628,500,thin

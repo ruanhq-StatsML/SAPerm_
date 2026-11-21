@@ -342,9 +342,8 @@ def build_methods(
     }
     if include_perm_suite:
         # CFPerm / RFPerm / DRPerm — RF outcome; global tests (no attribution).
-        # n_perm defaults to 150 in CFPerm repo; never thin these below that when
-        # the board asks for ≥150.
-        n_perm_cf_dr = max(150, int(n_perm))
+        # Honor CLI ``n_perm`` (accel boards may use 40); floor at 8 for a valid p-grid.
+        n_perm_cf_dr = max(8, int(n_perm))
 
         def rfperm(X1, X2, batch):
             return float(
@@ -363,6 +362,7 @@ def build_methods(
                     batch["Y"],
                     batch["T"],
                     n_perm=n_perm_cf_dr,
+                    n_splits=3,
                     seed=int(batch.get("seed", 0)),
                     model_m="rf_regressor",
                     model_tau="rf_regressor",
@@ -379,6 +379,7 @@ def build_methods(
                     n_perm=n_perm_cf_dr,
                     seed=int(batch.get("seed", 0)),
                     model_m="rf_regressor",
+                    top_k=4,
                 )
             )
 
