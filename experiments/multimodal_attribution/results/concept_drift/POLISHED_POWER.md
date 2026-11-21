@@ -1,4 +1,4 @@
-# Concept-drift power board (polished) — 2026-11-21 07:34 UTC
+# Concept-drift power board (polished) — 2026-11-21 07:36 UTC
 
 Setting: `msrvtt_concept_top30`, PCA `top30`, $n=500$/batch, $\alpha=0.05$.
 X fixed across domains; only $Y\mid X$ drifts (`concept_shift=0.35`).
@@ -10,40 +10,42 @@ X fixed across domains; only $Y\mid X$ drifts (`concept_shift=0.35`).
 | **rfperm** | 1.000 | 0.987 | 0.933 | 150 / 150 / 150 |
 | **cfperm** | 0.600 | 0.342 | 0.400 | 120 / 120 / 120 |
 | **drperm** | 0.400 | 0.217 | 0.300 | 120 / 120 / 120 |
-| skk13 | 1.000 | 1.000 | 1.00$^\dagger$ | 120 / 120 / 10 |
-| zwl | 1.000 | 1.000 | 1.00$^\dagger$ | 120 / 120 / 10 |
-| c2st_XY | 0.083 | 0.000 | 0.00$^\dagger$ | 120 / 120 / 10 |
-| c2st_X | 0.000 | 0.000 | 0.00$^\dagger$ | 120 / 120 / 10 |
-| miles11 | 0.000 | 0.000 | 0.00$^\dagger$ | 120 / 120 / 10 |
-| xu16 | 0.000 | 0.000 | 0.00$^\dagger$ | 120 / 120 / 10 |
-| kmmd | 0.000 | 0.000 | 0.00$^\dagger$ | 120 / 120 / 10 |
-| chen10 | 0.000 | 0.000 | 0.00$^\dagger$ | 120 / 120 / 10 |
-| sri08 | 0.000 | 0.000 | 0.00$^\dagger$ | 120 / 120 / 10 |
-| bai96 | 0.000 | 0.000 | 0.00$^\dagger$ | 120 / 120 / 10 |
-| pan14 | 0.000 | 0.000 | 0.00$^\dagger$ | 120 / 120 / 10 |
-| mmd_rbf | 0.000 | 0.000 | 0.00$^\dagger$ | 120 / 120 / 10 |
+| skk13 | 1.000 | 1.000 | 1.00† | 120 / 120 / 12 |
+| zwl | 1.000 | 1.000 | 1.00† | 120 / 120 / 12 |
+| c2st_XY | 0.083 | 0.000 | 0.00† | 120 / 120 / 12 |
+| c2st_X | 0.000 | 0.000 | 0.00† | 120 / 120 / 12 |
+| miles11 | 0.000 | 0.000 | 0.00† | 120 / 120 / 12 |
+| xu16 | 0.000 | 0.000 | 0.00† | 120 / 120 / 12 |
+| kmmd | 0.000 | 0.000 | 0.00† | 120 / 120 / 12 |
+| chen10 | 0.000 | 0.000 | 0.00† | 120 / 120 / 12 |
+| sri08 | 0.000 | 0.000 | 0.00† | 120 / 120 / 12 |
+| bai96 | 0.000 | 0.000 | 0.00† | 120 / 120 / 12 |
+| pan14 | 0.000 | 0.000 | 0.00† | 120 / 120 / 12 |
+| mmd_rbf | 0.000 | 0.000 | 0.00† | 120 / 120 / 12 |
 
-$^\dagger$ preliminary ($B<30$).
+† preliminary ($B<30$).
 
-## Type-I (null `msrvtt_null_top30`, text_audio)
+## Type-I (see also `POLISHED_TYPEI.md`)
 
-| method | B | reject rate |
-|---|---:|---:|
-| **rfperm** | — | — |
-| **cfperm** | 53 | 0.057 |
-| **drperm** | 53 | 0.038 |
-| skk13 | 53 | 1.000 |
-| zwl | 53 | 0.132 |
-| c2st_XY | 53 | 0.075 |
-| c2st_X | 53 | 0.038 |
-| miles11 | 53 | 0.019 |
-| xu16 | 53 | 0.057 |
-| kmmd | 53 | 0.057 |
-| chen10 | 53 | 0.000 |
-| sri08 | 53 | 0.019 |
-| bai96 | 53 | 0.019 |
-| pan14 | 53 | 0.038 |
-| mmd_rbf | 53 | 0.019 |
+| method | T×A | T×V | A×V |
+|---|---:|---:|---:|
+| **rfperm** | 0.00† | — | — |
+| **cfperm** | 0.057 | — | — |
+| **drperm** | 0.038 | — | — |
+| skk13 | 1.000‡ | 1.000‡ | 1.000‡ |
+| zwl | 0.153‡ | 0.207‡ | 0.217‡ |
+| c2st_XY | 0.033 | 0.053 | 0.025 |
+| c2st_X | 0.040 | 0.033 | 0.050 |
+| miles11 | 0.033 | 0.067 | 0.067 |
+| xu16 | 0.033 | 0.033 | 0.025 |
+| kmmd | 0.067 | 0.080 | 0.033 |
+| chen10 | 0.000 | 0.000 | 0.000 |
+| sri08 | 0.060 | 0.073 | 0.092 |
+| bai96 | 0.060 | 0.073 | 0.092 |
+| pan14 | 0.060 | 0.093 | 0.092 |
+| mmd_rbf | 0.060 | 0.053 | 0.100‡ |
+
+† $B<30$.  ‡ reject rate $\ge 0.10$ (inflated vs $\alpha=0.05$).
 
 ## Dataset schema (standardized)
 
@@ -54,10 +56,3 @@ $^\dagger$ preliminary ($B<30$).
 | `combo` | T×A / T×V / A×V / T×A×V | modality subset |
 | `concept_shift` | scalar (board: 0.35) | strength of $Y\mid X$ drift |
 | checkpoint | `(dataset, combo, scenario, method, rep)` | stackable $B$ |
-
-## Readout
-
-- **RFPerm** saturates near 1 on all finished combos (outcome-model sensitive to $Y\mid X$).
-- **CFPerm / DRPerm** retain non-trivial power; T×A strongest among the three combos.
-- Most classical two-sample tests ≈0 under concept drift (X unchanged) — as expected.
-- **SKK13 / ZWL** hit power 1 but SKK13 also rejects under null → not calibrated here.

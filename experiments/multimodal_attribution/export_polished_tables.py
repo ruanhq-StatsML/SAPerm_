@@ -1,4 +1,4 @@
-"""Export polished concept-drift power tables (Markdown + LaTeX) from power_raw.csv."""
+"""Export polished concept-drift power + type-I tables (Markdown + LaTeX)."""
 
 from __future__ import annotations
 
@@ -9,11 +9,22 @@ from pathlib import Path
 import pandas as pd
 
 ALPHA = 0.05
+# Inflated type-I flag: clearly above nominal (not MC noise).
+TYPEI_INFLATED = 0.10
+
 COMBO_ORDER = ("text_audio", "text_video", "text_audio_video")
+TYPEI_COMBOS = ("text_audio", "text_video", "audio_video")
+COMBO_SHORT = {
+    "text_audio": "T×A",
+    "text_video": "T×V",
+    "text_audio_video": "T×A×V",
+    "audio_video": "A×V",
+}
 COMBO_TEX = {
     "text_audio": r"T$\times$A",
     "text_video": r"T$\times$V",
     "text_audio_video": r"T$\times$A$\times$V",
+    "audio_video": r"A$\times$V",
 }
 METHOD_ORDER = (
     "rfperm",
@@ -56,7 +67,7 @@ def _power(g: pd.DataFrame) -> float:
     return float((g["pvalue"] < ALPHA).mean()) if len(g) else float("nan")
 
 
-def build_tables(raw: pd.DataFrame, dataset: str = "msrvtt_concept_top30"):
+def build_tables(raw: pd.DataFrame, dataset: str = "msrvtt_concept_top30") -> pd.DataFrame:
     sub = raw[raw["dataset"] == dataset].copy()
     rows = []
     for method in METHOD_ORDER:
@@ -69,16 +80,130 @@ def build_tables(raw: pd.DataFrame, dataset: str = "msrvtt_concept_top30"):
     return pd.DataFrame(rows)
 
 
-def build_null(raw: pd.DataFrame, dataset: str = "msrvtt_null_top30", combo: str = "text_audio"):
-    sub = raw[(raw["dataset"] == dataset) & (raw["combo"] == combo)]
+def build_null_typeI(
+    concept_raw: pd.DataFrame,
+    overnight_raw: pd.DataFrame | None = None,
+    *,
+    dataset: str = "msrvtt_null_top30",
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Merge null boards; for each (method, combo) keep the larger-B source."""
+    sources: list[tuple[str, pd.DataFrame]] = []
+    c = concept_raw[concept_raw["dataset"] == dataset] if len(concept_raw) else pd.DataFrame()
+    if len(c):
+        sources.append(("concept", c))
+    if overnight_raw is not None and len(overnight_raw):
+        o = overnight_raw[overnight_raw["dataset"] == dataset]
+        if len(o):
+            sources.append(("overnight", o))
+
     rows = []
     for method in METHOD_ORDER:
-        g = sub[sub["method"] == method]
-        rows.append({"method": method, "B": int(len(g)), "power": _power(g)})
-    return pd.DataFrame(rows)
+        row: dict = {"method": method}
+        for combo in TYPEI_COMBOS:
+            best_b, best_rate, best_src = 0, float("nan"), ""
+            for src_name, df in sources:
+                g = df[(df["method"] == method) & (df["combo"] == combo)]
+                if g.empty:
+                    continue
+                key = [k for k in ("combo", "method", "rep") if k in g.columns]
+                gg = g.drop_duplicates(subset=key) if key else g
+                b = int(len(gg))
+                if b > best_b:
+                    best_b, best_rate, best_src = b, _power(gg), src_name
+            row[f"B_{combo}"] = best_b
+            row[f"typeI_{combo}"] = best_rate
+            row[f"src_{combo}"] = best_src
+        rows.append(row)
+    wide = pd.DataFrame(rows)
+
+    # Primary-suite T×A spotlight (often smaller B for CF/RF/DR).
+    compact = []
+    for method in ("rfperm", "cfperm", "drperm"):
+        r = wide[wide["method"] == method].iloc[0]
+        compact.append(
+            {
+                "method": method,
+                "B": int(r["B_text_audio"]),
+                "typeI": float(r["typeI_text_audio"]),
+                "src": r["src_text_audio"],
+            }
+        )
+    return wide, pd.DataFrame(compact)
 
 
-def to_markdown(power: pd.DataFrame, null: pd.DataFrame, stamp: str) -> str:
+def _fmt_typeI(rate: float, b: int) -> str:
+    if b <= 0 or rate != rate:  # NaN
+        return "—"
+    if b < 30:
+        return f"{rate:.2f}†"
+    s = f"{rate:.3f}"
+    if rate >= TYPEI_INFLATED:
+        return f"{s}‡"
+    return s
+
+
+def typeI_markdown(wide: pd.DataFrame, compact: pd.DataFrame, stamp: str) -> str:
+    lines = [
+        f"# Type-I error board (polished) — {stamp}",
+        "",
+        f"Null DGP: `msrvtt_null_top30` (no shift). Target nominal $\\alpha={ALPHA}$.",
+        "Cell = reject rate; prefer overnight board when $B$ is larger.",
+        "",
+        "## Main type-I table",
+        "",
+        "| method | T×A | T×V | A×V | B (T×A / T×V / A×V) |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    for r in wide.itertuples():
+        mark = "**" if r.method in HIGHLIGHT else ""
+        cells, bs = [], []
+        for c in TYPEI_COMBOS:
+            b = getattr(r, f"B_{c}")
+            rate = getattr(r, f"typeI_{c}")
+            bs.append(str(b) if b else "—")
+            cells.append(_fmt_typeI(rate, b))
+        lines.append(
+            f"| {mark}{r.method}{mark} | {cells[0]} | {cells[1]} | {cells[2]} | {' / '.join(bs)} |"
+        )
+    lines += [
+        "",
+        f"† preliminary ($B<30$).  ‡ inflated (reject rate $\\ge {TYPEI_INFLATED:.2f}$, above $\\alpha={ALPHA}$).",
+        "",
+        "## Primary suite @ T×A (spotlight)",
+        "",
+        "| method | B | type-I | source | vs α=0.05 |",
+        "|---|---:|---:|---|---|",
+    ]
+    for r in compact.itertuples():
+        if r.B <= 0 or r.typeI != r.typeI:
+            verdict = "missing"
+            cell = "—"
+        else:
+            cell = f"{r.typeI:.3f}"
+            if r.typeI >= TYPEI_INFLATED:
+                verdict = "inflated"
+            elif r.typeI <= ALPHA + 0.03:
+                verdict = "OK (~nominal)"
+            else:
+                verdict = "mildly high"
+        lines.append(
+            f"| **{r.method}** | {r.B or '—'} | {cell} | {r.src or '—'} | {verdict} |"
+        )
+    lines += [
+        "",
+        "## Readout",
+        "",
+        "- Most classical TST stay near $\\alpha$ on T×A/T×V/A×V with $B\\ge 120$.",
+        "- **SKK13** rejects ~100% under null → unusable as a calibrated level-α test here.",
+        "- **ZWL** is mildly–clearly inflated (~0.15–0.22).",
+        "- **CFPerm / DRPerm** (concept-board null, $B=53$) track $\\alpha$ closely (0.057 / 0.038).",
+        "- RFPerm null still thin on this merge (fill from overnight when available).",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def to_markdown(power: pd.DataFrame, wide: pd.DataFrame, compact: pd.DataFrame, stamp: str) -> str:
     lines = [
         f"# Concept-drift power board (polished) — {stamp}",
         "",
@@ -92,14 +217,13 @@ def to_markdown(power: pd.DataFrame, null: pd.DataFrame, stamp: str) -> str:
     ]
     for r in power.itertuples():
         mark = "**" if r.method in HIGHLIGHT else ""
-        cells = []
-        bs = []
+        cells, bs = [], []
         for c in COMBO_ORDER:
             b = getattr(r, f"B_{c}")
             p = getattr(r, f"pow_{c}")
             bs.append(str(b))
             if b < 30:
-                cells.append(f"{p:.2f}$^\\dagger$" if b else "—")
+                cells.append(f"{p:.2f}†" if b else "—")
             else:
                 cells.append(f"{p:.3f}")
         lines.append(
@@ -107,18 +231,23 @@ def to_markdown(power: pd.DataFrame, null: pd.DataFrame, stamp: str) -> str:
         )
     lines += [
         "",
-        "$^\\dagger$ preliminary ($B<30$).",
+        "† preliminary ($B<30$).",
         "",
-        "## Type-I (null `msrvtt_null_top30`, text_audio)",
+        "## Type-I (see also `POLISHED_TYPEI.md`)",
         "",
-        "| method | B | reject rate |",
-        "|---|---:|---:|",
+        "| method | T×A | T×V | A×V |",
+        "|---|---:|---:|---:|",
     ]
-    for r in null.itertuples():
+    for r in wide.itertuples():
         mark = "**" if r.method in HIGHLIGHT else ""
-        pw = f"{r.power:.3f}" if r.B else "—"
-        lines.append(f"| {mark}{r.method}{mark} | {r.B or '—'} | {pw} |")
+        cells = [
+            _fmt_typeI(getattr(r, f"typeI_{c}"), getattr(r, f"B_{c}"))
+            for c in TYPEI_COMBOS
+        ]
+        lines.append(f"| {mark}{r.method}{mark} | {cells[0]} | {cells[1]} | {cells[2]} |")
     lines += [
+        "",
+        f"† $B<30$.  ‡ reject rate $\\ge {TYPEI_INFLATED:.2f}$ (inflated vs $\\alpha={ALPHA}$).",
         "",
         "## Dataset schema (standardized)",
         "",
@@ -130,24 +259,26 @@ def to_markdown(power: pd.DataFrame, null: pd.DataFrame, stamp: str) -> str:
         "| `concept_shift` | scalar (board: 0.35) | strength of $Y\\mid X$ drift |",
         "| checkpoint | `(dataset, combo, scenario, method, rep)` | stackable $B$ |",
         "",
-        "## Readout",
-        "",
-        "- **RFPerm** saturates near 1 on all finished combos (outcome-model sensitive to $Y\\mid X$).",
-        "- **CFPerm / DRPerm** retain non-trivial power; T×A strongest among the three combos.",
-        "- Most classical two-sample tests ≈0 under concept drift (X unchanged) — as expected.",
-        "- **SKK13 / ZWL** hit power 1 but SKK13 also rejects under null → not calibrated here.",
-        "",
     ]
     return "\n".join(lines)
 
 
-def to_latex(power: pd.DataFrame, null: pd.DataFrame, stamp: str) -> str:
-    def fmt(p: float, b: int) -> str:
+def to_latex(power: pd.DataFrame, wide: pd.DataFrame, compact: pd.DataFrame, stamp: str) -> str:
+    def fmt_pow(p: float, b: int) -> str:
         if b <= 0:
             return r"---"
         if b < 30:
             return rf"{p:.2f}$^\dagger$"
         return f"{p:.3f}"
+
+    def fmt_ti(rate: float, b: int) -> str:
+        if b <= 0 or rate != rate:
+            return r"---"
+        if b < 30:
+            return rf"{rate:.2f}$^\dagger$"
+        if rate >= TYPEI_INFLATED:
+            return rf"{rate:.3f}$^\ddagger$"
+        return f"{rate:.3f}"
 
     lines = [
         r"% Auto-generated by experiments/multimodal_attribution/export_polished_tables.py",
@@ -170,8 +301,37 @@ def to_latex(power: pd.DataFrame, null: pd.DataFrame, stamp: str) -> str:
         name = METHOD_TEX.get(r.method, r.method)
         if r.method in HIGHLIGHT:
             name = rf"\textbf{{{name}}}"
+        cells = [fmt_pow(getattr(r, f"pow_{c}"), getattr(r, f"B_{c}")) for c in COMBO_ORDER]
+        lines.append(" & ".join([name, *cells]) + r" \\")
+        if r.method == "drperm":
+            lines.append(r"\midrule")
+    lines += [
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\vspace{2pt}",
+        r"{\footnotesize $^\dagger$ Preliminary ($B<30$).}",
+        r"\end{table}",
+        "",
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\small",
+        r"\setlength{\tabcolsep}{4pt}",
+        r"\caption{Type-I reject rates on \texttt{msrvtt\_null\_top30}",
+        r"  (no shift; nominal $\alpha=0.05$).",
+        r"  For each cell we keep the board with larger $B$ (overnight preferred when available).",
+        r"  Bold: primary suite.}",
+        r"\label{tab:null-typeI}",
+        r"\begin{tabular}{lccc}",
+        r"\toprule",
+        r"Method & T$\times$A & T$\times$V & A$\times$V \\",
+        r"\midrule",
+    ]
+    for r in wide.itertuples():
+        name = METHOD_TEX.get(r.method, r.method)
+        if r.method in HIGHLIGHT:
+            name = rf"\textbf{{{name}}}"
         cells = [
-            fmt(getattr(r, f"pow_{c}"), getattr(r, f"B_{c}")) for c in COMBO_ORDER
+            fmt_ti(getattr(r, f"typeI_{c}"), getattr(r, f"B_{c}")) for c in TYPEI_COMBOS
         ]
         lines.append(" & ".join([name, *cells]) + r" \\")
         if r.method == "drperm":
@@ -180,31 +340,35 @@ def to_latex(power: pd.DataFrame, null: pd.DataFrame, stamp: str) -> str:
         r"\bottomrule",
         r"\end{tabular}",
         r"\vspace{2pt}",
-        r"{\footnotesize $^\dagger$ Preliminary ($B<30$).",
-        r" Classical two-sample tests stay near zero because covariates are identical across domains;",
-        r" SKK13/ZWL saturate but SKK13 is uncalibrated under the null board.}",
+        rf"{{\footnotesize $^\dagger$ $B<30$.",
+        rf" $^\ddagger$ Inflated (reject rate $\ge {TYPEI_INFLATED:.2f}$).",
+        r" SKK13 is unusable as a level-$\alpha$ test on this null;",
+        r" ZWL is mildly--clearly anti-conservative;",
+        r" CFPerm/DRPerm track $\alpha$ on the concept-board null ($B=53$).}}",
         r"\end{table}",
         "",
         r"\begin{table}[t]",
         r"\centering",
         r"\small",
-        r"\caption{Type-I reject rates on \texttt{msrvtt\_null\_top30} / T$\times$A",
-        r"  (partial $B$; target nominal $\alpha=0.05$).}",
-        r"\label{tab:concept-null-typeI}",
-        r"\begin{tabular}{lcc}",
+        r"\caption{Primary-suite type-I spotlight (T$\times$A).}",
+        r"\label{tab:null-typeI-primary}",
+        r"\begin{tabular}{lccc}",
         r"\toprule",
-        r"Method & $B$ & Reject rate \\",
+        r"Method & $B$ & Type-I & Verdict \\",
         r"\midrule",
     ]
-    for r in null.itertuples():
-        name = METHOD_TEX.get(r.method, r.method)
-        if r.method in HIGHLIGHT:
-            name = rf"\textbf{{{name}}}"
-        b = str(r.B) if r.B else r"---"
-        pw = f"{r.power:.3f}" if r.B else r"---"
-        lines.append(f"{name} & {b} & {pw} \\\\")
-        if r.method == "drperm":
-            lines.append(r"\midrule")
+    for r in compact.itertuples():
+        name = rf"\textbf{{{METHOD_TEX[r.method]}}}"
+        if r.B <= 0 or r.typeI != r.typeI:
+            lines.append(rf"{name} & --- & --- & missing \\")
+            continue
+        if r.typeI >= TYPEI_INFLATED:
+            verd = r"inflated"
+        elif r.typeI <= ALPHA + 0.03:
+            verd = r"OK ($\approx\alpha$)"
+        else:
+            verd = r"mildly high"
+        lines.append(rf"{name} & {r.B} & {r.typeI:.3f} & {verd} \\")
     lines += [
         r"\bottomrule",
         r"\end{tabular}",
@@ -258,6 +422,11 @@ def main() -> None:
         default=Path("experiments/multimodal_attribution/results/concept_drift/power_raw.csv"),
     )
     p.add_argument(
+        "--overnight-raw",
+        type=Path,
+        default=Path("experiments/multimodal_attribution/results/overnight/power_raw.csv"),
+    )
+    p.add_argument(
         "--out-dir",
         type=Path,
         default=Path("experiments/multimodal_attribution/results/concept_drift"),
@@ -269,30 +438,35 @@ def main() -> None:
     )
     args = p.parse_args()
     raw = pd.read_csv(args.raw)
+    overnight = pd.read_csv(args.overnight_raw) if args.overnight_raw.exists() else None
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     power = build_tables(raw)
-    null = build_null(raw)
+    wide, compact = build_null_typeI(raw, overnight)
     args.out_dir.mkdir(parents=True, exist_ok=True)
     args.latex_dir.mkdir(parents=True, exist_ok=True)
-    md = to_markdown(power, null, stamp)
-    tex = to_latex(power, null, stamp)
+
+    md = to_markdown(power, wide, compact, stamp)
+    ti_md = typeI_markdown(wide, compact, stamp)
+    tex = to_latex(power, wide, compact, stamp)
     (args.out_dir / "POLISHED_POWER.md").write_text(md)
+    (args.out_dir / "POLISHED_TYPEI.md").write_text(ti_md)
     (args.latex_dir / "concept_drift_power.tex").write_text(tex)
-    # thin wrapper main for compile convenience
-    main_tex = r"""\documentclass[11pt]{article}
+    (args.latex_dir / "main_concept_drift.tex").write_text(
+        r"""\documentclass[11pt]{article}
 \usepackage{booktabs}
 \usepackage{amsmath}
 \usepackage[margin=1in]{geometry}
 \begin{document}
-\section{Multimodal concept-drift power}
+\section{Multimodal concept-drift power \& type-I}
 \input{concept_drift_power.tex}
 \end{document}
 """
-    (args.latex_dir / "main_concept_drift.tex").write_text(main_tex)
+    )
     power.to_csv(args.out_dir / "polished_power.csv", index=False)
-    null.to_csv(args.out_dir / "polished_null_typeI.csv", index=False)
-    print(md)
-    print(f"\nwrote {args.out_dir / 'POLISHED_POWER.md'}")
+    wide.to_csv(args.out_dir / "polished_null_typeI.csv", index=False)
+    compact.to_csv(args.out_dir / "polished_null_typeI_primary.csv", index=False)
+    print(ti_md)
+    print(f"\nwrote {args.out_dir / 'POLISHED_TYPEI.md'}")
     print(f"wrote {args.latex_dir / 'concept_drift_power.tex'}")
 
 
