@@ -68,3 +68,9 @@ Streams (4 cores, 1 job each):
 - concept TA: CF/RF/DR done; classical ~90/120
 - CF TV~114, DR TV~68; MSR AV~109/120; emotion mosei still B=10 (queued)
 - ETA classical TA ~1h; MSR AV ~30min then TAV
+
+## classical-msr-restored-check (2026-11-21 02:45 UTC)
+
+- All 4 streams healthy (raw age <3min)
+- classical TA **100/120**; MSR AV **112/120**
+- CF TAV~12; DR TV~81; CF TV done
