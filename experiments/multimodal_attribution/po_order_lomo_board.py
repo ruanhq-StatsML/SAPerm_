@@ -10,7 +10,8 @@ Computes, with ``outcome/tau/nu = rf_regressor``:
 Example
 -------
 python -m experiments.multimodal_attribution.po_order_lomo_board \\
-  --n 400 --n-rep 12 --out-dir experiments/multimodal_attribution/results/po_order_lomo
+  --n 400 --n-rep 12 --n-jobs 4 \\
+  --out-dir experiments/multimodal_attribution/results/po_order_lomo
 """
 
 from __future__ import annotations
@@ -20,11 +21,12 @@ import json
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 import zlib
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -147,6 +149,86 @@ def _rf_triple(batch: dict, seed: int) -> dict:
     }
 
 
+def _meta_shift(spec: Optional[DatasetSpec]) -> Tuple[float, str]:
+    if spec is None or spec.scenario != "interaction_shift":
+        return 0.0, ""
+    return float(spec.interaction_shift), "_".join(spec.interact_pair)
+
+
+def _eval_unit(
+    *,
+    dataset: str,
+    scenario: str,
+    band: str,
+    rep: int,
+    n: int,
+    seed_base: int,
+    spec: Optional[DatasetSpec],
+    mosei: bool,
+    mosei_max_rows: int,
+    need_pairs: Sequence[str],
+    need_i3: bool,
+) -> List[dict]:
+    """One (dataset, rep) unit: requested I2 pairs + optional I3."""
+    s = seed_base
+    if mosei:
+        from experiments.multimodal_attribution.emotion_datasets import (
+            prepare_mosei_embeddings,
+            sample_emotion_batch,
+        )
+
+        pack = prepare_mosei_embeddings(max_rows=mosei_max_rows)
+        batch = sample_emotion_batch(pack, n=n, band=band, seed=s, combo=MODS)
+        ishift, ipair = 0.0, ""
+    else:
+        assert spec is not None
+        batch = make_dataset_batch(spec, MODS, n=n, seed=s)
+        ishift, ipair = _meta_shift(spec)
+
+    out_rows: List[dict] = []
+    for pair_name in need_pairs:
+        a, b = pair_name.split("_", 1)
+        t0 = time.time()
+        rec = _rf_pair(batch, a, b, seed=s + 17)
+        rec.update(
+            {
+                "dataset": dataset,
+                "scenario": scenario,
+                "band": band,
+                "rep": rep,
+                "kind": "I2",
+                "outcome_model": "rf_regressor",
+                "n": n,
+                "seed": s,
+                "seconds": time.time() - t0,
+                "interaction_shift": ishift,
+                "interact_pair": ipair,
+            }
+        )
+        out_rows.append(rec)
+    if need_i3:
+        t0 = time.time()
+        rec = _rf_triple(batch, seed=s + 31)
+        rec.update(
+            {
+                "dataset": dataset,
+                "scenario": scenario,
+                "band": band,
+                "rep": rep,
+                "kind": "I3",
+                "pair": "text_audio_video",
+                "outcome_model": "rf_regressor",
+                "n": n,
+                "seed": s,
+                "seconds": time.time() - t0,
+                "interaction_shift": ishift,
+                "interact_pair": ipair,
+            }
+        )
+        out_rows.append(rec)
+    return out_rows
+
+
 def run_po_grid(
     *,
     n: int,
@@ -155,6 +237,7 @@ def run_po_grid(
     out_dir: Path,
     include_mosei: bool,
     mosei_max_rows: int,
+    n_jobs: int = 4,
 ) -> pd.DataFrame:
     out_dir.mkdir(parents=True, exist_ok=True)
     raw_path = out_dir / "po_order_raw.csv"
@@ -163,142 +246,105 @@ def run_po_grid(
     if raw_path.exists():
         prev = pd.read_csv(raw_path)
         for r in prev.itertuples():
-            done.add((str(r.dataset), int(r.rep), str(r.kind), str(getattr(r, "pair", ""))))
+            kind = str(r.kind)
+            # I3 rows store pair=text_audio_video; normalize resume key to "".
+            pair = "" if kind == "I3" else str(getattr(r, "pair", "") or "")
+            done.add((str(r.dataset), int(r.rep), kind, pair))
         rows = prev.to_dict("records")
-
-    def _flush() -> None:
-        pd.DataFrame(rows).to_csv(raw_path, index=False)
 
     def log(msg: str) -> None:
         print(f"[{time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
-    specs = _po_specs()
-    for spec in specs:
+    def flush() -> None:
+        pd.DataFrame(rows).to_csv(raw_path, index=False)
+
+    tasks: List[Dict[str, Any]] = []
+    for spec in _po_specs():
         for rep in range(n_rep):
             s = seed + 1000 * (zlib.adler32(spec.name.encode()) % 10_000) + rep
-            batch = make_dataset_batch(spec, MODS, n=n, seed=s)
-            # pairs
-            for a, b in PAIRS:
-                key = (spec.name, rep, "I2", f"{a}_{b}")
-                if key in done:
-                    continue
-                t0 = time.time()
-                rec = _rf_pair(batch, a, b, seed=s + 17)
-                rec.update(
-                    {
-                        "dataset": spec.name,
-                        "scenario": spec.scenario,
-                        "band": spec.band,
-                        "rep": rep,
-                        "kind": "I2",
-                        "outcome_model": "rf_regressor",
-                        "n": n,
-                        "seed": s,
-                        "seconds": time.time() - t0,
-                        "interaction_shift": float(spec.interaction_shift)
-                        if spec.scenario == "interaction_shift"
-                        else 0.0,
-                        "interact_pair": "_".join(spec.interact_pair)
-                        if spec.scenario == "interaction_shift"
-                        else "",
-                    }
+            need_pairs = [
+                f"{a}_{b}"
+                for a, b in PAIRS
+                if (spec.name, rep, "I2", f"{a}_{b}") not in done
+            ]
+            need_i3 = (spec.name, rep, "I3", "") not in done
+            if not need_pairs and not need_i3:
+                continue
+            tasks.append(
+                dict(
+                    dataset=spec.name,
+                    scenario=spec.scenario,
+                    band=spec.band,
+                    rep=rep,
+                    n=n,
+                    seed_base=s,
+                    spec=spec,
+                    mosei=False,
+                    mosei_max_rows=mosei_max_rows,
+                    need_pairs=need_pairs,
+                    need_i3=need_i3,
                 )
-                rows.append(rec)
-                done.add(key)
-                log(f"{spec.name} rep={rep} I2({a}_{b})={rec['I2']:.4f} Ical={rec['I2_cal']:.4f}")
-                _flush()
-            # triple
-            key3 = (spec.name, rep, "I3", "")
-            if key3 not in done:
-                t0 = time.time()
-                rec = _rf_triple(batch, seed=s + 31)
-                rec.update(
-                    {
-                        "dataset": spec.name,
-                        "scenario": spec.scenario,
-                        "band": spec.band,
-                        "rep": rep,
-                        "kind": "I3",
-                        "pair": "text_audio_video",
-                        "outcome_model": "rf_regressor",
-                        "n": n,
-                        "seed": s,
-                        "seconds": time.time() - t0,
-                        "interaction_shift": float(spec.interaction_shift)
-                        if spec.scenario == "interaction_shift"
-                        else 0.0,
-                        "interact_pair": "_".join(spec.interact_pair)
-                        if spec.scenario == "interaction_shift"
-                        else "",
-                    }
-                )
-                rows.append(rec)
-                done.add(key3)
-                log(f"{spec.name} rep={rep} I3={rec['I3']:.4f} I3cal={rec['I3_cal']:.4f}")
-                _flush()
+            )
 
     if include_mosei:
-        from experiments.multimodal_attribution.emotion_datasets import (
-            prepare_mosei_embeddings,
-            sample_emotion_batch,
-        )
-
-        pack = prepare_mosei_embeddings(max_rows=mosei_max_rows)
         for rep in range(n_rep):
             s = seed + 50_000 + rep
-            batch = sample_emotion_batch(
-                pack, n=n, band="pc31_100", seed=s, combo=MODS
+            need_pairs = [
+                f"{a}_{b}"
+                for a, b in PAIRS
+                if ("mosei_train_test", rep, "I2", f"{a}_{b}") not in done
+            ]
+            need_i3 = ("mosei_train_test", rep, "I3", "") not in done
+            if not need_pairs and not need_i3:
+                continue
+            tasks.append(
+                dict(
+                    dataset="mosei_train_test",
+                    scenario="real_train_test",
+                    band="pc31_100",
+                    rep=rep,
+                    n=n,
+                    seed_base=s,
+                    spec=None,
+                    mosei=True,
+                    mosei_max_rows=mosei_max_rows,
+                    need_pairs=need_pairs,
+                    need_i3=need_i3,
+                )
             )
-            for a, b in PAIRS:
-                key = ("mosei_train_test", rep, "I2", f"{a}_{b}")
+
+    log(f"PO grid: {len(tasks)} units remaining, n_jobs={n_jobs}, n={n}, n_rep={n_rep}")
+    if not tasks:
+        return pd.DataFrame(rows)
+
+    # Chunk so we checkpoint periodically while saturating all cores.
+    chunk = max(n_jobs, 4)
+    for start in range(0, len(tasks), chunk):
+        batch_tasks = tasks[start : start + chunk]
+        log(f"dispatch {start}:{start + len(batch_tasks)} / {len(tasks)}")
+        parts = Parallel(n_jobs=n_jobs, prefer="processes", verbose=5)(
+            delayed(_eval_unit)(**t) for t in batch_tasks
+        )
+        for part in parts:
+            for rec in part:
+                kind = rec["kind"]
+                pair_key = "" if kind == "I3" else str(rec.get("pair", "") or "")
+                key = (rec["dataset"], int(rec["rep"]), kind, pair_key)
                 if key in done:
                     continue
-                t0 = time.time()
-                rec = _rf_pair(batch, a, b, seed=s + 17)
-                rec.update(
-                    {
-                        "dataset": "mosei_train_test",
-                        "scenario": "real_train_test",
-                        "band": "pc31_100",
-                        "rep": rep,
-                        "kind": "I2",
-                        "outcome_model": "rf_regressor",
-                        "n": n,
-                        "seed": s,
-                        "seconds": time.time() - t0,
-                        "interaction_shift": 0.0,
-                        "interact_pair": "",
-                    }
-                )
                 rows.append(rec)
                 done.add(key)
-                log(f"mosei rep={rep} I2({a}_{b})={rec['I2']:.4f} Ical={rec['I2_cal']:.4f}")
-                _flush()
-            key3 = ("mosei_train_test", rep, "I3", "")
-            if key3 not in done:
-                t0 = time.time()
-                rec = _rf_triple(batch, seed=s + 31)
-                rec.update(
-                    {
-                        "dataset": "mosei_train_test",
-                        "scenario": "real_train_test",
-                        "band": "pc31_100",
-                        "rep": rep,
-                        "kind": "I3",
-                        "pair": "text_audio_video",
-                        "outcome_model": "rf_regressor",
-                        "n": n,
-                        "seed": s,
-                        "seconds": time.time() - t0,
-                        "interaction_shift": 0.0,
-                        "interact_pair": "",
-                    }
-                )
-                rows.append(rec)
-                done.add(key3)
-                log(f"mosei rep={rep} I3={rec['I3']:.4f} I3cal={rec['I3_cal']:.4f}")
-                _flush()
-
+                if rec["kind"] == "I2":
+                    log(
+                        f"{rec['dataset']} rep={rec['rep']} I2({rec['pair']})="
+                        f"{rec['I2']:.4f} Ical={rec['I2_cal']:.4f}"
+                    )
+                else:
+                    log(
+                        f"{rec['dataset']} rep={rec['rep']} I3={rec['I3']:.4f} "
+                        f"I3cal={rec['I3_cal']:.4f}"
+                    )
+        flush()
     return pd.DataFrame(rows)
 
 
@@ -504,6 +550,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--n", type=int, default=400)
     p.add_argument("--n-rep", type=int, default=12)
+    p.add_argument("--n-jobs", type=int, default=4, help="Parallel units (use all cores)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument(
         "--out-dir",
@@ -543,6 +590,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             out_dir=out_dir,
             include_mosei=(args.include_mosei and not args.no_mosei),
             mosei_max_rows=args.mosei_max_rows,
+            n_jobs=max(1, int(args.n_jobs)),
         )
         s2, s3 = summarize_po(raw)
         s2.to_csv(out_dir / "I2_summary.csv", index=False)
@@ -557,6 +605,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     meta = {
         "n": args.n,
         "n_rep": args.n_rep,
+        "n_jobs": int(args.n_jobs),
         "outcome_model": "rf_regressor",
         "power_csvs": [str(x) for x in power_paths],
         "include_mosei": bool(args.include_mosei and not args.no_mosei),
