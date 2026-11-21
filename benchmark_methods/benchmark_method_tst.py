@@ -522,29 +522,33 @@ def compute_center(xy, n, m, ntoorderminus=2):
         return float(c)
 
 
-def zwl_test(X, Y, order):
+def zwl_test(X, Y, order=1, clip_val: float = 1e-8):
+    """Zhang–Wu–Liu style coordinate-wise t^2 mean test with Edgeworth center."""
+    X = np.asarray(X, dtype=float)
+    Y = np.asarray(Y, dtype=float)
     n1, p = X.shape
-    m = Y.shape[0]
-    mean1 = (np.ones(n) @ X)/n1
-    mean2 = (np.ones(m) @ Y)/n2
-    scale_X = X - mean1 
-    scale_Y = Y - mean2
-    var1 = np.ones(n) @ scale_X **2/(n1-1)
-    var2 = np.ones(m) @ scale_Y **2/(n2-1)
-    Sp = np.sqrt(var1/n1 + var2/n2)
-    t_sq = ((mean1 - mean2)/Sp)**2
-    Tn = np.mean(t_sq)
-    cov_XY = np.ones(p) %*% 
-    var_hat = np.sum(cov_XY)/(p**2)
-    comb = np.vstack([X, Y])
+    n2 = Y.shape[0]
+    mean1 = X.mean(axis=0)
+    mean2 = Y.mean(axis=0)
+    var1 = X.var(axis=0, ddof=1)
+    var2 = Y.var(axis=0, ddof=1)
+    Sp = np.sqrt(np.maximum(var1 / n1 + var2 / n2, clip_val))
+    t_sq = ((mean1 - mean2) / Sp) ** 2
+    Tn = float(np.mean(t_sq))
+    # Pairwise correlation of the coordinate-wise t-statistics under Gaussianity
+    # is approximated via the pooled correlation of the raw coordinates.
+    pooled = np.vstack([X, Y])
+    corr = np.corrcoef(pooled, rowvar=False)
+    corr = np.nan_to_num(corr, nan=0.0)
+    var_hat = float(np.mean(corr ** 2))
+    var_hat = max(var_hat, clip_val)
     center_vec = np.apply_along_axis(
-        compute_center, 0, 
-        comb, n = n, m = m, ntoorderminus = order
-        )
-    center_est = np.mean(center_vec)
-    test_stat = (Tn - center_est)/np.sqrt(var_hat)
-    pvalue = 2 * (1 - norm.cdf(np.abs(t_stat)))
-    return test_stat, pvalue, Tn, var
+        compute_center, 0, pooled, n=n1, m=n2, ntoorderminus=int(order)
+    )
+    center_est = float(np.mean(center_vec))
+    test_stat = (Tn - center_est) / np.sqrt(var_hat)
+    pvalue = float(2.0 * (1.0 - norm.cdf(abs(test_stat))))
+    return test_stat, pvalue, Tn, var_hat
 
 
 '''
@@ -554,47 +558,55 @@ A powerful and adaptive association test for rare variants
 '''
 
 
-def stat_SPU(X, Y, power_list, clip_val = 1e-3):
+def stat_SPU(X, Y, power_list, clip_val=1e-3):
     n1, p = X.shape
     n2 = Y.shape[0]
-    cov_X = np.cov(X, rowvar = False)
-    cov_Y = np.cov(Y, rowvar = False)
-    diff = np.mean(X, axis = 0) - np.mean(Y, axis = 0)
+    cov_X = np.cov(X, rowvar=False)
+    cov_Y = np.cov(Y, rowvar=False)
+    diff = np.mean(X, axis=0) - np.mean(Y, axis=0)
     Ts = np.zeros(len(power_list))
     for j in range(len(power_list)):
         if power_list[j] == np.inf:
-            diag1 = np.diag(cov_X)
-            diag1 = np.maximum(diag1, clip_val)
-            diag2 = np.diag(cov_Y)
-            diag2 = np.maximum(diag2, clip_val)
-            Ts[j] = max(diff**2/(diag1/n1 + diag2/n2))
+            diag1 = np.maximum(np.diag(cov_X), clip_val)
+            diag2 = np.maximum(np.diag(cov_Y), clip_val)
+            Ts[j] = np.max(diff ** 2 / (diag1 / n1 + diag2 / n2))
         else:
-            Ts[j] = np.sum(diff**power_list[j])
+            g = float(power_list[j])
+            Ts[j] = np.sum(np.abs(diff) ** g)
     return Ts
 
-def pan14(X, Y, n_perm = 100, power_list = [1,2,3,4,5,6,np.inf]):
-    n1, p = X.shape 
+
+def pan14(X, Y, n_perm=100, power_list=None):
+    if power_list is None:
+        power_list = [1, 2, 3, 4, 5, 6, np.inf]
+    X = np.asarray(X, dtype=float)
+    Y = np.asarray(Y, dtype=float)
+    n1, p = X.shape
     n2 = Y.shape[0]
     T_SPU_0 = stat_SPU(X, Y, power_list)
     T_SPU_resam = np.zeros((n_perm, len(power_list)))
-    cov_est_X = np.cov(X, rowvar = False)
-    cov_est_Y = np.cov(Y, rowvar = False)
+    cov_est_X = np.cov(X, rowvar=False)
+    cov_est_Y = np.cov(Y, rowvar=False)
+    # Stabilize covariance for MVN resampling.
+    cov_est_X = cov_est_X + 1e-6 * np.eye(p)
+    cov_est_Y = cov_est_Y + 1e-6 * np.eye(p)
     for b in range(n_perm):
-        X_b = multivariate_normal.rvs(mean = np.zeros(p), cov = cov_est_X, size = n1)
-        Y_b = multivariate_normal.rvs(mean = np.zeros(p), cov = cov_est_Y, size = n2)
-        T_SPU_resam[b, :] = stat_SPU(X, Y, power_list)
-    p_spu = np.zeros(len(power_list))#permutation p-value
-    T_aspu_resam = 
+        X_b = multivariate_normal.rvs(mean=np.zeros(p), cov=cov_est_X, size=n1)
+        Y_b = multivariate_normal.rvs(mean=np.zeros(p), cov=cov_est_Y, size=n2)
+        if n1 == 1:
+            X_b = np.atleast_2d(X_b)
+        if n2 == 1:
+            Y_b = np.atleast_2d(Y_b)
+        T_SPU_resam[b, :] = stat_SPU(X_b, Y_b, power_list)
+    p_spu = np.zeros(len(power_list))
+    T_aspu_resam = np.ones(n_perm)
     for i in range(len(power_list)):
-        p_spu[i] = ((np.sum(T_SPU_resam[:, i]) > abs(T_SPU_0[i]))+1)/(n_perm + 1)
-        p_spu_resam = (n_perm + 1 - rankdata(np.abs(T_SPU_resam[:, i])))/n_perm
-        if i == 1:
-            T_aspu_resam = p_spu_resam
-        else:
-            T_aspu_resam[np.where(T_aspu_resam > p_spu_resam)[0]] = p_spu_resam[np.where(T_aspu_resam > p_spu_resam)[0]]
-    T_aSPU_0 = min(p_spu)
-    p_aspu = (np.sum(T_aspu_resam < T_aSPU_0) + 1)/(n_perm + 1)#asymptotic p-value
-    return p_spu, p_aspu
+        p_spu[i] = (np.sum(np.abs(T_SPU_resam[:, i]) >= abs(T_SPU_0[i])) + 1.0) / (n_perm + 1.0)
+        p_spu_resam = (n_perm + 1.0 - rankdata(np.abs(T_SPU_resam[:, i]))) / n_perm
+        T_aspu_resam = np.minimum(T_aspu_resam, p_spu_resam)
+    T_aSPU_0 = float(np.min(p_spu))
+    p_aspu = (np.sum(T_aspu_resam <= T_aSPU_0) + 1.0) / (n_perm + 1.0)
+    return p_spu, float(p_aspu)
 
 #Testing:
 #df1 = multivariate_normal.rvs(mean = np.zeros(10), cov = np.random.random((10,10))+ np.diag(np.ones(10))*10, size= 100)
@@ -631,133 +643,3 @@ def skk_test(X, Y):
 #df1 = multivariate_normal.rvs(mean = np.zeros(10), cov = np.random.random((10,10))+ np.diag(np.ones(10))*10, size = 100)
 #df2 = multivariate_normal.rvs(mean = np.zeros(10), cov = np.random.random((10,10))+ np.diag(np.ones(10))*10, size = 100)
 #TS_value, p_value = skk_test(X, Y)
-
-
-
-
-
-def KLR_CV(X, Y, X_pred, Y_pred, lambda_seq, sigma_seq, cv = 5):
-"""
-X:         (n, p)
-Y:         (n, )
-X_pred:    (n_new, p)
-Y_pred:    (n_new, )
-lambdaseq: C = 1/lambda
-sigmaseq:  gamma(RBF kernel)
-"""
-    Y = np.asarray(Y).astype(float)
-    Y_pred = np.asarray(Y_pred).astype(float)
-    param_grid = {
-        'rbf__gamma': sigma_seq,
-        'logreg__C' : [1.0/lam for lam in lambda_seq]
-    }
-    n_components = min(100, X.shape[1] * 2) if X.shape[1] < 100 else 100
-    pipe = Pipeline([
-        ('rbf': RBFSampler(n_components = n_components, random_state = 24)),
-        ('logreg': LogisticRegression(solver = 'lbfgs', max_iter = 1000))
-    ])
-    #Cross-Validation:
-    grid = GridSearchCV(pipe, param_grid, cv = cv, scoring = 'neg_log_loss',
-        n_jobs = -1)
-    grid.fit(X, Y)
-    #Finding the best Model:
-    best = grid.best_estimator_
-    best_C = grid.best_params_['logreg__C']
-    best_gamma = grid.best_params_['rbf__gamma']
-    best_lambda = 1.0/best_C
-    #Predict Probabilities on X_pred:
-    prob_pre = best.predict_proba(X_pred)[:, 1]
-    prob_pre = np.clip(prob_pre, 0.01, 0.99)
-    #Compute the Log-loss for each of the combination:
-    cv_results = grid.cv_results_
-    for i, lam in enumerate(lambda_seq):
-        for j, sigma in enumerate(sigma_seq):
-            idx = np.where((cv_results['param_logreg__C'] == 1.0/lam) & 
-                (cv_results['param_rbf__gamma'] == sigma))[0]
-            if len(idx) > 0:
-                centropy[i, j] = -cv_results['mean_result'][idx[0]]
-            else:
-                centropy[i, j] = np.nan   
-    return {
-    'prob': prob_pre,
-    'lambda': best_lambda,
-    'sigma': best_gamma,
-    'centropy': centropy
-    }
-
-
-
-#rewrite it as prange here!
-from numba import njit, prange
-
-@jit(nopython=True)
-def accelerated_loop(arr):
-    total = 0.0
-    for i in range(len(arr)):
-        total += np.sqrt(i)
-    return total
-accelerated_loop(np.arange(1000000))
-
-
-from numba import njit, prange
-@njit(parallel = True)
-def parallel_loop(n):
-    result = np.zeros(n)
-    for i in prange(n):
-        result[i] = i ** (0.1)
-    return result
-
-parallel_loop(1000000)
-
-@njit(parallel = True, fastmath = True)#allow Numba to perform mathematically
-#aggressive optimizations,like reordering operations.
-#manual fusion: 
-
-#accelerate the for loop here, with mathematically aggressive optimizaions.
-#like reordering operations.
-numba.prange(10000)
-
-#fastmath = True, min(), max()
-
-from sklearn.kernel_approximation import RBFSampler
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCVs
-from sklearn.metrics import log_loss
-from sklearn.linear_model import LogisticRegression
-#cv_results['param_logreg__C']
-#cv_results['param_rbf__gamma']
-#cv_results['param_logreg__C']
-
-
-
-
-#automatic for the numba computing here!
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

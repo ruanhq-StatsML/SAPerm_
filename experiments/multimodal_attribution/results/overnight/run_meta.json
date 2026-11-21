@@ -1,0 +1,166 @@
+{
+  "n": 500,
+  "n_rep": 40,
+  "n_perm": 40,
+  "alpha": 0.05,
+  "seed": 0,
+  "with_po_interact": true,
+  "datasets": [
+    {
+      "name": "msrvtt_null_top30",
+      "scenario": "null",
+      "band": "top30",
+      "shift_modality": "video",
+      "interact_pair": [
+        "text",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_null_pc30_100",
+      "scenario": "null",
+      "band": "pc30_100",
+      "shift_modality": "video",
+      "interact_pair": [
+        "text",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "dims": [
+        160,
+        160,
+        160
+      ]
+    },
+    {
+      "name": "msrvtt_mean_video_top30",
+      "scenario": "mean_shift",
+      "band": "top30",
+      "shift_modality": "video",
+      "interact_pair": [
+        "text",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_mean_audio_top30",
+      "scenario": "mean_shift",
+      "band": "top30",
+      "shift_modality": "audio",
+      "interact_pair": [
+        "text",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_interact_text_video_top30",
+      "scenario": "interaction_shift",
+      "band": "top30",
+      "shift_modality": "video",
+      "interact_pair": [
+        "text",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_interact_text_audio_top30",
+      "scenario": "interaction_shift",
+      "band": "top30",
+      "shift_modality": "video",
+      "interact_pair": [
+        "text",
+        "audio"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_interact_audio_video_top30",
+      "scenario": "interaction_shift",
+      "band": "top30",
+      "shift_modality": "video",
+      "interact_pair": [
+        "audio",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_interact_text_video_pc30_100",
+      "scenario": "interaction_shift",
+      "band": "pc30_100",
+      "shift_modality": "video",
+      "interact_pair": [
+        "text",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "dims": [
+        160,
+        160,
+        160
+      ]
+    }
+  ],
+  "combos": {
+    "text_audio": [
+      "text",
+      "audio"
+    ],
+    "text_video": [
+      "text",
+      "video"
+    ],
+    "audio_video": [
+      "audio",
+      "video"
+    ],
+    "text_audio_video": [
+      "text",
+      "audio",
+      "video"
+    ]
+  },
+  "started_at": "2026-11-19T15:32:33Z"
+}

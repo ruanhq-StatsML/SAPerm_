@@ -12,6 +12,8 @@ from experiments.deep_active_sampling.ood_vimp import (
     RF_domain_classifier,
     brier_L2,
     cauchy_combine_pval,
+    higher_order_interaction_PO_risk,
+    multimodal_block_attribution,
     ood_vimp_wrapper,
     permuCATE_calPO,
     permuCATE_fit_nuisance,
@@ -23,6 +25,7 @@ from experiments.deep_active_sampling.ood_vimp import (
     pool_feature_weights,
     pred_vimp_wrapper,
     pred_vimp_wrapper_loco,
+    third_order_interaction_PO_risk,
 )
 
 __all__ = [
@@ -31,6 +34,8 @@ __all__ = [
     "RF_domain_classifier",
     "brier_L2",
     "cauchy_combine_pval",
+    "higher_order_interaction_PO_risk",
+    "multimodal_block_attribution",
     "ood_vimp_wrapper",
     "permuCATE_calPO",
     "permuCATE_fit_nuisance",
@@ -42,4 +47,5 @@ __all__ = [
     "pool_feature_weights",
     "pred_vimp_wrapper",
     "pred_vimp_wrapper_loco",
+    "third_order_interaction_PO_risk",
 ]
