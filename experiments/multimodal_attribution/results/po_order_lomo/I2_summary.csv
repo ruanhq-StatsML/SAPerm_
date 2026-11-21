@@ -1,0 +1,10 @@
+dataset,scenario,band,pair,mean_I2,mean_I2_cal,frac_I2_pos,frac_I2_cal_pos,n_rep
+msrvtt_concept_pc31_100,concept_drift,pc31_100,audio_video,99.8836401076246,-1020.4265308622854,1.0,0.0,12
+msrvtt_concept_pc31_100,concept_drift,pc31_100,text_audio,115.87185004557311,-1004.438320924337,1.0,0.0,12
+msrvtt_concept_pc31_100,concept_drift,pc31_100,text_video,113.45187648840204,-1006.858294481508,1.0,0.0,12
+msrvtt_concept_top30,concept_drift,top30,audio_video,10.341841048830583,-2.2535317499455525,1.0,0.0,12
+msrvtt_concept_top30,concept_drift,top30,text_audio,10.019374848708132,-2.575997950068004,1.0,0.0,12
+msrvtt_concept_top30,concept_drift,top30,text_video,9.779099719305972,-2.8162730794701645,1.0,0.0,12
+msrvtt_null_top30,no_shift,top30,audio_video,11.951305180741874,-11.724488168009914,1.0,0.0,12
+msrvtt_null_top30,no_shift,top30,text_audio,13.8218898926128,-9.853903456138989,1.0,0.08333333333333333,12
+msrvtt_null_top30,no_shift,top30,text_video,12.758545305392554,-10.917248043359237,1.0,0.0,12

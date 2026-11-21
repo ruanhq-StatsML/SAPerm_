@@ -11,11 +11,25 @@ Definitions (leave-out PO risk $R(S)$ = held-out PO after dropping block set $S$
 
 ## 1. Pairwise $I^{(2)}$ / $I^{(2)}_{\mathrm{cal}}$ (RF)
 
-_No I2 rows yet._
+| dataset | scenario | pair | mean $I^{(2)}$ | mean $I^{(2)}_{\mathrm{cal}}$ | frac $I>0$ | frac $I_{\mathrm{cal}}>0$ | B |
+|---|---|---|---:|---:|---:|---:|---:|
+| `msrvtt_concept_pc31_100` | concept_drift | audio_video | 99.884 | -1020.427 | 1.00 | 0.00 | 12 |
+| `msrvtt_concept_pc31_100` | concept_drift | text_audio | 115.872 | -1004.438 | 1.00 | 0.00 | 12 |
+| `msrvtt_concept_pc31_100` | concept_drift | text_video | 113.452 | -1006.858 | 1.00 | 0.00 | 12 |
+| `msrvtt_concept_top30` | concept_drift | audio_video | 10.342 | -2.254 | 1.00 | 0.00 | 12 |
+| `msrvtt_concept_top30` | concept_drift | text_audio | 10.019 | -2.576 | 1.00 | 0.00 | 12 |
+| `msrvtt_concept_top30` | concept_drift | text_video | 9.779 | -2.816 | 1.00 | 0.00 | 12 |
+| `msrvtt_null_top30` | no_shift | audio_video | 11.951 | -11.724 | 1.00 | 0.00 | 12 |
+| `msrvtt_null_top30` | no_shift | text_audio | 13.822 | -9.854 | 1.00 | 0.08 | 12 |
+| `msrvtt_null_top30` | no_shift | text_video | 12.759 | -10.917 | 1.00 | 0.00 | 12 |
 
 ## 2. Triple $I^{(3)}$ (RF)
 
-_No I3 rows yet._
+| dataset | scenario | mean $I^{(3)}$ | mean $I^{(3)}_{\mathrm{cal}}$ | frac $I^{(3)}>0$ | frac $I^{(3)}_{\mathrm{cal}}>0$ | B |
+|---|---|---:|---:|---:|---:|---:|
+| `msrvtt_concept_pc31_100` | concept_drift | 110.956 | -778.977 | 1.00 | 0.00 | 12 |
+| `msrvtt_concept_top30` | concept_drift | 10.890 | -2.224 | 1.00 | 0.00 | 12 |
+| `msrvtt_null_top30` | no_shift | 15.386 | -5.773 | 1.00 | 0.08 | 12 |
 
 ## 3. LOMO power loss (cross-check)
 

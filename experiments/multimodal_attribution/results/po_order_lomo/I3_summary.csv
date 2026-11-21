@@ -1,0 +1,4 @@
+dataset,scenario,band,mean_I3,mean_I3_cal,frac_I3_pos,frac_I3_cal_pos,n_rep
+msrvtt_concept_pc31_100,concept_drift,pc31_100,110.95631269739299,-778.9770624570709,1.0,0.0,12
+msrvtt_concept_top30,concept_drift,top30,10.890066509404013,-2.2236159601981598,1.0,0.0,12
+msrvtt_null_top30,no_shift,top30,15.385603062374477,-5.773082465551145,1.0,0.08333333333333333,12
