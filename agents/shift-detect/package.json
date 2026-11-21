@@ -1,0 +1,21 @@
+{
+  "name": "shift-detect",
+  "private": true,
+  "type": "module",
+  "description": "Trustworthy LLM eval + distribution-shift attribution agent (SAPerm / ruanhq-StatsML)",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "dev": "agent-sdk dev",
+    "demo": "node scripts/demo.mjs",
+    "features": "python3 python/extract_features.py --demo --pretty",
+    "power-meta": "python3 python/power_meta_features.py --n-rep 20 --n-perm 40 --n-doc 20"
+  },
+  "dependencies": {
+    "@grok/agent-sdk": "^0.7.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "6.0.3"
+  }
+}
