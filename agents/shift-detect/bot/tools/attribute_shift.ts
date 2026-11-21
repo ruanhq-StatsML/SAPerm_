@@ -1,5 +1,6 @@
 import { defineTool } from "@grok/agent-sdk/tools";
 import * as z from "zod/v4";
+import { shareBoard } from "../lib/glance.js";
 import {
   blockMeanAttribution,
   locoPoAttribution,
@@ -68,22 +69,59 @@ export default defineTool({
       if (!yRef || !yNew) {
         throw new Error("loco mode requires yRef and yNew (or a labeled fixture)");
       }
+      const attr = locoPoAttribution(
+        XRef,
+        yRef,
+        XNew,
+        yNew,
+        featureNames,
+        groundTruth,
+      );
       return {
-        ...locoPoAttribution(XRef, yRef, XNew, yNew, featureNames, groundTruth),
+        ...attr,
         fixture: input.fixture ?? null,
+        glance: {
+          headline: `top=${attr.top ?? "—"} · hit=${attr.topHit}`,
+          board: shareBoard(
+            attr.ranked.map((h) => ({ name: h.name, share: h.share, score: h.score })),
+            "LOCO drivers",
+          ),
+        },
       };
     }
 
     if (input.mode === "block_mean") {
+      const attr = blockMeanAttribution(
+        XRef,
+        XNew,
+        blocks,
+        groundTruth,
+        featureNames,
+      );
       return {
-        ...blockMeanAttribution(XRef, XNew, blocks, groundTruth, featureNames),
+        ...attr,
         fixture: input.fixture ?? null,
+        glance: {
+          headline: `top=${attr.top ?? "—"} · hit=${attr.topHit}`,
+          board: shareBoard(
+            attr.ranked.map((h) => ({ name: h.name, share: h.share, score: h.score })),
+            "Block mean-diff",
+          ),
+        },
       };
     }
 
+    const attr = pathwayBlockAttribution(XRef, XNew, blocks, groundTruth);
     return {
-      ...pathwayBlockAttribution(XRef, XNew, blocks, groundTruth),
+      ...attr,
       fixture: input.fixture ?? null,
+      glance: {
+        headline: `top=${attr.top ?? "—"} · hit=${attr.topHit}`,
+        board: shareBoard(
+          attr.ranked.map((h) => ({ name: h.name, share: h.share, score: h.score })),
+          "Pathway blocks",
+        ),
+      },
     };
   },
 });

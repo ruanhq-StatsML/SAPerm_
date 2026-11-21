@@ -5,7 +5,8 @@
   "description": "Trustworthy LLM eval + distribution-shift attribution agent (SAPerm / ruanhq-StatsML)",
   "scripts": {
     "check": "tsc --noEmit",
-    "dev": "agent-sdk dev"
+    "dev": "agent-sdk dev",
+    "demo": "node scripts/demo.mjs"
   },
   "dependencies": {
     "@grok/agent-sdk": "^0.7.2",

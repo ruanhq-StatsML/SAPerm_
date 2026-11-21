@@ -11,13 +11,14 @@ This maps directly onto building a credible eval system: cross-model comparison,
 
 ```bash
 cd agents/shift-detect
+npm run demo          # one-glance attribution boards + gates
 npx @grok/agent-sdk validate --dir .
-npx @grok/agent-sdk tool call run_trust_suite --dir . --input '{}'
-npx @grok/agent-sdk tool call align_llm_checkpoints --dir . --input '{"baseModelId":"base-text-v1","candidateModelId":"candidate-text-v2"}'
-npx @grok/agent-sdk tool call explain_llm_behavior --dir . --input '{"modelId":"weak-vl-v0","caseId":"vl_ocr_sign_v1"}'
 npx @grok/agent-sdk tool call score_report --dir . --input '{"fixture":"covariate_shift"}'
+npx @grok/agent-sdk tool call run_trust_suite --dir . --input '{}'
 npx @grok/agent-sdk dev --dir .
 ```
+
+`score_report` / `attribute_shift` return a `glance` board (share bars). Lead with that.
 
 ## Trustworthy LLM eval tools
 

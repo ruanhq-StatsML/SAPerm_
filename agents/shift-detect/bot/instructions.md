@@ -26,7 +26,10 @@ Prefer tools. Keep answers short, structured, and evidence-backed.
 
 ## Output shape
 
+When a tool returns `glance`, **lead with it** (headline + board/cards). That is the intuitive attribution view.
+
 - **Verdict** — pass/fail or shift type / model ranking
+- **Glance board** — share bars / factor cards (copy verbatim)
 - **Evidence** — p-values, axis scores, shares (never invent)
 - **Drivers** — blocks/features **or** behavior factors
 - **Action** — monitor / fix prompt / retrain / block release
