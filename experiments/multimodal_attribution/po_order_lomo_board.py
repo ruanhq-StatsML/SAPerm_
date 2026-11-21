@@ -348,14 +348,56 @@ def run_po_grid(
     return pd.DataFrame(rows)
 
 
+def _safe_ratio(num: np.ndarray, den: np.ndarray) -> float:
+    """Mean of num/den with tiny-den rows dropped."""
+    num = np.asarray(num, dtype=float)
+    den = np.asarray(den, dtype=float)
+    mask = np.abs(den) > 1e-8
+    if not np.any(mask):
+        return float("nan")
+    return float(np.mean(num[mask] / den[mask]))
+
+
 def summarize_po(raw: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Summaries include PO-risk *ratios* (scale-free readouts).
+
+    - ``r_cal = I_cal / PO(full)`` — calibrated interaction as a fraction of full PO
+    - ``r_I = I / PO(full)`` — raw interaction share
+    - leave-out inflate ``ℓ = R(S) / PO(full)`` — how much risk rises when blocks drop
+    """
     i2 = raw[raw.kind == "I2"].copy()
     i3 = raw[raw.kind == "I3"].copy()
+    if not i2.empty:
+        i2["r_I2"] = i2["I2"] / i2["po_full"].replace(0, np.nan)
+        i2["r_I2_cal"] = i2["I2_cal"] / i2["po_full"].replace(0, np.nan)
+        i2["ell_leave_a"] = i2["po_leave_a"] / i2["po_full"].replace(0, np.nan)
+        i2["ell_leave_b"] = i2["po_leave_b"] / i2["po_full"].replace(0, np.nan)
+        i2["ell_leave_both"] = i2["po_leave_both"] / i2["po_full"].replace(0, np.nan)
+    if not i3.empty:
+        i3["r_I3"] = i3["I3"] / i3["po_full"].replace(0, np.nan)
+        i3["r_I3_cal"] = i3["I3_cal"] / i3["po_full"].replace(0, np.nan)
+        for col, short in (
+            ("po_leave_t", "ell_t"),
+            ("po_leave_a", "ell_a"),
+            ("po_leave_v", "ell_v"),
+            ("po_leave_ta", "ell_ta"),
+            ("po_leave_tv", "ell_tv"),
+            ("po_leave_av", "ell_av"),
+        ):
+            if col in i3.columns:
+                i3[short] = i3[col] / i3["po_full"].replace(0, np.nan)
+
     s2 = (
         i2.groupby(["dataset", "scenario", "band", "pair"], as_index=False)
         .agg(
             mean_I2=("I2", "mean"),
             mean_I2_cal=("I2_cal", "mean"),
+            mean_po_full=("po_full", "mean"),
+            mean_r_I2=("r_I2", "mean"),
+            mean_r_I2_cal=("r_I2_cal", "mean"),
+            mean_ell_a=("ell_leave_a", "mean"),
+            mean_ell_b=("ell_leave_b", "mean"),
+            mean_ell_both=("ell_leave_both", "mean"),
             frac_I2_pos=("I2", lambda s: float(np.mean(np.asarray(s) > 0))),
             frac_I2_cal_pos=("I2_cal", lambda s: float(np.mean(np.asarray(s) > 0))),
             n_rep=("I2", "count"),
@@ -368,6 +410,12 @@ def summarize_po(raw: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
         .agg(
             mean_I3=("I3", "mean"),
             mean_I3_cal=("I3_cal", "mean"),
+            mean_po_full=("po_full", "mean"),
+            mean_r_I3=("r_I3", "mean"),
+            mean_r_I3_cal=("r_I3_cal", "mean"),
+            mean_ell_t=("ell_t", "mean"),
+            mean_ell_a=("ell_a", "mean"),
+            mean_ell_v=("ell_v", "mean"),
             frac_I3_pos=("I3", lambda s: float(np.mean(np.asarray(s) > 0))),
             frac_I3_cal_pos=("I3_cal", lambda s: float(np.mean(np.asarray(s) > 0))),
             n_rep=("I3", "count"),

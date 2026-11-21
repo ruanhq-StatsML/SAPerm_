@@ -25,9 +25,25 @@ $I^{(2)}$ / $I^{(3)}$ / $I_{\mathrm{cal}}$ read non-additivity off those increme
 - null: frac $I_{\mathrm{cal}}>0\approx 0.08$  
 - planted TA: $I_{\mathrm{cal}}^{(2)}$ more negative under $\lambda<0$ (−31.3) than $\lambda>0$ (−8.0)
 
+## PO-risk ratios (scale-free)
+
+$$
+r_{\mathrm{cal}}=I_{\mathrm{cal}}/\mathrm{PO}(\mathrm{full}),\quad
+\ell(S)=R(S)/\mathrm{PO}(\mathrm{full})
+$$
+
+| dataset | term | $r_{\mathrm{cal}}$ |
+|---|---|---:|
+| null top30 | $I^{(3)}$ | −0.233 |
+| concept top30 | $I^{(3)}$ | −0.155 |
+| concept pc31_100 | $I^{(3)}$ | −0.864 |
+| MOSEI | $I^{(3)}$ | −0.469 |
+
+CSV: `po_risk_ratios.csv`. Same sign story as LOMO `vs_best`<0, but comparable across PCA bands.
+
 ## Effect in one line
 
-Cross-modal interaction is measurable; under this concept drift it is **not** super-additive for early-concat TAV—best pair wins, matching $I_{\mathrm{cal}}^{(3)}<0$.
+Cross-modal interaction is measurable; under this concept drift it is **not** super-additive for early-concat TAV—best pair wins, matching $I_{\mathrm{cal}}^{(3)}<0$ and $r_{\mathrm{cal}}^{(3)}<0$.
 
 ## What else (optional, not required for the claim)
 

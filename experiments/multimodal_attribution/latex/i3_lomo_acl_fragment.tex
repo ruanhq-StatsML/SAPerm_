@@ -142,6 +142,48 @@ Dataset & Term & mean $I$ & mean $I_{\mathrm{cal}}$ & frac $I_{\mathrm{cal}}>0$ 
 \end{tabular}
 \end{table}
 
+\paragraph{PO-risk ratios.}
+Absolute $I$ / $I_{\mathrm{cal}}$ inherit the scale of $\mathrm{PO}(\mathrm{full})$.
+We therefore also report scale-free ratios
+\begin{equation}
+\label{eq:po-ratio}
+r_{\mathrm{cal}}^{(k)}
+=
+\frac{I_{\mathrm{cal}}^{(k)}}{\mathrm{PO}(\mathrm{full})}
+\,,\qquad
+\ell(S)
+=
+\frac{R(S)}{\mathrm{PO}(\mathrm{full})}\,,
+\end{equation}
+so that modality / subset / interaction comparisons stay commensurable across
+bands and datasets (Table~\ref{tab:po-ratios}).
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.05}
+\caption{PO-risk ratios (RF; $n{=}400$, $B{=}12$).
+$r_{\mathrm{cal}}=I_{\mathrm{cal}}/\mathrm{PO}(\mathrm{full})$;
+negative $r_{\mathrm{cal}}^{(3)}$ matches LOMO \texttt{vs\_best}$<0$ under concept drift.}
+\label{tab:po-ratios}
+\begin{tabular}{llccc}
+\toprule
+Dataset & Term & mean $\mathrm{PO}(\mathrm{full})$ & $r_{\mathrm{cal}}$ & $B$ \\
+\midrule
+null top30 & $I^{(3)}$ & 21.16 & $-0.233$ & 12 \\
+concept top30 & $I^{(3)}$ & 13.11 & $-0.155$ & 12 \\
+concept pc31--100 & $I^{(3)}$ & 889.9 & $-0.864$ & 12 \\
+MOSEI train--test & $I^{(3)}$ & 2322 & $-0.469$ & 12 \\
+\midrule
+concept top30 & $I^{(2)}$ T$\times$A & 12.60 & $-0.182$ & 12 \\
+concept top30 & $I^{(2)}$ T$\times$V & 12.60 & $-0.203$ & 12 \\
+concept pc31--100 & $I^{(2)}$ T$\times$A & 1120 & $-0.895$ & 12 \\
+MOSEI & $I^{(2)}$ T$\times$A & 2287 & $-0.613$ & 12 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \paragraph{Empirical reading.}
 These tables answer the three natural questions under the shift.
 \emph{Subset:} combo power ranks T$\times$A $>$ TAV $>$ T$\times$V for CF/DR on
@@ -150,10 +192,9 @@ top-30 (Table~\ref{tab:full-benchmark-power-typeI});
 \emph{Modality / marginal:} dropping video from TAV raises CF/DR/RF power on
 top-30; on the mid-band, dropping audio (keeping T$\times$V) hurts least /
 helps most.
-\emph{Interaction:} $I_{\mathrm{cal}}^{(2)}$ and $I_{\mathrm{cal}}^{(3)}$ are
-negative on concept and on MOSEI (Table~\ref{tab:I2-I3-rf}); under planted
-$\pm\lambda$, the antagonistic plant yields a more negative pairwise
-$I_{\mathrm{cal}}^{(2)}$ on the planted pair than the synergistic plant.
-Null losses stay at $0$ and calibrated signs stay near quiet.
-Altogether: the cross-modal interaction is readable from modality, subset,
-and marginal increments; here it is not super-additive under early-concat TAV.
+\emph{Interaction / ratio:} $I_{\mathrm{cal}}^{(2/3)}<0$ and
+$r_{\mathrm{cal}}^{(3)}<0$ on concept and MOSEI
+(Tables~\ref{tab:I2-I3-rf}--\ref{tab:po-ratios}).
+Null losses stay at $0$.
+Altogether: modality, subset, marginal, and PO-risk ratios read the same
+non-super-additive interaction under early-concat TAV.
