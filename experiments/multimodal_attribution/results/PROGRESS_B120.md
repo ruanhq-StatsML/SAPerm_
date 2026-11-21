@@ -105,3 +105,12 @@ All healthy. Focus remaining TV/TAV fill.
 | drperm | TAV 26/120 |
 | classical | TA 120 ✓ · TV 31/120 · n_jobs=8 |
 | MSR | AV 120 ✓ · TAV restarted (was hung >20m) · n_jobs=8 |
+
+## overnight-power-check (2026-11-21 05:02 UTC)
+
+| stream | status |
+|---|---|
+| cfperm | **all combos B=120 done** |
+| drperm | TAV 42/120 — restarted (hung) |
+| classical | TA ✓ · TV 45/120 — restarted · n_jobs=8 |
+| MSR | AV ✓ · TAV ~7 — restarted · n_jobs=8 |
