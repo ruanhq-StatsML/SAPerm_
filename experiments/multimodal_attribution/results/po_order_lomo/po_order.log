@@ -1,0 +1,556 @@
+[12:34:40] PO grid: 96 units remaining, n_jobs=4, n=400, n_rep=12
+[12:34:40] dispatch 0:4 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   20.9s remaining:   20.9s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   20.9s finished
+[12:35:01] msrvtt_null_top30 rep=0 I2(text_audio)=10.3012 Ical=-12.6181
+[12:35:01] msrvtt_null_top30 rep=0 I2(text_video)=11.4949 Ical=-11.4243
+[12:35:01] msrvtt_null_top30 rep=0 I2(audio_video)=12.7078 Ical=-10.2114
+[12:35:01] msrvtt_null_top30 rep=0 I3=18.3005 I3cal=-19.5042
+[12:35:01] msrvtt_null_top30 rep=1 I2(text_audio)=9.4176 Ical=-5.4844
+[12:35:01] msrvtt_null_top30 rep=1 I2(text_video)=10.5143 Ical=-4.3877
+[12:35:01] msrvtt_null_top30 rep=1 I2(audio_video)=9.4222 Ical=-5.4798
+[12:35:01] msrvtt_null_top30 rep=1 I3=9.8686 I3cal=-3.0820
+[12:35:01] msrvtt_null_top30 rep=2 I2(text_audio)=12.1264 Ical=-5.9443
+[12:35:01] msrvtt_null_top30 rep=2 I2(text_video)=10.3902 Ical=-7.6805
+[12:35:01] msrvtt_null_top30 rep=2 I2(audio_video)=10.3427 Ical=-7.7279
+[12:35:01] msrvtt_null_top30 rep=2 I3=12.9137 I3cal=-18.4767
+[12:35:01] msrvtt_null_top30 rep=3 I2(text_audio)=12.7223 Ical=-4.0357
+[12:35:01] msrvtt_null_top30 rep=3 I2(text_video)=9.1580 Ical=-7.6000
+[12:35:01] msrvtt_null_top30 rep=3 I2(audio_video)=10.8551 Ical=-5.9029
+[12:35:01] msrvtt_null_top30 rep=3 I3=9.1416 I3cal=-6.2966
+[12:35:01] dispatch 4:8 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   18.9s remaining:   18.9s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.0s finished
+[12:35:20] msrvtt_null_top30 rep=4 I2(text_audio)=8.1727 Ical=-11.9449
+[12:35:20] msrvtt_null_top30 rep=4 I2(text_video)=12.6529 Ical=-7.4647
+[12:35:20] msrvtt_null_top30 rep=4 I2(audio_video)=12.0901 Ical=-8.0275
+[12:35:20] msrvtt_null_top30 rep=4 I3=7.8108 I3cal=0.8633
+[12:35:20] msrvtt_null_top30 rep=5 I2(text_audio)=12.9959 Ical=-2.4847
+[12:35:20] msrvtt_null_top30 rep=5 I2(text_video)=9.0077 Ical=-6.4729
+[12:35:20] msrvtt_null_top30 rep=5 I2(audio_video)=12.6120 Ical=-2.8686
+[12:35:20] msrvtt_null_top30 rep=5 I3=13.0350 I3cal=-4.7615
+[12:35:20] msrvtt_null_top30 rep=6 I2(text_audio)=8.7170 Ical=-1.4252
+[12:35:20] msrvtt_null_top30 rep=6 I2(text_video)=6.8878 Ical=-3.2543
+[12:35:20] msrvtt_null_top30 rep=6 I2(audio_video)=8.2521 Ical=-1.8900
+[12:35:20] msrvtt_null_top30 rep=6 I3=6.6592 I3cal=-0.8228
+[12:35:20] msrvtt_null_top30 rep=7 I2(text_audio)=7.4694 Ical=-1.3837
+[12:35:20] msrvtt_null_top30 rep=7 I2(text_video)=8.3954 Ical=-0.4576
+[12:35:20] msrvtt_null_top30 rep=7 I2(audio_video)=6.5355 Ical=-2.3175
+[12:35:20] msrvtt_null_top30 rep=7 I3=12.3655 I3cal=-1.3042
+[12:35:20] dispatch 8:12 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   18.9s remaining:   18.9s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.0s finished
+[12:35:39] msrvtt_null_top30 rep=8 I2(text_audio)=12.2725 Ical=-20.8006
+[12:35:39] msrvtt_null_top30 rep=8 I2(text_video)=12.8559 Ical=-20.2171
+[12:35:39] msrvtt_null_top30 rep=8 I2(audio_video)=13.2217 Ical=-19.8513
+[12:35:39] msrvtt_null_top30 rep=8 I3=7.3438 I3cal=-1.8715
+[12:35:39] msrvtt_null_top30 rep=9 I2(text_audio)=14.7095 Ical=-32.3398
+[12:35:39] msrvtt_null_top30 rep=9 I2(text_video)=13.9587 Ical=-33.0905
+[12:35:39] msrvtt_null_top30 rep=9 I2(audio_video)=13.1866 Ical=-33.8626
+[12:35:39] msrvtt_null_top30 rep=9 I3=47.7202 I3cal=-6.1619
+[12:35:39] msrvtt_null_top30 rep=10 I2(text_audio)=36.7448 Ical=0.3060
+[12:35:39] msrvtt_null_top30 rep=10 I2(text_video)=32.7075 Ical=-3.7313
+[12:35:39] msrvtt_null_top30 rep=10 I2(audio_video)=14.7885 Ical=-21.6503
+[12:35:39] msrvtt_null_top30 rep=10 I3=13.3283 I3cal=-5.8603
+[12:35:39] msrvtt_null_top30 rep=11 I2(text_audio)=20.2136 Ical=-20.0916
+[12:35:39] msrvtt_null_top30 rep=11 I2(text_video)=15.0792 Ical=-25.2260
+[12:35:39] msrvtt_null_top30 rep=11 I2(audio_video)=19.4013 Ical=-20.9038
+[12:35:39] msrvtt_null_top30 rep=11 I3=26.1399 I3cal=-1.9987
+[12:35:39] dispatch 12:16 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   18.3s remaining:   18.3s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   18.5s finished
+[12:35:57] msrvtt_concept_top30 rep=0 I2(text_audio)=8.9484 Ical=-2.3366
+[12:35:57] msrvtt_concept_top30 rep=0 I2(text_video)=9.1363 Ical=-2.1487
+[12:35:57] msrvtt_concept_top30 rep=0 I2(audio_video)=9.4682 Ical=-1.8168
+[12:35:57] msrvtt_concept_top30 rep=0 I3=10.6687 I3cal=-0.8503
+[12:35:57] msrvtt_concept_top30 rep=1 I2(text_audio)=8.0088 Ical=-1.8006
+[12:35:57] msrvtt_concept_top30 rep=1 I2(text_video)=8.3959 Ical=-1.4135
+[12:35:57] msrvtt_concept_top30 rep=1 I2(audio_video)=8.4569 Ical=-1.3526
+[12:35:57] msrvtt_concept_top30 rep=1 I3=9.1831 I3cal=-1.2997
+[12:35:57] msrvtt_concept_top30 rep=2 I2(text_audio)=8.7093 Ical=-1.9080
+[12:35:57] msrvtt_concept_top30 rep=2 I2(text_video)=8.9619 Ical=-1.6554
+[12:35:57] msrvtt_concept_top30 rep=2 I2(audio_video)=9.8483 Ical=-0.7690
+[12:35:57] msrvtt_concept_top30 rep=2 I3=11.0861 I3cal=-1.7050
+[12:35:57] msrvtt_concept_top30 rep=3 I2(text_audio)=8.5289 Ical=-2.7516
+[12:35:57] msrvtt_concept_top30 rep=3 I2(text_video)=9.1575 Ical=-2.1230
+[12:35:57] msrvtt_concept_top30 rep=3 I2(audio_video)=8.5552 Ical=-2.7253
+[12:35:57] msrvtt_concept_top30 rep=3 I3=8.8313 I3cal=-1.7163
+[12:35:57] dispatch 16:20 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   18.4s remaining:   18.4s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   18.6s finished
+[12:36:16] msrvtt_concept_top30 rep=4 I2(text_audio)=12.9094 Ical=-2.6571
+[12:36:16] msrvtt_concept_top30 rep=4 I2(text_video)=10.2895 Ical=-5.2770
+[12:36:16] msrvtt_concept_top30 rep=4 I2(audio_video)=12.9921 Ical=-2.5744
+[12:36:16] msrvtt_concept_top30 rep=4 I3=11.0205 I3cal=-2.7022
+[12:36:16] msrvtt_concept_top30 rep=5 I2(text_audio)=10.4681 Ical=-2.2456
+[12:36:16] msrvtt_concept_top30 rep=5 I2(text_video)=9.7000 Ical=-3.0136
+[12:36:16] msrvtt_concept_top30 rep=5 I2(audio_video)=10.5329 Ical=-2.1808
+[12:36:16] msrvtt_concept_top30 rep=5 I3=11.8394 I3cal=-1.2738
+[12:36:16] msrvtt_concept_top30 rep=6 I2(text_audio)=9.7539 Ical=-0.8898
+[12:36:16] msrvtt_concept_top30 rep=6 I2(text_video)=9.5542 Ical=-1.0895
+[12:36:16] msrvtt_concept_top30 rep=6 I2(audio_video)=9.4586 Ical=-1.1851
+[12:36:16] msrvtt_concept_top30 rep=6 I3=10.4103 I3cal=-5.4407
+[12:36:16] msrvtt_concept_top30 rep=7 I2(text_audio)=9.4798 Ical=-4.3738
+[12:36:16] msrvtt_concept_top30 rep=7 I2(text_video)=9.3113 Ical=-4.5423
+[12:36:16] msrvtt_concept_top30 rep=7 I2(audio_video)=10.3700 Ical=-3.4835
+[12:36:16] msrvtt_concept_top30 rep=7 I3=13.5582 I3cal=-2.3290
+[12:36:16] dispatch 20:24 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   18.2s remaining:   18.2s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   18.4s finished
+[12:36:34] msrvtt_concept_top30 rep=8 I2(text_audio)=7.5708 Ical=-0.8959
+[12:36:34] msrvtt_concept_top30 rep=8 I2(text_video)=7.6168 Ical=-0.8500
+[12:36:34] msrvtt_concept_top30 rep=8 I2(audio_video)=7.6265 Ical=-0.8402
+[12:36:34] msrvtt_concept_top30 rep=8 I3=9.3093 I3cal=-0.8197
+[12:36:34] msrvtt_concept_top30 rep=9 I2(text_audio)=10.4757 Ical=-0.3522
+[12:36:34] msrvtt_concept_top30 rep=9 I2(text_video)=8.9719 Ical=-1.8560
+[12:36:34] msrvtt_concept_top30 rep=9 I2(audio_video)=10.2925 Ical=-0.5353
+[12:36:34] msrvtt_concept_top30 rep=9 I3=9.3402 I3cal=-1.4400
+[12:36:34] msrvtt_concept_top30 rep=10 I2(text_audio)=12.1011 Ical=-0.7441
+[12:36:34] msrvtt_concept_top30 rep=10 I2(text_video)=11.2607 Ical=-1.5845
+[12:36:34] msrvtt_concept_top30 rep=10 I2(audio_video)=10.7954 Ical=-2.0499
+[12:36:34] msrvtt_concept_top30 rep=10 I3=9.6418 I3cal=-0.8052
+[12:36:34] msrvtt_concept_top30 rep=11 I2(text_audio)=13.2783 Ical=-9.9566
+[12:36:34] msrvtt_concept_top30 rep=11 I2(text_video)=14.9931 Ical=-8.2418
+[12:36:34] msrvtt_concept_top30 rep=11 I2(audio_video)=15.7055 Ical=-7.5295
+[12:36:34] msrvtt_concept_top30 rep=11 I3=15.7918 I3cal=-6.3016
+[12:36:34] dispatch 24:28 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   37.7s remaining:   37.7s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   38.0s finished
+[12:37:12] msrvtt_concept_pc31_100 rep=0 I2(text_audio)=78.3405 Ical=-776.2856
+[12:37:12] msrvtt_concept_pc31_100 rep=0 I2(text_video)=213.0526 Ical=-641.5735
+[12:37:12] msrvtt_concept_pc31_100 rep=0 I2(audio_video)=168.0730 Ical=-686.5531
+[12:37:12] msrvtt_concept_pc31_100 rep=0 I3=52.9601 I3cal=-758.7472
+[12:37:12] msrvtt_concept_pc31_100 rep=1 I2(text_audio)=97.6222 Ical=-1043.1032
+[12:37:12] msrvtt_concept_pc31_100 rep=1 I2(text_video)=150.4733 Ical=-990.2521
+[12:37:12] msrvtt_concept_pc31_100 rep=1 I2(audio_video)=169.4064 Ical=-971.3190
+[12:37:12] msrvtt_concept_pc31_100 rep=1 I3=52.5645 I3cal=-268.7693
+[12:37:12] msrvtt_concept_pc31_100 rep=2 I2(text_audio)=54.1253 Ical=-321.1330
+[12:37:12] msrvtt_concept_pc31_100 rep=2 I2(text_video)=63.6215 Ical=-311.6368
+[12:37:12] msrvtt_concept_pc31_100 rep=2 I2(audio_video)=47.0758 Ical=-328.1825
+[12:37:12] msrvtt_concept_pc31_100 rep=2 I3=148.5291 I3cal=-981.5692
+[12:37:12] msrvtt_concept_pc31_100 rep=3 I2(text_audio)=86.9492 Ical=-905.9657
+[12:37:12] msrvtt_concept_pc31_100 rep=3 I2(text_video)=47.6099 Ical=-945.3050
+[12:37:12] msrvtt_concept_pc31_100 rep=3 I2(audio_video)=76.7097 Ical=-916.2053
+[12:37:12] msrvtt_concept_pc31_100 rep=3 I3=87.2812 I3cal=-448.5676
+[12:37:12] dispatch 28:32 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   37.7s remaining:   37.7s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   38.3s finished
+[12:37:51] msrvtt_concept_pc31_100 rep=4 I2(text_audio)=43.2671 Ical=-531.2311
+[12:37:51] msrvtt_concept_pc31_100 rep=4 I2(text_video)=43.5668 Ical=-530.9313
+[12:37:51] msrvtt_concept_pc31_100 rep=4 I2(audio_video)=62.0416 Ical=-512.4566
+[12:37:51] msrvtt_concept_pc31_100 rep=4 I3=119.2639 I3cal=-1035.5601
+[12:37:51] msrvtt_concept_pc31_100 rep=5 I2(text_audio)=118.0180 Ical=-978.5377
+[12:37:51] msrvtt_concept_pc31_100 rep=5 I2(text_video)=61.9283 Ical=-1034.6273
+[12:37:51] msrvtt_concept_pc31_100 rep=5 I2(audio_video)=122.4455 Ical=-974.1101
+[12:37:51] msrvtt_concept_pc31_100 rep=5 I3=96.1338 I3cal=-675.3871
+[12:37:51] msrvtt_concept_pc31_100 rep=6 I2(text_audio)=85.6075 Ical=-784.7370
+[12:37:51] msrvtt_concept_pc31_100 rep=6 I2(text_video)=86.1624 Ical=-784.1821
+[12:37:51] msrvtt_concept_pc31_100 rep=6 I2(audio_video)=47.6743 Ical=-822.6701
+[12:37:51] msrvtt_concept_pc31_100 rep=6 I3=100.7058 I3cal=-1038.0016
+[12:37:51] msrvtt_concept_pc31_100 rep=7 I2(text_audio)=132.3514 Ical=-1051.1230
+[12:37:51] msrvtt_concept_pc31_100 rep=7 I2(text_video)=92.5052 Ical=-1090.9692
+[12:37:51] msrvtt_concept_pc31_100 rep=7 I2(audio_video)=112.4802 Ical=-1070.9942
+[12:37:51] msrvtt_concept_pc31_100 rep=7 I3=192.4265 I3cal=-986.7540
+[12:37:51] dispatch 32:36 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   37.4s remaining:   37.4s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   37.7s finished
+[12:38:29] msrvtt_concept_pc31_100 rep=8 I2(text_audio)=135.2320 Ical=-1781.7569
+[12:38:29] msrvtt_concept_pc31_100 rep=8 I2(text_video)=103.0643 Ical=-1813.9247
+[12:38:29] msrvtt_concept_pc31_100 rep=8 I2(audio_video)=83.3867 Ical=-1833.6023
+[12:38:29] msrvtt_concept_pc31_100 rep=8 I3=99.5042 I3cal=-248.0173
+[12:38:29] msrvtt_concept_pc31_100 rep=9 I2(text_audio)=109.8415 Ical=-1357.1935
+[12:38:29] msrvtt_concept_pc31_100 rep=9 I2(text_video)=78.9087 Ical=-1388.1263
+[12:38:29] msrvtt_concept_pc31_100 rep=9 I2(audio_video)=82.9186 Ical=-1384.1164
+[12:38:29] msrvtt_concept_pc31_100 rep=9 I3=117.5714 I3cal=-1151.2031
+[12:38:29] msrvtt_concept_pc31_100 rep=10 I2(text_audio)=302.8192 Ical=-1014.2662
+[12:38:29] msrvtt_concept_pc31_100 rep=10 I2(text_video)=325.0236 Ical=-992.0618
+[12:38:29] msrvtt_concept_pc31_100 rep=10 I2(audio_video)=107.2687 Ical=-1209.8166
+[12:38:29] msrvtt_concept_pc31_100 rep=10 I3=188.4327 I3cal=-1183.2047
+[12:38:29] msrvtt_concept_pc31_100 rep=11 I2(text_audio)=146.2883 Ical=-1507.9271
+[12:38:29] msrvtt_concept_pc31_100 rep=11 I2(text_video)=95.5058 Ical=-1558.7095
+[12:38:29] msrvtt_concept_pc31_100 rep=11 I2(audio_video)=119.1231 Ical=-1535.0923
+[12:38:29] msrvtt_concept_pc31_100 rep=11 I3=76.1026 I3cal=-571.9437
+[12:38:29] dispatch 36:40 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   20.0s remaining:   20.0s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   20.2s finished
+[12:38:49] msrvtt_interact_TA_neg rep=0 I2(text_audio)=17.2495 Ical=-149.3422
+[12:38:49] msrvtt_interact_TA_neg rep=0 I2(text_video)=21.1722 Ical=-145.4194
+[12:38:49] msrvtt_interact_TA_neg rep=0 I2(audio_video)=24.8956 Ical=-141.6961
+[12:38:49] msrvtt_interact_TA_neg rep=0 I3=4.6041 I3cal=-2.0585
+[12:38:49] msrvtt_interact_TA_neg rep=1 I2(text_audio)=1.9657 Ical=-5.8208
+[12:38:49] msrvtt_interact_TA_neg rep=1 I2(text_video)=4.1940 Ical=-3.5925
+[12:38:49] msrvtt_interact_TA_neg rep=1 I2(audio_video)=3.4242 Ical=-4.3623
+[12:38:49] msrvtt_interact_TA_neg rep=1 I3=4.3195 I3cal=-1.2061
+[12:38:49] msrvtt_interact_TA_neg rep=2 I2(text_audio)=18.2809 Ical=-11.1856
+[12:38:49] msrvtt_interact_TA_neg rep=2 I2(text_video)=26.8889 Ical=-2.5776
+[12:38:49] msrvtt_interact_TA_neg rep=2 I2(audio_video)=26.1585 Ical=-3.3081
+[12:38:49] msrvtt_interact_TA_neg rep=2 I3=12.6947 I3cal=-15.4646
+[12:38:49] msrvtt_interact_TA_neg rep=3 I2(text_audio)=5.5697 Ical=-15.3530
+[12:38:49] msrvtt_interact_TA_neg rep=3 I2(text_video)=6.2873 Ical=-14.6354
+[12:38:49] msrvtt_interact_TA_neg rep=3 I2(audio_video)=6.2469 Ical=-14.6758
+[12:38:49] msrvtt_interact_TA_neg rep=3 I3=10.6486 I3cal=0.5960
+[12:38:49] dispatch 40:44 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   19.4s remaining:   19.4s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.6s finished
+[12:39:08] msrvtt_interact_TA_neg rep=4 I2(text_audio)=19.4912 Ical=-112.9478
+[12:39:08] msrvtt_interact_TA_neg rep=4 I2(text_video)=33.6584 Ical=-98.7806
+[12:39:08] msrvtt_interact_TA_neg rep=4 I2(audio_video)=26.3781 Ical=-106.0609
+[12:39:08] msrvtt_interact_TA_neg rep=4 I3=11.4499 I3cal=-16.5062
+[12:39:08] msrvtt_interact_TA_neg rep=5 I2(text_audio)=3.8459 Ical=-4.9646
+[12:39:08] msrvtt_interact_TA_neg rep=5 I2(text_video)=5.3980 Ical=-3.4125
+[12:39:08] msrvtt_interact_TA_neg rep=5 I2(audio_video)=5.0530 Ical=-3.7575
+[12:39:08] msrvtt_interact_TA_neg rep=5 I3=14.5698 I3cal=-5.7026
+[12:39:08] msrvtt_interact_TA_neg rep=6 I2(text_audio)=7.1912 Ical=-16.0983
+[12:39:08] msrvtt_interact_TA_neg rep=6 I2(text_video)=15.8281 Ical=-7.4615
+[12:39:08] msrvtt_interact_TA_neg rep=6 I2(audio_video)=12.0330 Ical=-11.2566
+[12:39:08] msrvtt_interact_TA_neg rep=6 I3=30.8376 I3cal=-226.4248
+[12:39:08] msrvtt_interact_TA_neg rep=7 I2(text_audio)=6.1876 Ical=-22.0270
+[12:39:08] msrvtt_interact_TA_neg rep=7 I2(text_video)=15.9302 Ical=-12.2844
+[12:39:08] msrvtt_interact_TA_neg rep=7 I2(audio_video)=12.2753 Ical=-15.9393
+[12:39:08] msrvtt_interact_TA_neg rep=7 I3=4.7414 I3cal=-8.7004
+[12:39:08] dispatch 44:48 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   19.4s remaining:   19.4s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.6s finished
+[12:39:28] msrvtt_interact_TA_neg rep=8 I2(text_audio)=13.6331 Ical=-14.2667
+[12:39:28] msrvtt_interact_TA_neg rep=8 I2(text_video)=14.7928 Ical=-13.1069
+[12:39:28] msrvtt_interact_TA_neg rep=8 I2(audio_video)=7.1230 Ical=-20.7768
+[12:39:28] msrvtt_interact_TA_neg rep=8 I3=3.4215 I3cal=-0.4446
+[12:39:28] msrvtt_interact_TA_neg rep=9 I2(text_audio)=3.3214 Ical=-1.4679
+[12:39:28] msrvtt_interact_TA_neg rep=9 I2(text_video)=3.8520 Ical=-0.9373
+[12:39:28] msrvtt_interact_TA_neg rep=9 I2(audio_video)=4.3385 Ical=-0.4507
+[12:39:28] msrvtt_interact_TA_neg rep=9 I3=3.1397 I3cal=-3.5106
+[12:39:28] msrvtt_interact_TA_neg rep=10 I2(text_audio)=7.4257 Ical=-22.7369
+[12:39:28] msrvtt_interact_TA_neg rep=10 I2(text_video)=15.7301 Ical=-14.4325
+[12:39:28] msrvtt_interact_TA_neg rep=10 I2(audio_video)=15.5139 Ical=-14.6487
+[12:39:28] msrvtt_interact_TA_neg rep=10 I3=5.8564 I3cal=-0.0011
+[12:39:28] msrvtt_interact_TA_neg rep=11 I2(text_audio)=5.7705 Ical=1.1280
+[12:39:28] msrvtt_interact_TA_neg rep=11 I2(text_video)=2.5153 Ical=-2.1271
+[12:39:28] msrvtt_interact_TA_neg rep=11 I2(audio_video)=5.2900 Ical=0.6475
+[12:39:28] msrvtt_interact_TA_neg rep=11 I3=11.6069 I3cal=3.4271
+[12:39:28] dispatch 48:52 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   19.5s remaining:   19.5s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.6s finished
+[12:39:48] msrvtt_interact_TA_pos rep=0 I2(text_audio)=4.5495 Ical=-19.5474
+[12:39:48] msrvtt_interact_TA_pos rep=0 I2(text_video)=17.8855 Ical=-6.2115
+[12:39:48] msrvtt_interact_TA_pos rep=0 I2(audio_video)=17.9692 Ical=-6.1277
+[12:39:48] msrvtt_interact_TA_pos rep=0 I3=4.4957 I3cal=-5.4697
+[12:39:48] msrvtt_interact_TA_pos rep=1 I2(text_audio)=3.7232 Ical=-16.1345
+[12:39:48] msrvtt_interact_TA_pos rep=1 I2(text_video)=6.0327 Ical=-13.8250
+[12:39:48] msrvtt_interact_TA_pos rep=1 I2(audio_video)=5.3680 Ical=-14.4897
+[12:39:48] msrvtt_interact_TA_pos rep=1 I3=18.5506 I3cal=6.7959
+[12:39:48] msrvtt_interact_TA_pos rep=2 I2(text_audio)=5.6771 Ical=0.0022
+[12:39:48] msrvtt_interact_TA_pos rep=2 I2(text_video)=5.3786 Ical=-0.2963
+[12:39:48] msrvtt_interact_TA_pos rep=2 I2(audio_video)=4.8510 Ical=-0.8239
+[12:39:48] msrvtt_interact_TA_pos rep=2 I3=7.9896 I3cal=-11.0016
+[12:39:48] msrvtt_interact_TA_pos rep=3 I2(text_audio)=4.1230 Ical=-1.3770
+[12:39:48] msrvtt_interact_TA_pos rep=3 I2(text_video)=4.5204 Ical=-0.9796
+[12:39:48] msrvtt_interact_TA_pos rep=3 I2(audio_video)=4.6531 Ical=-0.8470
+[12:39:48] msrvtt_interact_TA_pos rep=3 I3=7.7751 I3cal=4.1225
+[12:39:48] dispatch 52:56 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   19.7s remaining:   19.7s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.9s finished
+[12:40:07] msrvtt_interact_TA_pos rep=4 I2(text_audio)=3.1030 Ical=-3.4438
+[12:40:07] msrvtt_interact_TA_pos rep=4 I2(text_video)=2.4610 Ical=-4.0858
+[12:40:07] msrvtt_interact_TA_pos rep=4 I2(audio_video)=3.7017 Ical=-2.8451
+[12:40:07] msrvtt_interact_TA_pos rep=4 I3=6.5717 I3cal=-3.5728
+[12:40:07] msrvtt_interact_TA_pos rep=5 I2(text_audio)=0.4962 Ical=-9.2517
+[12:40:07] msrvtt_interact_TA_pos rep=5 I2(text_video)=5.3752 Ical=-4.3727
+[12:40:07] msrvtt_interact_TA_pos rep=5 I2(audio_video)=5.7503 Ical=-3.9976
+[12:40:07] msrvtt_interact_TA_pos rep=5 I3=48.9592 I3cal=-63.9853
+[12:40:07] msrvtt_interact_TA_pos rep=6 I2(text_audio)=4.0071 Ical=-3.0041
+[12:40:07] msrvtt_interact_TA_pos rep=6 I2(text_video)=5.3493 Ical=-1.6619
+[12:40:07] msrvtt_interact_TA_pos rep=6 I2(audio_video)=4.7448 Ical=-2.2664
+[12:40:07] msrvtt_interact_TA_pos rep=6 I3=6.4982 I3cal=-2.8864
+[12:40:07] msrvtt_interact_TA_pos rep=7 I2(text_audio)=5.8944 Ical=-11.4475
+[12:40:07] msrvtt_interact_TA_pos rep=7 I2(text_video)=10.0139 Ical=-7.3279
+[12:40:07] msrvtt_interact_TA_pos rep=7 I2(audio_video)=6.8045 Ical=-10.5374
+[12:40:07] msrvtt_interact_TA_pos rep=7 I3=14.4683 I3cal=-6.6790
+[12:40:07] dispatch 56:60 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   19.5s remaining:   19.5s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.7s finished
+[12:40:27] msrvtt_interact_TA_pos rep=8 I2(text_audio)=2.8241 Ical=-8.4967
+[12:40:27] msrvtt_interact_TA_pos rep=8 I2(text_video)=4.4810 Ical=-6.8399
+[12:40:27] msrvtt_interact_TA_pos rep=8 I2(audio_video)=4.1625 Ical=-7.1583
+[12:40:27] msrvtt_interact_TA_pos rep=8 I3=3.7607 I3cal=-2.3550
+[12:40:27] msrvtt_interact_TA_pos rep=9 I2(text_audio)=3.2427 Ical=-9.3607
+[12:40:27] msrvtt_interact_TA_pos rep=9 I2(text_video)=5.7672 Ical=-6.8361
+[12:40:27] msrvtt_interact_TA_pos rep=9 I2(audio_video)=5.3567 Ical=-7.2467
+[12:40:27] msrvtt_interact_TA_pos rep=9 I3=3.2352 I3cal=-1.4476
+[12:40:27] msrvtt_interact_TA_pos rep=10 I2(text_audio)=3.2888 Ical=-11.9561
+[12:40:27] msrvtt_interact_TA_pos rep=10 I2(text_video)=4.6362 Ical=-10.6087
+[12:40:27] msrvtt_interact_TA_pos rep=10 I2(audio_video)=5.0223 Ical=-10.2227
+[12:40:27] msrvtt_interact_TA_pos rep=10 I3=3.4443 I3cal=-7.9216
+[12:40:27] msrvtt_interact_TA_pos rep=11 I2(text_audio)=5.3529 Ical=-1.9299
+[12:40:27] msrvtt_interact_TA_pos rep=11 I2(text_video)=6.4323 Ical=-0.8506
+[12:40:27] msrvtt_interact_TA_pos rep=11 I2(audio_video)=3.7973 Ical=-3.4855
+[12:40:27] msrvtt_interact_TA_pos rep=11 I3=7.7768 I3cal=-2.6489
+[12:40:27] dispatch 60:64 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   19.4s remaining:   19.4s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.6s finished
+[12:40:47] msrvtt_interact_TV_neg rep=0 I2(text_audio)=34.0997 Ical=0.1841
+[12:40:47] msrvtt_interact_TV_neg rep=0 I2(text_video)=28.7581 Ical=-5.1575
+[12:40:47] msrvtt_interact_TV_neg rep=0 I2(audio_video)=20.6624 Ical=-13.2532
+[12:40:47] msrvtt_interact_TV_neg rep=0 I3=19.7999 I3cal=-8.8834
+[12:40:47] msrvtt_interact_TV_neg rep=1 I2(text_audio)=5.6436 Ical=-0.3886
+[12:40:47] msrvtt_interact_TV_neg rep=1 I2(text_video)=2.3212 Ical=-3.7110
+[12:40:47] msrvtt_interact_TV_neg rep=1 I2(audio_video)=6.3595 Ical=0.3272
+[12:40:47] msrvtt_interact_TV_neg rep=1 I3=16.8322 I3cal=-2.5860
+[12:40:47] msrvtt_interact_TV_neg rep=2 I2(text_audio)=14.0547 Ical=-53.3943
+[12:40:47] msrvtt_interact_TV_neg rep=2 I2(text_video)=30.1169 Ical=-37.3321
+[12:40:47] msrvtt_interact_TV_neg rep=2 I2(audio_video)=34.8814 Ical=-32.5676
+[12:40:47] msrvtt_interact_TV_neg rep=2 I3=3.8819 I3cal=-5.8960
+[12:40:47] msrvtt_interact_TV_neg rep=3 I2(text_audio)=6.3384 Ical=-2.5764
+[12:40:47] msrvtt_interact_TV_neg rep=3 I2(text_video)=6.5341 Ical=-2.3807
+[12:40:47] msrvtt_interact_TV_neg rep=3 I2(audio_video)=5.3646 Ical=-3.5502
+[12:40:47] msrvtt_interact_TV_neg rep=3 I3=5.5152 I3cal=-75.2514
+[12:40:47] dispatch 64:68 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   19.4s remaining:   19.4s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.8s finished
+[12:41:07] msrvtt_interact_TV_neg rep=4 I2(text_audio)=3.8515 Ical=-4.3734
+[12:41:07] msrvtt_interact_TV_neg rep=4 I2(text_video)=1.5068 Ical=-6.7181
+[12:41:07] msrvtt_interact_TV_neg rep=4 I2(audio_video)=3.6346 Ical=-4.5903
+[12:41:07] msrvtt_interact_TV_neg rep=4 I3=6.7077 I3cal=-6.1766
+[12:41:07] msrvtt_interact_TV_neg rep=5 I2(text_audio)=10.9657 Ical=-69.2183
+[12:41:07] msrvtt_interact_TV_neg rep=5 I2(text_video)=7.8953 Ical=-72.2887
+[12:41:07] msrvtt_interact_TV_neg rep=5 I2(audio_video)=5.0978 Ical=-75.0862
+[12:41:07] msrvtt_interact_TV_neg rep=5 I3=36.6501 I3cal=-69.0406
+[12:41:07] msrvtt_interact_TV_neg rep=6 I2(text_audio)=25.2089 Ical=-18.2169
+[12:41:07] msrvtt_interact_TV_neg rep=6 I2(text_video)=29.4499 Ical=-13.9759
+[12:41:07] msrvtt_interact_TV_neg rep=6 I2(audio_video)=23.4552 Ical=-19.9706
+[12:41:07] msrvtt_interact_TV_neg rep=6 I3=7.8922 I3cal=-2.5289
+[12:41:07] msrvtt_interact_TV_neg rep=7 I2(text_audio)=3.3293 Ical=-2.2626
+[12:41:07] msrvtt_interact_TV_neg rep=7 I2(text_video)=2.3546 Ical=-3.2373
+[12:41:07] msrvtt_interact_TV_neg rep=7 I2(audio_video)=3.1702 Ical=-2.4217
+[12:41:07] msrvtt_interact_TV_neg rep=7 I3=3.0750 I3cal=-8.7062
+[12:41:07] dispatch 68:72 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   19.4s remaining:   19.4s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.5s finished
+[12:41:26] msrvtt_interact_TV_neg rep=8 I2(text_audio)=6.1972 Ical=-29.1027
+[12:41:26] msrvtt_interact_TV_neg rep=8 I2(text_video)=6.3931 Ical=-28.9069
+[12:41:26] msrvtt_interact_TV_neg rep=8 I2(audio_video)=12.5883 Ical=-22.7117
+[12:41:26] msrvtt_interact_TV_neg rep=8 I3=11.7416 I3cal=-14.5045
+[12:41:26] msrvtt_interact_TV_neg rep=9 I2(text_audio)=12.2225 Ical=-1.2016
+[12:41:26] msrvtt_interact_TV_neg rep=9 I2(text_video)=3.8302 Ical=-9.5939
+[12:41:26] msrvtt_interact_TV_neg rep=9 I2(audio_video)=13.5033 Ical=0.0792
+[12:41:26] msrvtt_interact_TV_neg rep=9 I3=20.9261 I3cal=-7.9986
+[12:41:26] msrvtt_interact_TV_neg rep=10 I2(text_audio)=4.2214 Ical=-1.7241
+[12:41:26] msrvtt_interact_TV_neg rep=10 I2(text_video)=3.0791 Ical=-2.8665
+[12:41:26] msrvtt_interact_TV_neg rep=10 I2(audio_video)=6.3221 Ical=0.3765
+[12:41:26] msrvtt_interact_TV_neg rep=10 I3=3.7514 I3cal=-2.0062
+[12:41:26] msrvtt_interact_TV_neg rep=11 I2(text_audio)=11.0895 Ical=-16.0560
+[12:41:26] msrvtt_interact_TV_neg rep=11 I2(text_video)=10.0553 Ical=-17.0901
+[12:41:26] msrvtt_interact_TV_neg rep=11 I2(audio_video)=8.6570 Ical=-18.4884
+[12:41:26] msrvtt_interact_TV_neg rep=11 I3=5.1210 I3cal=-6.6343
+[12:41:26] dispatch 72:76 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   19.5s remaining:   19.5s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.7s finished
+[12:41:46] msrvtt_interact_TV_pos rep=0 I2(text_audio)=6.1812 Ical=-3.5942
+[12:41:46] msrvtt_interact_TV_pos rep=0 I2(text_video)=4.5794 Ical=-5.1959
+[12:41:46] msrvtt_interact_TV_pos rep=0 I2(audio_video)=6.9310 Ical=-2.8444
+[12:41:46] msrvtt_interact_TV_pos rep=0 I3=2.7493 I3cal=-2.4864
+[12:41:46] msrvtt_interact_TV_pos rep=1 I2(text_audio)=6.9321 Ical=-1.2488
+[12:41:46] msrvtt_interact_TV_pos rep=1 I2(text_video)=5.0873 Ical=-3.0936
+[12:41:46] msrvtt_interact_TV_pos rep=1 I2(audio_video)=5.4939 Ical=-2.6870
+[12:41:46] msrvtt_interact_TV_pos rep=1 I3=8.1901 I3cal=-18.6199
+[12:41:46] msrvtt_interact_TV_pos rep=2 I2(text_audio)=6.6078 Ical=-6.3799
+[12:41:46] msrvtt_interact_TV_pos rep=2 I2(text_video)=4.9565 Ical=-8.0312
+[12:41:46] msrvtt_interact_TV_pos rep=2 I2(audio_video)=6.8143 Ical=-6.1734
+[12:41:46] msrvtt_interact_TV_pos rep=2 I3=11.6667 I3cal=-4.9528
+[12:41:46] msrvtt_interact_TV_pos rep=3 I2(text_audio)=35.0316 Ical=-97.8202
+[12:41:46] msrvtt_interact_TV_pos rep=3 I2(text_video)=21.4748 Ical=-111.3769
+[12:41:46] msrvtt_interact_TV_pos rep=3 I2(audio_video)=37.6159 Ical=-95.2358
+[12:41:46] msrvtt_interact_TV_pos rep=3 I3=4.2606 I3cal=-1.8300
+[12:41:46] dispatch 76:80 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   19.6s remaining:   19.6s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.7s finished
+[12:42:06] msrvtt_interact_TV_pos rep=4 I2(text_audio)=3.9061 Ical=-0.6496
+[12:42:06] msrvtt_interact_TV_pos rep=4 I2(text_video)=0.9993 Ical=-3.5564
+[12:42:06] msrvtt_interact_TV_pos rep=4 I2(audio_video)=4.4841 Ical=-0.0716
+[12:42:06] msrvtt_interact_TV_pos rep=4 I3=3.0352 I3cal=-2.5515
+[12:42:06] msrvtt_interact_TV_pos rep=5 I2(text_audio)=4.4998 Ical=-2.7313
+[12:42:06] msrvtt_interact_TV_pos rep=5 I2(text_video)=2.5957 Ical=-4.6354
+[12:42:06] msrvtt_interact_TV_pos rep=5 I2(audio_video)=4.2384 Ical=-2.9927
+[12:42:06] msrvtt_interact_TV_pos rep=5 I3=19.9265 I3cal=-31.2557
+[12:42:06] msrvtt_interact_TV_pos rep=6 I2(text_audio)=6.5229 Ical=-19.0061
+[12:42:06] msrvtt_interact_TV_pos rep=6 I2(text_video)=5.2088 Ical=-20.3203
+[12:42:06] msrvtt_interact_TV_pos rep=6 I2(audio_video)=8.2367 Ical=-17.2923
+[12:42:06] msrvtt_interact_TV_pos rep=6 I3=10.8396 I3cal=-24.7902
+[12:42:06] msrvtt_interact_TV_pos rep=7 I2(text_audio)=4.9197 Ical=-14.2447
+[12:42:06] msrvtt_interact_TV_pos rep=7 I2(text_video)=6.1936 Ical=-12.9707
+[12:42:06] msrvtt_interact_TV_pos rep=7 I2(audio_video)=7.2296 Ical=-11.9347
+[12:42:06] msrvtt_interact_TV_pos rep=7 I3=6.9935 I3cal=-9.2627
+[12:42:06] dispatch 80:84 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   19.5s remaining:   19.5s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   19.7s finished
+[12:42:25] msrvtt_interact_TV_pos rep=8 I2(text_audio)=5.6077 Ical=-2.2224
+[12:42:25] msrvtt_interact_TV_pos rep=8 I2(text_video)=2.3163 Ical=-5.5138
+[12:42:25] msrvtt_interact_TV_pos rep=8 I2(audio_video)=5.9584 Ical=-1.8717
+[12:42:25] msrvtt_interact_TV_pos rep=8 I3=5.7020 I3cal=-8.4042
+[12:42:25] msrvtt_interact_TV_pos rep=9 I2(text_audio)=3.6173 Ical=-1.5089
+[12:42:25] msrvtt_interact_TV_pos rep=9 I2(text_video)=8.7503 Ical=3.6241
+[12:42:25] msrvtt_interact_TV_pos rep=9 I2(audio_video)=7.5059 Ical=2.3796
+[12:42:25] msrvtt_interact_TV_pos rep=9 I3=5.6624 I3cal=-2.7296
+[12:42:25] msrvtt_interact_TV_pos rep=10 I2(text_audio)=15.4932 Ical=-11.9390
+[12:42:25] msrvtt_interact_TV_pos rep=10 I2(text_video)=12.3100 Ical=-15.1223
+[12:42:25] msrvtt_interact_TV_pos rep=10 I2(audio_video)=10.2716 Ical=-17.1607
+[12:42:25] msrvtt_interact_TV_pos rep=10 I3=16.5707 I3cal=-3.1066
+[12:42:25] msrvtt_interact_TV_pos rep=11 I2(text_audio)=2.5552 Ical=-0.9692
+[12:42:25] msrvtt_interact_TV_pos rep=11 I2(text_video)=0.4137 Ical=-3.1107
+[12:42:25] msrvtt_interact_TV_pos rep=11 I2(audio_video)=3.0133 Ical=-0.5111
+[12:42:25] msrvtt_interact_TV_pos rep=11 I3=5.0156 I3cal=-20.9450
+[12:42:25] dispatch 84:88 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   39.0s remaining:   39.0s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   39.4s finished
+[12:43:05] mosei_train_test rep=0 I2(text_audio)=1099.5962 Ical=-1614.3701
+[12:43:05] mosei_train_test rep=0 I2(text_video)=1449.8766 Ical=-1264.0897
+[12:43:05] mosei_train_test rep=0 I2(audio_video)=1229.6187 Ical=-1484.3476
+[12:43:05] mosei_train_test rep=0 I3=757.9173 I3cal=-1262.5215
+[12:43:05] mosei_train_test rep=1 I2(text_audio)=752.1542 Ical=-1282.0385
+[12:43:05] mosei_train_test rep=1 I2(text_video)=803.6247 Ical=-1230.5680
+[12:43:05] mosei_train_test rep=1 I2(audio_video)=593.4722 Ical=-1440.7205
+[12:43:05] mosei_train_test rep=1 I3=1501.3261 I3cal=-1370.4904
+[12:43:05] mosei_train_test rep=2 I2(text_audio)=577.7118 Ical=-2342.8819
+[12:43:05] mosei_train_test rep=2 I2(text_video)=463.9300 Ical=-2456.6637
+[12:43:05] mosei_train_test rep=2 I2(audio_video)=611.5086 Ical=-2309.0850
+[12:43:05] mosei_train_test rep=2 I3=1728.1799 I3cal=-169.9749
+[12:43:05] mosei_train_test rep=3 I2(text_audio)=724.4290 Ical=-871.2662
+[12:43:05] mosei_train_test rep=3 I2(text_video)=944.6413 Ical=-651.0538
+[12:43:05] mosei_train_test rep=3 I2(audio_video)=350.7318 Ical=-1244.9634
+[12:43:05] mosei_train_test rep=3 I3=2822.2271 I3cal=-397.8073
+[12:43:05] dispatch 88:92 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   38.3s remaining:   38.3s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   38.4s finished
+[12:43:43] mosei_train_test rep=4 I2(text_audio)=353.4720 Ical=-1825.6155
+[12:43:43] mosei_train_test rep=4 I2(text_video)=476.5489 Ical=-1702.5386
+[12:43:43] mosei_train_test rep=4 I2(audio_video)=366.1363 Ical=-1812.9512
+[12:43:43] mosei_train_test rep=4 I3=641.5700 I3cal=-1578.2578
+[12:43:43] mosei_train_test rep=5 I2(text_audio)=1184.8680 Ical=-1385.9849
+[12:43:43] mosei_train_test rep=5 I2(text_video)=1173.5333 Ical=-1397.3196
+[12:43:43] mosei_train_test rep=5 I2(audio_video)=1332.9974 Ical=-1237.8555
+[12:43:43] mosei_train_test rep=5 I3=1351.9938 I3cal=-366.1269
+[12:43:43] mosei_train_test rep=6 I2(text_audio)=909.5028 Ical=-2531.7541
+[12:43:43] mosei_train_test rep=6 I2(text_video)=1444.9340 Ical=-1996.3229
+[12:43:43] mosei_train_test rep=6 I2(audio_video)=1336.5455 Ical=-2104.7113
+[12:43:43] mosei_train_test rep=6 I3=2185.1966 I3cal=-733.7110
+[12:43:43] mosei_train_test rep=7 I2(text_audio)=1136.7112 Ical=-1866.9823
+[12:43:43] mosei_train_test rep=7 I2(text_video)=1316.9436 Ical=-1686.7499
+[12:43:43] mosei_train_test rep=7 I2(audio_video)=949.0990 Ical=-2054.5945
+[12:43:43] mosei_train_test rep=7 I3=339.3687 I3cal=-1417.7669
+[12:43:43] dispatch 92:96 / 96
+[Parallel(n_jobs=4)]: Using backend LokyBackend with 4 concurrent workers.
+[Parallel(n_jobs=4)]: Done   2 out of   4 | elapsed:   38.2s remaining:   38.2s
+[Parallel(n_jobs=4)]: Done   4 out of   4 | elapsed:   38.7s finished
+[12:44:22] mosei_train_test rep=8 I2(text_audio)=1688.0949 Ical=-714.7011
+[12:44:22] mosei_train_test rep=8 I2(text_video)=1593.7054 Ical=-809.0905
+[12:44:22] mosei_train_test rep=8 I2(audio_video)=1193.2750 Ical=-1209.5209
+[12:44:22] mosei_train_test rep=8 I3=905.3580 I3cal=-1259.0852
+[12:44:22] mosei_train_test rep=9 I2(text_audio)=413.2766 Ical=-705.1192
+[12:44:22] mosei_train_test rep=9 I2(text_video)=533.0659 Ical=-585.3299
+[12:44:22] mosei_train_test rep=9 I2(audio_video)=402.7789 Ical=-715.6169
+[12:44:22] mosei_train_test rep=9 I3=1210.0403 I3cal=-1134.3853
+[12:44:22] mosei_train_test rep=10 I2(text_audio)=1212.7279 Ical=-761.9641
+[12:44:22] mosei_train_test rep=10 I2(text_video)=1578.8574 Ical=-395.8346
+[12:44:22] mosei_train_test rep=10 I2(audio_video)=640.3935 Ical=-1334.2985
+[12:44:22] mosei_train_test rep=10 I3=1238.0185 I3cal=-1189.2892
+[12:44:22] mosei_train_test rep=11 I2(text_audio)=394.6757 Ical=-1090.0900
+[12:44:22] mosei_train_test rep=11 I2(text_video)=320.2616 Ical=-1164.5041
+[12:44:22] mosei_train_test rep=11 I2(audio_video)=244.7319 Ical=-1240.0338
+[12:44:22] mosei_train_test rep=11 I3=514.5500 I3cal=-1792.7938
+# PO-risk 2nd/3rd-order (RF outcome) + LOMO power cross-check
+
+Outcome / τ / ν models: `rf_regressor`.
+
+Definitions (leave-out PO risk $R(S)$ = held-out PO after dropping block set $S$):
+
+- $I^{(2)}(m_1,m_2)=R(\{m_1\})+R(\{m_2\})-R(\{m_1,m_2\})$; $I_{\mathrm{cal}}^{(2)}=I^{(2)}-\mathrm{PO}(\mathrm{full})$.
+- $I^{(3)}=R(\{t\})+R(\{a\})+R(\{v\})-R(\{t,a\})-R(\{t,v\})-R(\{a,v\})+R(\{t,a,v\})$.
+- LOMO power loss $=\mathrm{Power}(\mathrm{TAV})-\mathrm{Power}(\mathrm{TAV}\setminus\{m\})$.
+  Loss $>0$: dropped modality helps the triple. Loss $<0$: over-complete / conflicting (dropping raises power) — cross-check for $I^{(3)}<0$.
+
+## 1. Pairwise $I^{(2)}$ / $I^{(2)}_{\mathrm{cal}}$ (RF)
+
+| dataset | scenario | pair | mean $I^{(2)}$ | mean $I^{(2)}_{\mathrm{cal}}$ | frac $I>0$ | frac $I_{\mathrm{cal}}>0$ | B |
+|---|---|---|---:|---:|---:|---:|---:|
+| `msrvtt_concept_pc31_100` | concept_drift | audio_video | 99.884 | -1020.427 | 1.00 | 0.00 | 12 |
+| `msrvtt_concept_pc31_100` | concept_drift | text_audio | 115.872 | -1004.438 | 1.00 | 0.00 | 12 |
+| `msrvtt_concept_pc31_100` | concept_drift | text_video | 113.452 | -1006.858 | 1.00 | 0.00 | 12 |
+| `msrvtt_concept_top30` | concept_drift | audio_video | 10.342 | -2.254 | 1.00 | 0.00 | 12 |
+| `msrvtt_concept_top30` | concept_drift | text_audio | 10.019 | -2.576 | 1.00 | 0.00 | 12 |
+| `msrvtt_concept_top30` | concept_drift | text_video | 9.779 | -2.816 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TA_neg` | interaction_shift | audio_video | 12.394 | -28.024 | 1.00 | 0.08 | 12 |
+| `msrvtt_interact_TA_neg` | interaction_shift | text_audio | 9.161 | -31.257 | 1.00 | 0.08 | 12 |
+| `msrvtt_interact_TA_neg` | interaction_shift | text_video | 13.854 | -26.564 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TA_pos` | interaction_shift | audio_video | 6.015 | -5.837 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TA_pos` | interaction_shift | text_audio | 3.857 | -7.996 | 1.00 | 0.08 | 12 |
+| `msrvtt_interact_TA_pos` | interaction_shift | text_video | 6.528 | -5.325 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TV_neg` | interaction_shift | audio_video | 11.975 | -15.988 | 1.00 | 0.25 | 12 |
+| `msrvtt_interact_TV_neg` | interaction_shift | text_audio | 11.435 | -16.528 | 1.00 | 0.08 | 12 |
+| `msrvtt_interact_TV_neg` | interaction_shift | text_video | 11.025 | -16.938 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TV_pos` | interaction_shift | audio_video | 8.983 | -13.033 | 1.00 | 0.08 | 12 |
+| `msrvtt_interact_TV_pos` | interaction_shift | text_audio | 8.490 | -13.526 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TV_pos` | interaction_shift | text_video | 6.240 | -15.775 | 1.00 | 0.08 | 12 |
+| `msrvtt_null_top30` | no_shift | audio_video | 11.951 | -11.724 | 1.00 | 0.00 | 12 |
+| `msrvtt_null_top30` | no_shift | text_audio | 13.822 | -9.854 | 1.00 | 0.08 | 12 |
+| `msrvtt_null_top30` | no_shift | text_video | 12.759 | -10.917 | 1.00 | 0.00 | 12 |
+| `mosei_train_test` | real_train_test | audio_video | 770.941 | -1515.725 | 1.00 | 0.00 | 12 |
+| `mosei_train_test` | real_train_test | text_audio | 870.602 | -1416.064 | 1.00 | 0.00 | 12 |
+| `mosei_train_test` | real_train_test | text_video | 1008.327 | -1278.339 | 1.00 | 0.00 | 12 |
+
+## 2. Triple $I^{(3)}$ (RF)
+
+| dataset | scenario | mean $I^{(3)}$ | mean $I^{(3)}_{\mathrm{cal}}$ | frac $I^{(3)}>0$ | frac $I^{(3)}_{\mathrm{cal}}>0$ | B |
+|---|---|---:|---:|---:|---:|---:|
+| `msrvtt_concept_pc31_100` | concept_drift | 110.956 | -778.977 | 1.00 | 0.00 | 12 |
+| `msrvtt_concept_top30` | concept_drift | 10.890 | -2.224 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TA_neg` | interaction_shift | 9.824 | -23.000 | 1.00 | 0.17 | 12 |
+| `msrvtt_interact_TA_pos` | interaction_shift | 11.127 | -8.087 | 1.00 | 0.17 | 12 |
+| `msrvtt_interact_TV_neg` | interaction_shift | 11.825 | -17.518 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TV_pos` | interaction_shift | 8.384 | -10.911 | 1.00 | 0.00 | 12 |
+| `msrvtt_null_top30` | no_shift | 15.386 | -5.773 | 1.00 | 0.08 | 12 |
+| `mosei_train_test` | real_train_test | 1266.312 | -1056.018 | 1.00 | 0.00 | 12 |
+
+## 3. LOMO power loss (cross-check)
+
+| dataset | method | dropped | Power(TAV) | Power(LOO) | loss (TAV−LOO) | Δ% | B_TAV | B_LOO |
+|---|---|---|---:|---:|---:|---:|---:|---:|
+| `msrvtt_concept_pc31_100` | rfperm | audio | 0.573 | 0.693 | -0.120 | -20.9% | 150 | 150 |
+| `msrvtt_concept_pc31_100` | rfperm | video | 0.573 | 0.647 | -0.073 | -12.8% | 150 | 150 |
+| `msrvtt_concept_pc31_100` | rfperm | vs_best_pair | 0.573 | 0.693 | -0.120 | -20.9% | 150 | 150 |
+| `msrvtt_concept_top30` | cfperm | audio | 0.400 | 0.342 | +0.058 | +14.6% | 120 | 120 |
+| `msrvtt_concept_top30` | cfperm | video | 0.400 | 0.600 | -0.200 | -50.0% | 120 | 120 |
+| `msrvtt_concept_top30` | cfperm | vs_best_pair | 0.400 | 0.600 | -0.200 | -50.0% | 120 | 120 |
+| `msrvtt_concept_top30` | drperm | audio | 0.300 | 0.217 | +0.083 | +27.8% | 120 | 120 |
+| `msrvtt_concept_top30` | drperm | video | 0.300 | 0.400 | -0.100 | -33.3% | 120 | 120 |
+| `msrvtt_concept_top30` | drperm | vs_best_pair | 0.300 | 0.400 | -0.100 | -33.3% | 120 | 120 |
+| `msrvtt_concept_top30` | rfperm | audio | 0.933 | 0.987 | -0.053 | -5.7% | 150 | 150 |
+| `msrvtt_concept_top30` | rfperm | video | 0.933 | 1.000 | -0.067 | -7.1% | 150 | 150 |
+| `msrvtt_concept_top30` | rfperm | vs_best_pair | 0.933 | 1.000 | -0.067 | -7.1% | 150 | 150 |
+| `msrvtt_null_top30` | rfperm | audio | 0.000 | 0.000 | +0.000 | +0.0% | 120 | 120 |
+| `msrvtt_null_top30` | rfperm | video | 0.000 | 0.000 | +0.000 | +0.0% | 120 | 133 |
+| `msrvtt_null_top30` | rfperm | vs_best_pair | 0.000 | 0.000 | +0.000 | +0.0% | 120 | 133 |
+
+**Read rule.** If TAV loses to best pair (`dropped=vs_best_pair`, loss $<0$), triple fusion is inefficient — consistent with $I^{(3)}\le 0$ / over-complete. Per-modality loss $<0$ means that channel is antagonistic or pure noise in the concat.
+

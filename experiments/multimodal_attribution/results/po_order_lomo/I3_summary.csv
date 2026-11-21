@@ -1,4 +1,9 @@
 dataset,scenario,band,mean_I3,mean_I3_cal,frac_I3_pos,frac_I3_cal_pos,n_rep
+mosei_train_test,real_train_test,pc31_100,1266.3122079788363,-1056.017513144843,1.0,0.0,12
 msrvtt_concept_pc31_100,concept_drift,pc31_100,110.95631269739299,-778.9770624570709,1.0,0.0,12
 msrvtt_concept_top30,concept_drift,top30,10.890066509404013,-2.2236159601981598,1.0,0.0,12
+msrvtt_interact_TA_neg,interaction_shift,top30,9.824183892257032,-22.999714848950077,1.0,0.16666666666666666,12
+msrvtt_interact_TA_pos,interaction_shift,top30,11.127128522637852,-8.087459787770854,1.0,0.16666666666666666,12
+msrvtt_interact_TV_neg,interaction_shift,top30,11.824517293200046,-17.51773305459367,1.0,0.0,12
+msrvtt_interact_TV_pos,interaction_shift,top30,8.384356860131923,-10.911213198156098,1.0,0.0,12
 msrvtt_null_top30,no_shift,top30,15.385603062374477,-5.773082465551145,1.0,0.08333333333333333,12

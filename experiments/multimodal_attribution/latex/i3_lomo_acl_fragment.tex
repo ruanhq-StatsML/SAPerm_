@@ -1,5 +1,14 @@
 % ACL drop-in: paste immediately after the Higher-order interaction paragraph
-% in Sec. Multi-Modal Datasets. Requires booktabs, amsmath, graphicx (already in preamble).
+% in Sec. Multi-Modal Datasets.
+
+The natural inputs are three nested comparisons:
+(i)~which \emph{modality} contributes
+($\Delta_{\mathrm{PO}}(M_i)$ / single-modality power);
+(ii)~which \emph{subset} contributes
+($\Delta_{\mathrm{PO}}(\mathcal{S})$ for pairs and TAV);
+(iii)~which modality has the largest \emph{marginal} contribution when dropped
+from a fixed full system (LOMO).
+Higher-order interactions are read off these increments, nothing more exotic.
 
 Writing $\Delta_{\mathrm{PO}}(\mathcal{S})$ for the PO-risk increment of modality
 subset $\mathcal{S}$, the three-way interaction is the inclusion--exclusion residual
@@ -30,7 +39,7 @@ R(\{1,2,3\})\,.
 Pairwise interactions use
 $I^{(2)}=R(\{m_1\})+R(\{m_2\})-R(\{m_1,m_2\})$, and the calibrated readout is
 $I_{\mathrm{cal}}^{(k)}=I^{(k)}-\mathrm{PO}(\mathrm{full})$.
-Complementing the residual, leave-one-modality-out (LOMO) power
+The LOMO power gap
 \begin{equation}
 \label{eq:lomo-power}
 \Delta^{\mathrm{pow}}_{m}
@@ -39,25 +48,21 @@ Complementing the residual, leave-one-modality-out (LOMO) power
 -
 \mathrm{Power}(\mathrm{TAV}\setminus\{m\})
 \end{equation}
-provides a deployment-facing \emph{cross-validation} of $\mathrm{sign}(I^{(3)})$:
-$\Delta^{\mathrm{pow}}_{m}<0$ means early-concat triple fusion is stronger without
-modality $m$ (over-complete / conflicting), and should line up with
-$I^{(3)}_{\mathrm{cal}}<0$.
-We emphasize that LOMO is a sign-level cross-check of the fusion diagnosis,
-not a second unique attribution of modality shares.
+is a sign-level check of the same interaction profile
+($\Delta^{\mathrm{pow}}_{m}<0$ $\Leftrightarrow$ early-concat is stronger without $m$),
+not a unique attribution of modality shares.
 
 \begin{table}[t]
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3.2pt}
 \renewcommand{\arraystretch}{1.05}
-\caption{LOMO power cross-check under concept drift on Omni-3B multimodal
-embeddings ($n{=}500$, $n_{\mathrm{perm}}{=}150$, $\alpha{=}0.05$).
+\caption{LOMO power under concept drift (Omni-3B;
+$n{=}500$, $n_{\mathrm{perm}}{=}150$, $\alpha{=}0.05$).
 Loss $=\mathrm{Power}(\mathrm{TAV})-\mathrm{Power}(\mathrm{LOO})$;
 \texttt{vs\_best}$=\mathrm{Power}(\mathrm{TAV})-\max\mathrm{Power}(\mathrm{pair})$.
-Negative \texttt{vs\_best} indicates inefficient triple early fusion---the
-deployment face of $I^{(3)}_{\mathrm{cal}}\le 0$.
-Null control (RFPerm): all losses $=0$.}
+Negative \texttt{vs\_best}: TAV does not beat the best pair.
+Null (RFPerm): losses $=0$.}
 \label{tab:lomo-power-cv}
 \begin{tabular}{llcccc}
 \toprule
@@ -88,52 +93,67 @@ Dataset & Method & Drop & Power(TAV) & Power(LOO) & Loss \\
 \begin{table}[t]
 \centering
 \scriptsize
-\setlength{\tabcolsep}{3.2pt}
+\setlength{\tabcolsep}{2.8pt}
 \renewcommand{\arraystretch}{1.05}
 \caption{RF PO-risk interactions ($m,\tau,\nu=\texttt{rf\_regressor}$;
 $n{=}400$, $B{=}12$).
-The delivery readout is the calibrated residual
-$I_{\mathrm{cal}}^{(k)}=I^{(k)}-\mathrm{PO}(\mathrm{full})$:
-$I_{\mathrm{cal}}^{(2)}<0$ and $I_{\mathrm{cal}}^{(3)}<0$ under concept drift
-align with negative LOMO \texttt{vs\_best}
-(Table~\ref{tab:lomo-power-cv}).
-Raw $I^{(k)}>0$ alone is not the decision rule.}
+Use $I_{\mathrm{cal}}^{(k)}=I^{(k)}-\mathrm{PO}(\mathrm{full})$;
+raw $I^{(k)}>0$ alone is not the decision rule.
+Concept / MOSEI: $I_{\mathrm{cal}}^{(3)}<0$.
+Planted $\pm\lambda$: more negative $I_{\mathrm{cal}}^{(2)}$ on the planted pair
+under antagonism than under synergy.}
 \label{tab:I2-I3-rf}
 \begin{tabular}{llcccc}
 \toprule
 Dataset & Term & mean $I$ & mean $I_{\mathrm{cal}}$ & frac $I_{\mathrm{cal}}>0$ & $B$ \\
 \midrule
-\multicolumn{6}{l}{\emph{Null:} \texttt{msrvtt\_null\_top30}} \\
+\multicolumn{6}{l}{\emph{Null} \texttt{msrvtt\_null\_top30}} \\
  & $I^{(2)}$ T$\times$A & 13.82 & $-9.85$ & 0.08 & 12 \\
  & $I^{(2)}$ T$\times$V & 12.76 & $-10.92$ & 0.00 & 12 \\
  & $I^{(2)}$ A$\times$V & 11.95 & $-11.72$ & 0.00 & 12 \\
  & $I^{(3)}$ TAV & 15.39 & $-5.77$ & 0.08 & 12 \\
 \midrule
-\multicolumn{6}{l}{\emph{Concept:} \texttt{msrvtt\_concept\_top30}} \\
+\multicolumn{6}{l}{\emph{Concept} \texttt{msrvtt\_concept\_top30}} \\
  & $I^{(2)}$ T$\times$A & 10.02 & $-2.58$ & 0.00 & 12 \\
  & $I^{(2)}$ T$\times$V & 9.78 & $-2.82$ & 0.00 & 12 \\
  & $I^{(2)}$ A$\times$V & 10.34 & $-2.25$ & 0.00 & 12 \\
  & $I^{(3)}$ TAV & 10.89 & $-2.22$ & 0.00 & 12 \\
 \midrule
-\multicolumn{6}{l}{\emph{Concept:} \texttt{msrvtt\_concept\_pc31\_100}} \\
+\multicolumn{6}{l}{\emph{Concept} \texttt{msrvtt\_concept\_pc31\_100}} \\
  & $I^{(2)}$ T$\times$A & 115.9 & $-1004.4$ & 0.00 & 12 \\
  & $I^{(2)}$ T$\times$V & 113.5 & $-1006.9$ & 0.00 & 12 \\
  & $I^{(2)}$ A$\times$V & 99.88 & $-1020.4$ & 0.00 & 12 \\
  & $I^{(3)}$ TAV & 111.0 & $-779.0$ & 0.00 & 12 \\
+\midrule
+\multicolumn{6}{l}{\emph{Interaction} $\lambda{=}\pm 1.8$ (planted pair $I^{(2)}_{\mathrm{cal}}$)} \\
+ & T$\times$A, $\lambda{<}0$ & 9.16 & $-31.26$ & 0.08 & 12 \\
+ & T$\times$A, $\lambda{>}0$ & 3.86 & $-8.00$ & 0.08 & 12 \\
+ & T$\times$V, $\lambda{<}0$ & 11.02 & $-16.94$ & 0.00 & 12 \\
+ & T$\times$V, $\lambda{>}0$ & 6.24 & $-15.78$ & 0.08 & 12 \\
+ & $I^{(3)}$ (TA $\lambda{<}0$) & 9.82 & $-23.00$ & 0.17 & 12 \\
+ & $I^{(3)}$ (TA $\lambda{>}0$) & 11.13 & $-8.09$ & 0.17 & 12 \\
+\midrule
+\multicolumn{6}{l}{\emph{Real} CMU-MOSEI train--test (pc31--100)} \\
+ & $I^{(2)}$ T$\times$A & 870.6 & $-1416.1$ & 0.00 & 12 \\
+ & $I^{(2)}$ T$\times$V & 1008.3 & $-1278.3$ & 0.00 & 12 \\
+ & $I^{(2)}$ A$\times$V & 770.9 & $-1515.7$ & 0.00 & 12 \\
+ & $I^{(3)}$ TAV & 1266.3 & $-1056.0$ & 0.00 & 12 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \paragraph{Empirical reading.}
-Taken together, $I^{(2)}$, $I^{(3)}$ (Table~\ref{tab:I2-I3-rf}) and LOMO
-power gaps (Table~\ref{tab:lomo-power-cv}) simply characterize how modalities
-interact under the shift:
-which pairs carry the signal, whether the third channel adds non-additive
-structure, and whether early-concat TAV improves on the best pair.
-Under concept drift we observe
-$\mathrm{Power}(T{\times}A)>\mathrm{Power}(\mathrm{TAV})$
-(Table~\ref{tab:full-benchmark-power-typeI}),
-\texttt{vs\_best}$<0$, and $I_{\mathrm{cal}}^{(3)}<0$ on both PCA bands---i.e.,
-the interaction among text~/~audio~/~video is not super-additive here.
-LOMO is only a sign-level check of that interaction profile, not a unique
-attribution of each modality.
+These tables answer the three natural questions under the shift.
+\emph{Subset:} combo power ranks T$\times$A $>$ TAV $>$ T$\times$V for CF/DR on
+top-30 (Table~\ref{tab:full-benchmark-power-typeI});
+\texttt{vs\_best}$<0$ throughout Table~\ref{tab:lomo-power-cv}.
+\emph{Modality / marginal:} dropping video from TAV raises CF/DR/RF power on
+top-30; on the mid-band, dropping audio (keeping T$\times$V) hurts least /
+helps most.
+\emph{Interaction:} $I_{\mathrm{cal}}^{(2)}$ and $I_{\mathrm{cal}}^{(3)}$ are
+negative on concept and on MOSEI (Table~\ref{tab:I2-I3-rf}); under planted
+$\pm\lambda$, the antagonistic plant yields a more negative pairwise
+$I_{\mathrm{cal}}^{(2)}$ on the planted pair than the synergistic plant.
+Null losses stay at $0$ and calibrated signs stay near quiet.
+Altogether: the cross-modal interaction is readable from modality, subset,
+and marginal increments; here it is not super-additive under early-concat TAV.

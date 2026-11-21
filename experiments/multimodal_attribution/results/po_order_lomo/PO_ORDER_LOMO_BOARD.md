@@ -19,9 +19,24 @@ Definitions (leave-out PO risk $R(S)$ = held-out PO after dropping block set $S$
 | `msrvtt_concept_top30` | concept_drift | audio_video | 10.342 | -2.254 | 1.00 | 0.00 | 12 |
 | `msrvtt_concept_top30` | concept_drift | text_audio | 10.019 | -2.576 | 1.00 | 0.00 | 12 |
 | `msrvtt_concept_top30` | concept_drift | text_video | 9.779 | -2.816 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TA_neg` | interaction_shift | audio_video | 12.394 | -28.024 | 1.00 | 0.08 | 12 |
+| `msrvtt_interact_TA_neg` | interaction_shift | text_audio | 9.161 | -31.257 | 1.00 | 0.08 | 12 |
+| `msrvtt_interact_TA_neg` | interaction_shift | text_video | 13.854 | -26.564 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TA_pos` | interaction_shift | audio_video | 6.015 | -5.837 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TA_pos` | interaction_shift | text_audio | 3.857 | -7.996 | 1.00 | 0.08 | 12 |
+| `msrvtt_interact_TA_pos` | interaction_shift | text_video | 6.528 | -5.325 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TV_neg` | interaction_shift | audio_video | 11.975 | -15.988 | 1.00 | 0.25 | 12 |
+| `msrvtt_interact_TV_neg` | interaction_shift | text_audio | 11.435 | -16.528 | 1.00 | 0.08 | 12 |
+| `msrvtt_interact_TV_neg` | interaction_shift | text_video | 11.025 | -16.938 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TV_pos` | interaction_shift | audio_video | 8.983 | -13.033 | 1.00 | 0.08 | 12 |
+| `msrvtt_interact_TV_pos` | interaction_shift | text_audio | 8.490 | -13.526 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TV_pos` | interaction_shift | text_video | 6.240 | -15.775 | 1.00 | 0.08 | 12 |
 | `msrvtt_null_top30` | no_shift | audio_video | 11.951 | -11.724 | 1.00 | 0.00 | 12 |
 | `msrvtt_null_top30` | no_shift | text_audio | 13.822 | -9.854 | 1.00 | 0.08 | 12 |
 | `msrvtt_null_top30` | no_shift | text_video | 12.759 | -10.917 | 1.00 | 0.00 | 12 |
+| `mosei_train_test` | real_train_test | audio_video | 770.941 | -1515.725 | 1.00 | 0.00 | 12 |
+| `mosei_train_test` | real_train_test | text_audio | 870.602 | -1416.064 | 1.00 | 0.00 | 12 |
+| `mosei_train_test` | real_train_test | text_video | 1008.327 | -1278.339 | 1.00 | 0.00 | 12 |
 
 ## 2. Triple $I^{(3)}$ (RF)
 
@@ -29,7 +44,12 @@ Definitions (leave-out PO risk $R(S)$ = held-out PO after dropping block set $S$
 |---|---|---:|---:|---:|---:|---:|
 | `msrvtt_concept_pc31_100` | concept_drift | 110.956 | -778.977 | 1.00 | 0.00 | 12 |
 | `msrvtt_concept_top30` | concept_drift | 10.890 | -2.224 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TA_neg` | interaction_shift | 9.824 | -23.000 | 1.00 | 0.17 | 12 |
+| `msrvtt_interact_TA_pos` | interaction_shift | 11.127 | -8.087 | 1.00 | 0.17 | 12 |
+| `msrvtt_interact_TV_neg` | interaction_shift | 11.825 | -17.518 | 1.00 | 0.00 | 12 |
+| `msrvtt_interact_TV_pos` | interaction_shift | 8.384 | -10.911 | 1.00 | 0.00 | 12 |
 | `msrvtt_null_top30` | no_shift | 15.386 | -5.773 | 1.00 | 0.08 | 12 |
+| `mosei_train_test` | real_train_test | 1266.312 | -1056.018 | 1.00 | 0.00 | 12 |
 
 ## 3. LOMO power loss (cross-check)
 
