@@ -80,4 +80,12 @@ console.log(
   trust.alignment.blockingAxes.join(", ") || "(none)",
 );
 
+section("7) Text meta-features — spaCy + VADER");
+for (const name of ["sentiment_shift", "entity_shift", "style_shift"]) {
+  const meta = call("attribute_text_meta", { fixture: name });
+  console.log("\n" + meta.glance.headline);
+  console.log(meta.glance.board);
+  console.log("action:", meta.recommendation.nextAction);
+}
+
 console.log("\nDone.\n");

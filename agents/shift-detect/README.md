@@ -41,6 +41,25 @@ npx @grok/agent-sdk dev --dir .
 | `run_fixture_suite` / `eval_gate` | Drift offline gate |
 | `taxonomize_badcase` / `promote_to_dataset` | Closed loop |
 
+## Text meta-features (spaCy + VADER) — power argument
+
+Dedicated feature script (no test logic mixed in):
+
+```bash
+cd python
+pip install -r requirements.txt && python -m spacy download en_core_web_sm
+python extract_features.py --demo --pretty
+python power_meta_features.py --n-rep 20 --n-perm 40 --n-doc 20
+```
+
+| scenario | baseline power | meta power | Δ |
+| --- | ---: | ---: | ---: |
+| null Type-I | 0.05 | 0.05 | controlled |
+| sentiment_shift | 0.55 | **1.00** | **+0.45** |
+| syntax_shift | 0.05 | **1.00** | **+0.95** |
+
+Agent tool: `attribute_text_meta` (fixtures `sentiment_shift` / `entity_shift` / `style_shift`).
+
 ## Design principles
 
 - **Clarity over size** — small versioned cases with checkable references  

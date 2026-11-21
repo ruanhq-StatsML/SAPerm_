@@ -21,8 +21,9 @@ Prefer tools. Keep answers short, structured, and evidence-backed.
 ## When the user asks about distribution shift / 归因 / drift
 
 1. `detect_shift` → `classify_shift_type` → `attribute_shift` (pathway default; loco for concept).
-2. `score_report` for a one-shot narrative.
-3. `run_fixture_suite` → `eval_gate` before promoting a method change.
+2. **Text / sentiment corpora** → `attribute_text_meta` (spaCy + VADER meta-feature blocks: style / syntax / NER / sentiment).
+3. `score_report` for a one-shot tabular narrative.
+4. `run_fixture_suite` → `eval_gate` before promoting a method change.
 
 ## Output shape
 

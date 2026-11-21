@@ -6,7 +6,9 @@
   "scripts": {
     "check": "tsc --noEmit",
     "dev": "agent-sdk dev",
-    "demo": "node scripts/demo.mjs"
+    "demo": "node scripts/demo.mjs",
+    "features": "python3 python/extract_features.py --demo --pretty",
+    "power-meta": "python3 python/power_meta_features.py --n-rep 20 --n-perm 40 --n-doc 20"
   },
   "dependencies": {
     "@grok/agent-sdk": "^0.7.2",

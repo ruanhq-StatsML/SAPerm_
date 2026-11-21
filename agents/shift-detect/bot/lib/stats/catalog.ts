@@ -92,6 +92,18 @@ export const METHOD_CATALOG: CatalogEntry[] = [
     useWhen: "Causal VIMP attribution after a shift is detected.",
     caveat: "Wire as Python sidecar when deep attribution is required.",
   },
+  {
+    id: "text_meta_spacy_vader",
+    family: "attribute",
+    agentMethod: "attribute_text_meta",
+    researchRepos: [
+      "SAPerm sentiment embedding pipeline",
+      "Product_Use_Case_Summarization",
+    ],
+    useWhen:
+      "Text windows: compose spaCy style/syntax/NER + VADER sentiment meta-features, then attribute blocks.",
+    caveat: "Needs python deps: spacy en_core_web_sm + vaderSentiment.",
+  },
 ];
 
 export function listCatalog(family?: CatalogEntry["family"]): CatalogEntry[] {
