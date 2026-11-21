@@ -1,2 +1,2 @@
 dataset,combo,scenario,pair,interaction_shift,mean_I,mean_I_cal,frac_pos,frac_pos_cal,power,signed_power,neg_signed_power,n_rep
-sens_interact_text_audio_neg1p8,text_audio,interaction_shift,text_audio,-1.8,5.641133051220418,-6.552204010490341,1.0,0.0625,0.0,0.0,0.0,16
+sens_interact_text_audio_neg1p8,text_audio,interaction_shift,text_audio,-1.8,6.0919111556557395,-15.736455472204307,1.0,0.05,0.0,0.0,0.0,20
