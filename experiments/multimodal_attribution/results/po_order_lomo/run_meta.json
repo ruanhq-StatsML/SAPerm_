@@ -1,0 +1,12 @@
+{
+  "n": 400,
+  "n_rep": 12,
+  "outcome_model": "rf_regressor",
+  "power_csvs": [
+    "experiments/multimodal_attribution/results/concept_drift/power_raw.csv",
+    "experiments/multimodal_attribution/results/emotion_overnight/power_raw.csv",
+    "experiments/multimodal_attribution/results/overnight/power_raw.csv"
+  ],
+  "include_mosei": true,
+  "started_or_finished_at": "2026-11-21T12:27:30Z"
+}

@@ -1,0 +1,110 @@
+% Higher-order PO interaction + LOMO power reconciliation (delivery prose)
+% Outcome model throughout: RandomForest (rf_regressor) for m / tau / nu.
+
+\paragraph{Higher-order interaction and leave-one-modality-out power.}
+One step further, we quantify how efficiently modalities interact for
+domain~/~label characterization.
+Writing $\Delta_{\mathrm{PO}}(\mathcal{S})$ for the PO-risk increment
+attributable to modality subset $\mathcal{S}$, the three-way interaction
+among modalities $M_1,M_2,M_3$ (e.g.\ text~/~audio~/~video) is the
+inclusion--exclusion residual
+\begin{equation}
+\label{eq:I3-delta-po}
+\begin{aligned}
+I^{(3)}(M_1,M_2,M_3)
+&=
+\Delta_{\mathrm{PO}}(M_1,M_2,M_3)
+-
+\Delta_{\mathrm{PO}}(M_1,M_2)
+-
+\Delta_{\mathrm{PO}}(M_1,M_3)
+-
+\Delta_{\mathrm{PO}}(M_2,M_3)\\
+&\qquad
++
+\Delta_{\mathrm{PO}}(M_1)
++
+\Delta_{\mathrm{PO}}(M_2)
++
+\Delta_{\mathrm{PO}}(M_3).
+\end{aligned}
+\end{equation}
+Equivalently, with leave-out PO risk $R(S)$ denoting held-out PO risk after
+dropping the feature blocks in $S$,
+\begin{equation}
+\label{eq:I3-leaveout}
+I^{(3)}
+=
+\sum_{i} R(\{i\})
+-
+\sum_{i<j} R(\{i,j\})
++
+R(\{1,2,3\}),
+\end{equation}
+so that $I^{(3)}$ isolates the non-additive remainder beyond all single- and
+pairwise PO increments.
+Complementing the residual, the leave-one-modality-out (LOMO) power gap
+\begin{equation}
+\label{eq:lomo-power}
+\Delta^{\mathrm{pow}}_{m}
+:=
+\mathrm{Power}(\mathrm{full})
+-
+\mathrm{Power}(\mathrm{full}\setminus\{m\})
+\end{equation}
+gives a direct, deployment-facing readout of which channel moves detection
+most: $\Delta^{\mathrm{pow}}_{m}>0$ means dropping $m$ hurts power
+(modality helps the joint test);
+$\Delta^{\mathrm{pow}}_{m}<0$ means the joint system is stronger without $m$
+(redundancy or conflict under early fusion).
+The two measures are designed to \emph{reconcile}:
+$I^{(3)}>0$ predicts jointly positive LOMO gaps
+(every channel earns its seat in the triple);
+$I^{(3)}\approx 0$ predicts near-zero gaps once the dominant pair is kept
+(essentially pairwise mechanisms);
+$I^{(3)}<0$ predicts at least one non-positive gap---and typically
+$\mathrm{Power}(\mathrm{full})<\max_{i<j}\mathrm{Power}(\{i,j\})$---i.e.\
+over-complete or conflicting triple fusion.
+
+\paragraph{Statistical reading.}
+Statistically, $I^{(3)}$ is a M\"obius residual on the PO-risk set function:
+it is not a unique causal share of any one modality, but a scalar test of
+whether the three-block leave-out pattern is super-additive, additive, or
+sub-additive after removing all lower-order terms.
+Under a calibrated null (type-I of pairwise $\texttt{interact\_PO}$ near
+$\alpha$), a stable sign of $I^{(3)}$ is interpretable as a property of the
+decision shift rather than a size artifact.
+LOMO gaps $\Delta^{\mathrm{pow}}_{m}$ are Monte Carlo power contrasts at
+fixed $(n,B,n_{\mathrm{perm}},\alpha)$; they inherit the usual Monte Carlo
+uncertainty of power estimates and are path-dependent on the chosen full
+system (triple vs.\ best pair as baseline).
+Reconciliation is therefore qualitative and sign-based
+(joint positivity~/~negativity of $I^{(3)}$ and the LOMO profile),
+not a claim that $|I^{(3)}|$ equals any single $\Delta^{\mathrm{pow}}_{m}$.
+When the outcome nuisance models are Random Forests
+(\texttt{rf\_regressor} for $m,\tau,\nu$), both $I^{(3)}$ and the CF/DR/RF
+power board share the same learner class, so disagreements are attributable
+to \emph{what} is measured (PO residual vs.\ rejection rate), not to a
+model mismatch.
+
+\paragraph{Practical reading.}
+In practice, the pair $(I^{(3)},\{\Delta^{\mathrm{pow}}_{m}\})$ turns
+``which combo has power'' into a fusion policy:
+\begin{itemize}
+  \item $I^{(3)}>0$ and $\Delta^{\mathrm{pow}}_{m}>0$ for all $m$
+  $\Rightarrow$ keep joint three-channel fusion (true complementary cues).
+  \item $I^{(3)}\approx 0$ with one large pairwise power and near-zero LOMO
+  gaps for the third channel
+  $\Rightarrow$ ship the dominant pair; treat the third modality as optional
+  audit~/~gate.
+  \item $I^{(3)}<0$ or $\Delta^{\mathrm{pow}}_{m}<0$ for some $m$
+  $\Rightarrow$ early-concat triple fusion is over-complete or conflicting:
+  drop or late-fuse the harmful channel, or replace concat by a conflict
+  gate---exactly the pattern already visible when
+  $\mathrm{Power}(T{\times}A)>\mathrm{Power}(\mathrm{TAV})$ under concept
+  drift.
+\end{itemize}
+Thus $I^{(3)}$ diagnoses \emph{interaction efficiency} of the PO increments,
+while LOMO power names \emph{which} modality to keep or cut; together they
+convert multimodal attribution into an actionable fusion decision without
+pretending to a unique percentage attribution of each channel.

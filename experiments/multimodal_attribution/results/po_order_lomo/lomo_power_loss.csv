@@ -1,0 +1,16 @@
+dataset,scenario,band,method,dropped,combo_loo,power_tav,B_tav,power_loo,B_loo,power_loss,power_delta_pct
+msrvtt_concept_pc31_100,concept_drift,pc31_100,rfperm,video,text_audio,0.5733333333333334,150,0.6466666666666666,150,-0.07333333333333325,-12.79069767441859
+msrvtt_concept_pc31_100,concept_drift,pc31_100,rfperm,audio,text_video,0.5733333333333334,150,0.6933333333333334,150,-0.12,-20.930232558139533
+msrvtt_concept_pc31_100,concept_drift,pc31_100,rfperm,vs_best_pair,text_video,0.5733333333333334,150,0.6933333333333334,150,-0.12,-20.930232558139533
+msrvtt_concept_top30,concept_drift,top30,cfperm,video,text_audio,0.4,120,0.6,120,-0.19999999999999996,-49.999999999999986
+msrvtt_concept_top30,concept_drift,top30,cfperm,audio,text_video,0.4,120,0.3416666666666667,120,0.05833333333333335,14.583333333333336
+msrvtt_concept_top30,concept_drift,top30,cfperm,vs_best_pair,text_audio,0.4,120,0.6,120,-0.19999999999999996,-49.999999999999986
+msrvtt_concept_top30,concept_drift,top30,drperm,video,text_audio,0.3,120,0.4,120,-0.10000000000000003,-33.33333333333335
+msrvtt_concept_top30,concept_drift,top30,drperm,audio,text_video,0.3,120,0.21666666666666667,120,0.08333333333333331,27.777777777777775
+msrvtt_concept_top30,concept_drift,top30,drperm,vs_best_pair,text_audio,0.3,120,0.4,120,-0.10000000000000003,-33.33333333333335
+msrvtt_concept_top30,concept_drift,top30,rfperm,video,text_audio,0.9333333333333333,150,1.0,150,-0.06666666666666665,-7.1428571428571415
+msrvtt_concept_top30,concept_drift,top30,rfperm,audio,text_video,0.9333333333333333,150,0.9866666666666667,150,-0.053333333333333344,-5.714285714285714
+msrvtt_concept_top30,concept_drift,top30,rfperm,vs_best_pair,text_audio,0.9333333333333333,150,1.0,150,-0.06666666666666665,-7.1428571428571415
+msrvtt_null_top30,no_shift,top30,rfperm,video,text_audio,0.0,120,0.0,133,0.0,0.0
+msrvtt_null_top30,no_shift,top30,rfperm,audio,text_video,0.0,120,0.0,120,0.0,0.0
+msrvtt_null_top30,no_shift,top30,rfperm,vs_best_pair,text_audio,0.0,120,0.0,133,0.0,0.0
