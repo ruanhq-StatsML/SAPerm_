@@ -1,0 +1,7 @@
+pair,combo,method,kind,typeI,n_rep,mean_p
+text×audio,text_audio,interact_PO_text_audio,po,0.02666666666666667,150,0.521869918699187
+text×audio,text_audio,crosscorr_text_audio,cc,0.04666666666666667,150,0.49887522676879675
+text×video,text_video,interact_PO_text_video,po,0.06666666666666667,150,0.5196864111498257
+text×video,text_video,crosscorr_text_video,cc,0.06,150,0.5139918027279446
+audio×video,audio_video,interact_PO_audio_video,po,0.03333333333333333,120,0.5056765389082463
+audio×video,audio_video,crosscorr_audio_video,cc,0.03333333333333333,120,0.5195407511926359

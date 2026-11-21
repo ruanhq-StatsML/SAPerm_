@@ -1,0 +1,200 @@
+% ACL drop-in: paste immediately after the Higher-order interaction paragraph
+% in Sec. Multi-Modal Datasets.
+
+The natural inputs are three nested comparisons:
+(i)~which \emph{modality} contributes
+($\Delta_{\mathrm{PO}}(M_i)$ / single-modality power);
+(ii)~which \emph{subset} contributes
+($\Delta_{\mathrm{PO}}(\mathcal{S})$ for pairs and TAV);
+(iii)~which modality has the largest \emph{marginal} contribution when dropped
+from a fixed full system (LOMO).
+Higher-order interactions are read off these increments, nothing more exotic.
+
+Writing $\Delta_{\mathrm{PO}}(\mathcal{S})$ for the PO-risk increment of modality
+subset $\mathcal{S}$, the three-way interaction is the inclusion--exclusion residual
+\begin{equation}
+\label{eq:I3-delta-po}
+\begin{aligned}
+I^{(3)}(M_1,M_2,M_3)
+&=
+\Delta_{\mathrm{PO}}(M_1,M_2,M_3)
+-
+\sum_{i<j}\Delta_{\mathrm{PO}}(M_i,M_j)
++
+\sum_{i}\Delta_{\mathrm{PO}}(M_i)\,.
+\end{aligned}
+\end{equation}
+Equivalently, with leave-out PO risk $R(S)$ (held-out PO after dropping the
+feature blocks in $S$),
+\begin{equation}
+\label{eq:I3-leaveout}
+I^{(3)}
+=
+\sum_{i} R(\{i\})
+-
+\sum_{i<j} R(\{i,j\})
++
+R(\{1,2,3\})\,.
+\end{equation}
+Pairwise interactions use
+$I^{(2)}=R(\{m_1\})+R(\{m_2\})-R(\{m_1,m_2\})$, and the calibrated readout is
+$I_{\mathrm{cal}}^{(k)}=I^{(k)}-\mathrm{PO}(\mathrm{full})$.
+The LOMO power gap
+\begin{equation}
+\label{eq:lomo-power}
+\Delta^{\mathrm{pow}}_{m}
+=
+\mathrm{Power}(\mathrm{TAV})
+-
+\mathrm{Power}(\mathrm{TAV}\setminus\{m\})
+\end{equation}
+is a sign-level check of the same interaction profile
+($\Delta^{\mathrm{pow}}_{m}<0$ $\Leftrightarrow$ early-concat is stronger without $m$),
+not a unique attribution of modality shares.
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\renewcommand{\arraystretch}{1.05}
+\caption{LOMO power under concept drift (Omni-3B;
+$n{=}500$, $n_{\mathrm{perm}}{=}150$, $\alpha{=}0.05$).
+Loss $=\mathrm{Power}(\mathrm{TAV})-\mathrm{Power}(\mathrm{LOO})$;
+\texttt{vs\_best}$=\mathrm{Power}(\mathrm{TAV})-\max\mathrm{Power}(\mathrm{pair})$.
+Negative \texttt{vs\_best}: TAV does not beat the best pair.
+Null (RFPerm): losses $=0$.}
+\label{tab:lomo-power-cv}
+\begin{tabular}{llcccc}
+\toprule
+Dataset & Method & Drop & Power(TAV) & Power(LOO) & Loss \\
+\midrule
+\multicolumn{6}{l}{\emph{msrvtt\_concept\_top30} ($B{=}120$ CF/DR; $B{=}150$ RF)} \\
+ & CFPerm & video (keep T$\times$A) & 0.400 & 0.600 & $-0.200$ \\
+ & CFPerm & audio (keep T$\times$V) & 0.400 & 0.342 & $+0.058$ \\
+ & CFPerm & vs\_best (T$\times$A) & 0.400 & 0.600 & $-0.200$ \\
+ & DRPerm & video & 0.300 & 0.400 & $-0.100$ \\
+ & DRPerm & audio & 0.300 & 0.217 & $+0.083$ \\
+ & DRPerm & vs\_best (T$\times$A) & 0.300 & 0.400 & $-0.100$ \\
+ & RFPerm & video & 0.933 & 1.000 & $-0.067$ \\
+ & RFPerm & audio & 0.933 & 0.987 & $-0.053$ \\
+ & RFPerm & vs\_best (T$\times$A) & 0.933 & 1.000 & $-0.067$ \\
+\midrule
+\multicolumn{6}{l}{\emph{msrvtt\_concept\_pc31\_100} (RFPerm, $B{=}150$)} \\
+ & RFPerm & video (keep T$\times$A) & 0.573 & 0.647 & $-0.073$ \\
+ & RFPerm & audio (keep T$\times$V) & 0.573 & 0.693 & $-0.120$ \\
+ & RFPerm & vs\_best (T$\times$V) & 0.573 & 0.693 & $-0.120$ \\
+\midrule
+\multicolumn{6}{l}{\emph{msrvtt\_null\_top30} (RFPerm, $B{=}120$)} \\
+ & RFPerm & video / audio / vs\_best & 0.000 & 0.000 & $0.000$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.8pt}
+\renewcommand{\arraystretch}{1.05}
+\caption{RF PO-risk interactions ($m,\tau,\nu=\texttt{rf\_regressor}$;
+$n{=}400$, $B{=}12$).
+Use $I_{\mathrm{cal}}^{(k)}=I^{(k)}-\mathrm{PO}(\mathrm{full})$;
+raw $I^{(k)}>0$ alone is not the decision rule.
+Concept / MOSEI: $I_{\mathrm{cal}}^{(3)}<0$.
+Planted $\pm\lambda$: more negative $I_{\mathrm{cal}}^{(2)}$ on the planted pair
+under antagonism than under synergy.}
+\label{tab:I2-I3-rf}
+\begin{tabular}{llcccc}
+\toprule
+Dataset & Term & mean $I$ & mean $I_{\mathrm{cal}}$ & frac $I_{\mathrm{cal}}>0$ & $B$ \\
+\midrule
+\multicolumn{6}{l}{\emph{Null} \texttt{msrvtt\_null\_top30}} \\
+ & $I^{(2)}$ T$\times$A & 13.82 & $-9.85$ & 0.08 & 12 \\
+ & $I^{(2)}$ T$\times$V & 12.76 & $-10.92$ & 0.00 & 12 \\
+ & $I^{(2)}$ A$\times$V & 11.95 & $-11.72$ & 0.00 & 12 \\
+ & $I^{(3)}$ TAV & 15.39 & $-5.77$ & 0.08 & 12 \\
+\midrule
+\multicolumn{6}{l}{\emph{Concept} \texttt{msrvtt\_concept\_top30}} \\
+ & $I^{(2)}$ T$\times$A & 10.02 & $-2.58$ & 0.00 & 12 \\
+ & $I^{(2)}$ T$\times$V & 9.78 & $-2.82$ & 0.00 & 12 \\
+ & $I^{(2)}$ A$\times$V & 10.34 & $-2.25$ & 0.00 & 12 \\
+ & $I^{(3)}$ TAV & 10.89 & $-2.22$ & 0.00 & 12 \\
+\midrule
+\multicolumn{6}{l}{\emph{Concept} \texttt{msrvtt\_concept\_pc31\_100}} \\
+ & $I^{(2)}$ T$\times$A & 115.9 & $-1004.4$ & 0.00 & 12 \\
+ & $I^{(2)}$ T$\times$V & 113.5 & $-1006.9$ & 0.00 & 12 \\
+ & $I^{(2)}$ A$\times$V & 99.88 & $-1020.4$ & 0.00 & 12 \\
+ & $I^{(3)}$ TAV & 111.0 & $-779.0$ & 0.00 & 12 \\
+\midrule
+\multicolumn{6}{l}{\emph{Interaction} $\lambda{=}\pm 1.8$ (planted pair $I^{(2)}_{\mathrm{cal}}$)} \\
+ & T$\times$A, $\lambda{<}0$ & 9.16 & $-31.26$ & 0.08 & 12 \\
+ & T$\times$A, $\lambda{>}0$ & 3.86 & $-8.00$ & 0.08 & 12 \\
+ & T$\times$V, $\lambda{<}0$ & 11.02 & $-16.94$ & 0.00 & 12 \\
+ & T$\times$V, $\lambda{>}0$ & 6.24 & $-15.78$ & 0.08 & 12 \\
+ & $I^{(3)}$ (TA $\lambda{<}0$) & 9.82 & $-23.00$ & 0.17 & 12 \\
+ & $I^{(3)}$ (TA $\lambda{>}0$) & 11.13 & $-8.09$ & 0.17 & 12 \\
+\midrule
+\multicolumn{6}{l}{\emph{Real} CMU-MOSEI train--test (pc31--100)} \\
+ & $I^{(2)}$ T$\times$A & 870.6 & $-1416.1$ & 0.00 & 12 \\
+ & $I^{(2)}$ T$\times$V & 1008.3 & $-1278.3$ & 0.00 & 12 \\
+ & $I^{(2)}$ A$\times$V & 770.9 & $-1515.7$ & 0.00 & 12 \\
+ & $I^{(3)}$ TAV & 1266.3 & $-1056.0$ & 0.00 & 12 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{PO-risk ratios.}
+Absolute $I$ / $I_{\mathrm{cal}}$ inherit the scale of $\mathrm{PO}(\mathrm{full})$.
+We therefore also report scale-free ratios
+\begin{equation}
+\label{eq:po-ratio}
+r_{\mathrm{cal}}^{(k)}
+=
+\frac{I_{\mathrm{cal}}^{(k)}}{\mathrm{PO}(\mathrm{full})}
+\,,\qquad
+\ell(S)
+=
+\frac{R(S)}{\mathrm{PO}(\mathrm{full})}\,,
+\end{equation}
+so that modality / subset / interaction comparisons stay commensurable across
+bands and datasets (Table~\ref{tab:po-ratios}).
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.05}
+\caption{PO-risk ratios (RF; $n{=}400$, $B{=}12$).
+$r_{\mathrm{cal}}=I_{\mathrm{cal}}/\mathrm{PO}(\mathrm{full})$;
+negative $r_{\mathrm{cal}}^{(3)}$ matches LOMO \texttt{vs\_best}$<0$ under concept drift.}
+\label{tab:po-ratios}
+\begin{tabular}{llccc}
+\toprule
+Dataset & Term & mean $\mathrm{PO}(\mathrm{full})$ & $r_{\mathrm{cal}}$ & $B$ \\
+\midrule
+null top30 & $I^{(3)}$ & 21.16 & $-0.233$ & 12 \\
+concept top30 & $I^{(3)}$ & 13.11 & $-0.155$ & 12 \\
+concept pc31--100 & $I^{(3)}$ & 889.9 & $-0.864$ & 12 \\
+MOSEI train--test & $I^{(3)}$ & 2322 & $-0.469$ & 12 \\
+\midrule
+concept top30 & $I^{(2)}$ T$\times$A & 12.60 & $-0.182$ & 12 \\
+concept top30 & $I^{(2)}$ T$\times$V & 12.60 & $-0.203$ & 12 \\
+concept pc31--100 & $I^{(2)}$ T$\times$A & 1120 & $-0.895$ & 12 \\
+MOSEI & $I^{(2)}$ T$\times$A & 2287 & $-0.613$ & 12 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Empirical reading.}
+These tables answer the three natural questions under the shift.
+\emph{Subset:} combo power ranks T$\times$A $>$ TAV $>$ T$\times$V for CF/DR on
+top-30 (Table~\ref{tab:full-benchmark-power-typeI});
+\texttt{vs\_best}$<0$ throughout Table~\ref{tab:lomo-power-cv}.
+\emph{Modality / marginal:} dropping video from TAV raises CF/DR/RF power on
+top-30; on the mid-band, dropping audio (keeping T$\times$V) hurts least /
+helps most.
+\emph{Interaction / ratio:} $I_{\mathrm{cal}}^{(2/3)}<0$ and
+$r_{\mathrm{cal}}^{(3)}<0$ on concept and MOSEI
+(Tables~\ref{tab:I2-I3-rf}--\ref{tab:po-ratios}).
+Null losses stay at $0$.
+Altogether: modality, subset, marginal, and PO-risk ratios read the same
+non-super-additive interaction under early-concat TAV.

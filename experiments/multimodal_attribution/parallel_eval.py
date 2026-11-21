@@ -24,6 +24,16 @@ def _eval_one(name: str, fn: Callable, X1, X2, batch) -> Tuple[str, float, str]:
         return name, float("nan"), f"{exc}\n{traceback.format_exc()}"
 
 
+def default_n_jobs(requested: int | None = None) -> int:
+    """Honor ``--n-jobs`` (oversubscribe allowed). Default 8 when unset."""
+    if requested is None or int(requested) <= 0:
+        try:
+            return max(1, int(os.environ.get("MM_N_JOBS", "8")))
+        except ValueError:
+            return 8
+    return max(1, int(requested))
+
+
 def eval_methods_parallel(
     method_items: Sequence[Tuple[str, Callable]],
     X1,
@@ -36,7 +46,7 @@ def eval_methods_parallel(
     items = list(method_items)
     if not items:
         return []
-    jobs = max(1, int(n_jobs))
+    jobs = default_n_jobs(n_jobs)
     if jobs == 1 or len(items) == 1:
         return [_eval_one(n, f, X1, X2, batch) for n, f in items]
     from joblib import Parallel, delayed

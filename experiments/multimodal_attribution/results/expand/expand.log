@@ -1,0 +1,4 @@
+[11:08:46] expand start: 8 datasets × relevant combos, 3840 batches, methods=['rfperm', 'drperm', 'cfperm'], n_jobs=1, compacted 0→0
+[11:08:46] expand start: 8 datasets × relevant combos, 3840 batches, methods=['rfperm', 'drperm', 'cfperm'], n_jobs=1, compacted 0→0
+[11:11:48] msrvtt_null_top30/text rep 1/120 (+3 methods, 1/3840, elapsed=0.05h)
+[11:11:48] msrvtt_null_top30/text rep 1/120 (+3 methods, 1/3840, elapsed=0.05h)

@@ -242,7 +242,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--n", type=int, default=500)
     p.add_argument("--n-rep", type=int, default=150)
-    p.add_argument("--n-perm", type=int, default=150, help="CFPerm/DRPerm/RFPerm permutations (min 150)")
+    p.add_argument("--n-perm", type=int, default=150, help="CFPerm/DRPerm/RFPerm permutations (accel may use 40)")
     p.add_argument("--alpha", type=float, default=0.05)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument(
