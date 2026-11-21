@@ -46,3 +46,11 @@ Checkpoint keeps finished cells. Subsequent runs use `--n-rep 120` (skip rep≥1
 | drperm | 0.400 |
 
 CF∥DR still filling text_video + text_audio_video under accel knobs.
+
+## overnight-power-check (2026-11-21 01:49 UTC)
+
+- text_audio: CF/DR/RF all ≥120 — **done**
+- text_video: CF ~30/120, DR ~21/120 (healthy, ~14–25s/rep)
+- text_audio_video: CF/DR not started; RF done
+- classical/MSR: **not** restarted (user: keep off)
+- ETA remaining combos ≈ 1h (DR-bound)
