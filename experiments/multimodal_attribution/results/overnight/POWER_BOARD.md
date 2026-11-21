@@ -1,25 +1,25 @@
-# Overnight multimodal power board (save-as-you-go, stackable n_rep)
+# overnight power board
 
-_rows=5711 after dedupe; α=0.05_
+_rows=5753 after dedupe; α=0.05_
 
 ## `msrvtt_null_top30` / `audio_video` / `no_shift`
 
 | method | power | mean p | n_rep |
 |---|---:|---:|---:|
-| skk13 | 1.000 | 0.000 | 100 |
-| zwl | 0.210 | 0.368 | 100 |
-| pan14 | 0.110 | 0.458 | 100 |
-| mmd_rbf | 0.100 | 0.459 | 100 |
-| bai96 | 0.090 | 0.451 | 100 |
-| sri08 | 0.090 | 0.453 | 100 |
-| miles11 | 0.070 | 0.453 | 100 |
-| c2st_X | 0.060 | 0.484 | 100 |
-| kmmd | 0.040 | 0.460 | 100 |
-| crosscorr_audio_video | 0.040 | 0.506 | 100 |
-| xu16 | 0.030 | 0.468 | 100 |
-| c2st_XY | 0.020 | 0.516 | 100 |
-| interact_PO_audio_video | 0.020 | 0.515 | 100 |
-| chen10 | 0.000 | 0.826 | 100 |
+| skk13 | 1.000 | 0.000 | 103 |
+| zwl | 0.204 | 0.367 | 103 |
+| pan14 | 0.107 | 0.453 | 103 |
+| mmd_rbf | 0.097 | 0.450 | 103 |
+| bai96 | 0.087 | 0.442 | 103 |
+| sri08 | 0.087 | 0.447 | 103 |
+| miles11 | 0.068 | 0.450 | 103 |
+| c2st_X | 0.058 | 0.486 | 103 |
+| kmmd | 0.039 | 0.459 | 103 |
+| crosscorr_audio_video | 0.039 | 0.505 | 103 |
+| c2st_XY | 0.029 | 0.510 | 103 |
+| xu16 | 0.029 | 0.462 | 103 |
+| interact_PO_audio_video | 0.019 | 0.512 | 103 |
+| chen10 | 0.000 | 0.824 | 103 |
 
 ## `msrvtt_null_top30` / `text_audio` / `no_shift`
 
