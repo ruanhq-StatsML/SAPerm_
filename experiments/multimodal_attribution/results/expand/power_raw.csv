@@ -1,0 +1,4 @@
+dataset,combo,scenario,band,method,rep,pvalue,n,alpha,seed,shift_modality,covariate_amount,interaction_shift,concept_shift
+msrvtt_null_top30,text,no_shift,top30,rfperm,0,0.5165562913907285,500,0.05,218,video,1.0,1.8,1.5
+msrvtt_null_top30,text,no_shift,top30,drperm,0,0.4900662251655629,500,0.05,218,video,1.0,1.8,1.5
+msrvtt_null_top30,text,no_shift,top30,cfperm,0,0.8410596026490066,500,0.05,218,video,1.0,1.8,1.5

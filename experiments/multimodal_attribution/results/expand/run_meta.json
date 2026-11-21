@@ -1,0 +1,214 @@
+{
+  "n": 500,
+  "n_rep": 120,
+  "n_perm": 150,
+  "alpha": 0.05,
+  "seed": 0,
+  "phases": [
+    "type_i",
+    "concept",
+    "covariate",
+    "interaction"
+  ],
+  "methods": [
+    "rfperm",
+    "drperm",
+    "cfperm"
+  ],
+  "datasets": [
+    {
+      "name": "msrvtt_null_top30",
+      "scenario": "no_shift",
+      "band": "top30",
+      "shift_modality": "video",
+      "interact_pair": [
+        "text",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "concept_shift": 1.5,
+      "covariate_amount": 1.0,
+      "inject_frac": 0.25,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_concept_top30",
+      "scenario": "concept_drift",
+      "band": "top30",
+      "shift_modality": "video",
+      "interact_pair": [
+        "text",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "concept_shift": 0.35,
+      "covariate_amount": 1.0,
+      "inject_frac": 0.25,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_backtrans_text_top30",
+      "scenario": "covariate_backtrans",
+      "band": "top30",
+      "shift_modality": "text",
+      "interact_pair": [
+        "text",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "concept_shift": 1.5,
+      "covariate_amount": 1.2,
+      "inject_frac": 0.25,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_inject_text_top30",
+      "scenario": "covariate_inject",
+      "band": "top30",
+      "shift_modality": "text",
+      "interact_pair": [
+        "text",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "concept_shift": 1.5,
+      "covariate_amount": 1.5,
+      "inject_frac": 0.3,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_inject_audio_top30",
+      "scenario": "covariate_inject",
+      "band": "top30",
+      "shift_modality": "audio",
+      "interact_pair": [
+        "text",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "concept_shift": 1.5,
+      "covariate_amount": 1.5,
+      "inject_frac": 0.3,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_interact_text_audio_neg",
+      "scenario": "interaction_shift",
+      "band": "top30",
+      "shift_modality": "video",
+      "interact_pair": [
+        "text",
+        "audio"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": -1.8,
+      "concept_shift": 1.5,
+      "covariate_amount": 1.0,
+      "inject_frac": 0.25,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_interact_text_audio_pos",
+      "scenario": "interaction_shift",
+      "band": "top30",
+      "shift_modality": "video",
+      "interact_pair": [
+        "text",
+        "audio"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": 1.8,
+      "concept_shift": 1.5,
+      "covariate_amount": 1.0,
+      "inject_frac": 0.25,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "name": "msrvtt_interact_text_video_neg",
+      "scenario": "interaction_shift",
+      "band": "top30",
+      "shift_modality": "video",
+      "interact_pair": [
+        "text",
+        "video"
+      ],
+      "mean_shift": 1.0,
+      "interaction_shift": -1.8,
+      "concept_shift": 1.5,
+      "covariate_amount": 1.0,
+      "inject_frac": 0.25,
+      "dims": [
+        128,
+        128,
+        128
+      ]
+    }
+  ],
+  "combos": {
+    "text": [
+      "text"
+    ],
+    "audio": [
+      "audio"
+    ],
+    "video": [
+      "video"
+    ],
+    "text_audio": [
+      "text",
+      "audio"
+    ],
+    "text_video": [
+      "text",
+      "video"
+    ],
+    "audio_video": [
+      "audio",
+      "video"
+    ],
+    "text_audio_video": [
+      "text",
+      "audio",
+      "video"
+    ]
+  },
+  "note": "expand: singles+pairs+TAV type-I; concept-drift; covariate_backtrans/inject; interaction \u00b1\u03bb; CF/DR/RF only",
+  "started_at": "2026-11-21T11:08:46Z",
+  "compacted_raw": {
+    "before": 0,
+    "after": 0
+  }
+}
