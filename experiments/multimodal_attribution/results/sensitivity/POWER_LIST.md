@@ -13,12 +13,12 @@
 
 | dataset | combo | n_rep | grade |
 |---|---|---:|---|
-| sens_interact_text_audio_neg1p8 | text_audio | 2 | preliminary |
+| sens_interact_text_audio_neg1p8 | text_audio | 3 | preliminary |
 
 ## CF / DR / RF
 
 | dataset | combo | method | power | n_rep | grade |
 |---|---|---|---:|---:|---|
-| sens_interact_text_audio_neg1p8 | text_audio | cfperm | 1.00 | 2 | preliminary |
-| sens_interact_text_audio_neg1p8 | text_audio | drperm | 0.00 | 2 | preliminary |
-| sens_interact_text_audio_neg1p8 | text_audio | rfperm | 0.00 | 2 | preliminary |
+| sens_interact_text_audio_neg1p8 | text_audio | cfperm | 0.67 | 3 | preliminary |
+| sens_interact_text_audio_neg1p8 | text_audio | drperm | 0.00 | 3 | preliminary |
+| sens_interact_text_audio_neg1p8 | text_audio | rfperm | 0.00 | 3 | preliminary |
