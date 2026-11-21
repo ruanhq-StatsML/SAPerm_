@@ -564,14 +564,24 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
             subset=["dataset", "combo", "pair", "rep"], keep="last"
         )
         signed["reject"] = signed["p"] < alpha
+        # Raw I=PO(-a)+PO(-b)-PO(-both) often sits >0 even under null (leave-out
+        # scale bias). Calibrated sign uses interaction_vs_full = I - PO(full):
+        #   >0 synergy beyond full-model baseline; <0 antagonism / cancellation.
+        if "interaction_vs_full" in signed.columns:
+            signed["I_cal"] = signed["interaction_vs_full"]
+        else:
+            signed["I_cal"] = signed["I"]
         signed["pos"] = signed["I"] > 0
-        signed["signed_reject"] = signed["reject"] & signed["pos"]
-        signed["neg_reject"] = signed["reject"] & (signed["I"] < 0)
+        signed["pos_cal"] = signed["I_cal"] > 0
+        signed["signed_reject"] = signed["reject"] & signed["pos_cal"]
+        signed["neg_reject"] = signed["reject"] & (signed["I_cal"] < 0)
         sig_sum = (
             signed.groupby(["dataset", "combo", "scenario", "pair", "interaction_shift"], dropna=False)
             .agg(
                 mean_I=("I", "mean"),
+                mean_I_cal=("I_cal", "mean"),
                 frac_pos=("pos", "mean"),
+                frac_pos_cal=("pos_cal", "mean"),
                 power=("reject", "mean"),
                 signed_power=("signed_reject", "mean"),
                 neg_signed_power=("neg_reject", "mean"),
@@ -608,7 +618,9 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
             sp = np.nan
             nsp = np.nan
             mean_I = np.nan
+            mean_I_cal = np.nan
             frac_pos = np.nan
+            frac_pos_cal = np.nan
             unsigned_pow = np.nan
             if len(sig_sum):
                 s = sig_sum[
@@ -620,9 +632,14 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
                     sp = float(s["signed_power"].iloc[0])
                     nsp = float(s["neg_signed_power"].iloc[0])
                     mean_I = float(s["mean_I"].iloc[0])
+                    mean_I_cal = float(s["mean_I_cal"].iloc[0]) if "mean_I_cal" in s.columns else mean_I
                     frac_pos = float(s["frac_pos"].iloc[0])
+                    frac_pos_cal = (
+                        float(s["frac_pos_cal"].iloc[0]) if "frac_pos_cal" in s.columns else frac_pos
+                    )
                     unsigned_pow = float(s["power"].iloc[0])
-            # Direction-matched signed power: +λ → I>0 branch; −λ → I<0 branch.
+            # Direction-matched signed power on *calibrated* I:
+            # +λ → I_cal>0 branch; −λ → I_cal<0 branch.
             matched_sp = sp if lam > 0 else nsp
             contrast_rows.append(
                 {
@@ -640,7 +657,9 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
                     "tav_minus_pair": ptav - pab if np.isfinite(ptav) else np.nan,
                     "tav_minus_max_single": ptav - max(pa, pb) if np.isfinite(ptav) else np.nan,
                     "mean_I": mean_I,
+                    "mean_I_cal": mean_I_cal,
                     "frac_I_pos": frac_pos,
+                    "frac_I_pos_cal": frac_pos_cal,
                     "unsigned_power_I": unsigned_pow,
                     "signed_power_pos": sp,
                     "signed_power_neg": nsp,
@@ -720,14 +739,14 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
         "| `power_pair` | power on the planted pair concat |",
         "| `power_tav` | power on text+audio+video |",
         "| `pair_minus_max_single` | **fusion lift** vs better single |",
-        "| `mean_I` / `frac_I_pos` | PO interaction direction |",
-        "| `signed_power_matched` | $P(\\mathrm{reject}\\wedge \\mathrm{sign}(\\hat I)=\\mathrm{sign}(\\lambda))$ |",
+        "| `I_cal=I-PO(full)` | **calibrated** interaction (raw $I$ is often $+$-biased) |",
+        "| `signed_power_matched` | $P(\\mathrm{reject}\\wedge \\mathrm{sign}(I_{cal})=\\mathrm{sign}(\\lambda))$ |",
         "",
         "### Insight hypothesis",
         "",
-        "1. **$\\lambda>0$** → `mean_I>0`, high matched signed power, "
+        "1. **$\\lambda>0$** → `I_cal>0`, high matched signed power, "
         "`power_pair > max(power_a,power_b)` (synergy: fusion beats singles).",
-        "2. **$\\lambda<0$** → `mean_I<0`, matched (neg) signed power up, fusion lift shrinks.",
+        "2. **$\\lambda<0$** → `I_cal<0`, matched (neg) signed power up, fusion lift shrinks.",
         "3. **TAV vs pair**: under a *pair* plant, TAV should not beat the planted pair by much "
         "(third modality is noise); under mean_shift of one mod, TAV ≈ pairs containing that mod.",
         "4. **±mean_shift** → single of shifted modality carries power; signed PO near α "
@@ -745,7 +764,7 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
             lines.append("")
             lines.append(
                 "| pair | λ | a | b | pair | TAV | pair−max₁ | TAV−pair | "
-                "mean_I | frac+ | matched signed-pow | n |"
+                "I_cal | frac+(cal) | matched signed-pow | n |"
             )
             lines.append(
                 "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"
@@ -757,8 +776,16 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
                     if np.isfinite(r.get("tav_minus_pair", np.nan))
                     else "—"
                 )
-                mi = f"{r['mean_I']:+.3f}" if np.isfinite(r["mean_I"]) else "—"
-                fp = f"{r['frac_I_pos']:.2f}" if np.isfinite(r["frac_I_pos"]) else "—"
+                mi = (
+                    f"{r['mean_I_cal']:+.3f}"
+                    if np.isfinite(r.get("mean_I_cal", np.nan))
+                    else "—"
+                )
+                fp = (
+                    f"{r['frac_I_pos_cal']:.2f}"
+                    if np.isfinite(r.get("frac_I_pos_cal", np.nan))
+                    else "—"
+                )
                 sp = (
                     f"{r['signed_power_matched']:.2f}"
                     if np.isfinite(r["signed_power_matched"])
@@ -863,20 +890,103 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
             "1. **Plant**: `interaction_shift` with signed $\\lambda$ injects a product on $(a,b)$ "
             "in $X$ and $Y$. $\\lambda>0$ = synergistic plant; $\\lambda<0$ = antagonistic plant.",
             "2. **Mechanism readout**: "
-            "$I=\\mathrm{PO}(-a)+\\mathrm{PO}(-b)-\\mathrm{PO}(-a,-b)$; "
-            "matched signed power = rate of rejecting *and* getting $\\mathrm{sign}(\\hat I)=\\mathrm{sign}(\\lambda)$.",
+            "$I=\\mathrm{PO}(-a)+\\mathrm{PO}(-b)-\\mathrm{PO}(-a,-b)$, "
+            "calibrated $I_{cal}=I-\\mathrm{PO}(\\mathrm{full})$. "
+            "Matched signed power rejects *and* matches $\\mathrm{sign}(I_{cal})=\\mathrm{sign}(\\lambda)$. "
+            "Empirically raw $I$ stays positive under null — **do not** sign off raw $I$.",
             "3. **Detectability readout (CF/DR/RF)**: compare `power_a`, `power_b`, `power_pair`, `power_tav`. "
-            "Fusion lift `power_pair - max(power_a,power_b)` is the operational twin of positive $I$: "
-            "if the pair is truly synergistic, the concatenated test should beat either single.",
-            "4. **Association**: across $\\pm\\lambda$ and pairs, corr(matched signed-power, fusion lift) "
-            "validates that PO interaction and perm-test fusion tell the same story.",
-            "5. **Control**: ±mean_shift moves one modality — singles light up, signed $I$ stays null, "
-            "pair/TAV ≈ single (no extra interaction credit).",
+            "Fusion lift is the operational twin of $I_{cal}>0$: synergistic label decisions "
+            "should make the pair beat either single.",
+            "4. **Sentiment / decision**: $I_{cal}>0$ ⇒ modalities *agree* in the label head (fuse); "
+            "$I_{cal}<0$ ⇒ *conflict* (gate / late-fuse / trust dominant channel).",
+            "5. **Association**: corr(matched signed-power, fusion lift) across $\\pm\\lambda$ "
+            "links mechanism to detection. ±mean_shift is the additive control.",
             "",
         ]
     )
 
     (out_dir / "SENSITIVITY_BOARD.md").write_text("\n".join(lines) + "\n")
+
+    # --- Flat POWER_LIST: every cell, easy to scan / compare ---
+    plist = [
+        "# POWER_LIST — CF / DR / RF × modality hierarchy",
+        "",
+        f"_α={alpha}; regenerated each summarize_",
+        "",
+        "Read left→right: **single a → single b → pair → TAV**, then PO signed.",
+        "",
+    ]
+    # interaction blocks
+    if len(contrast):
+        plist.append("## interaction_shift (planted pair)")
+        plist.append("")
+        for method in PERM_METHODS:
+            show = contrast[contrast["method"] == method].sort_values(["pair", "lambda"])
+            if not len(show):
+                continue
+            plist.append(f"### {method}")
+            plist.append("")
+            plist.append(
+                "| pair | λ | pow_a | pow_b | pow_pair | pow_TAV | "
+                "lift=pair−max₁ | mean_I | matched signed-pow | n_pair |"
+            )
+            plist.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+            for _, r in show.iterrows():
+                tav = f"{r['power_tav']:.2f}" if np.isfinite(r["power_tav"]) else "…"
+                mi = f"{r['mean_I']:+.2f}" if np.isfinite(r["mean_I"]) else "…"
+                sp = (
+                    f"{r['signed_power_matched']:.2f}"
+                    if np.isfinite(r["signed_power_matched"])
+                    else "…"
+                )
+                plist.append(
+                    f"| {r['pair']} | {r['lambda']:+.1f} | {r['power_a']:.2f} | {r['power_b']:.2f} | "
+                    f"{r['power_pair']:.2f} | {tav} | {r['pair_minus_max_single']:+.2f} | "
+                    f"{mi} | {sp} | {int(r['n_rep_pair'])} |"
+                )
+            plist.append("")
+    if len(mean_board):
+        plist.append("## mean_shift (± direction)")
+        plist.append("")
+        for method in PERM_METHODS:
+            show = mean_board[mean_board["method"] == method].sort_values(
+                ["shift_modality", "mean_shift", "pair"]
+            )
+            if not len(show):
+                continue
+            plist.append(f"### {method}")
+            plist.append("")
+            plist.append(
+                "| mod | amt | pow_single | pair | pow_pair | pow_TAV | pair−single |"
+            )
+            plist.append("|---|---:|---:|---|---:|---:|---:|")
+            for _, r in show.iterrows():
+                tav = f"{r['power_tav']:.2f}" if np.isfinite(r["power_tav"]) else "…"
+                plist.append(
+                    f"| {r['shift_modality']} | {r['mean_shift']:+.1f} | {r['power_single']:.2f} | "
+                    f"{r['pair']} | {r['power_pair']:.2f} | {tav} | {r['pair_minus_single']:+.2f} |"
+                )
+            plist.append("")
+    # raw progress skeleton so empty cells still show as …
+    prog = (
+        power[power["method"].isin(PERM_METHODS)]
+        .groupby(["scenario", "dataset", "combo", "method"], dropna=False)
+        .agg(power=("power", "mean"), n=("n_rep", "max"))
+        .reset_index()
+        .sort_values(["scenario", "dataset", "combo", "method"])
+    )
+    if len(prog):
+        plist.append("## All cells (progress skeleton)")
+        plist.append("")
+        plist.append("| scenario | dataset | combo | method | power | n |")
+        plist.append("|---|---|---|---|---:|---:|")
+        for _, r in prog.iterrows():
+            plist.append(
+                f"| {r['scenario']} | {r['dataset']} | {r['combo']} | {r['method']} | "
+                f"{r['power']:.2f} | {int(r['n'])} |"
+            )
+        plist.append("")
+    (out_dir / "POWER_LIST.md").write_text("\n".join(plist) + "\n")
     return power
 
 

@@ -1,0 +1,6 @@
+dataset,combo,scenario,method,shift_modality,mean_shift,interact_a,interact_b,interaction_shift,power,n_rep,mean_p
+sens_interact_text_audio_neg1p8,text_audio,interaction_shift,cfperm,video,1.0,text,audio,-1.8,0.6363636363636364,11,0.08264462809917356
+sens_interact_text_audio_neg1p8,text_audio,interaction_shift,crosscorr_text_audio,video,1.0,text,audio,-1.8,0.0,11,0.5179063360881543
+sens_interact_text_audio_neg1p8,text_audio,interaction_shift,drperm,video,1.0,text,audio,-1.8,0.0,11,1.0
+sens_interact_text_audio_neg1p8,text_audio,interaction_shift,interact_PO_text_audio,video,1.0,text,audio,-1.8,0.0,11,0.8251748251748251
+sens_interact_text_audio_neg1p8,text_audio,interaction_shift,rfperm,video,1.0,text,audio,-1.8,0.0,11,0.31955922865013775
