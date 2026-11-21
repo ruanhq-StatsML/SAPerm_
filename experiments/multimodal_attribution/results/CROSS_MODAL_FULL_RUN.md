@@ -19,3 +19,9 @@
 ## Delivery rule
 
 Cite power only if realized **B ≥ 100**. Pilot B=24 archived.
+
+## Out-dirs
+
+- `results/overnight` — null type-I stack
+- `results/overnight_cross` — mean_shift + interaction_shift (classical+PO)
+- `results/sensitivity` — CF/DR/RF ±λ ±mean
