@@ -1,6 +1,11 @@
 dataset,combo,scenario,method,shift_modality,mean_shift,interact_a,interact_b,interaction_shift,power,n_rep,mean_p
-sens_interact_text_audio_neg1p8,text_audio,interaction_shift,cfperm,video,1.0,text,audio,-1.8,0.55,20,0.07272727272727272
-sens_interact_text_audio_neg1p8,text_audio,interaction_shift,crosscorr_text_audio,video,1.0,text,audio,-1.8,0.0,20,0.5151515151515151
-sens_interact_text_audio_neg1p8,text_audio,interaction_shift,drperm,video,1.0,text,audio,-1.8,0.0,20,0.9939393939393939
-sens_interact_text_audio_neg1p8,text_audio,interaction_shift,interact_PO_text_audio,video,1.0,text,audio,-1.8,0.0,20,0.7692307692307693
-sens_interact_text_audio_neg1p8,text_audio,interaction_shift,rfperm,video,1.0,text,audio,-1.8,0.0,20,0.33333333333333337
+sens_interact_text_audio_neg1p8,text_audio,interaction_shift,cfperm,video,1.0,text,audio,-1.8,0.5416666666666666,24,0.08838383838383838
+sens_interact_text_audio_neg1p8,text_audio,interaction_shift,crosscorr_text_audio,video,1.0,text,audio,-1.8,0.041666666666666664,24,0.5113636363636364
+sens_interact_text_audio_neg1p8,text_audio,interaction_shift,drperm,video,1.0,text,audio,-1.8,0.0,24,0.9936868686868686
+sens_interact_text_audio_neg1p8,text_audio,interaction_shift,interact_PO_text_audio,video,1.0,text,audio,-1.8,0.0,24,0.7724358974358975
+sens_interact_text_audio_neg1p8,text_audio,interaction_shift,rfperm,video,1.0,text,audio,-1.8,0.0,24,0.3396464646464647
+sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,cfperm,video,1.0,text,audio,-1.8,0.0,1,0.36363636363636365
+sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,crosscorr_text_audio,video,1.0,text,audio,-1.8,0.0,1,0.06060606060606061
+sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,drperm,video,1.0,text,audio,-1.8,0.0,1,0.9696969696969697
+sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,interact_PO_text_audio,video,1.0,text,audio,-1.8,0.0,1,0.07692307692307693
+sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,rfperm,video,1.0,text,audio,-1.8,0.0,1,0.36363636363636365
