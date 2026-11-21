@@ -1,0 +1,45 @@
+% Type-I tables only — interact_PO / crosscorr / CF-DR-RF null
+% 口径: n_sample=500, alpha=0.05, B>=100 delivery (dagger if B<100)
+
+\begin{table}[t]
+\centering\small\setlength{\tabcolsep}{5pt}
+\caption{Type-I error of cross-modal PO interaction and block cross-correlation
+  on pairwise \texttt{msrvtt\_null\_top30}
+  ($n=500$, $B\ge 120$, $n_{\mathrm{perm}}=120$, $\alpha=0.05$).
+  All rates near $\alpha$: size-correct on the null.}
+\label{tab:typeI-po-crosscorr}
+\begin{tabular}{l cc cc}
+\toprule
+& \multicolumn{2}{c}{\texttt{interact\_PO}} & \multicolumn{2}{c}{\texttt{crosscorr}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Pair & type-I & $B$ & type-I & $B$ \\
+\midrule
+text$\times$audio & 0.027 & 150 & 0.047 & 150 \\
+text$\times$video & 0.067 & 150 & 0.060 & 150 \\
+audio$\times$video & 0.033 & 120 & 0.033 & 120 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering\small\setlength{\tabcolsep}{4pt}
+\caption{Type-I error of CFPerm / DRPerm / RFPerm on null boards
+  ($n=500$, $n_{\mathrm{perm}}=150$, $\alpha=0.05$).
+  RFPerm is calibrated (conservative) at $B=120$ on T$\times$A / T$\times$V / TAV.
+  $^\dagger$: $B<100$ (preliminary; stacking to 120).}
+\label{tab:typeI-cfdr-rf}
+\begin{tabular}{l ll cc}
+\toprule
+Board & combo & method & type-I & $B$ \\
+\midrule
+concept & text\_audio & CFPerm & 0.045$^\dagger$ & 89 \\
+concept & text\_audio & DRPerm & 0.056$^\dagger$ & 89 \\
+concept & text\_audio & RFPerm & 0.000 & 120 \\
+concept & text\_video & RFPerm & 0.000 & 120 \\
+concept & text\_audio\_video & RFPerm & 0.000 & 120 \\
+expand & text (single) & CFPerm & 0.000$^\dagger$ & 37 \\
+expand & text (single) & DRPerm & 0.000$^\dagger$ & 37 \\
+expand & text (single) & RFPerm & 0.000$^\dagger$ & 37 \\
+\bottomrule
+\end{tabular}
+\end{table}
