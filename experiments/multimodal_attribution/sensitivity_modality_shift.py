@@ -23,10 +23,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 import traceback
-from dataclasses import asdict, dataclass, replace
+from dataclasses import asdict
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -65,7 +66,7 @@ except ImportError:  # pragma: no cover
     from benchmark_config import MODEL_REGISTRY  # noqa: E402
 
 
-# Singles + pairs (the contrast the user asked for).
+# Singles + pairs + triple (直观：单模态 / 双模态 / 三模态对照).
 SENS_COMBOS: Dict[str, Tuple[str, ...]] = {
     "text": ("text",),
     "audio": ("audio",),
@@ -73,7 +74,10 @@ SENS_COMBOS: Dict[str, Tuple[str, ...]] = {
     "text_audio": ("text", "audio"),
     "text_video": ("text", "video"),
     "audio_video": ("audio", "video"),
+    "text_audio_video": ("text", "audio", "video"),
 }
+
+PERM_METHODS: Tuple[str, ...] = ("cfperm", "drperm", "rfperm")
 
 PAIRS: Tuple[Tuple[str, str], ...] = (
     ("text", "audio"),
@@ -203,6 +207,41 @@ def _combo_relevant(spec: DatasetSpec, combo_mods: Sequence[str]) -> bool:
     return True  # null: all combos
 
 
+def _combo_order_for_spec(spec: DatasetSpec) -> List[Tuple[str, Tuple[str, ...]]]:
+    """Prefer planted pair → TAV → singles so fusion / signed-I land early."""
+    items = [(k, v) for k, v in SENS_COMBOS.items() if _combo_relevant(spec, v)]
+    if spec.scenario == "interaction_shift":
+        a, b = spec.interact_pair
+        pair_name = f"{a}_{b}"
+
+        def _key(item):
+            name, mods = item
+            if name == pair_name:
+                return (0, name)
+            if name == "text_audio_video":
+                return (1, name)
+            if len(mods) == 1:
+                return (2, name)
+            return (3, name)
+
+        items.sort(key=_key)
+    elif spec.scenario == "mean_shift":
+        mod = spec.shift_modality
+
+        def _key_mean(item):
+            name, mods = item
+            if name == mod:
+                return (0, name)
+            if len(mods) == 2 and mod in mods:
+                return (1, name)
+            if name == "text_audio_video":
+                return (2, name)
+            return (3, name)
+
+        items.sort(key=_key_mean)
+    return items
+
+
 def run_sensitivity(
     *,
     n: int = 400,
@@ -218,7 +257,6 @@ def run_sensitivity(
     phases: Sequence[str] = ("interaction_shift", "mean_shift", "no_shift"),
     po_on_mean_shift: bool = False,
 ) -> None:
-    del n_jobs  # reserved; methods are sequential per rep (PO dominates).
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     raw_path = out_dir / "power_raw.csv"
@@ -237,12 +275,15 @@ def run_sensitivity(
         include_fsds=False,
         include_perm_suite=True,
     )
-    # Focus: CF/DR/RF (+ light classical for sanity). Drop slow classical bulk.
-    keep = {"cfperm", "drperm", "rfperm", "c2st_XY", "mmd_rbf"}
-    methods = {k: v for k, v in methods.items() if k in keep}
+    # Only CFPerm / DRPerm / RFPerm — fusion lift vs signed PO story.
+    methods = {k: v for k, v in methods.items() if k in PERM_METHODS}
 
     compact_raw_csv(raw_path)
     _, done = load_done(raw_path)
+
+    from experiments.multimodal_attribution.parallel_eval import (  # noqa: WPS433
+        eval_methods_parallel,
+    )
 
     meta = {
         "n": n,
@@ -251,11 +292,12 @@ def run_sensitivity(
         "n_perm_po": n_perm_po,
         "alpha": alpha,
         "seed": seed,
+        "n_jobs": n_jobs,
         "combos": {k: list(v) for k, v in SENS_COMBOS.items()},
         "datasets": [asdict(s) for s in specs],
         "methods": list(methods),
         "started_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "note": "sensitivity: ±mean / ±interaction; singles vs pairs; signed I",
+        "note": "sensitivity: ±mean / ±interaction; single/pair/TAV; signed I; CF/DR/RF only",
     }
     for d in meta["datasets"]:
         d["interact_pair"] = list(d["interact_pair"])
@@ -282,21 +324,26 @@ def run_sensitivity(
     finished = 0
 
     for spec in specs:
-        for combo_name, combo_mods in SENS_COMBOS.items():
-            if not _combo_relevant(spec, combo_mods):
-                continue
+        for combo_name, combo_mods in _combo_order_for_spec(spec):
             expected = list(methods)
             # Pair detectors when ≥2 mods; skip heavy PO on mean_shift unless opted in.
+            # On TAV under interaction_shift, only score the *planted* pair (not all 3).
             pair_list: List[Tuple[str, str]] = []
             want_po = spec.scenario != "mean_shift" or po_on_mean_shift
             if len(combo_mods) >= 2:
                 mods = list(combo_mods)
-                for i in range(len(mods)):
-                    for j in range(i + 1, len(mods)):
-                        pair_list.append((mods[i], mods[j]))
-                        expected.append(f"crosscorr_{mods[i]}_{mods[j]}")
-                        if want_po:
-                            expected.append(f"interact_PO_{mods[i]}_{mods[j]}")
+                if spec.scenario == "interaction_shift":
+                    a, b = spec.interact_pair
+                    if a in mods and b in mods:
+                        pair_list = [(a, b)]
+                else:
+                    for i in range(len(mods)):
+                        for j in range(i + 1, len(mods)):
+                            pair_list.append((mods[i], mods[j]))
+                for a, b in pair_list:
+                    expected.append(f"crosscorr_{a}_{b}")
+                    if want_po:
+                        expected.append(f"interact_PO_{a}_{b}")
 
             already = sum(
                 1
@@ -333,12 +380,17 @@ def run_sensitivity(
                     n_half = batch["n_per_batch"]
                     X1, X2 = X[:n_half], X[n_half:]
                     rows = []
-                    for mname, fn in methods.items():
-                        try:
-                            p = float(fn(X1, X2, batch))
-                        except Exception as exc:  # noqa: BLE001
-                            log(f"warn {spec.name}/{combo_name}/{mname} rep{rep}: {exc}")
-                            p = float("nan")
+                    todo = [
+                        (mname, fn)
+                        for mname, fn in methods.items()
+                        if done_key(spec.name, combo_name, spec.scenario, mname, rep)
+                        not in done
+                    ]
+                    for mname, pval, err in eval_methods_parallel(
+                        todo, X1, X2, batch, n_jobs=n_jobs
+                    ):
+                        if err:
+                            log(f"warn {spec.name}/{combo_name}/{mname} rep{rep}: {err.splitlines()[0]}")
                         rows.append(
                             {
                                 "dataset": spec.name,
@@ -347,7 +399,7 @@ def run_sensitivity(
                                 "band": spec.band,
                                 "method": mname,
                                 "rep": rep,
-                                "pvalue": p,
+                                "pvalue": pval,
                                 "n": n,
                                 "alpha": alpha,
                                 "seed": batch["seed"],
@@ -531,29 +583,33 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
     else:
         sig_sum = pd.DataFrame()
 
-    # --- Contrast: for each interaction_shift dataset, singles vs pair ---
+    # --- Contrast: singles vs pair vs TAV × signed I (interaction_shift) ---
     contrast_rows = []
     interact_ds = power[power["scenario"] == "interaction_shift"]["dataset"].unique()
     for ds in interact_ds:
-        sub = power[(power["dataset"] == ds) & (power["method"].isin(["cfperm", "drperm", "rfperm"]))]
+        sub = power[(power["dataset"] == ds) & (power["method"].isin(PERM_METHODS))]
         if sub.empty:
             continue
-        # recover pair from name or columns
         row0 = sub.iloc[0]
         a, b = str(row0["interact_a"]), str(row0["interact_b"])
         lam = float(row0["interaction_shift"])
         pair_combo = f"{a}_{b}"
-        for method in ["cfperm", "drperm", "rfperm"]:
+        for method in PERM_METHODS:
             p_a = sub[(sub["combo"] == a) & (sub["method"] == method)]
             p_b = sub[(sub["combo"] == b) & (sub["method"] == method)]
             p_ab = sub[(sub["combo"] == pair_combo) & (sub["method"] == method)]
+            p_tav = sub[(sub["combo"] == "text_audio_video") & (sub["method"] == method)]
             if p_a.empty or p_b.empty or p_ab.empty:
                 continue
-            pa, pb, pab = float(p_a["power"].iloc[0]), float(p_b["power"].iloc[0]), float(p_ab["power"].iloc[0])
-            # signed I on the pair combo
+            pa = float(p_a["power"].iloc[0])
+            pb = float(p_b["power"].iloc[0])
+            pab = float(p_ab["power"].iloc[0])
+            ptav = float(p_tav["power"].iloc[0]) if len(p_tav) else float("nan")
             sp = np.nan
+            nsp = np.nan
             mean_I = np.nan
             frac_pos = np.nan
+            unsigned_pow = np.nan
             if len(sig_sum):
                 s = sig_sum[
                     (sig_sum["dataset"] == ds)
@@ -562,8 +618,12 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
                 ]
                 if len(s):
                     sp = float(s["signed_power"].iloc[0])
+                    nsp = float(s["neg_signed_power"].iloc[0])
                     mean_I = float(s["mean_I"].iloc[0])
                     frac_pos = float(s["frac_pos"].iloc[0])
+                    unsigned_pow = float(s["power"].iloc[0])
+            # Direction-matched signed power: +λ → I>0 branch; −λ → I<0 branch.
+            matched_sp = sp if lam > 0 else nsp
             contrast_rows.append(
                 {
                     "dataset": ds,
@@ -573,15 +633,22 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
                     "power_a": pa,
                     "power_b": pb,
                     "power_pair": pab,
+                    "power_tav": ptav,
                     "max_single": max(pa, pb),
                     "pair_minus_max_single": pab - max(pa, pb),
                     "pair_minus_mean_single": pab - 0.5 * (pa + pb),
+                    "tav_minus_pair": ptav - pab if np.isfinite(ptav) else np.nan,
+                    "tav_minus_max_single": ptav - max(pa, pb) if np.isfinite(ptav) else np.nan,
                     "mean_I": mean_I,
                     "frac_I_pos": frac_pos,
-                    "signed_power": sp,
+                    "unsigned_power_I": unsigned_pow,
+                    "signed_power_pos": sp,
+                    "signed_power_neg": nsp,
+                    "signed_power_matched": matched_sp,
                     "n_rep_a": int(p_a["n_rep"].iloc[0]),
                     "n_rep_b": int(p_b["n_rep"].iloc[0]),
                     "n_rep_pair": int(p_ab["n_rep"].iloc[0]),
+                    "n_rep_tav": int(p_tav["n_rep"].iloc[0]) if len(p_tav) else 0,
                 }
             )
     contrast = pd.DataFrame(contrast_rows)
@@ -591,7 +658,7 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
     # --- Mean-shift directionality board ---
     mean_rows = []
     mean_ds = power[power["scenario"] == "mean_shift"]
-    for method in ["cfperm", "drperm", "rfperm"]:
+    for method in PERM_METHODS:
         for mod in MODALITIES:
             for amt in sorted(mean_ds["mean_shift"].dropna().unique()):
                 cell = mean_ds[
@@ -601,14 +668,12 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
                 ]
                 if cell.empty:
                     continue
-                # single of shifted modality
                 single = cell[cell["combo"] == mod]
-                # pairs containing mod
+                tav = cell[cell["combo"] == "text_audio_video"]
                 for pair in [p for p in ("text_audio", "text_video", "audio_video") if mod in p]:
                     pr = cell[cell["combo"] == pair]
                     if single.empty or pr.empty:
                         continue
-                    # PO interact on that pair if available
                     mean_I = np.nan
                     sp = np.nan
                     if len(sig_sum):
@@ -619,6 +684,7 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
                         if len(s):
                             mean_I = float(s["mean_I"].iloc[0])
                             sp = float(s["signed_power"].iloc[0])
+                    ptav = float(tav["power"].iloc[0]) if len(tav) else float("nan")
                     mean_rows.append(
                         {
                             "shift_modality": mod,
@@ -628,7 +694,9 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
                             "power_single": float(single["power"].iloc[0]),
                             "pair": pair,
                             "power_pair": float(pr["power"].iloc[0]),
+                            "power_tav": ptav,
                             "pair_minus_single": float(pr["power"].iloc[0]) - float(single["power"].iloc[0]),
+                            "tav_minus_single": ptav - float(single["power"].iloc[0]) if np.isfinite(ptav) else np.nan,
                             "mean_I_on_pair": mean_I,
                             "signed_power_I": sp,
                             "n_rep": int(single["n_rep"].iloc[0]),
@@ -648,88 +716,134 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
         "",
         "| Quantity | Meaning |",
         "|---|---|",
-        "| `power_single` | detectability on one modality block alone |",
-        "| `power_pair` | detectability on the concatenated pair |",
-        "| `pair_minus_max_single` | fusion lift vs best single |",
+        "| `power_a` / `power_b` | CF/DR/RF power on each single modality |",
+        "| `power_pair` | power on the planted pair concat |",
+        "| `power_tav` | power on text+audio+video |",
+        "| `pair_minus_max_single` | **fusion lift** vs better single |",
         "| `mean_I` / `frac_I_pos` | PO interaction direction |",
-        "| `signed_power` | $P(p(|I|)<\\alpha \\wedge \\hat I>0)$ |",
+        "| `signed_power_matched` | $P(\\mathrm{reject}\\wedge \\mathrm{sign}(\\hat I)=\\mathrm{sign}(\\lambda))$ |",
         "",
         "### Insight hypothesis",
         "",
-        "1. **$\\lambda>0$ interaction_shift** → `mean_I>0`, high `signed_power`, and "
-        "`power_pair > max(power_a, power_b)` (synergy: fusion beats singles).",
-        "2. **$\\lambda<0$** → `mean_I<0`, `neg_signed_power` up, fusion lift shrinks or reverses.",
-        "3. **±mean_shift** → singles of the shifted modality carry power; "
-        "`signed_power` on pairs stays near α (main effect ≠ interaction).",
-        "4. Direction (±) of mean shift should be **symmetric in power** for CF/DR "
-        "(two-sided), while `sign(I)` stays near null.",
+        "1. **$\\lambda>0$** → `mean_I>0`, high matched signed power, "
+        "`power_pair > max(power_a,power_b)` (synergy: fusion beats singles).",
+        "2. **$\\lambda<0$** → `mean_I<0`, matched (neg) signed power up, fusion lift shrinks.",
+        "3. **TAV vs pair**: under a *pair* plant, TAV should not beat the planted pair by much "
+        "(third modality is noise); under mean_shift of one mod, TAV ≈ pairs containing that mod.",
+        "4. **±mean_shift** → single of shifted modality carries power; signed PO near α "
+        "(main effect ≠ interaction); +/− directions ~symmetric for two-sided tests.",
         "",
     ]
     if len(contrast):
-        lines.append("## Interaction_shift: single vs pair vs signed power")
+        lines.append("## Interaction_shift: single vs pair vs TAV vs signed power")
         lines.append("")
-        # pivot-like readable table for cfperm first
-        show = contrast[contrast["method"] == "cfperm"].sort_values(["pair", "lambda"])
-        if len(show):
-            lines.append(
-                "| pair | λ | pow_a | pow_b | pow_pair | pair−max_single | mean_I | frac I>0 | signed_power | n |"
-            )
-            lines.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
-            for _, r in show.iterrows():
-                lines.append(
-                    f"| {r['pair']} | {r['lambda']:+.2f} | {r['power_a']:.2f} | {r['power_b']:.2f} | "
-                    f"{r['power_pair']:.2f} | {r['pair_minus_max_single']:+.2f} | "
-                    f"{r['mean_I']:+.3f} | {r['frac_I_pos']:.2f} | {r['signed_power']:.2f} | {int(r['n_rep_pair'])} |"
-                )
-            lines.append("")
-            # correlation-style insight
-            valid = show.dropna(subset=["signed_power", "pair_minus_max_single"])
-            if len(valid) >= 3:
-                corr = np.corrcoef(
-                    valid["signed_power"].astype(float),
-                    valid["pair_minus_max_single"].astype(float),
-                )[0, 1]
-                lines.append(
-                    f"CFPerm: corr(signed_power, pair−max_single) = **{corr:+.3f}** "
-                    f"(positive ⇒ synergy detection tracks fusion lift)."
-                )
-                lines.append("")
-        for method in ["drperm", "rfperm"]:
+        for method in PERM_METHODS:
             show = contrast[contrast["method"] == method].sort_values(["pair", "lambda"])
             if not len(show):
                 continue
             lines.append(f"### {method}")
             lines.append("")
             lines.append(
-                "| pair | λ | pow_a | pow_b | pow_pair | pair−max_single | signed_power |"
+                "| pair | λ | a | b | pair | TAV | pair−max₁ | TAV−pair | "
+                "mean_I | frac+ | matched signed-pow | n |"
             )
-            lines.append("|---|---:|---:|---:|---:|---:|---:|")
+            lines.append(
+                "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"
+            )
             for _, r in show.iterrows():
+                tav = f"{r['power_tav']:.2f}" if np.isfinite(r["power_tav"]) else "—"
+                tmp = (
+                    f"{r['tav_minus_pair']:+.2f}"
+                    if np.isfinite(r.get("tav_minus_pair", np.nan))
+                    else "—"
+                )
+                mi = f"{r['mean_I']:+.3f}" if np.isfinite(r["mean_I"]) else "—"
+                fp = f"{r['frac_I_pos']:.2f}" if np.isfinite(r["frac_I_pos"]) else "—"
+                sp = (
+                    f"{r['signed_power_matched']:.2f}"
+                    if np.isfinite(r["signed_power_matched"])
+                    else "—"
+                )
                 lines.append(
                     f"| {r['pair']} | {r['lambda']:+.2f} | {r['power_a']:.2f} | {r['power_b']:.2f} | "
-                    f"{r['power_pair']:.2f} | {r['pair_minus_max_single']:+.2f} | {r['signed_power']:.2f} |"
+                    f"{r['power_pair']:.2f} | {tav} | {r['pair_minus_max_single']:+.2f} | {tmp} | "
+                    f"{mi} | {fp} | {sp} | {int(r['n_rep_pair'])} |"
                 )
             lines.append("")
+            valid = show.dropna(subset=["signed_power_matched", "pair_minus_max_single"])
+            if len(valid) >= 3:
+                corr = float(
+                    np.corrcoef(
+                        valid["signed_power_matched"].astype(float),
+                        valid["pair_minus_max_single"].astype(float),
+                    )[0, 1]
+                )
+                lines.append(
+                    f"**{method}**: corr(matched signed-power, pair−max_single) = **{corr:+.3f}** "
+                    f"(+ ⇒ synergy detection tracks fusion lift)."
+                )
+                lines.append("")
+            # +λ vs −λ block means
+            pos = show[show["lambda"] > 0]
+            neg = show[show["lambda"] < 0]
+            if len(pos) and len(neg):
+                lines.append(
+                    f"| | mean fusion lift | mean matched signed-pow |"
+                )
+                lines.append("|---|---:|---:|")
+                lines.append(
+                    f"| λ>0 | {pos['pair_minus_max_single'].mean():+.3f} | "
+                    f"{pos['signed_power_matched'].mean():.3f} |"
+                )
+                lines.append(
+                    f"| λ<0 | {neg['pair_minus_max_single'].mean():+.3f} | "
+                    f"{neg['signed_power_matched'].mean():.3f} |"
+                )
+                lines.append("")
 
     if len(mean_board):
-        lines.append("## Mean_shift ±direction: single vs pair (CFPerm)")
+        lines.append("## Mean_shift ±direction: single vs pair vs TAV")
         lines.append("")
-        show = mean_board[mean_board["method"] == "cfperm"].sort_values(
-            ["shift_modality", "mean_shift", "pair"]
-        )
-        lines.append(
-            "| shifted | amount | power_single | pair | power_pair | pair−single | mean_I | signed_power |"
-        )
-        lines.append("|---|---:|---:|---|---:|---:|---:|---:|")
-        for _, r in show.iterrows():
-            lines.append(
-                f"| {r['shift_modality']} | {r['mean_shift']:+.2f} | {r['power_single']:.2f} | "
-                f"{r['pair']} | {r['power_pair']:.2f} | {r['pair_minus_single']:+.2f} | "
-                f"{r['mean_I_on_pair']:+.3f} | {r['signed_power_I']:.2f} |"
+        for method in PERM_METHODS:
+            show = mean_board[mean_board["method"] == method].sort_values(
+                ["shift_modality", "mean_shift", "pair"]
             )
-        lines.append("")
+            if not len(show):
+                continue
+            lines.append(f"### {method}")
+            lines.append("")
+            lines.append(
+                "| shifted | amt | single | pair | pair-pow | TAV | pair−single | TAV−single |"
+            )
+            lines.append("|---|---:|---:|---|---:|---:|---:|---:|")
+            for _, r in show.iterrows():
+                tav = f"{r['power_tav']:.2f}" if np.isfinite(r["power_tav"]) else "—"
+                tms = (
+                    f"{r['tav_minus_single']:+.2f}"
+                    if np.isfinite(r.get("tav_minus_single", np.nan))
+                    else "—"
+                )
+                lines.append(
+                    f"| {r['shift_modality']} | {r['mean_shift']:+.2f} | {r['power_single']:.2f} | "
+                    f"{r['pair']} | {r['power_pair']:.2f} | {tav} | "
+                    f"{r['pair_minus_single']:+.2f} | {tms} |"
+                )
+            lines.append("")
+            # +/- symmetry
+            if show["direction"].nunique() == 2:
+                sym = (
+                    show.groupby(["shift_modality", "direction"])["power_single"]
+                    .mean()
+                    .unstack(fill_value=np.nan)
+                )
+                if {"pos", "neg"}.issubset(sym.columns):
+                    gap = (sym["pos"] - sym["neg"]).abs().mean()
+                    lines.append(
+                        f"±direction gap on singles (mean |pow(+)-pow(−)|) = **{gap:.3f}** "
+                        f"(~0 ⇒ two-sided symmetry)."
+                    )
+                    lines.append("")
 
-    # null type-I snippet
     null = power[power["scenario"] == "no_shift"]
     if len(null):
         lines.append("## Null type-I (sanity)")
@@ -742,20 +856,25 @@ def summarize_sensitivity(out_dir: Path, *, alpha: float = 0.05) -> pd.DataFrame
             )
         lines.append("")
 
-    lines.append("## Argument (signed power ↔ fusion lift)")
-    lines.append("")
-    lines.append(
-        "Under `interaction_shift` with $\\lambda>0$, the DGP plants a product on $(a,b)$. "
-        "The PO residual $I(a,b)=\\mathrm{PO}(-a)+\\mathrm{PO}(-b)-\\mathrm{PO}(-a,-b)$ "
-        "is then expected **positive** (synergy). Signed power is the Monte Carlo rate of "
-        "detecting that synergy with the correct sign. The **fusion lift** "
-        "`power_pair - max(power_a, power_b)` is the detectability counterpart: "
-        "if the interaction is real and positive, the pair should beat the better single. "
-        "A positive correlation between signed power and fusion lift across $\\lambda$ "
-        "and pairs is the operational validation of that story. "
-        "Negative $\\lambda$ flips the plant → expect negative $\\hat I$ and a collapsed lift."
+    lines.extend(
+        [
+            "## Argument (signed power ↔ fusion lift ↔ modality hierarchy)",
+            "",
+            "1. **Plant**: `interaction_shift` with signed $\\lambda$ injects a product on $(a,b)$ "
+            "in $X$ and $Y$. $\\lambda>0$ = synergistic plant; $\\lambda<0$ = antagonistic plant.",
+            "2. **Mechanism readout**: "
+            "$I=\\mathrm{PO}(-a)+\\mathrm{PO}(-b)-\\mathrm{PO}(-a,-b)$; "
+            "matched signed power = rate of rejecting *and* getting $\\mathrm{sign}(\\hat I)=\\mathrm{sign}(\\lambda)$.",
+            "3. **Detectability readout (CF/DR/RF)**: compare `power_a`, `power_b`, `power_pair`, `power_tav`. "
+            "Fusion lift `power_pair - max(power_a,power_b)` is the operational twin of positive $I$: "
+            "if the pair is truly synergistic, the concatenated test should beat either single.",
+            "4. **Association**: across $\\pm\\lambda$ and pairs, corr(matched signed-power, fusion lift) "
+            "validates that PO interaction and perm-test fusion tell the same story.",
+            "5. **Control**: ±mean_shift moves one modality — singles light up, signed $I$ stays null, "
+            "pair/TAV ≈ single (no extra interaction credit).",
+            "",
+        ]
     )
-    lines.append("")
 
     (out_dir / "SENSITIVITY_BOARD.md").write_text("\n".join(lines) + "\n")
     return power
