@@ -61,9 +61,14 @@ def load_done(path: Path) -> Tuple[pd.DataFrame, Set[str]]:
     df = dedupe_raw(read_raw(path))
     if df.empty:
         return df, set()
+    # Avoid itertuples attribute access: column name ``dataset`` can clash with
+    # the Pandas namedtuple type / transient mid-write frames.
+    cols = [c for c in KEY_COLS if c in df.columns]
+    if len(cols) < len(KEY_COLS):
+        return df, set()
     done = {
-        done_key(str(r.dataset), str(r.combo), str(r.scenario), str(r.method), int(r.rep))
-        for r in df.itertuples()
+        done_key(str(a), str(b), str(c), str(d), int(e))
+        for a, b, c, d, e in df.loc[:, cols].itertuples(index=False, name=None)
     }
     return df, done
 
