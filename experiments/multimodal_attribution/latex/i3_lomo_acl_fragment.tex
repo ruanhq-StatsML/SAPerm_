@@ -124,25 +124,16 @@ Dataset & Term & mean $I$ & mean $I_{\mathrm{cal}}$ & frac $I_{\mathrm{cal}}>0$ 
 \end{tabular}
 \end{table}
 
-\paragraph{Empirical cross-validation.}
-Under synthetic concept drift, combo power alone already ranks
-$\mathrm{Power}(T{\times}A)>\mathrm{Power}(\mathrm{TAV})$ for CF/DR/RF
-(Table~\ref{tab:full-benchmark-power-typeI}).
-LOMO makes the inefficiency explicit (Table~\ref{tab:lomo-power-cv}):
-every primary method has \texttt{vs\_best}$<0$, and dropping video from TAV
-\emph{raises} CF/DR/RF power on the top-30 band---the third channel is
-over-complete under early concatenation.
-RF PO residuals cross-validate that diagnosis
-(Table~\ref{tab:I2-I3-rf}):
-$I_{\mathrm{cal}}^{(2)}<0$ and $I_{\mathrm{cal}}^{(3)}<0$ on both PCA bands,
-while the null board remains near-quiet on calibrated signs
-(frac\,$I_{\mathrm{cal}}>0\approx 0$).
-Statistically, $I^{(3)}$ is a M\"obius residual on the PO-risk set function
-(not a unique causal share); LOMO is a fixed-caliber Monte Carlo power
-contrast.
-Practically, the reconciled pair implies: ship the dominant pair
-(T$\times$A on top-30; T$\times$V on the mid-band), treat the third modality
-as optional audit~/~late fusion, and do \emph{not} default to triple early
-concat.
-Agreement in sign between $I_{\mathrm{cal}}^{(3)}$ and LOMO \texttt{vs\_best}
-is the intended cross-validation; equality of magnitudes is not claimed.
+\paragraph{Empirical reading.}
+Taken together, $I^{(2)}$, $I^{(3)}$ (Table~\ref{tab:I2-I3-rf}) and LOMO
+power gaps (Table~\ref{tab:lomo-power-cv}) simply characterize how modalities
+interact under the shift:
+which pairs carry the signal, whether the third channel adds non-additive
+structure, and whether early-concat TAV improves on the best pair.
+Under concept drift we observe
+$\mathrm{Power}(T{\times}A)>\mathrm{Power}(\mathrm{TAV})$
+(Table~\ref{tab:full-benchmark-power-typeI}),
+\texttt{vs\_best}$<0$, and $I_{\mathrm{cal}}^{(3)}<0$ on both PCA bands---i.e.,
+the interaction among text~/~audio~/~video is not super-additive here.
+LOMO is only a sign-level check of that interaction profile, not a unique
+attribution of each modality.
