@@ -1,3 +1,3 @@
 dataset,combo,scenario,pair,interaction_shift,mean_I,mean_I_cal,frac_pos,frac_pos_cal,power,signed_power,neg_signed_power,n_rep
 sens_interact_text_audio_neg1p8,text_audio,interaction_shift,text_audio,-1.8,6.0180811107575,-14.936907011214856,1.0,0.08333333333333333,0.0,0.0,0.0,24
-sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,text_audio,-1.8,19.80878436173056,-83.3053958466684,0.95,0.0,0.0,0.0,0.0,20
+sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,text_audio,-1.8,20.154037701681574,-83.89009091554712,0.9565217391304348,0.0,0.0,0.0,0.0,23

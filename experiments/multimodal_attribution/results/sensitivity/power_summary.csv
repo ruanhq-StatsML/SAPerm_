@@ -4,8 +4,8 @@ sens_interact_text_audio_neg1p8,text_audio,interaction_shift,crosscorr_text_audi
 sens_interact_text_audio_neg1p8,text_audio,interaction_shift,drperm,video,1.0,text,audio,-1.8,0.0,24,0.9936868686868686
 sens_interact_text_audio_neg1p8,text_audio,interaction_shift,interact_PO_text_audio,video,1.0,text,audio,-1.8,0.0,24,0.7724358974358975
 sens_interact_text_audio_neg1p8,text_audio,interaction_shift,rfperm,video,1.0,text,audio,-1.8,0.0,24,0.3396464646464647
-sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,cfperm,video,1.0,text,audio,-1.8,0.65,20,0.06212121212121212
-sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,crosscorr_text_audio,video,1.0,text,audio,-1.8,0.0,20,0.5151515151515151
-sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,drperm,video,1.0,text,audio,-1.8,0.0,20,0.9954545454545455
-sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,interact_PO_text_audio,video,1.0,text,audio,-1.8,0.0,20,0.6346153846153847
-sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,rfperm,video,1.0,text,audio,-1.8,0.0,20,0.33181818181818185
+sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,cfperm,video,1.0,text,audio,-1.8,0.6521739130434783,23,0.06060606060606061
+sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,crosscorr_text_audio,video,1.0,text,audio,-1.8,0.043478260869565216,23,0.530961791831357
+sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,drperm,video,1.0,text,audio,-1.8,0.0,23,0.9960474308300395
+sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,interact_PO_text_audio,video,1.0,text,audio,-1.8,0.0,23,0.6254180602006689
+sens_interact_text_audio_neg1p8,text_audio_video,interaction_shift,rfperm,video,1.0,text,audio,-1.8,0.0,23,0.32806324110671936
