@@ -4,7 +4,8 @@ _stamp 2026-11-21 · 口径: n_sample=500, B≥100 (target 120), n_perm∈{120,1
 
 **Read in one line.** Under concept drift, classical TST≈0 is *expected* (low covariate SNR: $X$ fixed). Graded CF/DR/RF power is therefore a strong proof that the suite reads $Y|X$. PO type-I ≈ α closes the size story.
 
-LaTeX: `experiments/multimodal_attribution/latex/delivery_power_po.tex`
+LaTeX: `experiments/multimodal_attribution/latex/delivery_power_po.tex`  
+口径对齐: `results/delivery/MSRVTT_POWER_TYPEI_CALIBER.md` (concept-drift power ↔ null type-I share $n=500$, $B\to 120$, $n_{\mathrm{perm}}=150$).
 
 ---
 
