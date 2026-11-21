@@ -20,6 +20,26 @@ _α=0.05; auto-generated from `power_raw.csv` / `signed_I_raw.csv`_
 3. **TAV vs pair**: under a *pair* plant, TAV should not beat the planted pair by much (third modality is noise); under mean_shift of one mod, TAV ≈ pairs containing that mod.
 4. **±mean_shift** → single of shifted modality carries power; signed PO near α (main effect ≠ interaction); +/− directions ~symmetric for two-sided tests.
 
+## Interaction_shift: single vs pair vs TAV vs signed power
+
+### cfperm
+
+| pair | λ | a | b | pair | TAV | pair−max₁ | TAV−pair | I_cal | frac+(cal) | matched signed-pow | n |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| text_audio | -1.80 | 0.90 | 0.00 | 0.54 | 0.62 | -0.36 | +0.08 | -14.937 | 0.08 | 0.00 | 24 |
+
+### drperm
+
+| pair | λ | a | b | pair | TAV | pair−max₁ | TAV−pair | I_cal | frac+(cal) | matched signed-pow | n |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| text_audio | -1.80 | 0.30 | 0.00 | 0.00 | 0.00 | -0.30 | +0.00 | -14.937 | 0.08 | 0.00 | 24 |
+
+### rfperm
+
+| pair | λ | a | b | pair | TAV | pair−max₁ | TAV−pair | I_cal | frac+(cal) | matched signed-pow | n |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| text_audio | -1.80 | 0.00 | 0.00 | 0.00 | 0.00 | +0.00 | +0.00 | -14.937 | 0.08 | 0.00 | 24 |
+
 ## Argument (signed power ↔ fusion lift ↔ modality hierarchy)
 
 1. **Plant**: `interaction_shift` with signed $\lambda$ injects a product on $(a,b)$ in $X$ and $Y$. $\lambda>0$ = synergistic plant; $\lambda<0$ = antagonistic plant.

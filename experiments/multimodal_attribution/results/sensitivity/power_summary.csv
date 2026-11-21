@@ -1,7 +1,10 @@
 dataset,combo,scenario,method,shift_modality,mean_shift,interact_a,interact_b,interaction_shift,power,n_rep,mean_p
-sens_interact_text_audio_neg1p8,audio,interaction_shift,cfperm,video,1.0,text,audio,-1.8,0.0,20,0.5742424242424242
-sens_interact_text_audio_neg1p8,audio,interaction_shift,drperm,video,1.0,text,audio,-1.8,0.0,20,1.0
-sens_interact_text_audio_neg1p8,audio,interaction_shift,rfperm,video,1.0,text,audio,-1.8,0.0,20,0.4712121212121212
+sens_interact_text_audio_neg1p8,audio,interaction_shift,cfperm,video,1.0,text,audio,-1.8,0.0,24,0.5656565656565656
+sens_interact_text_audio_neg1p8,audio,interaction_shift,drperm,video,1.0,text,audio,-1.8,0.0,24,1.0
+sens_interact_text_audio_neg1p8,audio,interaction_shift,rfperm,video,1.0,text,audio,-1.8,0.0,24,0.4823232323232323
+sens_interact_text_audio_neg1p8,text,interaction_shift,cfperm,video,1.0,text,audio,-1.8,0.9,10,0.04242424242424243
+sens_interact_text_audio_neg1p8,text,interaction_shift,drperm,video,1.0,text,audio,-1.8,0.3,10,0.22424242424242422
+sens_interact_text_audio_neg1p8,text,interaction_shift,rfperm,video,1.0,text,audio,-1.8,0.0,10,0.3
 sens_interact_text_audio_neg1p8,text_audio,interaction_shift,cfperm,video,1.0,text,audio,-1.8,0.5416666666666666,24,0.08838383838383838
 sens_interact_text_audio_neg1p8,text_audio,interaction_shift,crosscorr_text_audio,video,1.0,text,audio,-1.8,0.041666666666666664,24,0.5113636363636364
 sens_interact_text_audio_neg1p8,text_audio,interaction_shift,drperm,video,1.0,text,audio,-1.8,0.0,24,0.9936868686868686

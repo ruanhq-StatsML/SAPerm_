@@ -1,0 +1,4 @@
+dataset,pair,lambda,method,power_a,power_b,power_pair,power_tav,max_single,pair_minus_max_single,pair_minus_mean_single,tav_minus_pair,tav_minus_max_single,mean_I,mean_I_cal,frac_I_pos,frac_I_pos_cal,unsigned_power_I,signed_power_pos,signed_power_neg,signed_power_matched,n_rep_a,n_rep_b,n_rep_pair,n_rep_tav
+sens_interact_text_audio_neg1p8,text_audio,-1.8,cfperm,0.9,0.0,0.5416666666666666,0.625,0.9,-0.3583333333333334,0.09166666666666662,0.08333333333333337,-0.275,6.0180811107575,-14.936907011214856,1.0,0.08333333333333333,0.0,0.0,0.0,0.0,10,24,24,24
+sens_interact_text_audio_neg1p8,text_audio,-1.8,drperm,0.3,0.0,0.0,0.0,0.3,-0.3,-0.15,0.0,-0.3,6.0180811107575,-14.936907011214856,1.0,0.08333333333333333,0.0,0.0,0.0,0.0,10,24,24,24
+sens_interact_text_audio_neg1p8,text_audio,-1.8,rfperm,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.0180811107575,-14.936907011214856,1.0,0.08333333333333333,0.0,0.0,0.0,0.0,10,24,24,24
