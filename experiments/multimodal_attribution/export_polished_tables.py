@@ -1,0 +1,300 @@
+"""Export polished concept-drift power tables (Markdown + LaTeX) from power_raw.csv."""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+from pathlib import Path
+
+import pandas as pd
+
+ALPHA = 0.05
+COMBO_ORDER = ("text_audio", "text_video", "text_audio_video")
+COMBO_TEX = {
+    "text_audio": r"T$\times$A",
+    "text_video": r"T$\times$V",
+    "text_audio_video": r"T$\times$A$\times$V",
+}
+METHOD_ORDER = (
+    "rfperm",
+    "cfperm",
+    "drperm",
+    "skk13",
+    "zwl",
+    "c2st_XY",
+    "c2st_X",
+    "miles11",
+    "xu16",
+    "kmmd",
+    "chen10",
+    "sri08",
+    "bai96",
+    "pan14",
+    "mmd_rbf",
+)
+METHOD_TEX = {
+    "rfperm": r"RFPerm",
+    "cfperm": r"CFPerm",
+    "drperm": r"DRPerm",
+    "skk13": r"SKK13",
+    "zwl": r"ZWL",
+    "c2st_XY": r"C2ST$_{XY}$",
+    "c2st_X": r"C2ST$_X$",
+    "miles11": r"Miles11",
+    "xu16": r"Xu16",
+    "kmmd": r"kMMD",
+    "chen10": r"Chen10",
+    "sri08": r"Sri08",
+    "bai96": r"Bai96",
+    "pan14": r"Pan14",
+    "mmd_rbf": r"MMD$_{\mathrm{rbf}}$",
+}
+HIGHLIGHT = {"rfperm", "cfperm", "drperm"}
+
+
+def _power(g: pd.DataFrame) -> float:
+    return float((g["pvalue"] < ALPHA).mean()) if len(g) else float("nan")
+
+
+def build_tables(raw: pd.DataFrame, dataset: str = "msrvtt_concept_top30"):
+    sub = raw[raw["dataset"] == dataset].copy()
+    rows = []
+    for method in METHOD_ORDER:
+        row = {"method": method}
+        for combo in COMBO_ORDER:
+            g = sub[(sub["method"] == method) & (sub["combo"] == combo)]
+            row[f"B_{combo}"] = int(len(g))
+            row[f"pow_{combo}"] = _power(g)
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def build_null(raw: pd.DataFrame, dataset: str = "msrvtt_null_top30", combo: str = "text_audio"):
+    sub = raw[(raw["dataset"] == dataset) & (raw["combo"] == combo)]
+    rows = []
+    for method in METHOD_ORDER:
+        g = sub[sub["method"] == method]
+        rows.append({"method": method, "B": int(len(g)), "power": _power(g)})
+    return pd.DataFrame(rows)
+
+
+def to_markdown(power: pd.DataFrame, null: pd.DataFrame, stamp: str) -> str:
+    lines = [
+        f"# Concept-drift power board (polished) — {stamp}",
+        "",
+        "Setting: `msrvtt_concept_top30`, PCA `top30`, $n=500$/batch, $\\alpha=0.05$.",
+        "X fixed across domains; only $Y\\mid X$ drifts (`concept_shift=0.35`).",
+        "",
+        "## Power under concept drift",
+        "",
+        "| method | T×A | T×V | T×A×V | B (T×A / T×V / T×A×V) |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    for r in power.itertuples():
+        mark = "**" if r.method in HIGHLIGHT else ""
+        cells = []
+        bs = []
+        for c in COMBO_ORDER:
+            b = getattr(r, f"B_{c}")
+            p = getattr(r, f"pow_{c}")
+            bs.append(str(b))
+            if b < 30:
+                cells.append(f"{p:.2f}$^\\dagger$" if b else "—")
+            else:
+                cells.append(f"{p:.3f}")
+        lines.append(
+            f"| {mark}{r.method}{mark} | {cells[0]} | {cells[1]} | {cells[2]} | {' / '.join(bs)} |"
+        )
+    lines += [
+        "",
+        "$^\\dagger$ preliminary ($B<30$).",
+        "",
+        "## Type-I (null `msrvtt_null_top30`, text_audio)",
+        "",
+        "| method | B | reject rate |",
+        "|---|---:|---:|",
+    ]
+    for r in null.itertuples():
+        mark = "**" if r.method in HIGHLIGHT else ""
+        pw = f"{r.power:.3f}" if r.B else "—"
+        lines.append(f"| {mark}{r.method}{mark} | {r.B or '—'} | {pw} |")
+    lines += [
+        "",
+        "## Dataset schema (standardized)",
+        "",
+        "| field | values | role |",
+        "|---|---|---|",
+        "| `scenario` | `no_shift` / `mean_shift` / `interaction_shift` / `concept_drift` | DGP family |",
+        "| `band` | `top30` / `pc30_100` / `pc31_100` | PCA band per modality |",
+        "| `combo` | T×A / T×V / A×V / T×A×V | modality subset |",
+        "| `concept_shift` | scalar (board: 0.35) | strength of $Y\\mid X$ drift |",
+        "| checkpoint | `(dataset, combo, scenario, method, rep)` | stackable $B$ |",
+        "",
+        "## Readout",
+        "",
+        "- **RFPerm** saturates near 1 on all finished combos (outcome-model sensitive to $Y\\mid X$).",
+        "- **CFPerm / DRPerm** retain non-trivial power; T×A strongest among the three combos.",
+        "- Most classical two-sample tests ≈0 under concept drift (X unchanged) — as expected.",
+        "- **SKK13 / ZWL** hit power 1 but SKK13 also rejects under null → not calibrated here.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def to_latex(power: pd.DataFrame, null: pd.DataFrame, stamp: str) -> str:
+    def fmt(p: float, b: int) -> str:
+        if b <= 0:
+            return r"---"
+        if b < 30:
+            return rf"{p:.2f}$^\dagger$"
+        return f"{p:.3f}"
+
+    lines = [
+        r"% Auto-generated by experiments/multimodal_attribution/export_polished_tables.py",
+        rf"% stamp: {stamp}",
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\small",
+        r"\setlength{\tabcolsep}{4pt}",
+        r"\caption{Empirical power under multimodal \emph{concept drift}",
+        r"  ($X$ fixed, $Y\mid X$ shifts; \texttt{msrvtt\_concept\_top30}, PCA top-30,",
+        r"  $n=500$, $\alpha=0.05$, $B\ge 120$ for CF/RF/DR).",
+        r"  Bold rows are the primary suite.}",
+        r"\label{tab:concept-drift-power}",
+        r"\begin{tabular}{lccc}",
+        r"\toprule",
+        r"Method & T$\times$A & T$\times$V & T$\times$A$\times$V \\",
+        r"\midrule",
+    ]
+    for r in power.itertuples():
+        name = METHOD_TEX.get(r.method, r.method)
+        if r.method in HIGHLIGHT:
+            name = rf"\textbf{{{name}}}"
+        cells = [
+            fmt(getattr(r, f"pow_{c}"), getattr(r, f"B_{c}")) for c in COMBO_ORDER
+        ]
+        lines.append(" & ".join([name, *cells]) + r" \\")
+        if r.method == "drperm":
+            lines.append(r"\midrule")
+    lines += [
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\vspace{2pt}",
+        r"{\footnotesize $^\dagger$ Preliminary ($B<30$).",
+        r" Classical two-sample tests stay near zero because covariates are identical across domains;",
+        r" SKK13/ZWL saturate but SKK13 is uncalibrated under the null board.}",
+        r"\end{table}",
+        "",
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\small",
+        r"\caption{Type-I reject rates on \texttt{msrvtt\_null\_top30} / T$\times$A",
+        r"  (partial $B$; target nominal $\alpha=0.05$).}",
+        r"\label{tab:concept-null-typeI}",
+        r"\begin{tabular}{lcc}",
+        r"\toprule",
+        r"Method & $B$ & Reject rate \\",
+        r"\midrule",
+    ]
+    for r in null.itertuples():
+        name = METHOD_TEX.get(r.method, r.method)
+        if r.method in HIGHLIGHT:
+            name = rf"\textbf{{{name}}}"
+        b = str(r.B) if r.B else r"---"
+        pw = f"{r.power:.3f}" if r.B else r"---"
+        lines.append(f"{name} & {b} & {pw} \\\\")
+        if r.method == "drperm":
+            lines.append(r"\midrule")
+    lines += [
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
+        "",
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\small",
+        r"\caption{Standardized multimodal board schema (\texttt{DatasetSpec}).}",
+        r"\label{tab:dataset-schema}",
+        r"\begin{tabular}{llp{6.6cm}}",
+        r"\toprule",
+        r"Field & Values & Role \\",
+        r"\midrule",
+        r"\texttt{scenario} & \texttt{no\_shift}, \texttt{mean\_shift}, \texttt{interaction\_shift}, \texttt{concept\_drift} & DGP family \\",
+        r"\texttt{band} & \texttt{top30}, \texttt{pc30\_100}, \texttt{pc31\_100} & Per-modality PCA band \\",
+        r"\texttt{combo} & T$\times$A / T$\times$V / A$\times$V / T$\times$A$\times$V & Modality subset \\",
+        r"\texttt{concept\_shift} & scalar (board: $0.35$) & Strength of $Y\mid X$ drift \\",
+        r"checkpoint key & (\texttt{dataset},\texttt{combo},\texttt{scenario},\texttt{method},\texttt{rep}) & Stackable Monte Carlo $B$ \\",
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
+        "",
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\small",
+        r"\caption{Financial KG digestion prototype (standardized stages).}",
+        r"\label{tab:fin-kg-digestion}",
+        r"\begin{tabular}{clp{7.2cm}}",
+        r"\toprule",
+        r"Stage & Artifact & Description \\",
+        r"\midrule",
+        r"1 & triples JSON & Open KG edges (head, rel, tail, time, props) \\",
+        r"2 & graph$\to$text JSONL & 2--4 hop path sampling + relation templates \\",
+        r"3 & SFT/CoT JSONL & single-/multi-hop, link-pred, temporal QA \\",
+        r"4 & LoRA SFT & PEFT on instruct LM (demo: Qwen2.5-1.5B) \\",
+        r"5 & ToG + $t_{\mathrm{cut}}$ & Beam KG exploration; temporal extrapolation \\",
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def main() -> None:
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument(
+        "--raw",
+        type=Path,
+        default=Path("experiments/multimodal_attribution/results/concept_drift/power_raw.csv"),
+    )
+    p.add_argument(
+        "--out-dir",
+        type=Path,
+        default=Path("experiments/multimodal_attribution/results/concept_drift"),
+    )
+    p.add_argument(
+        "--latex-dir",
+        type=Path,
+        default=Path("experiments/multimodal_attribution/latex"),
+    )
+    args = p.parse_args()
+    raw = pd.read_csv(args.raw)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    power = build_tables(raw)
+    null = build_null(raw)
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+    args.latex_dir.mkdir(parents=True, exist_ok=True)
+    md = to_markdown(power, null, stamp)
+    tex = to_latex(power, null, stamp)
+    (args.out_dir / "POLISHED_POWER.md").write_text(md)
+    (args.latex_dir / "concept_drift_power.tex").write_text(tex)
+    # thin wrapper main for compile convenience
+    main_tex = r"""\documentclass[11pt]{article}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage[margin=1in]{geometry}
+\begin{document}
+\section{Multimodal concept-drift power}
+\input{concept_drift_power.tex}
+\end{document}
+"""
+    (args.latex_dir / "main_concept_drift.tex").write_text(main_tex)
+    power.to_csv(args.out_dir / "polished_power.csv", index=False)
+    null.to_csv(args.out_dir / "polished_null_typeI.csv", index=False)
+    print(md)
+    print(f"\nwrote {args.out_dir / 'POLISHED_POWER.md'}")
+    print(f"wrote {args.latex_dir / 'concept_drift_power.tex'}")
+
+
+if __name__ == "__main__":
+    main()
