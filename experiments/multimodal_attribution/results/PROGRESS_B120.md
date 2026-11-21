@@ -118,3 +118,14 @@ All healthy. Focus remaining TV/TAV fill.
 ## post-all-power-tables (2026-11-21 05:36 UTC)
 
 TA B=120 full table posted. CF all combos done. DR TAV 59/120. classical TV 60/120. MSR TAV 8/120. Emotion still ~10.
+
+## overnight-power-check (2026-11-21 06:04 UTC)
+
+| stream | status |
+|---|---|
+| cfperm | all combos B=120 ✓ |
+| drperm | TAV 90/120 |
+| classical | TV 87/120 · n_jobs=8 |
+| MSR | AV ✓ · TAV 11/120 · n_jobs=8 |
+
+ETA: DR TAV ~30–40min · classical TV ~30min then TAV · MSR TAV slow (~1h+/10reps).
