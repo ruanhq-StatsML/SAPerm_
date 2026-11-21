@@ -25,13 +25,13 @@ def _eval_one(name: str, fn: Callable, X1, X2, batch) -> Tuple[str, float, str]:
 
 
 def default_n_jobs(requested: int | None = None) -> int:
-    """Cap workers by CPU count (leave 1 core free when many boards share a box)."""
-    import os
-
-    cpu = os.cpu_count() or 2
+    """Honor ``--n-jobs`` (oversubscribe allowed). Default 8 when unset."""
     if requested is None or int(requested) <= 0:
-        return max(1, min(4, cpu))
-    return max(1, min(int(requested), cpu))
+        try:
+            return max(1, int(os.environ.get("MM_N_JOBS", "8")))
+        except ValueError:
+            return 8
+    return max(1, int(requested))
 
 
 def eval_methods_parallel(
