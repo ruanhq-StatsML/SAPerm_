@@ -96,3 +96,12 @@ All healthy. ETA: classical TA ~30min; MSR AV ~10min then TAV; DR TV ~30min then
 | drperm | TV 120 ✓ · TAV ~5/120 · CFDR_PERM_JOBS=4 |
 
 All healthy. Focus remaining TV/TAV fill.
+
+## overnight-power-check (2026-11-21 04:02 UTC)
+
+| stream | status |
+|---|---|
+| cfperm | TAV 113/120 |
+| drperm | TAV 26/120 |
+| classical | TA 120 ✓ · TV 31/120 · n_jobs=8 |
+| MSR | AV 120 ✓ · TAV restarted (was hung >20m) · n_jobs=8 |
