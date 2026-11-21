@@ -1,0 +1,26 @@
+\paragraph{Sensitivity design.}
+For each modality $m\in\{\mathrm{text},\mathrm{audio},\mathrm{video}\}$ we apply
+mean shifts of both signs ($\pm$), and for each pair $(a,b)$ we plant
+\texttt{interaction\_shift} with $\lambda\in\{-1.8,+1.8\}$ (quick grid; full
+grid adds intermediate magnitudes). On every cell we record
+(i) power on each \emph{single} modality,
+(ii) power on the concatenated \emph{pair},
+(iii) the PO interaction $\hat I(a,b)$ and $p(|I|)$.
+
+\paragraph{Signed power vs fusion lift.}
+Signed power is
+$\mathbb{P}(p(|I|)<\alpha \wedge \hat I>0)$ under $\lambda>0$
+(and the negative analogue under $\lambda<0$).
+Fusion lift is
+$\mathrm{power}_{\mathrm{pair}}-\max(\mathrm{power}_a,\mathrm{power}_b)$.
+The operational claim: when the plant is synergistic ($\lambda>0$),
+signed power rises \emph{together with} fusion lift --- the pair beats the
+better single precisely when PO-risk reports positive interaction.
+When $\lambda<0$, $\hat I$ flips and the lift collapses.
+Mean shifts move single-modality power with the shifted block but leave
+signed interaction near the null (main effect $\neq$ interaction).
+
+\paragraph{Why this delays delivery.}
+The concept-drift T$\times$A/T$\times$V table alone cannot show this
+mechanism. The sensitivity board is the unique evidence that
+positive $I$, signed power, and pair-vs-single detectability are the same story.

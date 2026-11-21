@@ -1,0 +1,16 @@
+method,B_text_audio,typeI_text_audio,src_text_audio,B_text_video,typeI_text_video,src_text_video,B_audio_video,typeI_audio_video,src_audio_video
+rfperm,13,0.0,overnight,0,,,0,,
+cfperm,53,0.05660377358490566,concept,0,,,0,,
+drperm,53,0.03773584905660377,concept,0,,,0,,
+skk13,150,1.0,overnight,150,1.0,overnight,120,1.0,overnight
+zwl,150,0.15333333333333332,overnight,150,0.20666666666666667,overnight,120,0.21666666666666667,overnight
+c2st_XY,150,0.03333333333333333,overnight,150,0.05333333333333334,overnight,120,0.025,overnight
+c2st_X,150,0.04,overnight,150,0.03333333333333333,overnight,120,0.05,overnight
+miles11,150,0.03333333333333333,overnight,150,0.06666666666666667,overnight,120,0.06666666666666667,overnight
+xu16,150,0.03333333333333333,overnight,150,0.03333333333333333,overnight,120,0.025,overnight
+kmmd,150,0.06666666666666667,overnight,150,0.08,overnight,120,0.03333333333333333,overnight
+chen10,150,0.0,overnight,150,0.0,overnight,120,0.0,overnight
+sri08,150,0.06,overnight,150,0.07333333333333333,overnight,120,0.09166666666666666,overnight
+bai96,150,0.06,overnight,150,0.07333333333333333,overnight,120,0.09166666666666666,overnight
+pan14,150,0.06,overnight,150,0.09333333333333334,overnight,120,0.09166666666666666,overnight
+mmd_rbf,150,0.06,overnight,150,0.05333333333333334,overnight,120,0.1,overnight

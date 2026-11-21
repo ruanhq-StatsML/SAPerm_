@@ -1,0 +1,85 @@
+% Auto delivery-grade tables — 2026-11-21 09:47 UTC
+% 口径: n=500, B>=100 (target 120), n_perm in {120,150}
+\begin{table}[t]
+\centering\small\setlength{\tabcolsep}{4pt}
+\caption{Delivery-grade multimodal powers under concept drift
+  (\texttt{msrvtt\_concept\_top30}, $n=500$, $B=120$ CF/DR, $B=150$ RF, $n_{\mathrm{perm}}=150$, $\alpha=0.05$).
+  Combos: T$\times$A, T$\times$V, TAV. Bold: primary suite.}
+\label{tab:delivery-concept-combos}
+\begin{tabular}{l ccc}
+\toprule
+Method & T$\times$A & T$\times$V & TAV \\
+\midrule
+\textbf{RFPerm} & 1.000 & 0.987 & 0.933 \\
+\textbf{CFPerm} & 0.600 & 0.342 & 0.400 \\
+\textbf{DRPerm} & 0.400 & 0.217 & 0.300 \\
+\midrule
+SKK13 & 1.000 & 1.000 & 1.000 \\
+ZWL & 1.000 & 1.000 & 1.000 \\
+C2ST$_{XY}$ & 0.083 & 0.000 & 0.000 \\
+C2ST$_X$ & 0.000 & 0.000 & 0.000 \\
+Miles11 & 0.000 & 0.000 & 0.000 \\
+Xu16 & 0.000 & 0.000 & 0.000 \\
+kMMD & 0.000 & 0.000 & 0.000 \\
+Chen10 & 0.000 & 0.000 & 0.000 \\
+Sri08 & 0.000 & 0.000 & 0.000 \\
+Bai96 & 0.000 & 0.000 & 0.000 \\
+Pan14 & 0.000 & 0.000 & 0.000 \\
+MMD$_{\mathrm{rbf}}$ & 0.000 & 0.000 & 0.000 \\
+\bottomrule\end{tabular}
+\vspace{2pt}{\footnotesize Classical TST$\approx 0$ (except SKK13/ZWL inflated) because $X$ is fixed;
+ CF/DR/RF read $Y\mid X$. Ordering for CFPerm: T$\times$A $>$ TAV $>$ T$\times$V.}
+\end{table}
+
+\begin{table}[t]
+\centering\small\setlength{\tabcolsep}{5pt}
+\caption{Type-I of cross-modal PO interaction and block cross-correlation
+  on \texttt{msrvtt\_null\_top30} ($n=500$, $B\ge 120$, overnight $n_{\mathrm{perm}}=120$, $\alpha=0.05$).
+  All near $\alpha$: interaction detectors are calibrated on the null.}
+\label{tab:delivery-po-typeI}
+\begin{tabular}{l cc cc}
+\toprule
+& \multicolumn{2}{c}{\texttt{interact\_PO}} & \multicolumn{2}{c}{\texttt{crosscorr}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Pair & type-I & $B$ & type-I & $B$ \\
+\midrule
+text$\times$audio & 0.027 & 150 & 0.047 & 150 \\
+text$\times$video & 0.067 & 150 & 0.060 & 150 \\
+audio$\times$video & 0.033 & 120 & 0.033 & 120 \\
+\bottomrule\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering\small\setlength{\tabcolsep}{5pt}
+\caption{Cross-modal T$\times$A / T$\times$V (delivery-grade).
+  Power: concept drift, $n=500$, $B=120$ (RF $150$), $n_{\mathrm{perm}}=150$.
+  Type-I classical: overnight null $B\ge 120$.
+  CF/DR null still stacking ($B\approx 54$); marked $\dagger$ if $B<100$.}
+\label{tab:cross-modal-TA-TV}
+\begin{tabular}{l cc @{\hspace{1.2em}} cc}
+\toprule
+& \multicolumn{2}{c}{\textbf{Power} (concept)} & \multicolumn{2}{c}{\textbf{Type-I} (null)} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Method & T$\times$A & T$\times$V & T$\times$A & T$\times$V \\
+\midrule
+\textbf{RFPerm} & 1.000 & 0.987 & --- & --- \\
+\textbf{CFPerm} & 0.600 & 0.342 & 0.056$^\dagger$ & --- \\
+\textbf{DRPerm} & 0.400 & 0.217 & 0.037$^\dagger$ & --- \\
+\midrule
+SKK13 & 1.000 & 1.000 & 1.000$^\ddagger$ & 1.000$^\ddagger$ \\
+ZWL & 1.000 & 1.000 & 0.153$^\ddagger$ & 0.207$^\ddagger$ \\
+C2ST$_{XY}$ & 0.083 & 0.000 & 0.033 & 0.053 \\
+C2ST$_X$ & 0.000 & 0.000 & 0.040 & 0.033 \\
+Miles11 & 0.000 & 0.000 & 0.033 & 0.067 \\
+Xu16 & 0.000 & 0.000 & 0.033 & 0.033 \\
+kMMD & 0.000 & 0.000 & 0.067 & 0.080 \\
+Chen10 & 0.000 & 0.000 & 0.000 & 0.000 \\
+Sri08 & 0.000 & 0.000 & 0.060 & 0.073 \\
+Bai96 & 0.000 & 0.000 & 0.060 & 0.073 \\
+Pan14 & 0.000 & 0.000 & 0.060 & 0.093 \\
+MMD$_{\mathrm{rbf}}$ & 0.000 & 0.000 & 0.060 & 0.053 \\
+\bottomrule\end{tabular}
+\vspace{2pt}{\footnotesize $^\dagger$ $B<100$ (stacking to 120).
+ $^\ddagger$ Inflated type-I ($\ge 0.10$).
+ T$\times$A stronger than T$\times$V for CF/DR under concept drift.}
+\end{table}
