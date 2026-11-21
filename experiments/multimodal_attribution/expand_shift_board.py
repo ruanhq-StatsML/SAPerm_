@@ -78,38 +78,28 @@ def _datasets_for_phases(phases: Sequence[str]) -> List[DatasetSpec]:
             )
         )
     if "covariate" in want:
-        # Back-translation analogue: warp text embeddings, keep Y semantics.
-        out.append(
-            DatasetSpec(
-                "msrvtt_backtrans_text_top30",
-                "covariate_backtrans",
-                band="top30",
-                shift_modality="text",
-                covariate_amount=1.2,
+        # Full-modality covariate ladder: backtrans + inject on text/audio/video.
+        # Dominant-modality power + LOMO vs concept-drift interaction profile.
+        for mod in ("text", "audio", "video"):
+            out.append(
+                DatasetSpec(
+                    f"msrvtt_backtrans_{mod}_top30",
+                    "covariate_backtrans",
+                    band="top30",
+                    shift_modality=mod,
+                    covariate_amount=1.2,
+                )
             )
-        )
-        # Random injection into text (token/feature pollution).
-        out.append(
-            DatasetSpec(
-                "msrvtt_inject_text_top30",
-                "covariate_inject",
-                band="top30",
-                shift_modality="text",
-                covariate_amount=1.5,
-                inject_frac=0.30,
+            out.append(
+                DatasetSpec(
+                    f"msrvtt_inject_{mod}_top30",
+                    "covariate_inject",
+                    band="top30",
+                    shift_modality=mod,
+                    covariate_amount=1.5,
+                    inject_frac=0.30,
+                )
             )
-        )
-        # Also inject into audio — modality-specific covariate control.
-        out.append(
-            DatasetSpec(
-                "msrvtt_inject_audio_top30",
-                "covariate_inject",
-                band="top30",
-                shift_modality="audio",
-                covariate_amount=1.5,
-                inject_frac=0.30,
-            )
-        )
     if "interaction" in want:
         out.append(
             DatasetSpec(
