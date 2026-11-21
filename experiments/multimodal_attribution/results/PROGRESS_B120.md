@@ -37,3 +37,12 @@ Checkpoint keeps finished cells. Subsequent runs use `--n-rep 120` (skip rep≥1
 - Observed: ~14s/rep CF, ~25s/rep DR (was ~100s / up to 26min)
 - Target: `msrvtt_concept_top30` text_audio → B=120
 
+## text_audio B=120 complete (2026-11-21 01:43 UTC)
+
+| method | power@0.05 |
+|---|---:|
+| rfperm | 1.000 |
+| cfperm | 0.600 |
+| drperm | 0.400 |
+
+CF∥DR still filling text_video + text_audio_video under accel knobs.
