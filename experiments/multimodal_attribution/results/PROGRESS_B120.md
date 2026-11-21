@@ -54,3 +54,10 @@ CF∥DR still filling text_video + text_audio_video under accel knobs.
 - text_audio_video: CF/DR not started; RF done
 - classical/MSR: **not** restarted (user: keep off)
 - ETA remaining combos ≈ 1h (DR-bound)
+
+## Restored classical + MSR (2026-11-21 01:59 UTC)
+
+Streams (4 cores, 1 job each):
+- `concept-cfperm` / `concept-drperm` — continue top30 (CFDR_PERM_JOBS=1, n_perm=40)
+- `concept-classical` — 12 TST methods resume from ~73–76 → B=120
+- `msr-overnight` — `overnight_power` resume null_top30 audio_video 103/120 → rest
