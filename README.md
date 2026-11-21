@@ -1,5 +1,13 @@
 # Hypothesis Testing Procedure for Distribution Shift with Application on Sentiment Analysis and Image Embedding
 
+## Attribution Agent
+
+See [`agents/shift-detect`](agents/shift-detect) for the Agent SDK **distribution-shift attribution agent**:
+detect → classify → pathway/LOCO attribute → Eval Gate → badcase promotion closed loop.
+It wraps the methods in this repo (and sibling RFPerm / CFPerm / OnlineMonitoring / FSDS work) behind tools and offline fixtures.
+
+---
+
 Implementation for the Permutation Test for Distribution Shift with Application to Sentiment Analysis: Both Tree-Based Permutation Test and R-risk based Tests. We benchmark the following 15 methods with the 6 developed methods: 
 - RFPerm: Random Forest Permutation Test for Distribution Shift 
 - XGBPerm: XGBoost based Permutation Test for Distribution Shift \
