@@ -7,16 +7,13 @@
 | **n_sample** | **500** |
 | **B / n_rep** | **120** |
 | **n_perm** | **150** |
-| **n_perm_po** | 50 |
 | **methods** | CFPerm / DRPerm / RFPerm |
-
-_Delivery-grade only if realized n_rep ≥ 100._
 
 ## Progress
 
-| dataset | combo | n_rep |
-|---|---|---:|
-| sens_interact_text_audio_neg1p8 | text_audio | 1 |
+| dataset | combo | n_rep | grade |
+|---|---|---:|---|
+| sens_interact_text_audio_neg1p8 | text_audio | 1 | preliminary |
 
 ## CF / DR / RF
 
