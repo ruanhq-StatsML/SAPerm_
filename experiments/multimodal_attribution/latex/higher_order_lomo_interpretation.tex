@@ -57,14 +57,18 @@ most: $\Delta^{\mathrm{pow}}_{m}>0$ means dropping $m$ hurts power
 (modality helps the joint test);
 $\Delta^{\mathrm{pow}}_{m}<0$ means the joint system is stronger without $m$
 (redundancy or conflict under early fusion).
-The two measures are designed to \emph{reconcile}:
-$I^{(3)}>0$ predicts jointly positive LOMO gaps
+We treat LOMO power as a \emph{cross-validation} of $I^{(3)}$, not as a
+second independent attribution theorem:
+$I^{(3)}>0$ should line up with jointly positive LOMO gaps
 (every channel earns its seat in the triple);
-$I^{(3)}\approx 0$ predicts near-zero gaps once the dominant pair is kept
+$I^{(3)}\approx 0$ with near-zero gaps once the dominant pair is kept
 (essentially pairwise mechanisms);
-$I^{(3)}<0$ predicts at least one non-positive gap---and typically
+$I^{(3)}<0$ with at least one non-positive gap---and typically
 $\mathrm{Power}(\mathrm{full})<\max_{i<j}\mathrm{Power}(\{i,j\})$---i.e.\
 over-complete or conflicting triple fusion.
+Agreement in sign validates the fusion diagnosis; disagreement flags
+estimation noise or a baseline mismatch (triple vs.\ best-pair LOMO),
+without claiming unique modality shares.
 
 \paragraph{Statistical reading.}
 Statistically, $I^{(3)}$ is a M\"obius residual on the PO-risk set function:
