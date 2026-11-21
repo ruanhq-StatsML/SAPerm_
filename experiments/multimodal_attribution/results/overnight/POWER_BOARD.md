@@ -1,26 +1,21 @@
-# Concept-drift POWER BOARD — 2026-11-21 05:36 UTC
+# Concept-drift POWER BOARD — 2026-11-21 07:29 UTC
 
-## text_audio: null vs concept_drift (FULL)
+## Highlight (concept_top30)
 
-| method | null B | null power | concept B | concept power |
-|---|---:|---:|---:|---:|
-| bai96 | 53 | 0.019 | 120 | 0.000 |
-| c2st_X | 53 | 0.038 | 120 | 0.000 |
-| c2st_XY | 53 | 0.075 | 120 | 0.083 |
-|  **cfperm** | 53 | 0.057 | 120 | 0.600 |
-| chen10 | 53 | 0.000 | 120 | 0.000 |
-|  **drperm** | 53 | 0.038 | 120 | 0.400 |
-| kmmd | 53 | 0.057 | 120 | 0.000 |
-| miles11 | 53 | 0.019 | 120 | 0.000 |
-| mmd_rbf | 53 | 0.019 | 120 | 0.000 |
-| pan14 | 53 | 0.038 | 120 | 0.000 |
-|  **rfperm** | — | — | 150 | 1.000 |
-| skk13 | 53 | 1.000 | 120 | 1.000 |
-| sri08 | 53 | 0.019 | 120 | 0.000 |
-| xu16 | 53 | 0.057 | 120 | 0.000 |
-| zwl | 53 | 0.132 | 120 | 1.000 |
-
-## Live
-
-- CF: all concept combos B=120 done
-- DR TAV filling · classical TV filling · MSR TAV slow · emotion B≈10
+| combo | method | B | power@0.05 |
+|---|---|---:|---:|
+| text_audio | cfperm | 120 | 0.600 |
+| text_audio | rfperm | 150 | 1.000 |
+| text_audio | drperm | 120 | 0.400 |
+| text_audio | skk13 | 120 | 1.000 |
+| text_audio | zwl | 120 | 1.000 |
+| text_video | cfperm | 120 | 0.342 |
+| text_video | rfperm | 150 | 0.987 |
+| text_video | drperm | 120 | 0.217 |
+| text_video | skk13 | 120 | 1.000 |
+| text_video | zwl | 120 | 1.000 |
+| text_audio_video | cfperm | 120 | 0.400 |
+| text_audio_video | rfperm | 150 | 0.933 |
+| text_audio_video | drperm | 120 | 0.300 |
+| text_audio_video | skk13 | 3 | 1.000 |
+| text_audio_video | zwl | 3 | 1.000 |
