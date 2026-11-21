@@ -114,3 +114,7 @@ All healthy. Focus remaining TV/TAV fill.
 | drperm | TAV 42/120 — restarted (hung) |
 | classical | TA ✓ · TV 45/120 — restarted · n_jobs=8 |
 | MSR | AV ✓ · TAV ~7 — restarted · n_jobs=8 |
+
+## post-all-power-tables (2026-11-21 05:36 UTC)
+
+TA B=120 full table posted. CF all combos done. DR TAV 59/120. classical TV 60/120. MSR TAV 8/120. Emotion still ~10.
