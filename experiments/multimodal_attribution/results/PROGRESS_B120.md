@@ -61,3 +61,10 @@ Streams (4 cores, 1 job each):
 - `concept-cfperm` / `concept-drperm` — continue top30 (CFDR_PERM_JOBS=1, n_perm=40)
 - `concept-classical` — 12 TST methods resume from ~73–76 → B=120
 - `msr-overnight` — `overnight_power` resume null_top30 audio_video 103/120 → rest
+
+## post-all-power-tables (2026-11-21 02:35 UTC)
+
+- Jobs healthy (raw mtime <1min); no restart
+- concept TA: CF/RF/DR done; classical ~90/120
+- CF TV~114, DR TV~68; MSR AV~109/120; emotion mosei still B=10 (queued)
+- ETA classical TA ~1h; MSR AV ~30min then TAV
