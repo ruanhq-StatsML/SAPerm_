@@ -13,14 +13,24 @@ The second-order PO interaction is the inclusion--exclusion term
 \[
 I(m_1,m_2)=\mathrm{PO}(-m_1)+\mathrm{PO}(-m_2)-\mathrm{PO}(-m_1,-m_2).
 \]
-$I>0$ is synergistic (joint structure beyond the sum of singles);
-$I<0$ is antagonistic / cancelling;
-$I\approx 0$ is additive.
+Project reading: $I>0$ means the pair jointly explains more of the domain /
+outcome gap than either block alone (synergy); $I<0$ is antagonistic /
+cancelling; $I\approx 0$ under the null is additive noise.
 \texttt{interact\_PO\_*} reports a permutation $p$-value on $|I|$;
 the sign for interpretation is that of the point estimate $I$.
-\texttt{crosscorr\_*} is a companion test on
-$|\mathrm{corr}_{\mathrm{new}}-\mathrm{corr}_{\mathrm{ref}}|$ of block means.
-The isolating DGP is \texttt{interaction\_shift} on a chosen \texttt{interact\_pair}.
+The isolating DGP is \texttt{interaction\_shift} (product structure in $X$ and $Y$
+on \texttt{interact\_pair}).
+
+\paragraph{Positive $I$ vs power (operational).}
+Positive $\hat I$ answers \emph{what mechanism} (synergistic pair).
+Power $\mathbb{P}_{H_1}(p(|I|)<\alpha)$ answers \emph{how often we detect}
+any nonzero interaction under that DGP --- it ignores sign.
+The delivery quantity is
+\emph{signed power}
+$\mathbb{P}_{H_1^{+}}(p(|I|)<\alpha \wedge \hat I>0)$:
+when cross-modal synergy is real, how often do we both reject and call the
+sign correctly? A large positive point estimate with large $p$ is not a claim;
+high unsigned power with unstable sign is detection without mechanism.
 
 \paragraph{Separation from combo power.}
 T$\times$A / T$\times$V / TAV concept-drift powers are coverage / detectability,
