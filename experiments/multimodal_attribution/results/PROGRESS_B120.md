@@ -129,3 +129,14 @@ TA B=120 full table posted. CF all combos done. DR TAV 59/120. classical TV 60/1
 | MSR | AV ✓ · TAV 11/120 · n_jobs=8 |
 
 ETA: DR TAV ~30–40min · classical TV ~30min then TAV · MSR TAV slow (~1h+/10reps).
+
+## overnight-power-check (2026-11-21 07:05 UTC)
+
+| stream | status |
+|---|---|
+| cfperm | all combos B=120 ✓ |
+| drperm | TAV 109/120 |
+| classical | TV 103/120 |
+| MSR | TAV 13 — restarted (hung 50m) · n_jobs=8 |
+
+ETA: DR ~10–15min · classical TV ~15–20min then TAV · MSR TAV continues slow.
