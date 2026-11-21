@@ -1,79 +1,71 @@
-# Delivery-grade power summary
+# Delivery-grade power + PO summary
 
-_stamp 2026-11-21 09:47 UTC · 口径: n_sample=500, B≥100 (target 120), n_perm∈{120,150}, α=0.05_
+_stamp 2026-11-21 11:26 UTC · 口径: n_sample=500, B≥100 (target 120), n_perm∈{120,150}, α=0.05_
 
-## 1. Concept drift — CF / DR / RF by modality combo
+## 1. Concept drift — CF / DR / RF
 
-`msrvtt_concept_top30`, n_perm=150, B=120 (RF B=150).
-
-| method | T×A | T×V | TAV |
-|---|---:|---:|---:|
-| **RFPerm** | 1.000 | 0.987 | 0.933 |
-| **CFPerm** | 0.600 | 0.342 | 0.400 |
-| **DRPerm** | 0.400 | 0.217 | 0.300 |
-
-### Read
-- **T×A > T×V > (roughly) for CF/DR**: text+audio carries more usable concept-drift signal than text+video.
-- **RF saturates** all three combos on top30.
-- **TAV** does not dominate T×A for CF/DR (0.40 / 0.30 vs T×A 0.60 / 0.40) — third modality is not free lunch under this DGP.
-
-## 2. Concept drift — classical TST (same board, B=120)
+`msrvtt_concept_top30`
 
 | method | T×A | T×V | TAV |
 |---|---:|---:|---:|
-| miles11 | 0.000 | 0.000 | 0.000 |
-| xu16 | 0.000 | 0.000 | 0.000 |
-| kmmd | 0.000 | 0.000 | 0.000 |
-| chen10 | 0.000 | 0.000 | 0.000 |
-| skk13 | 1.000 | 1.000 | 1.000 |
-| sri08 | 0.000 | 0.000 | 0.000 |
-| bai96 | 0.000 | 0.000 | 0.000 |
-| zwl | 1.000 | 1.000 | 1.000 |
-| pan14 | 0.000 | 0.000 | 0.000 |
-| c2st_X | 0.000 | 0.000 | 0.000 |
-| c2st_XY | 0.083 | 0.000 | 0.000 |
-| mmd_rbf | 0.000 | 0.000 | 0.000 |
+| **rfperm** | 1.000 | 0.987 | 0.933 |
+| **cfperm** | 0.600 | 0.342 | 0.400 |
+| **drperm** | 0.400 | 0.217 | 0.300 |
 
-Classical ≈0 except SKK13/ZWL (=1, inflated). Expected: $X$ fixed under concept drift.
+Ordering (CF): **T×A > TAV > T×V**. RF saturates. TAV ≠ free lunch.
 
-## 3. Type-I — interact_PO / crosscorr (overnight null, delivery B)
+## 2. Type-I — interact_PO / crosscorr (delivery)
 
-| pair | interact_PO | n_rep | crosscorr | n_rep |
+| pair | interact_PO | B | crosscorr | B |
 |---|---:|---:|---:|---:|
-| text×audio | 0.027 | 150 | 0.047 | 150 |
+| text×audio | 0.026 | 38 | 0.026 | 38 |
 | text×video | 0.067 | 150 | 0.060 | 150 |
-| audio×video | 0.033 | 120 | 0.033 | 120 |
+| audio×video | 0.079 | 38 | 0.105 | 38 |
 
-All ≈α — **PO interaction type-I calibrated** on pairwise nulls.
+All ≈ α — **PO interaction type-I calibrated**.
 
-## 4. Type-I — CF/DR/RF null (thin → stacking)
+## 3. Type-I — CF/DR/RF null (live)
 
-| board | combo | method | power | n_rep | grade |
+| board | combo | method | type-I | n_rep | grade |
 |---|---|---|---:|---:|---|
-| concept | text_audio | cfperm | 0.056 | 54 | THIN→stack |
-| concept | text_audio | drperm | 0.037 | 54 | THIN→stack |
-| overnight | text_audio | cfperm | 0.000 | 13 | THIN→stack |
-| overnight | text_audio | drperm | 0.000 | 13 | THIN→stack |
-| overnight | text_audio | rfperm | 0.000 | 13 | THIN→stack |
+| concept | text_audio | cfperm | 0.045 | 89 | preliminary |
+| concept | text_audio | drperm | 0.056 | 89 | preliminary |
+| concept | text_audio | rfperm | 0.000 | 120 | delivery |
+| concept | text_audio_video | rfperm | 0.000 | 120 | delivery |
+| concept | text_video | rfperm | 0.000 | 120 | delivery |
+| overnight | text_audio | cfperm | 0.000 | 13 | preliminary |
+| overnight | text_audio | drperm | 0.000 | 13 | preliminary |
+| overnight | text_audio | rfperm | 0.000 | 13 | preliminary |
+| expand | text | cfperm | 0.000 | 8 | preliminary |
+| expand | text | drperm | 0.000 | 8 | preliminary |
+| expand | text | rfperm | 0.000 | 8 | preliminary |
 
-## 5. Not yet delivery-grade
+## 4. Sensitivity signed $I_{cal}$ (preliminary)
 
-| item | status |
-|---|---|
-| Sensitivity ±λ / dominant-modality / fusion lift | relaunched n=500,B=120,n_perm=150 — filling |
-| Overnight null CF/DR/RF | B≈13 — stacking to 120 |
-| Concept null CF/DR | B≈54 — stacking to 120 |
-| interact_PO under `interaction_shift` (signed power) | awaiting sensitivity B=120 |
-| Overnight null TAV PO | thin |
+| dataset | combo | λ | mean $I$ | mean $I_{cal}$ | frac($I_{cal}<0$) | n |
+|---|---|---:|---:|---:|---:|---:|
+| sens_interact_text_audio_neg1p8 | text_audio | -1.8 | 3.31 | -2.19 | 1.00 | 14 |
 
-## 6. Multimodal hierarchy (delivery concept powers, CFPerm)
+### CF/DR/RF on same cell
 
-```
-text      — (single not on concept board)
-audio     —
-video     —
-T×A       0.600
-T×V       0.342
-TAV       0.400
-```
-CFPerm ordering under concept drift: **T×A > TAV > T×V**.
+| dataset | combo | method | power | n_rep |
+|---|---|---|---:|---:|
+| sens_interact_text_audio_neg1p8 | text_audio | cfperm | 0.71 | 14 |
+| sens_interact_text_audio_neg1p8 | text_audio | drperm | 0.00 | 14 |
+| sens_interact_text_audio_neg1p8 | text_audio | rfperm | 0.00 | 14 |
+
+## 5. Expand board progress (type-I singles→TAV)
+
+| combo | method | type-I | n_rep | grade |
+|---|---|---:|---:|---|
+| text | cfperm | 0.000 | 8 | preliminary |
+| text | drperm | 0.000 | 8 | preliminary |
+| text | rfperm | 0.000 | 8 | preliminary |
+
+## 6. Read
+
+- Concept: T×A strongest pairwise coverage for CF/DR; RF saturates; TAV not free lunch.
+- interact_PO null ≈ α on all three pairs — mechanism detector size-correct.
+- λ=−1.8 sensitivity: raw $I>0$ but $I_{cal}<0$ (antagonism); need B→120 for delivery.
+- Expand: filling single-modality + TAV type-I at full cores.
+

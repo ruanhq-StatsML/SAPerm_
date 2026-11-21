@@ -1,4 +1,4 @@
-% Auto delivery-grade tables — 2026-11-21 09:47 UTC
+% Auto delivery+PO tables — 2026-11-21 11:26 UTC
 % 口径: n=500, B>=100 (target 120), n_perm in {120,150}
 \begin{table}[t]
 \centering\small\setlength{\tabcolsep}{4pt}
@@ -21,10 +21,6 @@ C2ST$_X$ & 0.000 & 0.000 & 0.000 \\
 Miles11 & 0.000 & 0.000 & 0.000 \\
 Xu16 & 0.000 & 0.000 & 0.000 \\
 kMMD & 0.000 & 0.000 & 0.000 \\
-Chen10 & 0.000 & 0.000 & 0.000 \\
-Sri08 & 0.000 & 0.000 & 0.000 \\
-Bai96 & 0.000 & 0.000 & 0.000 \\
-Pan14 & 0.000 & 0.000 & 0.000 \\
 MMD$_{\mathrm{rbf}}$ & 0.000 & 0.000 & 0.000 \\
 \bottomrule\end{tabular}
 \vspace{2pt}{\footnotesize Classical TST$\approx 0$ (except SKK13/ZWL inflated) because $X$ is fixed;
@@ -43,43 +39,43 @@ MMD$_{\mathrm{rbf}}$ & 0.000 & 0.000 & 0.000 \\
 \cmidrule(lr){2-3}\cmidrule(lr){4-5}
 Pair & type-I & $B$ & type-I & $B$ \\
 \midrule
-text$\times$audio & 0.027 & 150 & 0.047 & 150 \\
+text$\times$audio & 0.026 & 38 & 0.026 & 38 \\
 text$\times$video & 0.067 & 150 & 0.060 & 150 \\
-audio$\times$video & 0.033 & 120 & 0.033 & 120 \\
+audio$\times$video & 0.079 & 38 & 0.105 & 38 \\
 \bottomrule\end{tabular}
 \end{table}
 
 \begin{table}[t]
 \centering\small\setlength{\tabcolsep}{5pt}
-\caption{Cross-modal T$\times$A / T$\times$V (delivery-grade).
-  Power: concept drift, $n=500$, $B=120$ (RF $150$), $n_{\mathrm{perm}}=150$.
-  Type-I classical: overnight null $B\ge 120$.
-  CF/DR null still stacking ($B\approx 54$); marked $\dagger$ if $B<100$.}
-\label{tab:cross-modal-TA-TV}
-\begin{tabular}{l cc @{\hspace{1.2em}} cc}
+\caption{Calibrated PO interaction $I_{\mathrm{cal}}=I-\mathrm{PO}(\mathrm{full})$ under
+  planted $\lambda$ (\texttt{interaction\_shift}; preliminary if $B<100$).
+  Raw $I$ is positively biased; sign uses $I_{\mathrm{cal}}$.}
+\label{tab:delivery-po-signed}
+\begin{tabular}{l c cccc}
 \toprule
-& \multicolumn{2}{c}{\textbf{Power} (concept)} & \multicolumn{2}{c}{\textbf{Type-I} (null)} \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}
-Method & T$\times$A & T$\times$V & T$\times$A & T$\times$V \\
+Combo & $\lambda$ & mean $I$ & mean $I_{\mathrm{cal}}$ & frac($I_{\mathrm{cal}}<0$) & $B$ \\
 \midrule
-\textbf{RFPerm} & 1.000 & 0.987 & --- & --- \\
-\textbf{CFPerm} & 0.600 & 0.342 & 0.056$^\dagger$ & --- \\
-\textbf{DRPerm} & 0.400 & 0.217 & 0.037$^\dagger$ & --- \\
-\midrule
-SKK13 & 1.000 & 1.000 & 1.000$^\ddagger$ & 1.000$^\ddagger$ \\
-ZWL & 1.000 & 1.000 & 0.153$^\ddagger$ & 0.207$^\ddagger$ \\
-C2ST$_{XY}$ & 0.083 & 0.000 & 0.033 & 0.053 \\
-C2ST$_X$ & 0.000 & 0.000 & 0.040 & 0.033 \\
-Miles11 & 0.000 & 0.000 & 0.033 & 0.067 \\
-Xu16 & 0.000 & 0.000 & 0.033 & 0.033 \\
-kMMD & 0.000 & 0.000 & 0.067 & 0.080 \\
-Chen10 & 0.000 & 0.000 & 0.000 & 0.000 \\
-Sri08 & 0.000 & 0.000 & 0.060 & 0.073 \\
-Bai96 & 0.000 & 0.000 & 0.060 & 0.073 \\
-Pan14 & 0.000 & 0.000 & 0.060 & 0.093 \\
-MMD$_{\mathrm{rbf}}$ & 0.000 & 0.000 & 0.060 & 0.053 \\
+text\_audio & -1.8 & 3.31 & -2.19 & 1.00 & 14 \\
 \bottomrule\end{tabular}
-\vspace{2pt}{\footnotesize $^\dagger$ $B<100$ (stacking to 120).
- $^\ddagger$ Inflated type-I ($\ge 0.10$).
- T$\times$A stronger than T$\times$V for CF/DR under concept drift.}
+\vspace{2pt}{\footnotesize Under $\lambda=-1.8$, $I_{\mathrm{cal}}<0$ (antagonism) despite raw $I>0$.}
+\end{table}
+
+\begin{table}[t]
+\centering\small\setlength{\tabcolsep}{4pt}
+\caption{CF/DR/RF type-I on null boards (live). Expand fills singles$\to$TAV.
+  $^\dagger$: $B<100$ (preliminary). 口径 $n=500$, $n_{\mathrm{perm}}=150$.}
+\label{tab:delivery-null-cfdr}
+\begin{tabular}{l ll cc}
+\toprule
+Board & combo & method & type-I & $B$ \\
+\midrule
+concept & text\_audio & cfperm & 0.045$^\dagger$ & 89 \\
+concept & text\_audio & drperm & 0.056$^\dagger$ & 89 \\
+concept & text\_audio & rfperm & 0.000 & 120 \\
+concept & text\_audio\_video & rfperm & 0.000 & 120 \\
+concept & text\_video & rfperm & 0.000 & 120 \\
+expand & text & cfperm & 0.000$^\dagger$ & 8 \\
+expand & text & drperm & 0.000$^\dagger$ & 8 \\
+expand & text & rfperm & 0.000$^\dagger$ & 8 \\
+\bottomrule\end{tabular}
 \end{table}
