@@ -314,6 +314,93 @@ def cfperm_loco_pvalue(
     }
 
 
+def mmd_pvalue(
+    A: np.ndarray,
+    B: np.ndarray,
+    *,
+    n_perm: int = 120,
+    seed: int = 0,
+    standardize: bool = True,
+) -> dict:
+    """Permutation MMD² two-sample test (RF-free; covariate / joint)."""
+    A, B = np.asarray(A, dtype=float), np.asarray(B, dtype=float)
+    if standardize:
+        A, B = standardize_pair(A, B)
+    obs = rbf_mmd2(A, B, seed=seed)
+    pooled = np.vstack([A, B])
+    n0 = len(A)
+    rng = np.random.default_rng(seed + 19)
+    exceed = 0
+    for i in range(n_perm):
+        perm = rng.permutation(len(pooled))
+        m = rbf_mmd2(pooled[perm[:n0]], pooled[perm[n0:]], seed=seed + 100 + i)
+        if m >= obs - 1e-15:
+            exceed += 1
+    p = (1 + exceed) / (1 + n_perm)
+    return {"method": "MMD", "statistic": float(obs), "p_value": float(p), "reject": p < 0.05}
+
+
+def c2st_pvalue(
+    A: np.ndarray,
+    B: np.ndarray,
+    *,
+    n_perm: int = 120,
+    seed: int = 0,
+    n_estimators: int = 80,
+) -> dict:
+    """Classifier two-sample test with RF outcome/classifier (Lopez-Paz & Oquab)."""
+    A, B = np.asarray(A, dtype=float), np.asarray(B, dtype=float)
+    X = np.vstack([A, B])
+    W = np.concatenate([np.zeros(len(A), dtype=int), np.ones(len(B), dtype=int)])
+
+    def _acc(Wb: np.ndarray, s: int) -> float:
+        clf = rf_classifier(s, n_estimators=n_estimators)
+        # 50/50 holdout accuracy
+        rng = np.random.default_rng(s)
+        idx = rng.permutation(len(X))
+        cut = len(X) // 2
+        tr, te = idx[:cut], idx[cut:]
+        if len(np.unique(Wb[tr])) < 2:
+            return 0.5
+        clf.fit(X[tr], Wb[tr])
+        return float(np.mean(clf.predict(X[te]) == Wb[te]))
+
+    obs = _acc(W, seed)
+    rng = np.random.default_rng(seed + 23)
+    exceed = 0
+    for i in range(n_perm):
+        Wb = rng.permutation(W)
+        if _acc(Wb, seed + 50 + i) >= obs - 1e-15:
+            exceed += 1
+    p = (1 + exceed) / (1 + n_perm)
+    return {"method": "C2ST", "statistic": float(obs), "p_value": float(p), "reject": p < 0.05}
+
+
+def rrperm_pvalue(
+    X: np.ndarray,
+    Y: np.ndarray,
+    W: np.ndarray,
+    *,
+    n_perm: int = 120,
+    seed: int = 0,
+    n_estimators: int = 60,
+) -> dict:
+    """R-risk permutation test (RF outcome): permute W under null."""
+    obs = r_risk(X, Y, W, seed=seed, n_estimators=n_estimators)
+    rng = np.random.default_rng(seed + 29)
+    null = np.zeros(n_perm)
+    for b in range(n_perm):
+        null[b] = r_risk(X, Y, rng.permutation(W), seed=seed + 100 + b, n_estimators=n_estimators)
+    p = (1.0 + np.sum(null >= obs - 1e-15)) / (1 + n_perm)
+    return {
+        "method": "RRPerm",
+        "statistic": float(obs),
+        "r_risk": float(obs),
+        "p_value": float(p),
+        "reject": p < 0.05,
+    }
+
+
 def window_bundle(
     X0: np.ndarray,
     y0: np.ndarray,
@@ -326,8 +413,12 @@ def window_bundle(
     n_perm: int = 40,
     seed: int = 0,
     n_estimators: int = 40,
+    all_methods: bool = False,
 ) -> dict:
-    """One window → RF / DR(PO) / optional ρ_PO / MMD share / CF per modality."""
+    """One window → RF / DR(PO) / optional ρ_PO / MMD share / CF per modality.
+
+    If ``all_methods``, also RRPerm, C2ST(X), C2ST(X,Y), MMD(X), MMD(X,Y).
+    """
     X, Y, W = batch_xy(X0, y0, X1, y1)
     rf = rfperm_pvalue(X0, y0, X1, y1, n_perm=n_perm, seed=seed, n_estimators=n_estimators)
     dr = drperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators)
@@ -338,6 +429,15 @@ def window_bundle(
         "power_loss": float(rf["power_loss"]),
         "r_risk": float(r_risk(X, Y, W, seed=seed + 5, n_estimators=n_estimators)),
     }
+    if all_methods:
+        out["RRPerm"] = rrperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 11, n_estimators=n_estimators)
+        # joint vs covariate-only two-sample
+        XY0 = np.column_stack([X0, as_1d(y0)])
+        XY1 = np.column_stack([X1, as_1d(y1)])
+        out["MMD_X"] = mmd_pvalue(X0, X1, n_perm=n_perm, seed=seed + 13)
+        out["MMD_XY"] = mmd_pvalue(XY0, XY1, n_perm=n_perm, seed=seed + 15)
+        out["C2ST_X"] = c2st_pvalue(X0, X1, n_perm=n_perm, seed=seed + 17, n_estimators=n_estimators)
+        out["C2ST_XY"] = c2st_pvalue(XY0, XY1, n_perm=n_perm, seed=seed + 19, n_estimators=n_estimators)
     if base_slice is not None and rich_slice is not None:
         Xb0, Xb1 = X0[:, base_slice], X1[:, base_slice]
         Xr0, Xr1 = X0[:, rich_slice], X1[:, rich_slice]

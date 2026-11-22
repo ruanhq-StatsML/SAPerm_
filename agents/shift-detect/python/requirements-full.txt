@@ -1,0 +1,18 @@
+# Full power-comparison stack (RF outcome + classic two-sample + multimodal FE)
+numpy
+pandas
+scipy
+scikit-learn
+joblib
+pyarrow
+tabulate
+numba
+xgboost
+opencv-python-headless
+vaderSentiment
+spacy>=3.7
+# after: python -m spacy download en_core_web_sm
+
+# Sibling method code (clone next to SAPerm, put on PYTHONPATH):
+#   https://github.com/ruanhq-StatsML/RFPerm
+#   https://github.com/ruanhq-StatsML/CFPerm

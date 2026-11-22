@@ -43,7 +43,13 @@ def digest(n_max: int | None = 500, *, with_audio: bool = False) -> Digested:
     cache = OUT / f"{tag}_cache_modasense_n{len(df)}.npz"
     names = list(TEXT_NAMES) + IMAGE_NAMES + (AUDIO_NAMES if with_audio else [])
     texts = df["text_propositional"].astype(str).tolist()
-    y = np.array([1 if str(l).lower() in _NEG else 0 for l in df["text_label"]], dtype=float)
+
+    def _bin(col: str) -> np.ndarray:
+        return np.array([1 if str(l).lower() in _NEG else 0 for l in df[col]], dtype=float)
+
+    y = _bin("text_label")
+    y_image = _bin("image_label")
+    y_audio = _bin("audio_label")
 
     if cache.exists():
         M = np.load(cache, allow_pickle=True)["M"]
@@ -72,6 +78,8 @@ def digest(n_max: int | None = 500, *, with_audio: bool = False) -> Digested:
             "modalities": ["text", "image"] + (["audio"] if with_audio else []),
             "cache": str(cache),
             "label": "text_label → binary (neg={fear,sad,angry,disgust})",
+            "y_image": y_image,
+            "y_audio": y_audio,
             "source": "ModaSense/emotion parquet",
         },
     )
@@ -144,7 +152,8 @@ def write_digest_report(d: Digested, path: Path | None = None) -> Path:
 
 
 SCENARIOS = (
-    "null_shift",
+    "random_split",          # Type-I / null
+    "concept_drift",         # P(Y|X) changes: new Y ← image_label
     "text_sentiment_shift",
     "image_brightness_shift",
     "audio_energy_shift",
@@ -163,7 +172,8 @@ def make_windows(
 
     M, y = d.M, d.y
     n = len(y)
-    if scenario == "null_shift":
+    if scenario in ("null_shift", "random_split", "concept_drift"):
+        # same P(X) random split; concept_drift remaps Y in make_window_xy
         idx = rng.permutation(n)
         return idx[:n_doc], idx[n_doc : 2 * n_doc]
 
@@ -183,6 +193,22 @@ def make_windows(
     a = rng.choice(lo, n_doc, replace=len(lo) < n_doc)
     b = rng.choice(hi, n_doc, replace=len(hi) < n_doc)
     return a, b
+
+
+def make_window_xy(
+    scenario: str,
+    d: Digested,
+    n_doc: int,
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Return (X0, y0, X1, y1). concept_drift keeps P(X), swaps new Y→image_label."""
+    a, b = make_windows(scenario, d, n_doc, rng)
+    X = d.X()
+    y0, y1 = d.y[a], d.y[b]
+    if scenario == "concept_drift":
+        y_img = np.asarray(d.extras["y_image"], dtype=float)
+        y1 = y_img[b]
+    return X[a], y0, X[b], y1
 
 
 def main(argv=None) -> int:
