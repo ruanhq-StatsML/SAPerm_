@@ -1,0 +1,519 @@
+{
+  "config": {
+    "B": 150,
+    "n_perm": 150,
+    "n_doc": 120,
+    "pca_k": 24,
+    "n_estimators": 40,
+    "scenarios": [
+      "null_shift",
+      "sentiment_meta",
+      "syntax_meta",
+      "train_vs_heldout"
+    ],
+    "loco_blocks": [
+      "embed_pca",
+      "meta",
+      "vader_sent",
+      "spacy_syntax",
+      "spacy_style"
+    ],
+    "elapsed_sec": 18262.971731185913
+  },
+  "summary": {
+    "table": [
+      {
+        "scenario": "null_shift",
+        "B": 150,
+        "power": {
+          "embed": {
+            "RFPerm": 0.03333333333333333,
+            "DRPerm": 0.06666666666666667
+          },
+          "embed_meta": {
+            "RFPerm": 0.04666666666666667,
+            "DRPerm": 0.04666666666666667
+          }
+        },
+        "cf_block_power": {
+          "embed_pca": 0.04666666666666667,
+          "meta": 0.06666666666666667,
+          "vader_sent": 0.04,
+          "spacy_syntax": 0.08666666666666667,
+          "spacy_style": 0.04
+        },
+        "delta_detect": {
+          "RFPerm": 0.013333333333333336,
+          "DRPerm": -0.019999999999999997
+        }
+      },
+      {
+        "scenario": "sentiment_meta",
+        "B": 150,
+        "power": {
+          "embed": {
+            "RFPerm": 0.04666666666666667,
+            "DRPerm": 0.0
+          },
+          "embed_meta": {
+            "RFPerm": 0.05333333333333334,
+            "DRPerm": 0.0
+          }
+        },
+        "cf_block_power": {
+          "embed_pca": 0.006666666666666667,
+          "meta": 0.02666666666666667,
+          "vader_sent": 0.02,
+          "spacy_syntax": 0.04,
+          "spacy_style": 0.06
+        },
+        "delta_detect": {
+          "RFPerm": 0.006666666666666668,
+          "DRPerm": 0.0
+        }
+      },
+      {
+        "scenario": "syntax_meta",
+        "B": 150,
+        "power": {
+          "embed": {
+            "RFPerm": 0.16,
+            "DRPerm": 0.0
+          },
+          "embed_meta": {
+            "RFPerm": 0.07333333333333333,
+            "DRPerm": 0.0
+          }
+        },
+        "cf_block_power": {
+          "embed_pca": 0.16,
+          "meta": 0.31333333333333335,
+          "vader_sent": 0.18,
+          "spacy_syntax": 0.32,
+          "spacy_style": 0.2
+        },
+        "delta_detect": {
+          "RFPerm": -0.08666666666666667,
+          "DRPerm": 0.0
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "B": 150,
+        "power": {
+          "embed": {
+            "RFPerm": 1.0,
+            "DRPerm": 1.0
+          },
+          "embed_meta": {
+            "RFPerm": 1.0,
+            "DRPerm": 1.0
+          }
+        },
+        "cf_block_power": {
+          "embed_pca": 0.96,
+          "meta": 0.9933333333333333,
+          "vader_sent": 0.62,
+          "spacy_syntax": 0.6666666666666666,
+          "spacy_style": 0.7266666666666667
+        },
+        "delta_detect": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0
+        }
+      }
+    ],
+    "schema": {
+      "layout": "X=[Z_PCA, M_meta]",
+      "pca_k": 24,
+      "p_meta": 37,
+      "p_total": 61,
+      "modality": {
+        "embed": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ],
+        "meta": [
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60
+        ]
+      },
+      "meta_block_indices": {
+        "spacy_style": [
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32
+        ],
+        "spacy_syntax": [
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39
+        ],
+        "spacy_ner": [
+          40,
+          41,
+          42,
+          43,
+          44,
+          45
+        ],
+        "vader_sent": [
+          46,
+          47,
+          48,
+          49,
+          50
+        ],
+        "discourse": [
+          51,
+          52,
+          53,
+          54
+        ],
+        "structure_cues": [
+          55,
+          56,
+          57,
+          58,
+          59,
+          60
+        ]
+      },
+      "blocks": [
+        {
+          "name": "embed_pca",
+          "modality": "embed",
+          "package": "transformers/BiasFinder-BERT+sklearn.PCA",
+          "start": 0,
+          "end": 24,
+          "indices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ],
+          "names": [
+            "pca_0",
+            "pca_1",
+            "pca_2",
+            "pca_3",
+            "pca_4",
+            "pca_5",
+            "pca_6",
+            "pca_7",
+            "pca_8",
+            "pca_9",
+            "pca_10",
+            "pca_11",
+            "pca_12",
+            "pca_13",
+            "pca_14",
+            "pca_15",
+            "pca_16",
+            "pca_17",
+            "pca_18",
+            "pca_19",
+            "pca_20",
+            "pca_21",
+            "pca_22",
+            "pca_23"
+          ]
+        },
+        {
+          "name": "spacy_style",
+          "modality": "meta",
+          "package": "spacy:en_core_web_sm",
+          "start": 24,
+          "end": 33,
+          "indices": [
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32
+          ],
+          "names": [
+            "n_tokens",
+            "n_sents",
+            "avg_token_len",
+            "avg_sent_len",
+            "punct_ratio",
+            "exclam_ratio",
+            "question_ratio",
+            "type_token_ratio",
+            "stopword_ratio"
+          ]
+        },
+        {
+          "name": "spacy_syntax",
+          "modality": "meta",
+          "package": "spacy:en_core_web_sm",
+          "start": 33,
+          "end": 40,
+          "indices": [
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39
+          ],
+          "names": [
+            "pos_noun",
+            "pos_verb",
+            "pos_adj",
+            "pos_adv",
+            "pos_propn",
+            "pos_pron",
+            "verb_noun_ratio"
+          ]
+        },
+        {
+          "name": "spacy_ner",
+          "modality": "meta",
+          "package": "spacy:en_core_web_sm",
+          "start": 40,
+          "end": 46,
+          "indices": [
+            40,
+            41,
+            42,
+            43,
+            44,
+            45
+          ],
+          "names": [
+            "ent_density",
+            "ent_count",
+            "ent_person",
+            "ent_org",
+            "ent_gpe",
+            "ent_date"
+          ]
+        },
+        {
+          "name": "vader_sent",
+          "modality": "meta",
+          "package": "vaderSentiment",
+          "start": 46,
+          "end": 51,
+          "indices": [
+            46,
+            47,
+            48,
+            49,
+            50
+          ],
+          "names": [
+            "vader_compound",
+            "vader_pos",
+            "vader_neu",
+            "vader_neg",
+            "vader_polar_gap"
+          ]
+        },
+        {
+          "name": "discourse",
+          "modality": "meta",
+          "package": "surface+regex",
+          "start": 51,
+          "end": 55,
+          "indices": [
+            51,
+            52,
+            53,
+            54
+          ],
+          "names": [
+            "digit_ratio",
+            "upper_ratio",
+            "url_like",
+            "negation_cues"
+          ]
+        },
+        {
+          "name": "structure_cues",
+          "modality": "meta",
+          "package": "spacy+regex",
+          "start": 55,
+          "end": 61,
+          "indices": [
+            55,
+            56,
+            57,
+            58,
+            59,
+            60
+          ],
+          "names": [
+            "avg_dep_depth",
+            "clause_like_ratio",
+            "hedge_cues",
+            "intensifier_cues",
+            "repeat_char_ratio",
+            "flesch_proxy"
+          ]
+        }
+      ],
+      "feature_names_meta": [
+        "n_tokens",
+        "n_sents",
+        "avg_token_len",
+        "avg_sent_len",
+        "punct_ratio",
+        "exclam_ratio",
+        "question_ratio",
+        "type_token_ratio",
+        "stopword_ratio",
+        "pos_noun",
+        "pos_verb",
+        "pos_adj",
+        "pos_adv",
+        "pos_propn",
+        "pos_pron",
+        "verb_noun_ratio",
+        "ent_density",
+        "ent_count",
+        "ent_person",
+        "ent_org",
+        "ent_gpe",
+        "ent_date",
+        "vader_compound",
+        "vader_pos",
+        "vader_neu",
+        "vader_neg",
+        "vader_polar_gap",
+        "digit_ratio",
+        "upper_ratio",
+        "url_like",
+        "negation_cues",
+        "avg_dep_depth",
+        "clause_like_ratio",
+        "hedge_cues",
+        "intensifier_cues",
+        "repeat_char_ratio",
+        "flesch_proxy"
+      ],
+      "packages_text": [
+        "spacy+regex",
+        "spacy:en_core_web_sm",
+        "surface+regex",
+        "vaderSentiment"
+      ],
+      "packages_video_optional": {
+        "motion": [
+          "opencv-python",
+          "scenedetect"
+        ],
+        "scene_cuts": [
+          "scenedetect",
+          "ffmpeg-python"
+        ],
+        "audio": [
+          "librosa",
+          "soundfile"
+        ],
+        "asr_subtitle": [
+          "whisper",
+          "faster-whisper"
+        ],
+        "objects": [
+          "ultralytics",
+          "torchvision"
+        ]
+      }
+    }
+  }
+}

@@ -89,6 +89,20 @@ sentiment$\to$vader; syntax HARD$\to$spacy\_syntax; heldout$\to$mixed with
 large meta share. Table to be merged from
 \texttt{power\_cross\_modality\_full.md} on completion.
 
+\subsection{Cross-modality CFPerm powers (filled)}
+\begin{center}
+\begin{tabular}{lccccc}
+\toprule
+Scenario & embed\_pca & meta & vader\_sent & spacy\_syntax & spacy\_style \\
+\midrule
+null\_shift & 0.05 & 0.07 & 0.04 & 0.09 & 0.04 \\
+sentiment\_meta & 0.01 & 0.03 & 0.02 & 0.04 & 0.06 \\
+syntax\_meta & 0.16 & 0.31 & 0.18 & 0.32 & 0.20 \\
+train\_vs\_heldout & 0.96 & 0.99 & 0.62 & 0.67 & 0.73 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
 \section{One-line takeaway}
 \textbf{Power deltas and PO-risk ratios do not merely ``check'' each other---
 their joint signature \emph{is} the embed$\times$meta interaction evidence,
