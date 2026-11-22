@@ -1,0 +1,193 @@
+{
+  "biasfinder": {
+    "dataset": "biasfinder_gen",
+    "rows": [
+      {
+        "scenario": "null_shift",
+        "mmd": {
+          "embed": 0.015944970443404653,
+          "meta": 0.01528182338034674
+        },
+        "mmd_fine": {
+          "embed": 0.015944970443404653,
+          "vader_sent": 0.01293530393426273,
+          "spacy_syntax": 0.014116349356642582
+        },
+        "mmd_top": "embed",
+        "mmd_fine_top": "embed",
+        "RF_embed": 0.02666666666666667,
+        "RF_embed_meta": 0.02666666666666667,
+        "DR_embed": 0.07333333333333333,
+        "DR_embed_meta": 0.07333333333333333,
+        "CF_delta": 0.033333333333333326,
+        "rho_PO": 1.0700056691842725,
+        "label": "null_calibration"
+      },
+      {
+        "scenario": "sentiment_meta",
+        "mmd": {
+          "embed": 0.10223890878467903,
+          "meta": 0.15050295796044882
+        },
+        "mmd_fine": {
+          "embed": 0.10223890878467903,
+          "vader_sent": 0.7629185368716037,
+          "spacy_syntax": 0.027241356055837294
+        },
+        "mmd_top": "meta",
+        "mmd_fine_top": "vader_sent",
+        "RF_embed": 0.02,
+        "RF_embed_meta": 0.08,
+        "DR_embed": 0.0,
+        "DR_embed_meta": 0.0,
+        "CF_delta": 0.006666666666666668,
+        "rho_PO": 0.25157005313948655,
+        "label": "absorb_interaction"
+      },
+      {
+        "scenario": "syntax_meta",
+        "mmd": {
+          "embed": 0.0501067508542894,
+          "meta": 0.1187102876114531
+        },
+        "mmd_fine": {
+          "embed": 0.0501067508542894,
+          "vader_sent": 0.01535315679647805,
+          "spacy_syntax": 0.4882838448862591
+        },
+        "mmd_top": "meta",
+        "mmd_fine_top": "spacy_syntax",
+        "RF_embed": 0.10666666666666667,
+        "RF_embed_meta": 0.06666666666666667,
+        "DR_embed": 0.0,
+        "DR_embed_meta": 0.0,
+        "CF_delta": 0.0933333333333333,
+        "rho_PO": 0.19108224308387234,
+        "label": "localize_interaction"
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "mmd": {
+          "embed": 0.035083210063701145,
+          "meta": 0.023970195956281148
+        },
+        "mmd_fine": {
+          "embed": 0.035083210063701145,
+          "vader_sent": 0.01568018347994546,
+          "spacy_syntax": 0.020458909884232036
+        },
+        "mmd_top": "embed",
+        "mmd_fine_top": "embed",
+        "RF_embed": 1.0,
+        "RF_embed_meta": 1.0,
+        "DR_embed": 1.0,
+        "DR_embed_meta": 1.0,
+        "CF_delta": 0.22666666666666657,
+        "rho_PO": 1.0251574452588263,
+        "label": "concept_residual"
+      }
+    ]
+  },
+  "modasense": {
+    "dataset": "modasense_emotion",
+    "rows": [
+      {
+        "scenario": "null_shift",
+        "mmd": {
+          "text": 0.01651978575807236,
+          "image": 0.015736724653629432,
+          "audio": 0.014474541023850741
+        },
+        "mmd_top": "text",
+        "RF_text": 0.0125,
+        "RF_mm": 0.0125,
+        "rho_PO": 2.1421884299786336,
+        "CF_text": 0.025,
+        "CF_image": 0.0625,
+        "RF_smoke": {
+          "text": 0.16666666666666666,
+          "image": 0.16666666666666666,
+          "audio": 0.16666666666666666,
+          "all": 0.16666666666666666
+        },
+        "rho_smoke": {
+          "text_image_over_text": 1.7124922907963842,
+          "all_over_text": 2.571022040610526,
+          "all_over_text_image": 1.506112019647121
+        }
+      },
+      {
+        "scenario": "text_sentiment_shift",
+        "mmd": {
+          "text": 0.3259304947841737,
+          "image": 0.011197538009482453,
+          "audio": 0.020297463127761803
+        },
+        "mmd_top": "text",
+        "RF_text": 1.0,
+        "RF_mm": 1.0,
+        "rho_PO": 1.9504908288945335,
+        "CF_text": 1.0,
+        "CF_image": 0.5375,
+        "RF_smoke": {
+          "text": 0.8333333333333334,
+          "image": 0.8333333333333334,
+          "audio": 0.8333333333333334,
+          "all": 0.8333333333333334
+        },
+        "rho_smoke": {
+          "text_image_over_text": 2.026018711683292,
+          "all_over_text": 1.9432224335021682,
+          "all_over_text_image": 0.9994456309994701
+        }
+      },
+      {
+        "scenario": "image_brightness_shift",
+        "mmd": {
+          "text": 0.016389496204459824,
+          "image": 0.5702759884760645,
+          "audio": 0.013602629433736017
+        },
+        "mmd_top": "image",
+        "RF_text": 0.0,
+        "RF_mm": 0.05,
+        "rho_PO": 0.6206077485606871,
+        "CF_text": 0.0,
+        "CF_image": 0.0125,
+        "RF_smoke": {
+          "text": 0.0,
+          "image": 0.0,
+          "audio": 0.0,
+          "all": 0.0
+        },
+        "rho_smoke": {
+          "text_image_over_text": 1.5758288019031343,
+          "all_over_text": 1.9406306202344978,
+          "all_over_text_image": 1.3449846344421605
+        }
+      },
+      {
+        "scenario": "audio_energy_shift",
+        "mmd": {
+          "text": 0.011511328047238124,
+          "image": 0.014002849748128909,
+          "audio": 0.5419028952762819
+        },
+        "mmd_top": "audio",
+        "RF_smoke": {
+          "text": 0.0,
+          "image": 0.0,
+          "audio": 0.0,
+          "all": 0.0
+        },
+        "rho_smoke": {
+          "text_image_over_text": 1.8512552383984504,
+          "all_over_text": 1.0629197947842883,
+          "all_over_text_image": 0.635430401578745
+        }
+      }
+    ]
+  },
+  "B_mmd": 50,
+  "n_doc": 80
+}
