@@ -1,0 +1,42 @@
+{
+  "config": {
+    "n": 300,
+    "B": 40,
+    "grid": 4,
+    "mask_frac": 0.5,
+    "scenario": "image_brightness_shift"
+  },
+  "table": {
+    "text_only": {
+      "RF_power": 0.0,
+      "DR_power": 0.075,
+      "PO": 0.00047717289182107905
+    },
+    "image_full": {
+      "RF_power": 0.025,
+      "DR_power": 0.0,
+      "PO": 0.0008472729176289249
+    },
+    "image_masked": {
+      "RF_power": 0.025,
+      "DR_power": 0.0,
+      "PO": 0.0016535776524475771
+    },
+    "mm_full": {
+      "RF_power": 0.0,
+      "DR_power": 0.0,
+      "PO": 0.0002940542754075062
+    },
+    "mm_masked": {
+      "RF_power": 0.0,
+      "DR_power": 0.0,
+      "PO": 0.0003560421634162146
+    }
+  },
+  "rho_PO_image_mask_over_full": 1.9516470054006667,
+  "rho_PO_mm_mask_over_full": 1.2108042398730792,
+  "delta_RF_image": 0.0,
+  "delta_RF_mm": 0.0,
+  "mean_img_meta_l1": 0.08801636139258656,
+  "read": "Primary contrast is image_full vs image_masked under fixed brightness windows. Patch mask should drop image RF power if visual meta carried the shift; \u03c1_PO(mask/full) tracks PO-risk change."
+}

@@ -96,7 +96,7 @@ def run_rep(scenario, M, y, brightness, n_doc, n_perm, seed, n_estimators) -> di
         dr = drperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators)
         out[fs] = {"RFPerm": rf, "DRPerm": dr}
         if fs == "multimodal":
-            sch = schema_mm()
+            sch = schema_mm(with_audio=False)
             cf = {}
             for bname, spec in sch["blocks"].items():
                 cf[bname] = cfperm_loco_pvalue(
@@ -147,7 +147,7 @@ def summarize(rows: list[dict]) -> dict:
             lab = "mixed"
         entry["interaction_label"] = lab
         table.append(entry)
-    return {"table": table, "schema": schema_mm()}
+    return {"table": table, "schema": schema_mm(with_audio=False)}
 
 
 def render_md(result: dict) -> str:
