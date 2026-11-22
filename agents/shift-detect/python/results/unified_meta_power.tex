@@ -1,0 +1,117 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,amsmath,amssymb,hyperref,enumitem}
+\usepackage[T1]{fontenc}
+
+\title{Unified Writeup: Meta-Features for Power and\\
+Interpretable Cross-Modality Localization}
+\author{SAPerm shift-detect}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Pipeline (portable)}
+\text{spaCy}+\text{VADER} produce meta $M$; BiasFinder BERT gives embedding $Z$.
+\[
+X=[Z_{\mathrm{PCA}},\,M],\qquad
+\text{list-indices maintained in \texttt{feature\_schema.py}}.
+\]
+Detection: RFPerm / DRPerm. Localization: CFPerm LOCO on named blocks.
+Text packages are encapsulated (\texttt{en\_core\_web\_sm}, \texttt{vaderSentiment}).
+Video meta packages (optional / out of scope): OpenCV, PySceneDetect, librosa, Whisper, Ultralytics---same block+index pattern.
+
+\section{Block / modality index registry}
+Layout for $\mathrm{pca\_k}{=}24$, $p_M{=}37$ ($p{=}61$):
+\begin{center}
+\begin{tabular}{llcl}
+\toprule
+Block & Modality & Indices & Package \\
+\midrule
+\texttt{embed\_pca} & embed & $0{:}24$ & BERT+PCA \\
+\texttt{spacy\_style} & meta & $24{:}33$ & spaCy \\
+\texttt{spacy\_syntax} & meta & $33{:}40$ & spaCy \\
+\texttt{spacy\_ner} & meta & $40{:}46$ & spaCy \\
+\texttt{vader\_sent} & meta & $46{:}51$ & VADER \\
+\texttt{discourse} & meta & $51{:}55$ & surface \\
+\texttt{structure\_cues} & meta & $55{:}61$ & spaCy+regex \\
+\bottomrule
+\end{tabular}
+\end{center}
+After digestion / localization / interaction, CFPerm always receives these
+list-indices---never anonymous columns.
+
+\section{DGP list (text covariate battery)}
+\begin{enumerate}[leftmargin=*]
+  \item \texttt{null\_shift} --- Type-I.
+  \item \texttt{sentiment\_shift} --- polarity flip.
+  \item \texttt{entity\_shift} --- NER density.
+  \item \texttt{style\_shift} --- length / punctuation.
+  \item \texttt{syntax\_shift} (\textbf{HARD}) --- length-matched POS flip.
+\end{enumerate}
+Catalog in \texttt{dgp\_text.py} (same spirit as \texttt{experiments/dgps.py}).
+
+\section{Feature-only power (baseline vs meta)}
+$n_{\mathrm{rep}}{=}20$, $n_{\mathrm{perm}}{=}40$:
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+DGP & Baseline & Meta & $\Delta$ \\
+\midrule
+null (Type-I) & 0.15 & 0.05 & --- \\
+sentiment\_shift & 0.40 & \textbf{1.00} & $+0.60$ \\
+entity\_shift & 1.00 & 1.00 & $0$ \\
+style\_shift & 1.00 & 1.00 & $0$ \\
+syntax\_shift HARD & 0.10 & \textbf{1.00} & $+0.90$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Embed $\pm$ meta (BiasFinder; $B{=}150$, $N_{\mathrm{perm}}{=}120$)}
+\begin{center}
+\begin{tabular}{llccc}
+\toprule
+Scenario & Set & RFPerm & DRPerm & CFPerm \\
+\midrule
+null & embed / +meta & 0.03/0.03 & 0.07/0.07 & 0.03/0.06 \\
+sentiment\_meta & embed / +meta & 0.02/0.08 & 0.00/0.00 & 0.02/0.03 \\
+syntax\_meta HARD & embed / +meta & 0.11/0.07 & 0.00/0.00 & 0.21/\textbf{0.31} \\
+train\_vs\_heldout & embed / +meta & 1.00/1.00 & 1.00/1.00 & 0.77/\textbf{0.99} \\
+\bottomrule
+\end{tabular}
+\end{center}
+$\Delta$ CFPerm: syntax $+0.09$, heldout $+0.23$. Detection can saturate;
+localization is where meta earns incremental value. PO-risk shrinks under
+sentiment routing when $M$ is added (nuisance adjustment).
+
+\section{Other benchmarks (HYP / RQ / GEN; $n_{\mathrm{perm}}{=}150$)}
+No BERT on HYP/RQ---feature-only sarc vs not-sarc windows:
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Benchmark & Baseline & Meta & Both \\
+\midrule
+HYP-sarc-notsarc & 0.07 & \textbf{0.27} & 0.17 \\
+RQ-sarc-notsarc & 0.20 & \textbf{0.67} & 0.30 \\
+GEN-sarc-notsarc & 0.87 & 0.80 & 0.90 \\
+\bottomrule
+\end{tabular}
+\end{center}
+RQ/HYP: meta helps when surface baseline is weak. GEN: already easy for baseline.
+
+\section{Cross-modality (running: $B{=}150$, $N_{\mathrm{perm}}{=}150$)}
+CFPerm LOCO on \texttt{embed\_pca}, full \texttt{meta}, \texttt{vader\_sent},
+\texttt{spacy\_syntax}, \texttt{spacy\_style} under the same windows.
+Results will fill \texttt{power\_cross\_modality\_full.\{json,md\}}---expected:
+sentiment$\to$vader block; syntax HARD$\to$spacy\_syntax; heldout$\to$mixed
+with strong meta share.
+
+\section{Conclusions}
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Power}: meta helps on structure-aligned covariates (syntax $+0.90$, sentiment $+0.60$; RQ $+0.47$).
+  \item \textbf{Localization}: $X=[Z,M]$ + block indices make CFPerm a named-block test (heldout $+0.23$, syntax $+0.09$).
+  \item \textbf{Cross-modality}: list-indices separate embed vs meta modalities after digestion/interaction.
+  \item \textbf{Portability}: spaCy/VADER are packaged; video meta is the same schema with different packages (optional).
+\end{enumerate}
+
+\end{document}
