@@ -103,7 +103,7 @@ MMD 三模态同阶（~0.015）；RF≈0.01；CF≈0.03–0.06。ρ_PO=2.14 在 
 3. **Image 亮度窗给出「静默吸收」**：π_image≈0.95 且 ρ_PO=0.62，但 RF/CF≈α —— covariate 通道成立，检测/块定位不成立。  
 4. **Audio 窗目前证据不完整**：仅 MMD 强；RF/CF/ρ_PO 未闭合，不能与 text 窗并列宣称 localization。  
 5. **方法论**：对 multimodal 模型，应用 `{modality: array}` 同时报 MMD占比、RFPerm、CFPerm、ρ_PO；只有四者闭合才升级为「该模态驱动 shift」的强声明。  
-6. **Embedding 不能 represent everything**（BiasFinder Digested 侧证）：特征质量一般的 VADER/spaCy 仍能在 $Z$ 之上抬 CF（heldout $+0.23$）、压 ρ（sentiment $0.25$）、feature-only power $0.40\!\to\!1.00$。见 `today_update_tables.tex`。
+6. **Embedding 不代表一切**：Digested 上粗 meta 仍能在 $Z$ 之上抬 CF / 压 ρ —— 见 `today_update_tables.tex`。
 
 ---
 

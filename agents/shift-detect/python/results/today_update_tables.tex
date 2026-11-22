@@ -149,35 +149,9 @@ sentiment\_meta & $0.01$ & $0.03$ & $0.02$ & $0.04$ \\
 \end{tabular}
 \end{center}
 
-\paragraph{Insight (the claim worth keeping).}
-\begin{enumerate}[leftmargin=*,itemsep=2pt]
-  \item \textbf{Embeddings are incomplete representations for shift work.}
-        On heldout, RF is already saturated with $Z$, yet CF still gains
-        $+0.23$ when $M$ is attached---localization lives outside the
-        PCA subspace.
-  \item \textbf{Crude named meta is enough to move the needle.}
-        VADER/spaCy are not foundation features; still
-        $\rho_{\mathrm{PO}}\!\ll\!1$ (absorb) on sentiment/syntax and
-        feature-only power jumps $0.40\!\to\!1.00$ / $0.10\!\to\!1.00$.
-        Incremental value does not require $M$ to be ``better than BERT.''
-  \item \textbf{Digested makes the gap operational.}
-        Schema-indexed LOCO names the winning block
-        (\texttt{vader\_sent}, \texttt{spacy\_syntax}, or modality
-        \texttt{text\_meta}) instead of anonymous PCA dims---so the
-        incompleteness of $Z$ becomes an actionable subset, not a
-        black-box residual.
-  \item \textbf{Same software, two layouts.}
-        BiasFinder proves $Z\not\supset M$; ModaSense proves that when
-        there is no $Z$ at all, modality meta still yields a closed
-        evidence chain on the text axis (Table~\ref{sec:modasense}).
-\end{enumerate}
-
-%% ------------------------------------------------------------------
-\section{Protocol (one line)}
-%% ------------------------------------------------------------------
-Declare a driver only when MMD share, RFPerm, CFPerm, and (when relevant)
-$\rho_{\mathrm{PO}}$ agree; otherwise report the split.
-Never upgrade high $\pi$ alone into a localization claim, and never treat
-embedding saturation as proof that named meta is redundant.
+\paragraph{Insight.}
+Even crude named meta still moves $\rho_{\mathrm{PO}}$, CF, and
+feature-only power on top of BERT PCA---so
+\textbf{embedding does not represent everything}.
 
 \end{document}
