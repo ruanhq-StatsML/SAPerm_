@@ -35,8 +35,8 @@ def load_df(n_max: int | None = None) -> pd.DataFrame:
 
 
 def digest(n_max: int | None = 500, *, with_audio: bool = False) -> Digested:
-    from extract_features import FEATURE_NAMES as TEXT_NAMES
-    from extract_mm_features import AUDIO_NAMES, IMAGE_NAMES, build_mm_matrix, schema_mm
+    from datasets.text_meta import FEATURE_NAMES as TEXT_NAMES
+    from datasets.mm_meta import AUDIO_NAMES, IMAGE_NAMES, build_mm_matrix, schema_mm
 
     df = load_df(n_max)
     tag = "mm3" if with_audio else "mm"
@@ -141,6 +141,48 @@ def write_digest_report(d: Digested, path: Path | None = None) -> Path:
     ]
     stem.with_suffix(".md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     return stem.with_suffix(".md")
+
+
+SCENARIOS = (
+    "null_shift",
+    "text_sentiment_shift",
+    "image_brightness_shift",
+    "audio_energy_shift",
+)
+
+
+def make_windows(
+    scenario: str,
+    d: Digested,
+    n_doc: int,
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Dataset-specific batch indices (exist, new)."""
+    from datasets.text_meta import FEATURE_NAMES as TEXT_NAMES
+    from datasets.mm_meta import AUDIO_NAMES, IMAGE_NAMES
+
+    M, y = d.M, d.y
+    n = len(y)
+    if scenario == "null_shift":
+        idx = rng.permutation(n)
+        return idx[:n_doc], idx[n_doc : 2 * n_doc]
+
+    if scenario == "text_sentiment_shift":
+        score = M[:, TEXT_NAMES.index("vader_compound")]
+    elif scenario == "image_brightness_shift":
+        score = M[:, len(TEXT_NAMES) + IMAGE_NAMES.index("img_brightness")]
+    elif scenario == "audio_energy_shift":
+        if "audio" not in d.schema.get("modality", {}):
+            raise ValueError("audio_energy_shift needs digest(..., with_audio=True)")
+        off = len(TEXT_NAMES) + len(IMAGE_NAMES)
+        score = M[:, off + AUDIO_NAMES.index("aud_rms_energy")]
+    else:
+        raise ValueError(scenario)
+    order = np.argsort(score)
+    lo, hi = order[: max(n_doc * 2, n_doc)], order[-max(n_doc * 2, n_doc) :]
+    a = rng.choice(lo, n_doc, replace=len(lo) < n_doc)
+    b = rng.choice(hi, n_doc, replace=len(hi) < n_doc)
+    return a, b
 
 
 def main(argv=None) -> int:

@@ -60,7 +60,7 @@ def load(n_max: int | None = None, seed: int = 0) -> tuple[np.ndarray, np.ndarra
 
 
 def digest(n_max: int | None = 2000, pca_k: int = 24, seed: int = 0) -> Digested:
-    from feature_schema import schema
+    from datasets.feature_schema import schema
 
     Z, y, texts = load(n_max, seed=seed)
     M, names = cached_text_meta(texts, OUT / f"meta_cache_n{len(texts)}.npz")
@@ -75,6 +75,47 @@ def digest(n_max: int | None = 2000, pca_k: int = 24, seed: int = 0) -> Digested
         schema=schema(pca_k),
         extras={"p_embed_raw": int(Z.shape[1]), "pca_k": pca_k},
     )
+
+
+SCENARIOS = ("null_shift", "sentiment_meta", "syntax_meta", "train_vs_heldout")
+
+
+def make_windows(
+    scenario: str,
+    d: Digested,
+    n_doc: int,
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray]:
+    from datasets.text_meta import FEATURE_NAMES
+
+    M, y = d.M, d.y
+    n = len(y)
+    if scenario == "null_shift":
+        idx = rng.permutation(n)
+        return idx[:n_doc], idx[n_doc : 2 * n_doc]
+    if scenario == "sentiment_meta":
+        score = M[:, FEATURE_NAMES.index("vader_compound")]
+        order = np.argsort(score)
+        neg = order[: max(n_doc * 3, n_doc)]
+        mid = order[len(order) // 3 : 2 * len(order) // 3]
+        return (
+            rng.choice(mid, n_doc, replace=len(mid) < n_doc),
+            rng.choice(neg, n_doc, replace=len(neg) < n_doc),
+        )
+    if scenario == "syntax_meta":
+        score = M[:, FEATURE_NAMES.index("verb_noun_ratio")]
+        order = np.argsort(score)
+        lo, hi = order[: max(n_doc * 3, n_doc)], order[-max(n_doc * 3, n_doc) :]
+        return (
+            rng.choice(lo, n_doc, replace=len(lo) < n_doc),
+            rng.choice(hi, n_doc, replace=len(hi) < n_doc),
+        )
+    if scenario == "train_vs_heldout":
+        half = n // 2
+        a = rng.choice(np.arange(half), n_doc, replace=half < n_doc)
+        b = rng.choice(np.arange(half, n), n_doc, replace=(n - half) < n_doc)
+        return a, b
+    raise ValueError(scenario)
 
 
 def main(argv=None) -> int:

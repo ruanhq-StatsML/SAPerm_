@@ -1,0 +1,201 @@
+{
+  "config": {
+    "B": 80,
+    "n_perm": 100,
+    "n_doc": 60,
+    "n_estimators": 40,
+    "n_max": 500,
+    "n_jobs": 2,
+    "seed": 7,
+    "smoke": false,
+    "elapsed_sec": 7382.938829421997,
+    "dataset": "ModaSense/emotion"
+  },
+  "thesis": "Cross-modality meta: power + block localization; (\u0394Power, \u03c1_PO)=interaction evidence.",
+  "summary": {
+    "table": [
+      {
+        "scenario": "image_brightness_shift",
+        "B": 80,
+        "power": {
+          "text_only": {
+            "RFPerm": 0.0,
+            "DRPerm": 0.0
+          },
+          "multimodal": {
+            "RFPerm": 0.05,
+            "DRPerm": 0.0
+          }
+        },
+        "cf_block_power": {
+          "text_meta": 0.0,
+          "image_meta": 0.0125
+        },
+        "rho_PO": 0.6206077485606871,
+        "PO_text": 0.000320854332550363,
+        "PO_mm": 0.00019912468494002276,
+        "delta_RF": 0.05,
+        "delta_DR": 0.0,
+        "interaction_label": "absorb_interaction"
+      },
+      {
+        "scenario": "null_shift",
+        "B": 80,
+        "power": {
+          "text_only": {
+            "RFPerm": 0.0125,
+            "DRPerm": 0.05
+          },
+          "multimodal": {
+            "RFPerm": 0.0125,
+            "DRPerm": 0.0625
+          }
+        },
+        "cf_block_power": {
+          "text_meta": 0.025,
+          "image_meta": 0.0625
+        },
+        "rho_PO": 2.1421884299786336,
+        "PO_text": 0.00044212619652891455,
+        "PO_mm": 0.0009471176227947003,
+        "delta_RF": 0.0,
+        "delta_DR": 0.012499999999999997,
+        "interaction_label": "null"
+      },
+      {
+        "scenario": "text_sentiment_shift",
+        "B": 80,
+        "power": {
+          "text_only": {
+            "RFPerm": 1.0,
+            "DRPerm": 0.275
+          },
+          "multimodal": {
+            "RFPerm": 1.0,
+            "DRPerm": 0.6375
+          }
+        },
+        "cf_block_power": {
+          "text_meta": 1.0,
+          "image_meta": 0.5375
+        },
+        "rho_PO": 1.9504908288945335,
+        "PO_text": 0.00077242688676689,
+        "PO_mm": 0.0015066115586303752,
+        "delta_RF": 0.0,
+        "delta_DR": 0.36249999999999993,
+        "interaction_label": "text_localize"
+      }
+    ],
+    "schema": {
+      "layout": "X=[M_text, M_image]",
+      "modality": {
+        "text": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36
+        ],
+        "image": [
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43
+        ]
+      },
+      "blocks": {
+        "text_meta": {
+          "indices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36
+          ],
+          "package": "spacy+vader"
+        },
+        "image_meta": {
+          "indices": [
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43
+          ],
+          "package": "opencv"
+        }
+      },
+      "p_total": 44
+    }
+  }
+}

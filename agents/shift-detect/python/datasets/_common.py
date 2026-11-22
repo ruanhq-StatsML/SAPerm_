@@ -85,7 +85,7 @@ def pca_embed(Z: np.ndarray, k: int, seed: int = 0) -> np.ndarray:
 
 def cached_text_meta(texts: list[str], cache: Path | None = None) -> tuple[np.ndarray, list[str]]:
     """spaCy+VADER matrix in FEATURE_NAMES order, with optional npz cache."""
-    from extract_features import FEATURE_NAMES, build_matrix
+    from datasets.text_meta import FEATURE_NAMES, build_matrix
 
     if cache is not None and cache.exists():
         data = np.load(cache, allow_pickle=True)
