@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
-"""Data-digestion pipeline — ready software entrypoint.
+"""Data-digestion + test entrypoint.
 
-Stages
-------
-  1. ingest   : align texts ↔ embeddings (BiasFinder / GEN)
-  2. extract  : spaCy+VADER meta M; PCA(Z)
-  3. schema   : list-indices by modality / block
-  4. window   : scenario routing (sentiment / syntax / heldout / null)
-  5. test     : RFPerm / DRPerm / CFPerm(+block)
-  6. subset   : after localization, rank meta coords → driving subset
-  7. report   : power increase + interaction evidence (ΔPower, ρ_PO)
+Prefer one script per dataset under ``datasets/`` for the
+read → preprocess → embed → meta path:
 
-Two product claims only:
-  (A) power increase from meta
-  (B) interaction evidence + subset that drives sentiment (etc.)
+  python -m datasets.biasfinder_gen --n-max 2000
+  python -m datasets.modasense_emotion --n-max 500
+
+This file wires that digestion into windowing / RF·DR·CF / subset.
+VADER FE argument: docs/vader_feature_engineering.md
 
 Usage
 -----
@@ -51,21 +46,36 @@ def digest(
     pca_k: int,
     seed: int,
 ) -> dict[str, Any]:
-    Z, y, texts = load_aligned_embed_text(n_max=n_max)
-    cache = OUT / f"meta_cache_n{len(texts)}.npz"
-    M, meta_names = compute_or_cache_meta(texts, cache)
-    name_to_j = {n: i for i, n in enumerate(meta_names)}
-    M = M[:, [name_to_j[n] for n in FEATURE_NAMES]]
-    Zpca = build_Zpca(Z, pca_k, seed=seed)
-    sch = schema(pca_k)
-    return {
-        "Zpca": Zpca,
-        "M": M,
-        "y": y,
-        "texts": texts,
-        "schema": sch,
-        "x_names": [f"pca_{i}" for i in range(pca_k)] + list(FEATURE_NAMES),
-    }
+    # Prefer the per-dataset digestion script (BiasFinder/GEN).
+    try:
+        from datasets.biasfinder_gen import digest as digest_ds
+
+        d = digest_ds(n_max=n_max, pca_k=pca_k, seed=seed)
+        return {
+            "Zpca": d.Z,
+            "M": d.M,
+            "y": d.y,
+            "texts": d.texts,
+            "schema": d.schema,
+            "x_names": [f"pca_{i}" for i in range(pca_k)] + list(FEATURE_NAMES),
+        }
+    except Exception:
+        # Fallback to legacy helpers if dataset script path is unavailable.
+        Z, y, texts = load_aligned_embed_text(n_max=n_max)
+        cache = OUT / f"meta_cache_n{len(texts)}.npz"
+        M, meta_names = compute_or_cache_meta(texts, cache)
+        name_to_j = {n: i for i, n in enumerate(meta_names)}
+        M = M[:, [name_to_j[n] for n in FEATURE_NAMES]]
+        Zpca = build_Zpca(Z, pca_k, seed=seed)
+        sch = schema(pca_k)
+        return {
+            "Zpca": Zpca,
+            "M": M,
+            "y": y,
+            "texts": texts,
+            "schema": sch,
+            "x_names": [f"pca_{i}" for i in range(pca_k)] + list(FEATURE_NAMES),
+        }
 
 
 def run_once(
