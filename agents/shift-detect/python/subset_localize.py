@@ -20,18 +20,12 @@ from typing import Any
 
 import numpy as np
 
-from extract_features import FEATURE_NAMES
-from feature_schema import block_indices, meta_indices, schema
-from perm_tests import cfperm_loco_pvalue
-from power_embed_meta import (
-    build_Zpca,
-    compute_or_cache_meta,
-    load_aligned_embed_text,
-    make_windows,
-)
-
+from datasets.text_meta import FEATURE_NAMES
+from datasets.feature_schema import block_indices, meta_indices, schema
+from interactions import cfperm_loco_pvalue
 
 OUT = Path(__file__).resolve().parent / "results"
+
 
 
 def loco_rank_coords(
@@ -128,6 +122,14 @@ def digest_and_subset_sentiment(
     seed: int = 2026,
 ) -> dict[str, Any]:
     """Full path: digest BiasFinder → sentiment windows → block → subset."""
+    # Demo-only deps live under _legacy/
+    from _legacy.power_embed_meta import (
+        build_Zpca,
+        compute_or_cache_meta,
+        load_aligned_embed_text,
+        make_windows,
+    )
+
     Z, y, texts = load_aligned_embed_text(n_max=n_max)
     cache = OUT / f"meta_cache_n{len(texts)}.npz"
     M, meta_names = compute_or_cache_meta(texts, cache)

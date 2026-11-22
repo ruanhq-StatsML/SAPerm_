@@ -467,3 +467,38 @@ def window_bundle(
             )
         out["CFPerm"] = cf
     return out
+
+
+# ---------------------------------------------------------------------------
+# Packaged localization (CFPerm block → coordinate subset)
+# ---------------------------------------------------------------------------
+
+def localize_subset(
+    X0, X1, *,
+    block_indices,
+    names,
+    Y0=None, Y1=None,
+    n_perm: int = 100,
+    seed: int = 0,
+    n_estimators: int = 60,
+    top_k: int = 5,
+):
+    """Use packaged subset_localize: block LOCO then driving feature subset."""
+    from subset_localize import carrier_rank_from_windows, select_subset
+
+    X, Y, W = batch_xy(
+        X0,
+        Y0 if Y0 is not None else np.zeros(len(X0)),
+        X1,
+        Y1 if Y1 is not None else np.zeros(len(X1)),
+    )
+    idx = np.asarray(block_indices, dtype=int)
+    block = cfperm_loco_pvalue(
+        X, Y, W, test_indices=idx, n_perm=n_perm, seed=seed, n_estimators=n_estimators,
+    )
+    carriers = carrier_rank_from_windows(X0, X1, idx, list(names))
+    subset = select_subset(
+        [{**r, "p_value": 1.0, "reject": False} for r in carriers],
+        top_k=top_k, cum_share=0.85,
+    )
+    return {"block": block, "carriers": carriers, "subset": subset}
