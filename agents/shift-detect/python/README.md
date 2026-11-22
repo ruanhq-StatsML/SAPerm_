@@ -35,7 +35,10 @@ python digest_pipeline.py --scenario sentiment_meta --smoke
 | `feature_schema.py` | modality / block indices |
 | `perm_tests.py` | RFPerm / DRPerm / CFPerm |
 | `dgp_text.py` | text DGP catalog |
-| `extract_mm_features.py` | optional text+image meta (ModaSense) |
+| `extract_mm_features.py` | text+image+audio meta (ModaSense) |
+| `datasets/modasense_emotion.py` | ModaSense digest → `Digested` + schema |
+
+ModaSense digestion (read → meta → schema): [`docs/modasense_digestion.md`](docs/modasense_digestion.md).
 
 ## Business read (subset)
 

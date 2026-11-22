@@ -11,6 +11,8 @@ Canonical writeup: [`unified_meta_power.tex`](unified_meta_power.tex)
 | `poc_mask_image_patches_full.md` | patch-mask ρ_PO≈1.95 (side POC) |
 | `mmd_two_datasets.md` | BiasFinder + ModaSense MMD × ρ_PO × power |
 | `modasense_scientific_case.md` | **ModaSense专题**: RF/CF/MMD份额/ρ_PO/localization |
+| `digest_modasense_mm3_n500.md` | ModaSense digestion summary (schema + dims) |
+| `../docs/modasense_digestion.md` | ModaSense data-digestion logic |
 | `mmd_modalities.py` | ready: arrays in → per-mod MMD out |
 | `realdata_po_power_crosscheck.md` | absorb / localize / residual table |
 
