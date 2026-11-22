@@ -32,109 +32,40 @@ Usage
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 import time
-import zipfile
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 
-from extract_features import BLOCKS, FEATURE_NAMES, build_matrix, extract_meta
+from extract_features import BLOCKS, FEATURE_NAMES
 from perm_tests import cfperm_loco_pvalue, drperm_pvalue, rfperm_pvalue
 
-ROOT = Path(__file__).resolve().parents[3]  # SAPerm repo root
-EMB_TRAIN = ROOT / "datasets" / "train_biasfinder_bert_embedding.csv"
-DATA_ZIP = ROOT / "datasets" / "dataset.zip"
 OUT_DIR = Path(__file__).resolve().parent / "results"
 
 
 def load_aligned_embed_text(
     n_max: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray, list[str]]:
-    """Return Z (n,768), y (n,), texts (n,) with GEN↔embedding row alignment."""
-    # texts
-    texts: list[str] = []
-    classes_txt: list[str] = []
-    with zipfile.ZipFile(DATA_ZIP) as zf:
-        with zf.open("GEN-sarc-notsarc.csv") as raw:
-            import io
+    """Canonical ingest: ``datasets.biasfinder_gen.load``."""
+    from datasets.biasfinder_gen import load
 
-            reader = csv.DictReader(io.TextIOWrapper(raw, encoding="utf-8"))
-            for row in reader:
-                classes_txt.append(row["class"])
-                texts.append(row["text"])
-
-    Z_list: list[list[float]] = []
-    y_list: list[int] = []
-    classes_emb: list[str] = []
-    with EMB_TRAIN.open(encoding="utf-8") as f:
-        reader = csv.reader(f)
-        header = next(reader)
-        assert header[-1] == "class"
-        # drop leading pandas index column if present
-        start = 1 if header[0] in ("", "Unnamed: 0") or header[0].lower() == "unnamed: 0" else 0
-        if header[0] == "0" and header[1] == "1":
-            # numbered embedding dims starting at 0 — keep all but class
-            start = 0
-        for row in reader:
-            classes_emb.append(row[-1])
-            feats = row[start:-1]
-            # if 769 dims and first looks like a row id, drop it
-            if len(feats) == 769:
-                feats = feats[1:]
-            Z_list.append([float(v) for v in feats])
-            y_list.append(1 if row[-1] == "sarc" else 0)
-
-    if classes_txt != classes_emb:
-        raise RuntimeError("GEN text classes are not aligned with embedding rows")
-
-    Z = np.asarray(Z_list, dtype=float)
-    y = np.asarray(y_list, dtype=float)
-    if n_max is not None and n_max < len(y):
-        rng = np.random.default_rng(0)
-        # stratified subsample
-        idx0 = np.where(y == 0)[0]
-        idx1 = np.where(y == 1)[0]
-        k0 = n_max // 2
-        k1 = n_max - k0
-        take = np.concatenate(
-            [
-                rng.choice(idx0, size=min(k0, len(idx0)), replace=False),
-                rng.choice(idx1, size=min(k1, len(idx1)), replace=False),
-            ]
-        )
-        take.sort()
-        Z, y = Z[take], y[take]
-        texts = [texts[i] for i in take]
-    return Z, y, texts
+    return load(n_max=n_max, seed=0)
 
 
 def compute_or_cache_meta(texts: list[str], cache: Path) -> tuple[np.ndarray, list[str]]:
-    if cache.exists():
-        data = np.load(cache, allow_pickle=True)
-        names = list(data["names"])
-        if names == FEATURE_NAMES:
-            return data["M"], names
-        print(
-            f"Meta cache schema mismatch ({len(names)} vs {len(FEATURE_NAMES)}); rebuilding.",
-            file=sys.stderr,
-        )
-    print(f"Extracting meta-features for {len(texts)} docs (spaCy+VADER)...", file=sys.stderr)
-    M_list, names = build_matrix(texts, "meta")
-    M = np.asarray(M_list, dtype=float)
-    cache.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(cache, M=M, names=np.array(names, dtype=object))
-    return M, names
+    from datasets._common import cached_text_meta
+
+    print(f"Meta features for {len(texts)} docs (cache={cache.name})...", file=sys.stderr)
+    return cached_text_meta(texts, cache)
 
 
 def build_Zpca(Z: np.ndarray, k: int, seed: int = 0) -> np.ndarray:
-    pca = PCA(n_components=k, random_state=seed)
-    return pca.fit_transform(StandardScaler().fit_transform(Z))
+    from datasets._common import pca_embed
+
+    return pca_embed(Z, k, seed=seed)
 
 
 def make_windows(

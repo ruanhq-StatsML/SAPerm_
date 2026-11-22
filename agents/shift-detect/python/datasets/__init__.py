@@ -1,9 +1,19 @@
-"""Per-dataset digestion scripts: read → preprocess → embed/meta → schema."""
+"""Per-dataset digestion: read → preprocess → embed/meta → schema."""
 
-from .biasfinder_gen import digest as digest_biasfinder_gen
-from .modasense_emotion import digest as digest_modasense
+from __future__ import annotations
 
-REGISTRY = {
-    "biasfinder_gen": digest_biasfinder_gen,
-    "modasense_emotion": digest_modasense,
-}
+from typing import Callable
+
+
+def _registry() -> dict[str, Callable]:
+    from .biasfinder_gen import digest as biasfinder_gen
+    from .modasense_emotion import digest as modasense_emotion
+
+    return {
+        "biasfinder_gen": biasfinder_gen,
+        "modasense_emotion": modasense_emotion,
+    }
+
+
+def digest(name: str, **kwargs):
+    return _registry()[name](**kwargs)

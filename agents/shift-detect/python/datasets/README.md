@@ -1,23 +1,19 @@
 # Per-dataset digestion
 
-One script = one dataset. Same five stages every time:
-
 ```
 read → preprocess → embed → meta → schema
 ```
 
-| Script | Dataset | Embed | Meta |
-| --- | --- | --- | --- |
-| `biasfinder_gen.py` | GEN-sarc + BiasFinder BERT | PCA(Z) | spaCy + **VADER** |
-| `modasense_emotion.py` | ModaSense/emotion | — | text meta + OpenCV image |
+| module | data |
+| --- | --- |
+| `biasfinder_gen` | GEN + BiasFinder BERT → PCA(Z) + spaCy/VADER |
+| `modasense_emotion` | ModaSense text+image meta |
 
 ```bash
-cd agents/shift-detect/python
-python -m datasets.biasfinder_gen --n-max 2000 --write results/digest_biasfinder.npz
+python -m datasets.biasfinder_gen --n-max 2000
 python -m datasets.modasense_emotion --n-max 500
+python digest_pipeline.py --scenario sentiment_meta --subset
 ```
 
-Downstream tests (`digest_pipeline.py`, `power_*.py`) consume the digested
-`Digested` / cached `.npz` — they do not re-invent ingest.
-
-VADER feature-engineering argument: [`../docs/vader_feature_engineering.md`](../docs/vader_feature_engineering.md).
+Shared helpers: `_common.py` (`Digested`, `cached_text_meta`, `pca_embed`).  
+VADER: [`../docs/vader_feature_engineering.md`](../docs/vader_feature_engineering.md).
