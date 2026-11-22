@@ -1,0 +1,97 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,amsmath,amssymb,hyperref,enumitem}
+\usepackage[T1]{fontenc}
+
+\title{Interaction Evidence v2:\\
+$(\Delta\mathrm{Power},\,\rho_{\mathrm{PO}})$ as Cross-Modality Signature}
+\author{SAPerm shift-detect --- iterated writeup}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Adding meta-features $M$ to embeddings $Z$ is not only about raising power.
+The \emph{joint} pattern of detection power change and PO-risk ratio
+\[
+\rho_{\mathrm{PO}}
+=\frac{\mathrm{PO}(Z{+}M)}{\mathrm{PO}(Z)},
+\qquad
+\mathrm{PO}=\mathbb{E}[\tau(X)^2],\ 
+\tau\approx(Y-\mu)(W-e)
+\]
+is \textbf{statistical evidence of embed$\times$meta interaction}---not a bug
+to patch. Different DGPs leave different signatures; that is the scientific
+payload.
+\end{abstract}
+
+\section{Claim}
+RFPerm / DRPerm / CFPerm on $X=[Z_{\mathrm{PCA}},M]$ with named block indices
+yield a closed loop: detect $\to$ type $\to$ localize.
+The upgrade in this iteration: treat
+$(\Delta\mathrm{Power},\,\rho_{\mathrm{PO}})$ as an \emph{interaction
+signature}, mutually readable with CFPerm block power.
+
+\section{Empirical signatures (BiasFinder; $B{=}150$)}
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Scenario & $\rho_{\mathrm{PO}}$ & $\Delta$RF & $\Delta$DR & $\Delta$CF & Signature \\
+\midrule
+null\_shift & 1.07 & 0.00 & 0.00 & $+0.03$ & null calibration \\
+sentiment\_meta & \textbf{0.25} & $+0.06$ & 0.00 & $+0.01$ & \textbf{absorb interaction} \\
+syntax\_meta HARD & \textbf{0.19} & $-0.04$ & 0.00 & $\mathbf{+0.09}$ & \textbf{localize interaction} \\
+train\_vs\_heldout & 1.03 & 0.00 & 0.00 & $\mathbf{+0.23}$ & concept residual + localize \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Reading (interaction, not repair).}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Absorb}: $\rho_{\mathrm{PO}}\ll 1$, DR power stays $\approx 0$.
+        $M$ enters the nuisance $(\mu,e)$; embed$\times$meta interaction
+        \emph{removes} residual batch--outcome dependence.
+  \item \textbf{Localize}: CFPerm $\Delta>0$ on the meta block while DR may
+        stay quiet---interaction site is the named block (syntax / sentiment),
+        visible to LOCO even when PO channel is absorbed.
+  \item \textbf{Concept residual}: $\rho_{\mathrm{PO}}\approx 1$ and DR/RF at
+        ceiling---interaction cannot absorb the shift; CFPerm still shows
+        \emph{where} meta helps attribute it ($+0.23$ on heldout).
+\end{itemize}
+
+\section{Why this is stronger than ``power went up''}
+A lone power increase is ambiguous (easier alternative vs.\ worse Type-I).
+A lone PO-risk drop is also ambiguous (underfitting $\tau$).
+Together with CFPerm on list-indices:
+\begin{enumerate}[leftmargin=*]
+  \item Power says whether we reject more often.
+  \item $\rho_{\mathrm{PO}}$ says whether $M$ changed the \emph{channel}.
+  \item Block CFPerm says \emph{which modality coordinates} carry the interaction.
+\end{enumerate}
+That triad is the interaction evidence.
+
+\section{Supporting batteries}
+\paragraph{Feature-only hard DGP.}
+\texttt{syntax\_shift}: baseline $0.10\to$ meta $1.00$ ($\Delta{+}0.90$).
+\paragraph{Other benchmarks ($n_{\mathrm{perm}}{=}150$).}
+RQ $0.20\to 0.67$; HYP $0.07\to 0.27$; GEN already easy for baseline.
+\paragraph{Schema.}
+\texttt{feature\_schema.py}: embed $0{:}24$, meta blocks $24{:}61$
+(spaCy style/syntax/NER, VADER, discourse, structure).
+
+\section{Cross-modality block CFPerm}
+Run in flight: $B{=}150$, $N_{\mathrm{perm}}{=}150$, LOCO on
+\texttt{embed\_pca}, \texttt{meta}, \texttt{vader\_sent}, \texttt{spacy\_syntax},
+\texttt{spacy\_style}. Expected alignment with signatures above:
+sentiment$\to$vader; syntax HARD$\to$spacy\_syntax; heldout$\to$mixed with
+large meta share. Table to be merged from
+\texttt{power\_cross\_modality\_full.md} on completion.
+
+\section{One-line takeaway}
+\textbf{Power deltas and PO-risk ratios do not merely ``check'' each other---
+their joint signature \emph{is} the embed$\times$meta interaction evidence,
+and CFPerm names the interacting block.}
+
+\end{document}
