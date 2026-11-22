@@ -182,9 +182,8 @@ def main(argv=None) -> int:
         "delta_RF_mm": table["mm_masked"]["RF_power"] - table["mm_full"]["RF_power"],
         "mean_img_meta_l1": float(np.mean(np.abs(Mi - Mm))),
         "read": (
-            "Primary contrast is image_full vs image_masked under fixed brightness "
-            "windows. Patch mask should drop image RF power if visual meta carried "
-            "the shift; ρ_PO(mask/full) tracks PO-risk change."
+            "Headline is ρ_PO(mask/full) on image features. RF may stay flat; "
+            "ρ>1 means patch mask degraded the visual nuisance (PO-risk up)."
         ),
     }
 
@@ -192,26 +191,33 @@ def main(argv=None) -> int:
     tag = "smoke" if args.smoke else "full"
     jp = OUT / f"poc_mask_image_patches_{tag}.json"
     jp.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    r_img = summary["rho_PO_image_mask_over_full"]
+    r_mm = summary["rho_PO_mm_mask_over_full"]
     md = [
-        "# POC: mask image patches → PO / power",
+        "# POC: mask image patches → ρ_PO / power",
         "",
         f"grid={args.grid}×{args.grid}, mask_frac={args.mask_frac}, B={args.B}, "
-        f"scenario=image_brightness_shift",
+        "windows=`image_brightness_shift`.",
         "",
-        "| set | RF power | DR power | PO |",
+        "| set | RF | DR | PO |",
         "| --- | ---: | ---: | ---: |",
     ]
     for fs, row in table.items():
         md.append(
-            f"| `{fs}` | {row['RF_power']:.2f} | {row['DR_power']:.2f} | {row['PO']:.4g} |"
+            f"| {fs} | {row['RF_power']:.2f} | {row['DR_power']:.2f} | {row['PO']:.4g} |"
         )
     md += [
         "",
-        f"ρ_PO image (mask/full) = {summary['rho_PO_image_mask_over_full']}",
-        f"ρ_PO mm (mask/full) = {summary['rho_PO_mm_mask_over_full']}",
-        f"ΔRF image (mask−full) = {summary['delta_RF_image']:+.2f}",
-        f"ΔRF mm (mask−full) = {summary['delta_RF_mm']:+.2f}",
-        f"mean |Δimage_meta| = {summary['mean_img_meta_l1']:.4f}",
+        "**ρ_PO (mask / full)**",
+        "",
+        "| contrast | ρ_PO |",
+        "| --- | ---: |",
+        f"| image_masked / image_full | **{r_img:.2f}** |" if r_img else "| image | n/a |",
+        f"| mm_masked / mm_full | {r_mm:.2f} |" if r_mm else "| mm | n/a |",
+        "",
+        f"ΔRF image = {summary['delta_RF_image']:+.2f}; "
+        f"ΔRF mm = {summary['delta_RF_mm']:+.2f}; "
+        f"|Δimage_meta| = {summary['mean_img_meta_l1']:.3f}.",
         "",
         summary["read"],
         "",
