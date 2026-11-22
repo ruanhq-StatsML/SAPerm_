@@ -9,6 +9,8 @@ Canonical writeup: [`unified_meta_power.tex`](unified_meta_power.tex)
 | `power_mm_modasense_full.md` | ModaSense text/image ρ_PO |
 | `case_modasense_business.md` | CFPerm subset → business map |
 | `poc_mask_image_patches_full.md` | patch-mask ρ_PO≈1.95 (side POC) |
+| `mmd_po_power_insights.md` | ModaSense MMD × ρ_PO × power |
+| `mmd_modalities.py` | ready: arrays in → per-mod MMD out |
 | `realdata_po_power_crosscheck.md` | absorb / localize / residual table |
 
 **ρ_PO cheat sheet**
