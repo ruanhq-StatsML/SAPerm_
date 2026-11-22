@@ -2,6 +2,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{booktabs,amsmath,amssymb,enumitem}
 \usepackage[T1]{fontenc}
+\usepackage{url}
 
 \title{Today's Update:\\
 ModaSense Joint Tables + Digested Insight\\
@@ -153,5 +154,24 @@ sentiment\_meta & $0.01$ & $0.03$ & $0.02$ & $0.04$ \\
 Even crude named meta still moves $\rho_{\mathrm{PO}}$, CF, and
 feature-only power on top of BERT PCA---so
 \textbf{embedding does not represent everything}.
+
+\paragraph{ModaSense in one paragraph.}
+On ModaSense/emotion~\cite{modasense_emotion_2026} ($n{=}500$,
+designed pairwise label conflict), $X{=}[M_t,M_i,M_a]$ with
+RF/CF/$\pi$/$\rho_{\mathrm{PO}}$ yields an interpretable trichotomy:
+text-sentiment closes the chain
+($\pi_t{=}0.91$, RF${=}1$, CF$_t{=}1$, VADER subset, $\rho{=}1.95$);
+image-brightness is silent absorb
+($\pi_i{=}0.95$, $\rho{=}0.62$, power${\approx}\alpha$);
+audio remains MMD-only. Closed chains name executable features, not
+anonymous dims.
+
+\begin{thebibliography}{1}
+\bibitem{modasense_emotion_2026}
+Tri-PvP.
+\newblock {ModaSense/emotion}: Multimodal Emotion with Cross-Modal Label Conflict.
+\newblock Hugging Face Datasets, 2026.
+\newblock \url{https://huggingface.co/datasets/ModaSense/emotion}.
+\end{thebibliography}
 
 \end{document}

@@ -107,9 +107,26 @@ MMD 三模态同阶（~0.015）；RF≈0.01；CF≈0.03–0.06。ρ_PO=2.14 在 
 
 ---
 
-## 5. 配置与文件
+## 5. 一段可读结论
+
+On ModaSense/emotion（n=500，模态标签两两冲突），$X=[M_t,M_i,M_a]$ 上同时读 RF / CF / $\pi$ / $\rho_{\mathrm{PO}}$ 得到可解释三分法：text 情感窗四方闭合（$\pi_t{=}0.91$，RF${=}1$，CF$_t{=}1$，VADER 子集，$\rho{=}1.95$）→ 文案通道；image 亮度窗静默吸收（$\pi_i{=}0.95$，$\rho{=}0.62$，power≈α）→ 通道在动但不报警；audio 目前仅 MMD。闭合时定位到可执行特征名，而非匿名维。详见 `modasense_paragraph.md`。
+
+## 6. BibTeX
+
+```bibtex
+@misc{modasense_emotion_2026,
+  author       = {{Tri-PvP}},
+  title        = {{ModaSense/emotion}: Multimodal Emotion with Cross-Modal Label Conflict},
+  year         = {2026},
+  howpublished = {Hugging Face Datasets},
+  url          = {https://huggingface.co/datasets/ModaSense/emotion},
+  note         = {500 test examples; per-modality emotion labels with designed pairwise conflict. Also Tri-PvP/emotion.}
+}
+```
+
+## 7. 配置与文件
 
 - Full power：`power_mm_modasense_full.json`（B=80）  
 - MMD：`mmd_two_datasets.json` → modasense  
 - Localization：`case_modasense_business.json`  
-- Helper：`mmd_modalities.py`
+- Paragraph + bib：`modasense_paragraph.md`
