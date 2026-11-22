@@ -187,28 +187,40 @@ def run_dataset(
         n_perm = min(n_perm, 20)
 
     print(
-        f"=== {name} scenarios={scs} B={B} RF(n={n_estimators}) "
+        f"=== {name} scenarios={scs} B={B} n_perm={n_perm} RF(n={n_estimators}) "
         f"all_methods={all_methods} classic={classic is not None} ===",
         flush=True,
     )
-    jobs = [
-        delayed(_one_rep)(
-            sc,
-            name=name,
-            d=d,
-            make_xy=make_xy,
-            modality=modality,
-            n_doc=n_doc,
-            n_perm=n_perm,
-            n_estimators=n_estimators,
-            seed=seed + 17 * (abs(hash(sc)) % 10_000) + b,
-            all_methods=all_methods,
-        )
-        for sc in scs
-        for b in range(B)
-    ]
-    rows = Parallel(n_jobs=n_jobs, prefer="processes")(jobs)
-    raw = pd.DataFrame(rows)
+    all_rows: list[dict] = []
+    for sc in scs:
+        print(f"  >> {sc} ({B} reps)...", flush=True)
+        jobs = [
+            delayed(_one_rep)(
+                sc,
+                name=name,
+                d=d,
+                make_xy=make_xy,
+                modality=modality,
+                n_doc=n_doc,
+                n_perm=n_perm,
+                n_estimators=n_estimators,
+                seed=seed + 17 * (abs(hash(sc)) % 10_000) + b,
+                all_methods=all_methods,
+            )
+            for b in range(B)
+        ]
+        rows = Parallel(n_jobs=n_jobs, prefer="processes")(jobs)
+        all_rows.extend(rows)
+        # checkpoint after each scenario
+        ckpt = pd.DataFrame(all_rows)
+        ckpt.to_csv(OUT / "benchmark_all_full_reps. partial.csv".replace(" ", ""), index=False)
+        # quick power peek for this scenario
+        rej = [c for c in ckpt.columns if c.endswith("_rej")]
+        sub = ckpt[ckpt["scenario"] == sc]
+        peek = {c.replace("_rej", ""): float(sub[c].mean()) for c in rej[:8]}
+        print(f"  << {sc} done: {peek}", flush=True)
+
+    raw = pd.DataFrame(all_rows)
     agg_cols = [c for c in raw.columns if c.endswith("_rej")]
     g = raw.groupby(["dataset", "scenario"], as_index=False)
     summary = g[agg_cols].mean().rename(columns={c: c.replace("_rej", "_power") for c in agg_cols})
@@ -224,10 +236,10 @@ def run_dataset(
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--dataset", default="modasense_emotion", choices=[*DATASETS, "all"])
-    p.add_argument("--B", type=int, default=80)
+    p.add_argument("--B", type=int, default=100)
     p.add_argument("--n-doc", type=int, default=80)
-    p.add_argument("--n-perm", type=int, default=100)
-    p.add_argument("--n-estimators", type=int, default=80)
+    p.add_argument("--n-perm", type=int, default=150)
+    p.add_argument("--n-estimators", type=int, default=80, help="RF trees (outcome / C2ST)")
     p.add_argument("--n-jobs", type=int, default=4)
     p.add_argument("--smoke", action="store_true")
     p.add_argument("--all-methods", action="store_true", default=False)
