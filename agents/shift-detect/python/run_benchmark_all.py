@@ -21,7 +21,7 @@ from interactions import window_bundle
 from utils import OUT
 
 try:
-    import benchmark_classic as classic
+    from _legacy import benchmark_classic as classic
 except Exception:  # pragma: no cover
     classic = None
 
@@ -307,6 +307,12 @@ def main(argv=None) -> int:
     )
     (OUT / f"benchmark_all_{tag}.md").write_text(md, encoding="utf-8")
     print(f"\nwrote {sum_path}\nwrote {raw_path}")
+    # also refresh manuscript chapter
+    try:
+        from _legacy.fill_full_power_chapter import main as _fill
+        _fill()
+    except Exception as e:
+        print(f"[warn] fill chapter skipped: {e}", flush=True)
     return 0
 
 
