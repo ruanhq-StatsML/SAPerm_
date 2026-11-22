@@ -160,6 +160,15 @@ def make_windows(
         mid = order[len(order) // 3 : 2 * len(order) // 3]
         a = rng.choice(mid, size=n_doc, replace=len(mid) < n_doc)
         b = rng.choice(neg, size=n_doc, replace=len(neg) < n_doc)
+    elif scenario == "syntax_meta":
+        # HARD DGP analog on real embeddings: route by POS structure
+        # (verb_noun_ratio) — length-matched surface, syntax flips.
+        score = M[:, FEATURE_NAMES.index("verb_noun_ratio")]
+        order = np.argsort(score)
+        lo = order[: max(n_doc * 3, n_doc)]
+        hi = order[-max(n_doc * 3, n_doc) :]
+        a = rng.choice(lo, size=n_doc, replace=len(lo) < n_doc)
+        b = rng.choice(hi, size=n_doc, replace=len(hi) < n_doc)
     elif scenario == "train_vs_heldout":
         half = n // 2
         a = rng.choice(np.arange(half), size=n_doc, replace=False)
@@ -387,7 +396,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--scenarios",
         nargs="*",
-        default=["null_shift", "sentiment_meta", "train_vs_heldout"],
+        default=["null_shift", "sentiment_meta", "syntax_meta", "train_vs_heldout"],
     )
     p.add_argument("--n-jobs", type=int, default=4)
     args = p.parse_args(argv)
