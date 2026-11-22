@@ -1,0 +1,110 @@
+{
+  "config": {
+    "B": 8,
+    "n_perm": 40,
+    "n": 160,
+    "p_z": 8,
+    "p_m": 4,
+    "n_estimators": 40,
+    "strength": 1.0,
+    "seed": 2026,
+    "elapsed_sec": 190.3960998058319
+  },
+  "summary": {
+    "table": [
+      {
+        "dgp": "concept_embed",
+        "B": 8,
+        "power_embed": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.5
+        },
+        "power_meta": {
+          "RFPerm": 0.125,
+          "DRPerm": 0.25
+        },
+        "delta_RF": 0.125,
+        "delta_DR": -0.25,
+        "PO_embed": 0.008608020147087569,
+        "PO_meta": 0.008815570980775197,
+        "rho_PO": 1.0241113322391389,
+        "CF_meta": 0.375,
+        "CF_placebo": 0.125,
+        "delta_CF": 0.25,
+        "signature": "localize_ok",
+        "expected": "concept_residual_ok",
+        "match": false
+      },
+      {
+        "dgp": "concept_meta",
+        "B": 8,
+        "power_embed": {
+          "RFPerm": 0.125,
+          "DRPerm": 0.125
+        },
+        "power_meta": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.25
+        },
+        "delta_RF": -0.125,
+        "delta_DR": 0.125,
+        "PO_embed": 0.008193822203658475,
+        "PO_meta": 0.008563250980390624,
+        "rho_PO": 1.0450862573717064,
+        "CF_meta": 0.0,
+        "CF_placebo": 0.125,
+        "delta_CF": -0.125,
+        "signature": "mixed",
+        "expected": "localize_ok",
+        "match": false
+      },
+      {
+        "dgp": "covariate_meta",
+        "B": 8,
+        "power_embed": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0
+        },
+        "power_meta": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0
+        },
+        "delta_RF": 0.0,
+        "delta_DR": 0.0,
+        "PO_embed": 0.007464821564807413,
+        "PO_meta": 0.005125680322115002,
+        "rho_PO": 0.6866447211919714,
+        "CF_meta": 0.125,
+        "CF_placebo": 0.0,
+        "delta_CF": 0.125,
+        "signature": "absorb_ok",
+        "expected": "absorb_ok",
+        "match": true
+      },
+      {
+        "dgp": "null",
+        "B": 8,
+        "power_embed": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.125
+        },
+        "power_meta": {
+          "RFPerm": 0.125,
+          "DRPerm": 0.125
+        },
+        "delta_RF": 0.125,
+        "delta_DR": 0.0,
+        "PO_embed": 0.007478188804817867,
+        "PO_meta": 0.008158830631733447,
+        "rho_PO": 1.0910169353409576,
+        "CF_meta": 0.0,
+        "CF_placebo": 0.0,
+        "delta_CF": 0.0,
+        "signature": "null_calibration",
+        "expected": "null_calibration",
+        "match": true
+      }
+    ]
+  },
+  "thesis": "(\u0394Power, \u03c1_PO, \u0394CF) joint signature cross-validates embed\u00d7meta interaction under concept vs covariate DGPs."
+}
