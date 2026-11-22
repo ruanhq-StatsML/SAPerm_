@@ -15,6 +15,7 @@ Canonical writeup: [`unified_meta_power.tex`](unified_meta_power.tex)
 | `../docs/modasense_digestion.md` | ModaSense data-digestion logic |
 | `today_update_tables.tex` | **Today**: ModaSense joint tables + Digested insight (embed ⊈ everything) |
 | `joint_shift_analysis.tex` | **Canonical** 3-panel joint table (feature-only / BiasFinder / ModaSense) |
+| `manuscript_final.tex` | **Final manuscript** (fills Sec. full power when B=100 lands) |
 | `mmd_modalities.py` | ready: arrays in → per-mod MMD out |
 | `realdata_po_power_crosscheck.md` | absorb / localize / residual table |
 
