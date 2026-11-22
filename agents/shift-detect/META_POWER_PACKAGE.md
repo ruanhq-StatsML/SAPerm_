@@ -2,17 +2,20 @@
 
 Download: [`meta_power_package.zip`](meta_power_package.zip).
 
-Contents: digestion + perm tests + curated results (unified tables, ModaSense scientific case).
+## Five scripts only
 
 ```
-# BiasFinder
-digest X=[Z,M] → RF/DR → ρ_PO → CFPerm → meta subset
-
-# ModaSense (primary multimodal)
-digest X=[M_text,M_image,M_audio] → RF/CF power → π_MMD → ρ_PO → localization
+digest.py
+interactions.py        # PO-risk, MMD, R-risk, power-loss, RF/DR/CF
+run_benchmark_all.py   # → DataFrame
+utils.py
+subset_localize.py     # ORIGINAL localization (CFPerm → subset)
+datasets/              # dataset-specific
 ```
 
-ModaSense digestion logic: `python/docs/modasense_digestion.md`  
-Scientific case: `python/results/modasense_scientific_case.md`
+```
+digest → Digested → interactions / run_benchmark_all
+                  → subset_localize
+```
 
-Live sources also under `python/` (zip is the snapshot bundle).
+Results: `python/results/joint_shift_analysis.tex`, `manuscript_final.tex`.
