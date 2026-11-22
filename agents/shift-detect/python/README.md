@@ -1,44 +1,42 @@
-# Text meta-features (spaCy + VADER)
+# Data-digestion pipeline (ready)
 
-Dedicated feature script + power argument for the attribution agent.
+Two claims only: **(A) power increase** from meta, **(B) interaction evidence + driving subset** after localization.
 
-## Scripts
-
-| Script | Role |
-| --- | --- |
-| `extract_features.py` | **Only features** — spaCy style/syntax/NER + VADER sentiment |
-| `power_meta_features.py` | Type-I / power: `baseline` vs `meta` vs `both` |
-| `meta_features.py` | Fixture attribution helper used by the Agent tool |
-
-## Install
+## Entrypoint
 
 ```bash
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
+
+# full digest → test → localize → subset (sentiment drivers)
+python digest_pipeline.py --scenario sentiment_meta --subset
+
+# smoke
+python digest_pipeline.py --scenario sentiment_meta --smoke
 ```
 
-## Extract features
+## Pipeline stages
 
-```bash
-python extract_features.py --demo --pretty
-python extract_features.py --set meta --json texts.json
-python extract_features.py --set baseline --json texts.json   # ablation surface stats
-```
+1. **ingest** — GEN text ↔ BiasFinder BERT align  
+2. **extract** — `extract_features.py` (spaCy+VADER) + PCA(Z)  
+3. **schema** — `feature_schema.py` list-indices (embed vs meta blocks)  
+4. **window** — sentiment / syntax / heldout / null routing  
+5. **test** — RFPerm / DRPerm / CFPerm  
+6. **subset** — block LOCO → coordinate LOCO → driving meta-feature names  
+7. **report** — ρ_PO + top block + subset (`results/digest_*.json`)
 
-## Power argument
+## Modules
 
-```bash
-python power_meta_features.py --n-rep 20 --n-perm 40 --n-doc 20
-# writes results/power_meta.json and results/power_meta.md
-```
+| File | Role |
+| --- | --- |
+| `digest_pipeline.py` | **ready software** entrypoint |
+| `subset_localize.py` | localization → meta-feature subset |
+| `extract_features.py` | text meta only |
+| `feature_schema.py` | modality / block indices |
+| `perm_tests.py` | RFPerm / DRPerm / CFPerm |
+| `dgp_text.py` | text DGP catalog |
+| `extract_mm_features.py` | optional text+image meta (ModaSense) |
 
-Latest offline result (α=0.05):
+## Business read (subset)
 
-| scenario | baseline | meta | Δ |
-| --- | ---: | ---: | ---: |
-| null Type-I | 0.05 | 0.05 | controlled |
-| sentiment_shift power | 0.55 | **1.00** | **+0.45** |
-| syntax_shift power | 0.05 | **1.00** | **+0.95** |
-| entity / style | 1.00 | 1.00 | saturated (surface also sees it) |
-
-**Claim:** when the planted signal lives in linguistic/sentiment structure (VADER polarity, spaCy POS), meta-features raise power versus a surface baseline without blowing Type-I.
+After localization names e.g. `vader_sent`, subset LOCO returns the **meta-features that drive the sentiment shift** (names + indices)—actionable for routing, review, and feature ops.
