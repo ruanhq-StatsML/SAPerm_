@@ -13,6 +13,7 @@ Canonical writeup: [`unified_meta_power.tex`](unified_meta_power.tex)
 | `modasense_scientific_case.md` | **ModaSense专题**: RF/CF/MMD份额/ρ_PO/localization |
 | `digest_modasense_mm3_n500.md` | ModaSense digestion summary (schema + dims) |
 | `../docs/modasense_digestion.md` | ModaSense data-digestion logic |
+| `today_update_tables.tex` | **Today**: ModaSense joint tables + Digested insight (embed ⊈ everything) |
 | `mmd_modalities.py` | ready: arrays in → per-mod MMD out |
 | `realdata_po_power_crosscheck.md` | absorb / localize / residual table |
 
