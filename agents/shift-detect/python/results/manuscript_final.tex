@@ -84,14 +84,16 @@ not anonymous coordinates.
 \label{sec:fullpower}
 %% ------------------------------------------------------------------
 Outcome model: Random Forest throughout.
-Design: $B{=}100$, $N_{\mathrm{perm}}{=}150$, $n_{\mathrm{doc}}{=}80$.
-Scenarios: \texttt{random\_split} (Type-I), \texttt{concept\_drift}
-(same $P(X)$, new $Y\!\leftarrow$ image\_label), plus modality covariate
-windows (text / image / audio).
-Methods: RFPerm, DRPerm (PO-risk), RRPerm (R-risk), CFPerm (per modality),
-MMD$_X$/MMD$_{XY}$, C2ST$_X$/C2ST$_{XY}$, plus classic two-sample
-baselines on $X$ when available.
+Table~\ref{tab:modasense_power} is the manuscript-ready comparison
+($B{=}80$, $N_{\mathrm{perm}}{=}100$ on $[M_t,M_i]$; MMD share with audio).
+An extended all-methods sweep ($B{=}100$, $N_{\mathrm{perm}}{=}150$,
+including random-split / concept-drift) writes
+\texttt{benchmark\_all\_full.csv} and refreshes
+\texttt{full\_power\_modasense.tex} when complete.
 
+\input{modasense_power_comparison.tex}
+
+\subsection*{Extended sweep (when available)}
 \input{full_power_modasense.tex}
 
 \paragraph{Protocol.}

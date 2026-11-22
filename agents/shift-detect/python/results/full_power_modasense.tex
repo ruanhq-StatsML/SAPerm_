@@ -1,19 +1,10 @@
-% Auto-filled when benchmark_all_full.csv is ready.
-% Until then: placeholder pointing at the running B=100 experiment.
+% Extended all-methods table (optional). Primary manuscript table:
+%   modasense_power_comparison.tex
+% This file is overwritten when benchmark_all_full.csv lands.
 
-\noindent\textit{Status.}
-Full comparison ($B{=}100$, $N_{\mathrm{perm}}{=}150$, RF outcome) is
-running via \texttt{run\_benchmark\_all.py}.
-This file is overwritten by \texttt{fill\_full\_power\_chapter.py}
-once \texttt{benchmark\_all\_full.csv} lands.
-
-\begin{center}
-\begin{tabular}{lcccc}
-\toprule
-Scenario & RFPerm & DRPerm & RRPerm & note \\
-\midrule
-random\_split / concept\_drift / \ldots
-  & --- & --- & --- & pending full table \\
-\bottomrule
-\end{tabular}
-\end{center}
+\noindent\textit{Note.}
+Primary numbers for the paper are in Table~\ref{tab:modasense_power}
+(\texttt{modasense\_power\_comparison.tex}).
+The $B{=}100$ all-methods sweep (RF/DR/RR/CF/MMD/C2ST + classic,
+\texttt{random\_split}/\texttt{concept\_drift}) is optional and fills here
+when \texttt{benchmark\_all\_full.csv} is ready.
