@@ -1,0 +1,32 @@
+{
+  "note": "Partial aggregate from power_cross_modality.ckpt.npz while heldout finishes",
+  "B_by_scenario": {
+    "null_shift": 150,
+    "sentiment_meta": 150,
+    "syntax_meta": 150,
+    "train_vs_heldout": 30
+  },
+  "table": [
+    {
+      "scenario": "null_shift",
+      "rho_PO": 1.053,
+      "CF": {"embed_pca": 0.05, "meta": 0.07, "vader_sent": 0.04, "spacy_syntax": 0.09, "spacy_style": 0.04}
+    },
+    {
+      "scenario": "sentiment_meta",
+      "rho_PO": 0.249,
+      "CF": {"embed_pca": 0.01, "meta": 0.03, "vader_sent": 0.02, "spacy_syntax": 0.04, "spacy_style": 0.06}
+    },
+    {
+      "scenario": "syntax_meta",
+      "rho_PO": 0.194,
+      "CF": {"embed_pca": 0.16, "meta": 0.31, "vader_sent": 0.18, "spacy_syntax": 0.32, "spacy_style": 0.20}
+    },
+    {
+      "scenario": "train_vs_heldout",
+      "rho_PO": 0.99,
+      "CF": {"embed_pca": 0.97, "meta": 1.0, "vader_sent": 0.7, "spacy_syntax": 0.77, "spacy_style": 0.7},
+      "partial": true
+    }
+  ]
+}
