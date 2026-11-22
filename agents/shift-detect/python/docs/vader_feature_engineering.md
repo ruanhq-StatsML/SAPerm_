@@ -81,6 +81,13 @@ Digestion 后：
 | 与 spaCy 分 block | 情感 vs 句法/NER 可分开 localize，避免一锅粥 |
 | 不做领域重训 | 评测/归因要稳定；领域适配应作为**显式竞争方法**，不是默认可变 |
 
-## 5. 一句话
+## 5. Subset 不能替代 embedding
 
-VADER 特征工程的目的不是提高分类 accuracy，而是提供 **可检验、可命名的情感坐标**，从而在 data-digestion 之后同时支撑：**power increase**、**PO 交互证据**、**情感驱动 subset localization**。
+Driving subset（如 `compound/neg/polar_gap/neu`）是对**情感轴**的 summarization，不是 \(Z\) 的 span。  
+Heldout 上 \(\rho_{PO}\approx1\)、power\((Z)=1\) 说明 concept residual 仍在 embedding；  
+sentiment 上 \(\rho_{PO}\approx0.25\) 说明的是 \(Z{+}M\) **交互吸收**，前提仍是保留 \(Z\)。  
+完整论证见 [`embed_vs_vader_subset.md`](embed_vs_vader_subset.md)。
+
+## 6. 一句话
+
+VADER 特征工程的目的不是提高分类 accuracy，而是提供 **可检验、可命名的情感坐标**，从而在 data-digestion 之后同时支撑：**power increase**、**PO 交互证据**、**情感驱动 subset localization**——且始终 **on top of / alongside** embedding，而非替换它。
