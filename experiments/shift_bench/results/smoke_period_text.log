@@ -1,0 +1,8 @@
+<frozen runpy>:128: RuntimeWarning: 'experiments.shift_bench.run_benchmark_all' found in sys.modules after import of package 'experiments.shift_bench', but prior to execution of 'experiments.shift_bench.run_benchmark_all'; this may result in unpredictable behaviour
+[1/5] period_text/time_split  tau2=0.197  RF_p=0.062  DR_p=0.062  top_shap=p1_e3
+[2/5] period_text/time_split  tau2=0.188  RF_p=0.062  DR_p=0.062  top_shap=p0_e3
+[3/5] period_text/time_split  tau2=0.172  RF_p=0.062  DR_p=0.562  top_shap=p1_e3
+[4/5] period_text/time_split  tau2=0.186  RF_p=0.062  DR_p=0.062  top_shap=p0_e3
+[5/5] period_text/time_split  tau2=0.183  RF_p=0.062  DR_p=0.062  top_shap=p1_e3
+    dataset   scenario  B  tau2_mean  po_risk_mean  mmd2_mean  RFPerm_power  DRPerm_power  MMD_power
+period_text time_split  5      0.185         0.005       0.27           0.0           0.0        0.0

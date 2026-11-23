@@ -18,7 +18,12 @@ from sklearn.metrics import roc_auc_score
 
 from experiments.online_po_risk.active import STRATEGIES, select_window
 from experiments.online_po_risk.plot import plot_ood
-from experiments.online_po_risk.score import dr_scores, online_pfi, resample_indices
+from experiments.online_po_risk.score import (
+    dr_scores,
+    online_pfi,
+    online_po_shapley,
+    resample_indices,
+)
 from experiments.online_po_risk.stream import SIGNAL_IDX, linear_stream
 
 
@@ -176,6 +181,7 @@ def run_comparison(
     out.mkdir(parents=True, exist_ok=True)
     rows: list[dict] = []
     pfi_rows: list[dict] = []
+    shap_rows: list[dict] = []
     for scenario in ("concept", "covariate"):
         for s in range(seeds):
             seed = base_seed + 1000 * s + (0 if scenario == "concept" else 17)
@@ -195,17 +201,35 @@ def run_comparison(
                 )
             )
             if scenario == "concept":
-                for item in online_pfi(x, y, window=ref_n + budget, step=step, seed=seed, n_repeats=2, signal_idx=SIGNAL_IDX):
+                win = ref_n + budget
+                for item in online_pfi(
+                    x, y, window=win, step=step, seed=seed, n_repeats=2, signal_idx=SIGNAL_IDX
+                ):
                     item["seed"] = int(seed)
                     item["shifted"] = int(item["m"] > shift_at)
                     pfi_rows.append(item)
+                for item in online_po_shapley(
+                    x,
+                    y,
+                    window=win,
+                    step=step,
+                    seed=seed,
+                    signal_idx=SIGNAL_IDX,
+                    tau_kind="rf",
+                    n_perm=12,
+                ):
+                    item["seed"] = int(seed)
+                    item["shifted"] = int(item["m"] > shift_at)
+                    shap_rows.append(item)
             print(f"finished {scenario} seed {s + 1}/{seeds}", flush=True)
     curves = pd.DataFrame(rows)
     summary = summarize(curves, shift_at, pool_n)
     pfi = pd.DataFrame(pfi_rows)
+    shap = pd.DataFrame(shap_rows)
     curves.to_csv(out / "ood_curves.csv", index=False)
     summary.to_csv(out / "strategy_summary.csv", index=False)
     pfi.to_csv(out / "online_pfi.csv", index=False)
+    shap.to_csv(out / "online_po_shapley.csv", index=False)
     plot_ood(curves, out / "ood_strategies.png", shift_at)
     plot_ood(
         curves,
