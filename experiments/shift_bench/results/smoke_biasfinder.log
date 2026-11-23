@@ -1,0 +1,6 @@
+<frozen runpy>:128: RuntimeWarning: 'experiments.shift_bench.run_benchmark_all' found in sys.modules after import of package 'experiments.shift_bench', but prior to execution of 'experiments.shift_bench.run_benchmark_all'; this may result in unpredictable behaviour
+[1/3] biasfinder/train_vs_test  tau2=1.191  RF_p=0.062  DR_p=1.000  top_shap=pca_0
+[2/3] biasfinder/train_vs_test  tau2=0.191  RF_p=0.062  DR_p=1.000  top_shap=pca_9
+[3/3] biasfinder/train_vs_test  tau2=0.176  RF_p=0.062  DR_p=1.000  top_shap=pca_2
+   dataset      scenario  B  tau2_mean  po_risk_mean  mmd2_mean  RFPerm_power  DRPerm_power  MMD_power
+biasfinder train_vs_test  3       0.52           0.0      0.587           0.0           0.0        0.0

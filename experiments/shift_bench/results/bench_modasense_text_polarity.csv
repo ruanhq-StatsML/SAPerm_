@@ -1,0 +1,4 @@
+dataset,scenario,rep,seed,n_ref,n_new,p,RFPerm_p,RFPerm_reject,DRPerm_p,DRPerm_reject,MMD_p,MMD_reject,po_risk,power_loss,r_risk,mmd2,tau2,top_shap,top_rf,top_mmd,top_shap_is_driver,top_rf_is_driver,top_mmd_is_driver,driver_shap,noise_shap
+modasense,text_polarity,0,2026,60,60,50,0.0625,False,1.0,False,0.0625,False,0.0007067519201624727,0.9998000000000001,0.05016666666666667,0.13522046409322885,1.0,n_tokens,vader_neg,vader_compound,0,1,1,0.0,0.0
+modasense,text_polarity,1,2043,60,60,50,0.0625,False,1.0,False,0.0625,False,0.0010211625769260344,0.9998000000000001,0.02911458333333333,0.038309357774027664,1.0,n_tokens,vader_compound,vader_compound,0,1,1,0.0,0.0
+modasense,text_polarity,2,2060,60,60,50,0.0625,False,1.0,False,0.0625,False,0.0010318548587605473,0.9998000000000001,0.019625,0.10608315611691788,1.0,n_tokens,vader_neg,vader_compound,0,1,1,0.0,0.0

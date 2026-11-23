@@ -1,0 +1,2 @@
+dataset,scenario,B,tau2_mean,po_risk_mean,mmd2_mean,RFPerm_power,DRPerm_power,MMD_power
+period_text,time_split,5,0.18544062621941385,0.004692961784563238,0.26986009245873277,0.0,0.0,0.0
