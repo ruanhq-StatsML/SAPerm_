@@ -55,3 +55,10 @@ python -m experiments.shift_bench.run_benchmark_all --dataset biasfinder --legac
 | `embed_periods.py` | `discretize` → `embed` → `AlignHead` → `concat` 时间窗 |
 | `digest.py` | BiasFinder / ModaSense / OpenML / period_text |
 | `run_benchmark_all.py` | 唯一 main |
+
+
+## MSR-VTT / LCO-Omni digestion
+
+See [`docs/msrvtt-lco-digestion.md`](docs/msrvtt-lco-digestion.md).
+Full extractors live on branch `cursor/multimodal-higher-order-interaction-e93c`
+(`prepare_msrvtt_lco`, `msrvtt.build_msrvtt_style_batches`, `concatenate_modalities`).
