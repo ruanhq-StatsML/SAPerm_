@@ -18,35 +18,25 @@ Predictive SHAP attributes a fitted outcome model $f(X)$ to named
 covariates. We apply the same attribution to the doubly robust
 pseudo-outcome learner $\tau(X)$ that underlies online PO-risk.
 The OOD score remains $\mathbb{E}[\tau(X)^2]$; Shapley values of
-$\tau$ name which coordinates drive that score. On a pure concept
-shift---where $P(X)$ is fixed and only $Y\mid X$ moves---RF-domain
-importance and MMD-LOCO stay near noise, while PO-risk Shapley
-recovers the signal axes. The procedure is the predictive pipeline
-with the target replaced by the DR residual.
+$\tau$ name which coordinates drive that score.
+On $B{=}20$ linear streams, a pure concept shift lights PO-risk Shapley
+(driver hit rate $1.00$) while RF-domain / MMD stay near chance; a pure
+covariate shift does the opposite (RF / MMD hit rate $1.00$ on the
+shifted coordinate). Same engine as predictive SHAP; only the supervised
+target is the DR residual.
 \end{abstract}
 
 \section{From predictive SHAP to PO-risk SHAP}
 
-In the predictive setting one fits $f$ for $\mathbb{E}[Y\mid X]$ (or a
-classifier score) and reports
-\[
-\phi_j(x)
-=
-\sum_{S\subseteq\{1,\ldots,p\}\setminus\{j\}}
-\frac{|S|!\,(p-|S|-1)!}{p!}
-\Bigl(
-  f_{S\cup\{j\}}(x)-f_S(x)
-\Bigr),
-\]
-with global importance $\overline{\phi}_j=\mathbb{E}_x|\phi_j(x)|$.
-That construction does not depend on $Y$ being a label: it only needs a
-fitted map $x\mapsto \widehat{g}(x)$.
+In the predictive setting one fits $f$ for $\mathbb{E}[Y\mid X]$ and
+reports Shapley values $\phi_j(x)$ of $f$, with global importance
+$\overline{\phi}_j=\mathbb{E}_x|\phi_j(x)|$. That construction needs
+only a fitted map $x\mapsto\widehat{g}(x)$.
 
 Online PO-risk uses a different map. With batch indicator
 $T\in\{0,1\}$ (reference vs.\ queried window), fit nuisances
 $\mu_t(x)=\widehat{\mathbb{E}}[Y\mid X=x,T=t]$ and
-$e(x)=\widehat{\mathbb{P}}(T=1\mid X=x)$, form the DR
-pseudo-outcome
+$e(x)=\widehat{\mathbb{P}}(T=1\mid X=x)$, form
 \begin{equation}
 \label{eq:phi}
 \phi
@@ -55,32 +45,15 @@ pseudo-outcome
 +(\mu_1(X)-\mu_0(X)),
 \end{equation}
 and regress $\tau(X)\approx\phi$. The scalar OOD score is
-\begin{equation}
-\label{eq:tau2}
-\mathrm{PO\text{-}score}
-=
-\mathbb{E}\bigl[\tau(X)^2\bigr],
-\qquad
-\mathrm{PO\text{-}risk}
-=
-\mathbb{E}\bigl[(\phi-\tau(X))^2\bigr].
-\end{equation}
-A concept shift that changes $Y\mid X$ across batches inflates
-$\tau$; a pure covariate shift that is absorbed into $e$ and $\mu$
-need not. Attribution therefore targets $\tau$, not a domain
-classifier on $X$ alone.
+$\mathbb{E}[\tau(X)^2]$; PO-risk is $\mathbb{E}[(\phi-\tau(X))^2]$.
 
 \paragraph{Translation rule.}
-Replace the predictive model $f$ by the pseudo-outcome model $\tau$.
-Keep the same Shapley engine: LinearSHAP when $\tau$ is ridge,
-TreeSHAP when $\tau$ is a random forest. Global OOD importance is
-$\overline{\phi}_j=\mathbb{E}|\mathrm{SHAP}_j(\tau;x)|$.
-No new identification theory is required; what changes is the
-\emph{estimand} the model approximates.
+Replace $f$ by $\tau$. Keep LinearSHAP (ridge) or TreeSHAP (RF).
+Global OOD importance is $\overline{\phi}_j=\mathbb{E}|\mathrm{SHAP}_j(\tau;x)|$.
+Residual-permutation VIMP (permute coordinate $j$, measure the rise in
+PO-risk) is a second view of the same object.
 
-\section{Why this separates concept from covariate}
-
-Three attributions answer three questions.
+\section{Trichotomy}
 
 \begin{center}
 \begin{tabular}{lll}
@@ -94,95 +67,139 @@ Online $\tau^2$ score & scalar alarm & either, after nuisances \\
 \end{tabular}
 \end{center}
 
-\vspace{0.5em}
-\noindent
-If only $P(X)$ moves, domain classifiers and MMD light up; $\tau$ can
-stay small when the outcome regression absorbs the shift. If only
-$Y\mid X$ moves, $P(X)$-based tools are blind by construction, while
-$\phi$ in~\eqref{eq:phi} carries a nonzero batch effect and $\tau$
-fits it. Shapley on $\tau$ then ranks the coordinates that generate
-that effect---the same ranking predictive SHAP would give if the
-``label'' were the DR residual.
+\section{Design}
 
-Residual-permutation VIMP (permute coordinate $j$, refit-free
-predict of $\tau$, measure the rise in PO-risk) is a second view of
-the same object. Empirically it agrees with Shapley on the signal
-set; Shapley is the local, additive explanation, VIMP the risk-drop
-summary.
+Stream $Y=X_{\mathrm{sig}}\beta+\varepsilon$, $p{=}8$, $n{=}280$,
+change at $t{=}140$, $B{=}20$ seeds.
+\texttt{concept}: drop $\beta$ on $\{2,3\}$ after the change ($P(X)$ fixed).
+\texttt{covariate}: add a constant to $x_0$ ($Y\mid X$ fixed).
+Each seed: one pre window (two halves of the burn-in) and one post
+window (burn-in vs.\ post-shift block of size $50$).
+$\tau\in\{\mathrm{RF},\mathrm{ridge}\}$, $N_{\mathrm{perm}}{=}15$.
+Sliding windows: $w{=}60$, step $20$, RF $\tau$.
+Code: \texttt{python -m experiments.online\_po\_risk.run\_po\_shapley --seeds 20}.
 
-\section{Online window}
+\section{Results}
 
-Fix a sliding window of length $w$. Split it into a reference half
-($T=0$) and a query half ($T=1$), fit~\eqref{eq:phi}--\eqref{eq:tau2},
-and compute $\overline{\phi}_j$. Before a concept change the two
-halves share a law, so $\tau\approx 0$ and Shapley mass is diffuse.
-After the change the query half carries the new $Y\mid X$; signal
-coordinates dominate $\overline{\phi}$. This is the online analogue of
-a single predictive SHAP call on a held-out batch.
-
-Implementation: \texttt{experiments/online\_po\_risk/score.py}
-(\texttt{fit\_dr\_tau}, \texttt{tau\_shapley\_importance},
-\texttt{ood\_vimp}, \texttt{online\_po\_shapley}).
-\texttt{run\_comparison} writes \texttt{online\_po\_shapley.csv}
-beside the existing outcome PFI trace.
-
-\section{Evidence (linear concept stream)}
-
-Stream: $Y=X_{\mathrm{sig}}\beta+\varepsilon$, $p{=}8$, signal set
-$\{2,3\}$. After the change point, $\beta$ on $\{2,3\}$ drops by one;
-$P(X)$ is untouched. One post-shift ref/new window
-($n_{\mathrm{ref}}{=}n_{\mathrm{new}}{=}50$, RF $\tau$, TreeSHAP):
+\subsection{Window-level recovery}
 
 \begin{table}[ht]
 \centering
-\caption{Three-way OOD attribution after a pure concept shift.
-PO-risk Shapley and residual-permutation VIMP recover the signal;
-RF-domain and MMD-LOCO do not.}
-\label{tab:threeway}
-\begin{tabular}{lrrrrc}
+\caption{$B{=}20$. Driver hit rate $=$ fraction of seeds where
+$\arg\max_j$ lands in the designed driver set
+($\{2,3\}$ for concept, $\{0\}$ for covariate).
+Mean driver vs.\ noise mass for each attribution.}
+\label{tab:window}
+\scriptsize
+\begin{tabular}{ll l ccc cc cc}
 \toprule
-Feature & PO Shapley & PO VIMP & RF-domain & MMD-LOCO & Signal \\
+Scenario & Phase & $\tau$
+& \multicolumn{3}{c}{top hit rate}
+& \multicolumn{2}{c}{Shapley}
+& \multicolumn{2}{c}{RF-domain} \\
+\cmidrule(lr){4-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}
+& & & Shap & RF & MMD & driver & noise & driver & noise \\
 \midrule
-$x_0$ & 0.06 & 0.17 & 0.06 & $-0.00$ & \\
-$x_1$ & 0.12 & 0.21 & 0.14 & $0.00$ & \\
-$x_2$ & \textbf{0.54} & \textbf{1.59} & 0.09 & $-0.00$ & yes \\
-$x_3$ & \textbf{0.50} & \textbf{1.24} & 0.09 & $0.00$ & yes \\
-$x_4$ & 0.05 & 0.17 & 0.16 & $-0.00$ & \\
-$x_5$ & 0.05 & 0.18 & 0.13 & $-0.00$ & \\
-$x_6$ & 0.20 & 0.31 & 0.15 & $0.00$ & \\
-$x_7$ & 0.11 & 0.26 & 0.17 & $0.00$ & \\
+concept & pre  & RF    & .20 & .20 & .05 & .10 & .12 & .13 & .13 \\
+concept & post & RF    & \textbf{1.00} & .35 & .05 & \textbf{.65} & .12 & .13 & .12 \\
+concept & pre  & ridge & .20 & .20 & .05 & .14 & .16 & .13 & .13 \\
+concept & post & ridge & \textbf{1.00} & .35 & .05 & \textbf{.91} & .15 & .13 & .12 \\
+\midrule
+covariate & pre  & RF    & .10 & .10 & .45 & .12 & .12 & .12 & .13 \\
+covariate & post & RF    & .20 & \textbf{1.00} & \textbf{1.00} & .14 & .12 & \textbf{.37} & .09 \\
+covariate & pre  & ridge & .20 & .10 & .45 & .20 & .17 & .12 & .13 \\
+covariate & post & ridge & .20 & \textbf{1.00} & \textbf{1.00} & .24 & .19 & \textbf{.37} & .09 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Sliding windows ($w{=}60$, four seeds): mean signal Shapley rises from
-$0.11$ (pre) to $0.22$ (post), while noise stays near $0.11$; the rate
-that $\arg\max_j\overline{\phi}_j$ lands in $\{2,3\}$ doubles
-($0.25\to 0.50$). Ridge LinearSHAP on the same window also ranks
-$x_2$ first. The pattern matches the predictive case: when the fitted
-object carries the scientific signal, Shapley recovers it; when the
-object is a domain classifier on $X$, it cannot see a concept shift.
+Post-concept $\tau^2$ rises from $0.41$ to $2.63$ (RF) / $4.29$ (ridge);
+post-covariate $\tau^2$ stays near $0.5$. The alarm and the Shapley
+localization move together on concept drift; on covariate drift the
+alarm is quiet and $P(X)$-tools take the localization.
+
+\subsection{Feature-level means (post, RF $\tau$)}
+
+\begin{table}[ht]
+\centering
+\caption{Mean attribution across $B{=}20$ post windows (RF $\tau$).
+Concept: Shapley / VIMP peak on $\{x_2,x_3\}$.
+Covariate: RF-domain / MMD peak on $x_0$.}
+\label{tab:feat}
+\scriptsize
+\begin{tabular}{l rrrr c | l rrrr c}
+\toprule
+\multicolumn{6}{c|}{concept} & \multicolumn{6}{c}{covariate} \\
+\cmidrule(lr){1-6}\cmidrule(lr){7-12}
+Feat & Shap & VIMP & RF & MMD & drv
+& Feat & Shap & VIMP & RF & MMD & drv \\
+\midrule
+$x_0$ & .11 & .27 & .12 & .00 &
+& $x_0$ & .14 & .33 & \textbf{.37} & \textbf{.05} & yes \\
+$x_1$ & .16 & .37 & .11 & .00 &
+& $x_1$ & .10 & .28 & .10 & $-$.01 & \\
+$x_2$ & \textbf{.62} & \textbf{1.93} & .13 & .00 & yes
+& $x_2$ & .11 & .27 & .09 & $-$.01 & \\
+$x_3$ & \textbf{.67} & \textbf{2.27} & .13 & .00 & yes
+& $x_3$ & .12 & .28 & .09 & $-$.01 & \\
+$x_4$ & .09 & .26 & .13 & .00 &
+& $x_4$ & .10 & .26 & .09 & $-$.01 & \\
+$x_5$ & .13 & .32 & .13 & .00 &
+& $x_5$ & .12 & .33 & .09 & $-$.01 & \\
+$x_6$ & .09 & .26 & .12 & .00 &
+& $x_6$ & .13 & .32 & .08 & $-$.01 & \\
+$x_7$ & .11 & .27 & .13 & .00 &
+& $x_7$ & .15 & .35 & .09 & $-$.01 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Sliding windows}
+
+\begin{table}[ht]
+\centering
+\caption{Online Shapley of $\tau$ (RF), $w{=}60$, step $20$, $B{=}20$.
+After a concept change, mean driver Shapley rises and the top-1 driver
+rate nearly doubles; covariate windows stay flat on Shapley while the
+fixed-window RF/MMD analysis above already localizes $x_0$.}
+\label{tab:slide}
+\begin{tabular}{ll cccc}
+\toprule
+Scenario & Phase & top-driver rate & driver Shap & noise Shap & $\tau^2$ \\
+\midrule
+concept & pre  & .26 & .11 & .12 & .44 \\
+concept & post & \textbf{.44} & \textbf{.20} & .12 & \textbf{.74} \\
+covariate & pre  & .12 & .11 & .12 & .44 \\
+covariate & post & .10 & .12 & .11 & .47 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Operational reading}
 
 \begin{enumerate}
-\item \textbf{Alarm.} Watch $\mathbb{E}[\tau(X)^2]$ (and its
-  active-sampling paths) for a rejectable rise.
-\item \textbf{Localize.} On a rejecting window, read
-  $\overline{\phi}_j$ of $\tau$. Those coordinates are the concept
-  drivers under the current nuisances.
-\item \textbf{Cross-check.} If RF-domain / MMD also spike, the window
-  mixes covariate mass; do not claim a pure concept mechanism.
-\item \textbf{Act.} The Shapley list is the same kind of executable
-  ranking predictive SHAP already provided for $f(X)$---only the
-  supervised target is the DR residual.
+\item Alarm on $\mathbb{E}[\tau^2]$.
+\item On a rejecting window, read $\overline{\phi}_j$ of $\tau$ for
+  concept drivers.
+\item If RF-domain / MMD also spike, the window mixes covariate mass;
+  do not claim a pure concept mechanism.
+\item The ranking is the same deliverable predictive SHAP already
+  gave for $f(X)$---only the label is the DR residual.
 \end{enumerate}
+
+\section*{Artifacts}
+\texttt{po\_shapley\_window.csv},
+\texttt{po\_shapley\_window\_summary.csv},
+\texttt{po\_shapley\_feature\_means.csv},
+\texttt{online\_po\_shapley.csv},
+\texttt{online\_po\_shapley\_summary.csv}
+under \texttt{experiments/online\_po\_risk/results/}.
 
 \section*{Takeaway}
 PO-risk $+$ Shapley is predictive SHAP with the label replaced by the
-doubly robust batch residual. Detection stays on $\tau^2$;
-interpretation stays on SHAP of $\tau$. On concept drift that is
-exactly where the signal lives, and where $P(X)$-only tools are
-silent.
+DR batch residual. Detection stays on $\tau^2$; interpretation stays
+on SHAP of $\tau$. Concept drift is exactly where that pair works and
+where $P(X)$-only tools are silent; covariate drift is the complementary
+case.
 
 \end{document}
