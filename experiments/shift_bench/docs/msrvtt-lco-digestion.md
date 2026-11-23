@@ -1,18 +1,9 @@
-# MSR-VTT / LCO digestion
+# MSR-VTT / LCO digestion (Python)
 
 ```
-video_id (unique)
-  → LCO Omni encode once each: text / audio / video
-  → PCA band per modality (top30 | pc31–100)
-  → hstack [text | audio | video]   # modality_indices
-  → Digested (X, y, T)
+modalities = {text, audio, video}   # LCO Omni, once each
+digest_concat(...)                  # PCA band → hstack
+digest_aligned(...)                 # AlignHead → hstack
 ```
 
-No CLIP/WavLM mean-pool. No cross-modal fusion beyond concat.
-
-```bash
-python -m experiments.multimodal_attribution.prepare_msrvtt_lco --max-rows 700
-```
-
-Code: `prepare_msrvtt_lco` → `concatenate_modalities`  
-(`cursor/multimodal-higher-order-interaction-e93c`)
+Code: `experiments/shift_bench/digest_mm.py`
