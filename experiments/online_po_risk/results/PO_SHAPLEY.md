@@ -4,6 +4,9 @@ Same idea as predictive SHAP, applied to the DR pseudo-outcome model
 `tau(X) ≈ φ`. The online OOD score is `mean(tau²)`; Shapley of `tau`
 names which covariates drive that score.
 
+**LaTeX writeup:** [`po_risk_shapley.tex`](po_risk_shapley.tex)
+(argument + Table~1 three-way smoke).
+
 ## API (`experiments.online_po_risk.score`)
 
 - `fit_dr_tau` — nuisances + `tau` (`ridge` or `rf`)
