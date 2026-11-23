@@ -41,6 +41,8 @@ def digest(
     n_periods: int = 4,
     backend: str = "hashing",
     dim: int = 64,
+    align: bool = True,
+    align_dim: int = 32,
     split_at: float | None = None,
 ) -> Digested:
     """Return one ref/new window.
@@ -58,6 +60,9 @@ def digest(
             n_periods=n_periods,
             backend=backend,
             dim=dim,
+            align=align,
+            align_dim=align_dim,
+            seed=seed,
         )
         y = np.asarray(y, dtype=float).reshape(-1)
         # split by time: early periods = ref, late = new (no modality alignment)
@@ -78,7 +83,13 @@ def digest(
             y1=y[b],
             names=names,
             drivers=[],
-            extras={"period_ids": period_ids, "n_periods": n_periods, "backend": backend},
+            extras={
+                "period_ids": period_ids,
+                "n_periods": n_periods,
+                "backend": backend,
+                "align": align,
+                "align_dim": align_dim,
+            },
         )
 
     # Real tabular / BiasFinder / ModaSense — reuse online_po_risk.real_data

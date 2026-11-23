@@ -80,6 +80,8 @@ def run(
     n_periods: int = 4,
     backend: str = "hashing",
     dim: int = 32,
+    align: bool = True,
+    align_dim: int = 32,
     out_dir: Path | None = None,
 ) -> pd.DataFrame:
     out_dir = Path(out_dir) if out_dir is not None else OUT
@@ -101,6 +103,8 @@ def run(
                 n_periods=n_periods,
                 backend=backend,
                 dim=dim,
+                align=align,
+                align_dim=align_dim,
             )
         else:
             dig = digest(dataset, scenario, seed=s, n_ref=n_ref, n_new=n_new)
@@ -186,6 +190,8 @@ def main(argv=None) -> int:
     p.add_argument("--n-periods", type=int, default=4)
     p.add_argument("--backend", default="hashing", choices=["hashing", "llama3", "omni3"])
     p.add_argument("--dim", type=int, default=32)
+    p.add_argument("--align-dim", type=int, default=32, help="AlignHead output dim before concat")
+    p.add_argument("--no-align", action="store_true", help="Skip AlignHead (raw concat)")
     p.add_argument("--out-dir", type=Path, default=None)
     args = p.parse_args(argv)
     run(
@@ -201,6 +207,8 @@ def main(argv=None) -> int:
         n_periods=args.n_periods,
         backend=args.backend,
         dim=args.dim,
+        align=not args.no_align,
+        align_dim=args.align_dim,
         out_dir=args.out_dir,
     )
     return 0
