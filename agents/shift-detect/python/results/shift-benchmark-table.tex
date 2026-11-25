@@ -1,0 +1,142 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.7in]{geometry}
+\usepackage{booktabs,amsmath,graphicx}
+\usepackage[T1]{fontenc}
+
+\title{ModaSense joint power comparison\\
+{\large all five windows, $B{=}100$}}
+\author{SAPerm shift-detect}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+ModaSense/emotion all-methods sweep
+($B{=}100$, $N_{\mathrm{perm}}{=}150$,
+Random Forest outcome, $n_{\mathrm{doc}}{=}80$, $\alpha{=}0.05$).
+Entries are empirical rejection rates unless noted.
+$\rho_{\mathrm{PO}}=\mathrm{PO}(X)/\mathrm{PO}(M_t)$;
+$\pi$ is the mean MMD share on z-scored text/image/audio blocks.
+SKK raised \texttt{LinAlgError} on every replicate and is omitted.
+\end{abstract}
+
+\begin{table*}[ht]
+\centering
+\caption{ModaSense joint power ($B{=}100$).
+Random split is the Type-I check.
+Concept drift keeps $P(X)$ and replaces the new-batch label with
+\texttt{image\_label}.
+Text / image / audio windows are covariate splits on the named meta channel.
+Miles $=$ random-projection test on $X$.}
+\label{tab:modasense_power}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccccccccc}
+\toprule
+Scenario
+& $\pi_{T/I/A}$
+& RF
+& DR
+& RR
+& MMD$_X$
+& MMD$_{XY}$
+& C2ST$_X$
+& C2ST$_{XY}$
+& CF$_T$
+& CF$_I$
+& CF$_A$
+& kMMD
+& Miles
+& $\rho_{\mathrm{PO}}$ \\
+\midrule
+Random split
+& $.34/.34/.32$
+& $.05$ & $.06$ & $.05$
+& $.07$ & $.06$
+& $.04$ & $.01$
+& $.04$ & $.08$ & $.06$
+& $.04$ & $.06$
+& $3.75$ \\
+Concept drift
+& $.33/.33/.34$
+& $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{1.00}$
+& $.01$ & $.06$
+& $.02$ & $.02$
+& $.00$ & $.79$ & $.70$
+& $.05$ & $.05$
+& $0.91$ \\
+Text sentiment
+& $\mathbf{.91}/.03/.06$
+& $\mathbf{1.00}$ & $.02$ & $\mathbf{1.00}$
+& $\mathbf{1.00}$ & $\mathbf{1.00}$
+& $\mathbf{1.00}$ & $\mathbf{1.00}$
+& $\mathbf{1.00}$ & $.49$ & $.44$
+& $\mathbf{1.00}$ & $\mathbf{1.00}$
+& $3.95$ \\
+Image brightness
+& $.03/\mathbf{.95}/.02$
+& $.03$ & $.00$ & $.00$
+& $\mathbf{1.00}$ & $\mathbf{1.00}$
+& $\mathbf{1.00}$ & $\mathbf{1.00}$
+& $.00$ & $.03$ & $.01$
+& $.05$ & $\mathbf{1.00}$
+& $0.84$ \\
+Audio energy
+& $.02/.03/\mathbf{.95}$
+& $.00$ & $.00$ & $.00$
+& $\mathbf{1.00}$ & $\mathbf{1.00}$
+& $\mathbf{1.00}$ & $\mathbf{1.00}$
+& $.00$ & $.04$ & $.07$
+& $.39$ & $\mathbf{1.00}$
+& $0.55$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\begin{table}[ht]
+\centering
+\caption{Classic mean tests on $X$ (same $B{=}100$ replicates).
+Chen--Qin rejects every replicate, including the random split.
+Xu, Bai--Saranadasa, and Srivastava stay near $\alpha$ on every window,
+including the three covariate shifts.}
+\label{tab:modasense_classic}
+\begin{tabular}{lcccc}
+\toprule
+Scenario & Chen--Qin & Xu adaptive & Bai--Saranadasa & Srivastava \\
+\midrule
+Random split     & $1.00$ & $.08$ & $.06$ & $.07$ \\
+Concept drift    & $1.00$ & $.07$ & $.04$ & $.06$ \\
+Text sentiment   & $1.00$ & $.07$ & $.02$ & $.01$ \\
+Image brightness & $1.00$ & $.02$ & $.01$ & $.02$ \\
+Audio energy     & $1.00$ & $.08$ & $.06$ & $.05$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Statistical reading}
+\begin{itemize}
+  \item \textbf{Type-I.} On a random split, RF/DR/RR, MMD, C2ST, CFPerm,
+        kernel MMD, and Miles sit near $\alpha{=}0.05$. Chen--Qin does not.
+  \item \textbf{Concept drift is an outcome shift.}
+        $P(X)$ tests stay near $\alpha$ ($\pi$ flat, MMD$_X{=}0.01$),
+        while RF/DR/RR power is $1$. CFPerm misses text
+        (image $.79$, audio $.70$, text $.00$).
+        $\rho_{\mathrm{PO}}{\approx}0.91$ is residual, not absorb.
+  \item \textbf{Text sentiment is a detectable covariate on the copy channel.}
+        $\pi_{\mathrm{text}}{=}0.91$. Two-sample tests on $X$ and $(X,Y)$
+        and CF$_{\mathrm{text}}$ all have power $1$.
+        DRPerm power is $.02$: the VADER block absorbs the batch effect
+        out of the residual outcome. $\rho_{\mathrm{PO}}{>}1$ is not absorption.
+  \item \textbf{Image / audio are silent covariates for PO / CF.}
+        $\pi$ concentrates on the designed channel ($.95$), and permutation
+        MMD, C2ST, and Miles have power $1$, but RF/DR/RR and every CFPerm
+        block stay at $\alpha$. The channel moves; it does not become a
+        rejectable outcome or block-localization event.
+        Kernel MMD is $.05$ on image and $.39$ on audio.
+  \item \textbf{Coordinate-wise mean tests} (Xu, Bai, Srivastava) miss every
+        covariate window. Chen--Qin alarms everywhere, including the null.
+\end{itemize}
+
+\end{document}

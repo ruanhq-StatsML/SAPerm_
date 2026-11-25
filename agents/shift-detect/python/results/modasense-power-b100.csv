@@ -1,0 +1,6 @@
+dataset,scenario,RFPerm_power,DRPerm_power,RRPerm_power,MMD_X_power,MMD_XY_power,C2ST_X_power,C2ST_XY_power,CF_text_power,CF_image_power,CF_audio_power,kernel_MMD_power,chen_qin_power,adaptive_test_high_dim_power,bai96_test_power,sri08_test_power,skk_test_power,random_projection_test_power,classic_c2st_XY_power,rho_po_mean,pi_text,pi_image,pi_audio,B
+modasense_emotion,random_split,0.05,0.06,0.05,0.07,0.06,0.04,0.01,0.04,0.08,0.06,0.04,1.0,0.08,0.06,0.07,0.0,0.06,0.03,3.7526152428729893,0.3395038670427186,0.3370947668790249,0.32340136605440056,100
+modasense_emotion,concept_drift,1.0,1.0,1.0,0.01,0.06,0.02,0.02,0.0,0.79,0.7,0.05,1.0,0.07,0.04,0.06,0.0,0.05,0.06,0.9068523404314065,0.3297868897505748,0.3307848596922792,0.3394282505333009,100
+modasense_emotion,text_sentiment_shift,1.0,0.02,1.0,1.0,1.0,1.0,1.0,1.0,0.49,0.44,1.0,1.0,0.07,0.02,0.01,0.0,1.0,1.0,3.9482031209183974,0.9114460059562037,0.033569591427030844,0.05498440261396196,100
+modasense_emotion,image_brightness_shift,0.03,0.0,0.0,1.0,1.0,1.0,1.0,0.0,0.03,0.01,0.05,1.0,0.02,0.01,0.02,0.0,1.0,1.0,0.8448324527697721,0.030005317358686803,0.9475923640845656,0.0224023185550878,100
+modasense_emotion,audio_energy_shift,0.0,0.0,0.0,1.0,1.0,1.0,1.0,0.0,0.04,0.07,0.39,1.0,0.08,0.06,0.05,0.0,1.0,1.0,0.5515865879723277,0.02030485034887599,0.025930182036186415,0.9537649676131815,100
