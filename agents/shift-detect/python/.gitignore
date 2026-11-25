@@ -1,0 +1,5 @@
+results/*.npz
+results/*.log
+results/*.ckpt.npz
+results/*_cache_*.npz
+__pycache__/

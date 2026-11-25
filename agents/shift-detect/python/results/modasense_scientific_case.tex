@@ -1,0 +1,59 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,amsmath,amssymb,enumitem}
+\usepackage[T1]{fontenc}
+
+\title{ModaSense Case Study:\\
+RFPerm, CFPerm, MMD Share, $\rho_{\mathrm{PO}}$, and Localization}
+\author{SAPerm shift-detect}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+On ModaSense/emotion we report four quantities jointly:
+RFPerm power, CFPerm block power, modality MMD share
+$\pi_m=\mathrm{MMD}_m/\sum_{m'}\mathrm{MMD}_{m'}$, and
+$\rho_{\mathrm{PO}}=\mathrm{PO}([M_t,M_i])/\mathrm{PO}(M_t)$,
+plus carrier/LOCO localization when supported by CF.
+Numbers are from $B{=}80$ power runs and $B{=}50$ MMD sweeps; we do not
+upgrade weak CF/audio evidence into strong claims.
+\end{abstract}
+
+\section{Joint table}
+\begin{center}
+\begin{tabular}{lccccc}
+\toprule
+Scenario & $\pi_{t/i/a}$ & RF $t\!\to\!$MM & CF $t/i$ & $\rho_{\mathrm{PO}}$ & Read \\
+\midrule
+null & $.35/.34/.31$ & $.01\!\to\!.01$ & $.03/.06$ & $2.14$ & baseline \\
+text sentiment & $\mathbf{.91}/.03/.06$ & $\mathbf{1\!\to\!1}$ & $\mathbf{1.00}/.54$ & $1.95$ & detect+localize text \\
+image brightness & $.03/\mathbf{.95}/.02$ & $.00\!\to\!.05$ & $.00/.01$ & $\mathbf{0.62}$ & high MMD, absorb, no power \\
+audio energy & $.02/.02/\mathbf{.95}$ & $\approx 0$ & CF audio$\approx 0$ & $\sim 1.06$ & MMD-only so far \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Findings}
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Text window closes the chain.}
+        $\pi_{\mathrm{text}}{=}0.91$, RFPerm${=}1$, CFPerm text${=}1$,
+        subset $=\{\texttt{vader\_neg},\texttt{compound},\texttt{pos},
+        \texttt{polar\_gap},\texttt{neu}\}$, $\rho{=}1.95$
+        (saturated detect, not absorb).
+  \item \textbf{Image window: silent absorb.}
+        $\pi_{\mathrm{image}}{=}0.95$ and $\rho{=}0.62$, but RF/CF near $\alpha$.
+        MMD/$\rho_{\mathrm{PO}}$ track a covariate channel; they are not
+        substitutes for rejection power or block localization.
+  \item \textbf{Audio window incomplete.}
+        $\pi_{\mathrm{audio}}{=}0.95$ only; RF/CF/$\rho$ do not yet close.
+        No localization claim.
+  \item \textbf{Protocol.}
+        Declare a modality as the driver only when MMD share, RFPerm,
+        CFPerm, and (when relevant) $\rho_{\mathrm{PO}}$ agree; otherwise
+        report the split explicitly.
+\end{enumerate}
+
+\end{document}

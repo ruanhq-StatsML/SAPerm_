@@ -1,0 +1,143 @@
+\begin{table*}[ht]
+\centering
+\caption{Joint characterization of distribution shifts across
+feature representations and modalities.}
+\label{tab:joint_shift_analysis}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lcccccll}
+\toprule
+Scenario
+& MMD Share
+& Detection
+& DRPerm
+& CFPerm
+& $\rho_{\mathrm{PO}}$
+& Block-level CFPerm
+& Feature Localization \\
+& $(T/I/A)$
+& Base $\to$ Rich
+& Base $\to$ Rich
+& Base $\to$ Rich
+& & & \\
+\midrule
+
+\multicolumn{8}{l}{\textbf{Panel A: Feature-only Covariate Shifts}} \\
+\midrule
+
+Null
+& -- & $.05\to.05$ & -- & -- & -- & -- & -- \\
+
+Sentiment
+& -- & $.40$--$.55\to1.00$ & -- & -- & --
+& -- & Sentiment polarity \\
+
+Syntax
+& -- & $.05$--$.10\to1.00$ & -- & -- & --
+& -- & POS, verb/noun ratio \\
+
+Entity/Style
+& -- & $1.00\to1.00$ & -- & -- & --
+& -- & NER, style \\
+
+\midrule
+\multicolumn{8}{l}{\textbf{Panel B: BiasFinder --- Embedding vs. Embedding + Meta}} \\
+\midrule
+
+Null
+& --
+& $.03\to.03$
+& $.07\to.07$
+& $.03\to.06$
+& $1.07$
+& $.05/.07/.04/.09/.04$
+& -- \\
+
+Sentiment
+& --
+& $.02\to.08$
+& $.00\to.00$
+& $.02\to.03$
+& $\mathbf{0.25}$
+& $.01/.03/.02/.04/.06$
+& Compound, negative, polarity gap, neutral \\
+
+Syntax (hard)
+& --
+& $\Delta=-.04$
+& --
+& $\Delta=+.09$
+& $\mathbf{0.19}$
+& $.16/.31/.18/\mathbf{.32}/.20$
+& Verb/noun ratio, POS frequencies \\
+
+Held-out
+& --
+& $1.00\to1.00$
+& $1.00\to1.00$
+& $.77\to\mathbf{.99}$
+& $1.03$
+& $.96/\mathbf{.99}/.62/.67/.73$
+& Multiple linguistic blocks \\
+
+\midrule
+\multicolumn{8}{l}{\textbf{Panel C: ModaSense --- Multimodal Shift Localization}} \\
+\midrule
+
+Null
+& $.35/.34/.31$
+& $.01\to.01$
+& --
+& --
+& $2.14$
+& $T=.03,\ I=.06$
+& -- \\
+
+Text sentiment
+& $\mathbf{.91}/.03/.06$
+& $1.00\to1.00$
+& --
+& --
+& $1.95$
+& $\mathbf{T=1.00},\ I=.54$
+& Negative, compound, polarity gap \\
+
+Image brightness
+& $.03/\mathbf{.95}/.02$
+& $.00\to.05$
+& --
+& --
+& $\mathbf{0.62}$
+& $T=.00,\ I=.01$
+& Brightness, contrast, hue, saturation$^\dagger$ \\
+
+Audio energy
+& $.02/.02/\mathbf{.95}$
+& $\approx0$
+& --
+& --
+& $\sim1.06$
+& $A\approx0$
+& -- \\
+
+\bottomrule
+\end{tabular}
+}
+
+\vspace{3pt}
+\begin{minipage}{\textwidth}
+\footnotesize
+\textit{Notes:}
+In Panel B, block-level CFPerm rejection rates are reported
+in the order of embedding, meta-features, sentiment,
+syntax, and style. Base-to-rich CFPerm comparisons refer
+to the trailing-PCA reference block and the meta-feature
+block, respectively.
+In Panel C, $T$, $I$, and $A$ denote text, image, and audio.
+The PO-risk ratio compares text--image with text-only
+representations.
+$^\dagger$Descriptive feature ranking without strong
+CFPerm evidence.
+Feature localization uses the packaged CFPerm LOCO $\to$
+\texttt{subset\_localize} pipeline (block then coordinate subset).
+\end{minipage}
+\end{table*}

@@ -1,0 +1,96 @@
+{
+  "source": [
+    "power_embed_meta_full.json",
+    "power_embed_meta_syntax.json"
+  ],
+  "signatures": [
+    {
+      "scenario": "null_shift",
+      "power_embed": {
+        "RFPerm": 0.02666666666666667,
+        "DRPerm": 0.07333333333333333,
+        "CFPerm": 0.02666666666666667
+      },
+      "power_meta": {
+        "RFPerm": 0.02666666666666667,
+        "DRPerm": 0.07333333333333333,
+        "CFPerm": 0.06
+      },
+      "delta_power": {
+        "RFPerm": 0.0,
+        "DRPerm": 0.0,
+        "CFPerm": 0.033333333333333326
+      },
+      "PO_embed": 0.007169829887232358,
+      "PO_meta": 0.0076717586264254565,
+      "rho_PO": 1.0700056691842725,
+      "interaction_label": "null_calibration"
+    },
+    {
+      "scenario": "sentiment_meta",
+      "power_embed": {
+        "RFPerm": 0.02,
+        "DRPerm": 0.0,
+        "CFPerm": 0.02
+      },
+      "power_meta": {
+        "RFPerm": 0.08,
+        "DRPerm": 0.0,
+        "CFPerm": 0.02666666666666667
+      },
+      "delta_power": {
+        "RFPerm": 0.06,
+        "DRPerm": 0.0,
+        "CFPerm": 0.006666666666666668
+      },
+      "PO_embed": 0.005440539826554242,
+      "PO_meta": 0.0013686768932737437,
+      "rho_PO": 0.25157005313948655,
+      "interaction_label": "absorb_interaction"
+    },
+    {
+      "scenario": "syntax_meta",
+      "power_embed": {
+        "RFPerm": 0.10666666666666667,
+        "DRPerm": 0.0,
+        "CFPerm": 0.21333333333333335
+      },
+      "power_meta": {
+        "RFPerm": 0.06666666666666667,
+        "DRPerm": 0.0,
+        "CFPerm": 0.30666666666666664
+      },
+      "delta_power": {
+        "RFPerm": -0.04000000000000001,
+        "DRPerm": 0.0,
+        "CFPerm": 0.0933333333333333
+      },
+      "PO_embed": 0.005265482476722269,
+      "PO_meta": 0.0010061402025709147,
+      "rho_PO": 0.19108224308387234,
+      "interaction_label": "localize_interaction"
+    },
+    {
+      "scenario": "train_vs_heldout",
+      "power_embed": {
+        "RFPerm": 1.0,
+        "DRPerm": 1.0,
+        "CFPerm": 0.7666666666666667
+      },
+      "power_meta": {
+        "RFPerm": 1.0,
+        "DRPerm": 1.0,
+        "CFPerm": 0.9933333333333333
+      },
+      "delta_power": {
+        "RFPerm": 0.0,
+        "DRPerm": 0.0,
+        "CFPerm": 0.22666666666666657
+      },
+      "PO_embed": 0.02163166169922365,
+      "PO_meta": 0.02217585904427932,
+      "rho_PO": 1.0251574452588263,
+      "interaction_label": "concept_residual"
+    }
+  ]
+}

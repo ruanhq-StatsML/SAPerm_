@@ -1,0 +1,177 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,amsmath,amssymb,enumitem}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+
+\title{Today's Update:\\
+ModaSense Joint Tables + Digested Insight\\
+{\normalsize Embedding Does Not Represent Everything}}
+\author{SAPerm shift-detect}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Two deliverables from this update.
+(1)~ModaSense joint evidence:
+RFPerm / CFPerm power, modality MMD share $\pi_m$, $\rho_{\mathrm{PO}}$,
+and localization---reported only when the chain closes.
+(2)~A Digested-object insight on BiasFinder:
+even crude named meta ($M$) still moves power / absorption / CF localization
+on top of BERT PCA ($Z$).
+That is direct evidence that \textbf{embeddings do not represent everything}
+relevant to shift detection.
+\end{abstract}
+
+%% ------------------------------------------------------------------
+\section{ModaSense: joint table (primary)}
+\label{sec:modasense}
+%% ------------------------------------------------------------------
+Data: ModaSense/emotion, $n{=}500$, designed pairwise label conflict $=1$.
+Power $B{=}80$ on $X{=}[M_t,M_i]$; MMD $B{=}50$ on z-scored
+$\{M_t,M_i,M_a\}$; $\pi_m=\mathrm{MMD}_m/\sum_{m'}\mathrm{MMD}_{m'}$;
+$\rho_{\mathrm{PO}}=\mathrm{PO}([M_t,M_i])/\mathrm{PO}(M_t)$.
+
+\begin{center}
+\small
+\begin{tabular}{lccccc}
+\toprule
+Scenario & $\pi_{t/i/a}$ & RF $t\!\to\!$MM & CF $t/i$ & $\rho_{\mathrm{PO}}$ & Read \\
+\midrule
+null & $.35/.34/.31$
+  & $.01\!\to\!.01$ & $.03/.06$ & $2.14$ & Type-I \\
+text sentiment & $\mathbf{.91}/.03/.06$
+  & $\mathbf{1\!\to\!1}$ & $\mathbf{1.00}/.54$ & $1.95$
+  & detect+localize text \\
+image brightness & $.03/\mathbf{.95}/.02$
+  & $.00\!\to\!.05$ & $.00/.01$ & $\mathbf{0.62}$
+  & high MMD, absorb, no power \\
+audio energy & $.02/.02/\mathbf{.95}$
+  & $\approx 0$ & CF$_a{\approx}0$ & ${\sim}1.06$
+  & MMD-only \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Localization (only when CF supports it).}
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Scenario & Top block / subset & Claim? \\
+\midrule
+text sentiment
+  & \texttt{text\_meta} $\to$
+    \{\texttt{vader\_neg},\texttt{compound},\texttt{pos},
+     \texttt{polar\_gap},\texttt{neu}\}
+  & \textbf{yes} (CF$_t{=}1$) \\
+image brightness
+  & carrier \{\texttt{img\_brightness},\texttt{hue\_std},
+    \texttt{contrast},\texttt{sat\_mean}\}
+  & \textbf{no} as CF reject (CF${\approx}\alpha$) \\
+audio energy
+  & --- & \textbf{no} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Findings (ModaSense).}
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item Text window closes the chain:
+        $\pi_t{=}0.91$, RF${=}1$, CF$_t{=}1$, VADER subset, $\rho{=}1.95$.
+  \item Image window is \emph{silent absorb}:
+        $\pi_i{=}0.95$ and $\rho{=}0.62$, but RF/CF near $\alpha$.
+        MMD/$\rho_{\mathrm{PO}}$ track a covariate channel; they are not
+        substitutes for rejection power.
+  \item Audio remains MMD-only under current $B$/Y; no localization claim.
+\end{enumerate}
+
+%% ------------------------------------------------------------------
+\section{Digested insight: embedding $\neq$ everything}
+\label{sec:embed}
+%% ------------------------------------------------------------------
+Digestion returns a typed object
+\[
+\texttt{Digested}:\quad
+X \;=\;
+\begin{cases}
+[Z_{\mathrm{PCA}},\,M] & \text{BiasFinder (embed + text meta)}\\[2pt]
+[M_t,M_i,M_a] & \text{ModaSense (meta-only multimodal)}
+\end{cases}
+\]
+with named \texttt{schema.blocks} / \texttt{schema.modality} for CF LOCO.
+Meta builders (spaCy+VADER, OpenCV, WAV stats) are intentionally simple---
+feature quality is ``just OK.'' The point is not that $M$ is fancy; it is
+that \textbf{$Z$ alone leaves measurable gaps}.
+
+\subsection*{Table A --- BiasFinder: $Z$ vs $[Z,M]$ ($B{=}150$)}
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Scenario & $\rho_{\mathrm{PO}}$ & $\Delta$RF
+  & $\Delta$CF & What $M$ adds on top of $Z$ \\
+\midrule
+null & $1.07$ & $0$ & $+0.03$ & calibration held \\
+sentiment\_meta & $\mathbf{0.25}$ & $+0.06$ & $+0.01$
+  & absorb polarity into $(\mu,e)$ \\
+syntax\_meta & $\mathbf{0.19}$ & $-0.04$ & $\mathbf{+0.09}$
+  & localize structure block \\
+heldout & $1.03$ & $0$ & $\mathbf{+0.23}$
+  & CF $0.77\!\to\!0.99$ beyond PCA \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Table B --- Feature-only power (no embed): baseline $\to$ meta}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Scenario & Baseline & Meta & $\Delta$ \\
+\midrule
+sentiment\_shift & $0.40$ & $\mathbf{1.00}$ & $+0.60$ \\
+syntax\_shift (HARD) & $0.10$ & $\mathbf{1.00}$ & $+0.90$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Table C --- CF block power on $X{=}[Z,M]$ (who owns the shift?)}
+\begin{center}
+\small
+\begin{tabular}{lcccc}
+\toprule
+Scenario & embed\_pca & meta & vader\_sent & spacy\_syntax \\
+\midrule
+syntax\_meta HARD & $0.16$ & $\mathbf{0.31}$ & $0.18$ & $\mathbf{0.32}$ \\
+heldout & $0.96$ & $\mathbf{0.99}$ & $0.62$ & $0.67$ \\
+sentiment\_meta & $0.01$ & $0.03$ & $0.02$ & $0.04$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Insight.}
+Even crude named meta still moves $\rho_{\mathrm{PO}}$, CF, and
+feature-only power on top of BERT PCA---so
+\textbf{embedding does not represent everything}.
+
+\paragraph{ModaSense in one paragraph.}
+On ModaSense/emotion~\cite{modasense_emotion_2026} ($n{=}500$,
+designed pairwise label conflict), $X{=}[M_t,M_i,M_a]$ with
+RF/CF/$\pi$/$\rho_{\mathrm{PO}}$ yields an interpretable trichotomy:
+text-sentiment closes the chain
+($\pi_t{=}0.91$, RF${=}1$, CF$_t{=}1$, VADER subset, $\rho{=}1.95$);
+image-brightness is silent absorb
+($\pi_i{=}0.95$, $\rho{=}0.62$, power${\approx}\alpha$);
+audio remains MMD-only. Closed chains name executable features, not
+anonymous dims.
+
+\begin{thebibliography}{1}
+\bibitem{modasense_emotion_2026}
+Tri-PvP.
+\newblock {ModaSense/emotion}: Multimodal Emotion with Cross-Modal Label Conflict.
+\newblock Hugging Face Datasets, 2026.
+\newblock \url{https://huggingface.co/datasets/ModaSense/emotion}.
+\end{thebibliography}
+
+\end{document}

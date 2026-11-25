@@ -3,7 +3,7 @@
     "nRep": 20,
     "nPerm": 40,
     "nDoc": 20,
-    "seed": 11,
+    "seed": 7,
     "featureSets": [
       "baseline",
       "meta",
@@ -13,6 +13,13 @@
     "packages": [
       "spacy:en_core_web_sm",
       "vaderSentiment"
+    ],
+    "dgps": [
+      "null_shift",
+      "sentiment_shift",
+      "entity_shift",
+      "style_shift",
+      "syntax_shift"
     ]
   },
   "rows": [
@@ -20,13 +27,13 @@
       "scenario": "null_shift",
       "featureSet": "baseline",
       "metric": "typeI",
-      "rate": 0.05,
-      "meanP": 0.5585365853658536,
+      "rate": 0.15,
+      "meanP": 0.4353658536585366,
       "nRep": 20,
       "nDoc": 20,
       "nPerm": 40,
       "signal": null,
-      "note": "Two random splits of the same pool (Type-I).",
+      "note": "Two random splits of the same pool.",
       "nFeatures": 5
     },
     {
@@ -34,38 +41,38 @@
       "featureSet": "meta",
       "metric": "typeI",
       "rate": 0.05,
-      "meanP": 0.46585365853658534,
+      "meanP": 0.4451219512195122,
       "nRep": 20,
       "nDoc": 20,
       "nPerm": 40,
       "signal": null,
-      "note": "Two random splits of the same pool (Type-I).",
-      "nFeatures": 19
+      "note": "Two random splits of the same pool.",
+      "nFeatures": 37
     },
     {
       "scenario": "null_shift",
       "featureSet": "both",
       "metric": "typeI",
-      "rate": 0.05,
-      "meanP": 0.35609756097560974,
+      "rate": 0.0,
+      "meanP": 0.4914634146341464,
       "nRep": 20,
       "nDoc": 20,
       "nPerm": 40,
       "signal": null,
-      "note": "Two random splits of the same pool (Type-I).",
-      "nFeatures": 24
+      "note": "Two random splits of the same pool.",
+      "nFeatures": 42
     },
     {
       "scenario": "sentiment_shift",
       "featureSet": "baseline",
       "metric": "power",
-      "rate": 0.55,
-      "meanP": 0.18048780487804877,
+      "rate": 0.4,
+      "meanP": 0.1597560975609756,
       "nRep": 20,
       "nDoc": 20,
       "nPerm": 40,
       "signal": "vader_sent",
-      "note": "Polarity flips; lengths stay review-like. Baseline is weak here.",
+      "note": "Polarity flip; lengths review-like.",
       "nFeatures": 5
     },
     {
@@ -78,8 +85,8 @@
       "nDoc": 20,
       "nPerm": 40,
       "signal": "vader_sent",
-      "note": "Polarity flips; lengths stay review-like. Baseline is weak here.",
-      "nFeatures": 19
+      "note": "Polarity flip; lengths review-like.",
+      "nFeatures": 37
     },
     {
       "scenario": "sentiment_shift",
@@ -91,8 +98,8 @@
       "nDoc": 20,
       "nPerm": 40,
       "signal": "vader_sent",
-      "note": "Polarity flips; lengths stay review-like. Baseline is weak here.",
-      "nFeatures": 24
+      "note": "Polarity flip; lengths review-like.",
+      "nFeatures": 42
     },
     {
       "scenario": "entity_shift",
@@ -104,7 +111,7 @@
       "nDoc": 20,
       "nPerm": 40,
       "signal": "spacy_ner",
-      "note": "NER density planted (baseline may also see capitals).",
+      "note": "NER density planted.",
       "nFeatures": 5
     },
     {
@@ -117,8 +124,8 @@
       "nDoc": 20,
       "nPerm": 40,
       "signal": "spacy_ner",
-      "note": "NER density planted (baseline may also see capitals).",
-      "nFeatures": 19
+      "note": "NER density planted.",
+      "nFeatures": 37
     },
     {
       "scenario": "entity_shift",
@@ -130,8 +137,8 @@
       "nDoc": 20,
       "nPerm": 40,
       "signal": "spacy_ner",
-      "note": "NER density planted (baseline may also see capitals).",
-      "nFeatures": 24
+      "note": "NER density planted.",
+      "nFeatures": 42
     },
     {
       "scenario": "style_shift",
@@ -143,7 +150,7 @@
       "nDoc": 20,
       "nPerm": 40,
       "signal": "spacy_style",
-      "note": "Length + punctuation (baseline char_len also fires).",
+      "note": "Length + punctuation.",
       "nFeatures": 5
     },
     {
@@ -156,8 +163,8 @@
       "nDoc": 20,
       "nPerm": 40,
       "signal": "spacy_style",
-      "note": "Length + punctuation (baseline char_len also fires).",
-      "nFeatures": 19
+      "note": "Length + punctuation.",
+      "nFeatures": 37
     },
     {
       "scenario": "style_shift",
@@ -169,20 +176,20 @@
       "nDoc": 20,
       "nPerm": 40,
       "signal": "spacy_style",
-      "note": "Length + punctuation (baseline char_len also fires).",
-      "nFeatures": 24
+      "note": "Length + punctuation.",
+      "nFeatures": 42
     },
     {
       "scenario": "syntax_shift",
       "featureSet": "baseline",
       "metric": "power",
-      "rate": 0.05,
-      "meanP": 0.41585365853658535,
+      "rate": 0.1,
+      "meanP": 0.42560975609756097,
       "nRep": 20,
       "nDoc": 20,
       "nPerm": 40,
       "signal": "spacy_syntax",
-      "note": "Matched length; POS mix flips \u2014 meta should win.",
+      "note": "HARD: matched length; POS mix flips (ADJ vs VERB).",
       "nFeatures": 5
     },
     {
@@ -195,8 +202,8 @@
       "nDoc": 20,
       "nPerm": 40,
       "signal": "spacy_syntax",
-      "note": "Matched length; POS mix flips \u2014 meta should win.",
-      "nFeatures": 19
+      "note": "HARD: matched length; POS mix flips (ADJ vs VERB).",
+      "nFeatures": 37
     },
     {
       "scenario": "syntax_shift",
@@ -208,18 +215,18 @@
       "nDoc": 20,
       "nPerm": 40,
       "signal": "spacy_syntax",
-      "note": "Matched length; POS mix flips \u2014 meta should win.",
-      "nFeatures": 24
+      "note": "HARD: matched length; POS mix flips (ADJ vs VERB).",
+      "nFeatures": 42
     }
   ],
   "pivot": {
     "null_shift": {
-      "baseline": 0.05,
+      "baseline": 0.15,
       "meta": 0.05,
-      "both": 0.05
+      "both": 0.0
     },
     "sentiment_shift": {
-      "baseline": 0.55,
+      "baseline": 0.4,
       "meta": 1.0,
       "both": 1.0
     },
@@ -234,24 +241,24 @@
       "both": 1.0
     },
     "syntax_shift": {
-      "baseline": 0.05,
+      "baseline": 0.1,
       "meta": 1.0,
       "both": 1.0
     }
   },
   "argument": {
-    "claim": "On alternatives whose signal sits in spaCy/VADER structure (sentiment, NER, style), meta-features raise rejection power versus surface baseline, while null Type-I stays controlled.",
+    "claim": "Meta raises power on structure-aligned covariates (esp. hard syntax_shift); Type-I controlled.",
     "nullTypeI": {
-      "baseline": 0.05,
+      "baseline": 0.15,
       "meta": 0.05,
-      "both": 0.05
+      "both": 0.0
     },
     "powerGains": [
       {
         "scenario": "sentiment_shift",
-        "baselinePower": 0.55,
+        "baselinePower": 0.4,
         "metaPower": 1.0,
-        "delta": 0.44999999999999996,
+        "delta": 0.6,
         "improved": true
       },
       {
@@ -270,16 +277,15 @@
       },
       {
         "scenario": "syntax_shift",
-        "baselinePower": 0.05,
+        "baselinePower": 0.1,
         "metaPower": 1.0,
-        "delta": 0.95,
+        "delta": 0.9,
         "improved": true
       }
     ],
     "metaBeatsBaselineOn": [
       "sentiment_shift",
       "syntax_shift"
-    ],
-    "allAlternativesImproved": false
+    ]
   }
 }

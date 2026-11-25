@@ -1,0 +1,1657 @@
+{
+  "dataset": "ModaSense/emotion",
+  "modalities": [
+    "text",
+    "image",
+    "audio"
+  ],
+  "conflict": {
+    "P_text_ne_image": 1.0,
+    "P_text_ne_audio": 1.0,
+    "P_image_ne_audio": 1.0
+  },
+  "schema": {
+    "layout": "X=[M_text, M_image, M_audio]",
+    "modality": {
+      "text": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36
+      ],
+      "image": [
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43
+      ],
+      "audio": [
+        44,
+        45,
+        46,
+        47,
+        48,
+        49
+      ]
+    },
+    "blocks": {
+      "text_meta": {
+        "indices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36
+        ],
+        "package": "spacy+vader"
+      },
+      "image_meta": {
+        "indices": [
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43
+        ],
+        "package": "opencv"
+      },
+      "audio_meta": {
+        "indices": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49
+        ],
+        "package": "wave+numpy"
+      }
+    },
+    "p_total": 50
+  },
+  "feature_business_dict": {
+    "vader_compound": [
+      "文本综合情感极性",
+      "情绪路由 / 情感漂移告警轴"
+    ],
+    "vader_pos": [
+      "正向情感质量",
+      "正向内容占比监控"
+    ],
+    "vader_neu": [
+      "中性/含糊质量",
+      "回避与暧昧语气识别"
+    ],
+    "vader_neg": [
+      "负向情感质量",
+      "负面情绪升温检测"
+    ],
+    "vader_polar_gap": [
+      "正负冲突强度",
+      "矛盾表述 / 讽刺候选"
+    ],
+    "n_tokens": [
+      "文本长度",
+      "信息量与冗长度"
+    ],
+    "avg_sent_len": [
+      "句长",
+      "表达复杂度"
+    ],
+    "punct_ratio": [
+      "标点密度",
+      "语气激烈程度代理"
+    ],
+    "exclam_ratio": [
+      "感叹强度",
+      "情绪激动代理"
+    ],
+    "verb_noun_ratio": [
+      "动名比",
+      "叙事动态 vs 名物化"
+    ],
+    "hedge_cues": [
+      "犹豫词",
+      "不确定 / 推诿话术"
+    ],
+    "intensifier_cues": [
+      "强调词",
+      "情绪加码"
+    ],
+    "negation_cues": [
+      "否定词",
+      "立场翻转"
+    ],
+    "img_brightness": [
+      "画面明暗",
+      "视觉氛围明/暗切换"
+    ],
+    "img_contrast": [
+      "对比度",
+      "视觉冲击 / 清晰度"
+    ],
+    "img_edge_density": [
+      "边缘密度",
+      "画面复杂度 / 杂乱"
+    ],
+    "img_sat_mean": [
+      "饱和度",
+      "色彩情绪强度"
+    ],
+    "img_hue_std": [
+      "色相离散",
+      "色彩多样性"
+    ],
+    "img_warm_ratio": [
+      "暖色占比",
+      "暖/冷情绪色调"
+    ],
+    "img_laplacian_var": [
+      "清晰/模糊",
+      "对焦质量 / 运动模糊"
+    ],
+    "aud_rms_energy": [
+      "响度能量",
+      "音量升高 / 激动度"
+    ],
+    "aud_zcr": [
+      "过零率",
+      "嘈杂 / 清音粗糙度"
+    ],
+    "aud_spectral_centroid": [
+      "频谱重心",
+      "音色明暗（尖/沉）"
+    ],
+    "aud_lowband_ratio": [
+      "低频占比",
+      "低沉 / 压迫感"
+    ],
+    "aud_silence_ratio": [
+      "静音占比",
+      "停顿 / 犹豫"
+    ],
+    "aud_peak_to_rms": [
+      "动态峰值比",
+      "突发尖峰 / 爆发"
+    ]
+  },
+  "scenarios": [
+    {
+      "scenario": "text_sentiment_shift",
+      "top_block": "text_meta",
+      "localization_blocks": [
+        {
+          "block": "text_meta",
+          "importance": 0.39977734374999996,
+          "p_value": 0.012345679012345678,
+          "reject": true,
+          "indices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36
+          ],
+          "package": "spacy+vader"
+        },
+        {
+          "block": "image_meta",
+          "importance": 0.03192578124999998,
+          "p_value": 0.012345679012345678,
+          "reject": true,
+          "indices": [
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43
+          ],
+          "package": "opencv"
+        },
+        {
+          "block": "audio_meta",
+          "importance": 0.0,
+          "p_value": 1.0,
+          "reject": false,
+          "indices": [
+            44,
+            45,
+            46,
+            47,
+            48,
+            49
+          ],
+          "package": "wave+numpy"
+        }
+      ],
+      "driving_subset_carrier": {
+        "indices": [
+          25,
+          22,
+          23,
+          11,
+          26,
+          24,
+          9
+        ],
+        "names": [
+          "vader_neg",
+          "vader_compound",
+          "vader_pos",
+          "pos_adj",
+          "vader_polar_gap",
+          "vader_neu",
+          "pos_noun"
+        ],
+        "size": 7,
+        "members": [
+          {
+            "index": 25,
+            "name": "vader_neg",
+            "importance": 8.717123700256812,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 1
+          },
+          {
+            "index": 22,
+            "name": "vader_compound",
+            "importance": 4.19498442819324,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 2
+          },
+          {
+            "index": 23,
+            "name": "vader_pos",
+            "importance": 1.4665106629601143,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 3
+          },
+          {
+            "index": 11,
+            "name": "pos_adj",
+            "importance": 1.362187363176857,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 4
+          },
+          {
+            "index": 26,
+            "name": "vader_polar_gap",
+            "importance": 1.0496501051969085,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 5
+          },
+          {
+            "index": 24,
+            "name": "vader_neu",
+            "importance": 1.0496501051969076,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 6
+          },
+          {
+            "index": 9,
+            "name": "pos_noun",
+            "importance": 1.0111286084529787,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 7
+          }
+        ]
+      },
+      "driving_subset_loco": {
+        "indices": [
+          5,
+          25,
+          30,
+          6,
+          15,
+          29,
+          20,
+          31,
+          12,
+          17,
+          0,
+          4,
+          36
+        ],
+        "names": [
+          "exclam_ratio",
+          "vader_neg",
+          "negation_cues",
+          "question_ratio",
+          "verb_noun_ratio",
+          "url_like",
+          "ent_gpe",
+          "avg_dep_depth",
+          "pos_adv",
+          "ent_count",
+          "n_tokens",
+          "punct_ratio",
+          "flesch_proxy"
+        ],
+        "size": 13,
+        "members": [
+          {
+            "index": 5,
+            "name": "exclam_ratio",
+            "importance": 0.10026171874999998,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 1
+          },
+          {
+            "index": 25,
+            "name": "vader_neg",
+            "importance": 0.059375,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 2
+          },
+          {
+            "index": 30,
+            "name": "negation_cues",
+            "importance": 0.04646874999999999,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 3
+          },
+          {
+            "index": 6,
+            "name": "question_ratio",
+            "importance": 0.0386640625,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 4
+          },
+          {
+            "index": 15,
+            "name": "verb_noun_ratio",
+            "importance": 0.03663671875,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 5
+          },
+          {
+            "index": 29,
+            "name": "url_like",
+            "importance": 0.028925781250000004,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 6
+          },
+          {
+            "index": 20,
+            "name": "ent_gpe",
+            "importance": 0.02639453125,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 7
+          },
+          {
+            "index": 31,
+            "name": "avg_dep_depth",
+            "importance": 0.01426562499999999,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 8
+          },
+          {
+            "index": 12,
+            "name": "pos_adv",
+            "importance": 0.01220703125,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 9
+          },
+          {
+            "index": 17,
+            "name": "ent_count",
+            "importance": 0.002843750000000006,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 10
+          },
+          {
+            "index": 0,
+            "name": "n_tokens",
+            "importance": 0.002570312499999998,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 11
+          },
+          {
+            "index": 4,
+            "name": "punct_ratio",
+            "importance": 0.001722656249999989,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 12
+          },
+          {
+            "index": 36,
+            "name": "flesch_proxy",
+            "importance": 0.0017070312499999907,
+            "p_value": 0.024390243902439025,
+            "reject": true,
+            "rank": 13
+          }
+        ]
+      },
+      "carrier_rank": [
+        {
+          "index": 25,
+          "name": "vader_neg",
+          "importance": 8.717123700256812,
+          "p_value": null,
+          "reject": null,
+          "rank": 1
+        },
+        {
+          "index": 22,
+          "name": "vader_compound",
+          "importance": 4.19498442819324,
+          "p_value": null,
+          "reject": null,
+          "rank": 2
+        },
+        {
+          "index": 23,
+          "name": "vader_pos",
+          "importance": 1.4665106629601143,
+          "p_value": null,
+          "reject": null,
+          "rank": 3
+        },
+        {
+          "index": 11,
+          "name": "pos_adj",
+          "importance": 1.362187363176857,
+          "p_value": null,
+          "reject": null,
+          "rank": 4
+        },
+        {
+          "index": 26,
+          "name": "vader_polar_gap",
+          "importance": 1.0496501051969085,
+          "p_value": null,
+          "reject": null,
+          "rank": 5
+        },
+        {
+          "index": 24,
+          "name": "vader_neu",
+          "importance": 1.0496501051969076,
+          "p_value": null,
+          "reject": null,
+          "rank": 6
+        },
+        {
+          "index": 9,
+          "name": "pos_noun",
+          "importance": 1.0111286084529787,
+          "p_value": null,
+          "reject": null,
+          "rank": 7
+        },
+        {
+          "index": 8,
+          "name": "stopword_ratio",
+          "importance": 0.569553776475145,
+          "p_value": null,
+          "reject": null,
+          "rank": 8
+        },
+        {
+          "index": 7,
+          "name": "type_token_ratio",
+          "importance": 0.3466010575341098,
+          "p_value": null,
+          "reject": null,
+          "rank": 9
+        },
+        {
+          "index": 36,
+          "name": "flesch_proxy",
+          "importance": 0.28893844807222796,
+          "p_value": null,
+          "reject": null,
+          "rank": 10
+        }
+      ],
+      "loco_rank": [
+        {
+          "index": 5,
+          "name": "exclam_ratio",
+          "importance": 0.10026171874999998,
+          "p_value": 0.024390243902439025,
+          "reject": true,
+          "rank": 1
+        },
+        {
+          "index": 25,
+          "name": "vader_neg",
+          "importance": 0.059375,
+          "p_value": 0.024390243902439025,
+          "reject": true,
+          "rank": 2
+        },
+        {
+          "index": 30,
+          "name": "negation_cues",
+          "importance": 0.04646874999999999,
+          "p_value": 0.024390243902439025,
+          "reject": true,
+          "rank": 3
+        },
+        {
+          "index": 6,
+          "name": "question_ratio",
+          "importance": 0.0386640625,
+          "p_value": 0.024390243902439025,
+          "reject": true,
+          "rank": 4
+        },
+        {
+          "index": 15,
+          "name": "verb_noun_ratio",
+          "importance": 0.03663671875,
+          "p_value": 0.024390243902439025,
+          "reject": true,
+          "rank": 5
+        },
+        {
+          "index": 29,
+          "name": "url_like",
+          "importance": 0.028925781250000004,
+          "p_value": 0.024390243902439025,
+          "reject": true,
+          "rank": 6
+        },
+        {
+          "index": 20,
+          "name": "ent_gpe",
+          "importance": 0.02639453125,
+          "p_value": 0.024390243902439025,
+          "reject": true,
+          "rank": 7
+        },
+        {
+          "index": 31,
+          "name": "avg_dep_depth",
+          "importance": 0.01426562499999999,
+          "p_value": 0.024390243902439025,
+          "reject": true,
+          "rank": 8
+        },
+        {
+          "index": 12,
+          "name": "pos_adv",
+          "importance": 0.01220703125,
+          "p_value": 0.024390243902439025,
+          "reject": true,
+          "rank": 9
+        },
+        {
+          "index": 17,
+          "name": "ent_count",
+          "importance": 0.002843750000000006,
+          "p_value": 0.024390243902439025,
+          "reject": true,
+          "rank": 10
+        }
+      ],
+      "business_map_carrier": [
+        {
+          "feature": "vader_neg",
+          "meaning": "负向情感质量",
+          "business_action": "负面情绪升温检测"
+        },
+        {
+          "feature": "vader_compound",
+          "meaning": "文本综合情感极性",
+          "business_action": "情绪路由 / 情感漂移告警轴"
+        },
+        {
+          "feature": "vader_pos",
+          "meaning": "正向情感质量",
+          "business_action": "正向内容占比监控"
+        },
+        {
+          "feature": "pos_adj",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "vader_polar_gap",
+          "meaning": "正负冲突强度",
+          "business_action": "矛盾表述 / 讽刺候选"
+        },
+        {
+          "feature": "vader_neu",
+          "meaning": "中性/含糊质量",
+          "business_action": "回避与暧昧语气识别"
+        },
+        {
+          "feature": "pos_noun",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        }
+      ],
+      "business_map_loco": [
+        {
+          "feature": "exclam_ratio",
+          "meaning": "感叹强度",
+          "business_action": "情绪激动代理"
+        },
+        {
+          "feature": "vader_neg",
+          "meaning": "负向情感质量",
+          "business_action": "负面情绪升温检测"
+        },
+        {
+          "feature": "negation_cues",
+          "meaning": "否定词",
+          "business_action": "立场翻转"
+        },
+        {
+          "feature": "question_ratio",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "verb_noun_ratio",
+          "meaning": "动名比",
+          "business_action": "叙事动态 vs 名物化"
+        },
+        {
+          "feature": "url_like",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "ent_gpe",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "avg_dep_depth",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "pos_adv",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "ent_count",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "n_tokens",
+          "meaning": "文本长度",
+          "business_action": "信息量与冗长度"
+        },
+        {
+          "feature": "punct_ratio",
+          "meaning": "标点密度",
+          "business_action": "语气激烈程度代理"
+        },
+        {
+          "feature": "flesch_proxy",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        }
+      ],
+      "business_value": "文本模态被点名；驱动维 ['vader_neg', 'vader_compound', 'vader_pos', 'pos_adj', 'vader_polar_gap', 'vader_neu', 'pos_noun'] 直接对应情绪监控 KPI（极性、负面质量、冲突）。业务动作：对文案通道告警并回放样本，不牵动视觉/音频产线。"
+    },
+    {
+      "scenario": "image_brightness_shift",
+      "top_block": "image_meta",
+      "localization_blocks": [
+        {
+          "block": "image_meta",
+          "importance": 5.1915476073349525e-05,
+          "p_value": 0.38271604938271603,
+          "reject": false,
+          "indices": [
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43
+          ],
+          "package": "opencv"
+        },
+        {
+          "block": "text_meta",
+          "importance": 4.221519966074874e-05,
+          "p_value": 0.9753086419753086,
+          "reject": false,
+          "indices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36
+          ],
+          "package": "spacy+vader"
+        },
+        {
+          "block": "audio_meta",
+          "importance": 3.159378985969382e-05,
+          "p_value": 0.38271604938271603,
+          "reject": false,
+          "indices": [
+            44,
+            45,
+            46,
+            47,
+            48,
+            49
+          ],
+          "package": "wave+numpy"
+        }
+      ],
+      "driving_subset_carrier": {
+        "indices": [
+          37,
+          41,
+          38,
+          40
+        ],
+        "names": [
+          "img_brightness",
+          "img_hue_std",
+          "img_contrast",
+          "img_sat_mean"
+        ],
+        "size": 4,
+        "members": [
+          {
+            "index": 37,
+            "name": "img_brightness",
+            "importance": 5.144376926008115,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 1
+          },
+          {
+            "index": 41,
+            "name": "img_hue_std",
+            "importance": 2.4793168125983907,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 2
+          },
+          {
+            "index": 38,
+            "name": "img_contrast",
+            "importance": 2.2035627068886035,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 3
+          },
+          {
+            "index": 40,
+            "name": "img_sat_mean",
+            "importance": 1.5219394263774082,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 4
+          }
+        ]
+      },
+      "driving_subset_loco": {
+        "indices": [
+          41
+        ],
+        "names": [
+          "img_hue_std"
+        ],
+        "size": 1,
+        "members": [
+          {
+            "index": 41,
+            "name": "img_hue_std",
+            "importance": 7.934027777777815e-06,
+            "p_value": 0.1951219512195122,
+            "reject": false,
+            "rank": 1
+          }
+        ]
+      },
+      "carrier_rank": [
+        {
+          "index": 37,
+          "name": "img_brightness",
+          "importance": 5.144376926008115,
+          "p_value": null,
+          "reject": null,
+          "rank": 1
+        },
+        {
+          "index": 41,
+          "name": "img_hue_std",
+          "importance": 2.4793168125983907,
+          "p_value": null,
+          "reject": null,
+          "rank": 2
+        },
+        {
+          "index": 38,
+          "name": "img_contrast",
+          "importance": 2.2035627068886035,
+          "p_value": null,
+          "reject": null,
+          "rank": 3
+        },
+        {
+          "index": 40,
+          "name": "img_sat_mean",
+          "importance": 1.5219394263774082,
+          "p_value": null,
+          "reject": null,
+          "rank": 4
+        },
+        {
+          "index": 42,
+          "name": "img_warm_ratio",
+          "importance": 0.16608730818854353,
+          "p_value": null,
+          "reject": null,
+          "rank": 5
+        },
+        {
+          "index": 39,
+          "name": "img_edge_density",
+          "importance": 0.15118048804489956,
+          "p_value": null,
+          "reject": null,
+          "rank": 6
+        },
+        {
+          "index": 43,
+          "name": "img_laplacian_var",
+          "importance": 0.020411604878552404,
+          "p_value": null,
+          "reject": null,
+          "rank": 7
+        }
+      ],
+      "loco_rank": [
+        {
+          "index": 41,
+          "name": "img_hue_std",
+          "importance": 7.934027777777815e-06,
+          "p_value": 0.1951219512195122,
+          "reject": false,
+          "rank": 1
+        },
+        {
+          "index": 37,
+          "name": "img_brightness",
+          "importance": 3.797743055555485e-07,
+          "p_value": 0.2682926829268293,
+          "reject": false,
+          "rank": 2
+        },
+        {
+          "index": 38,
+          "name": "img_contrast",
+          "importance": 0.0,
+          "p_value": 1.0,
+          "reject": false,
+          "rank": 3
+        },
+        {
+          "index": 39,
+          "name": "img_edge_density",
+          "importance": 0.0,
+          "p_value": 1.0,
+          "reject": false,
+          "rank": 4
+        },
+        {
+          "index": 40,
+          "name": "img_sat_mean",
+          "importance": 0.0,
+          "p_value": 1.0,
+          "reject": false,
+          "rank": 5
+        },
+        {
+          "index": 42,
+          "name": "img_warm_ratio",
+          "importance": 0.0,
+          "p_value": 1.0,
+          "reject": false,
+          "rank": 6
+        },
+        {
+          "index": 43,
+          "name": "img_laplacian_var",
+          "importance": 0.0,
+          "p_value": 1.0,
+          "reject": false,
+          "rank": 7
+        }
+      ],
+      "business_map_carrier": [
+        {
+          "feature": "img_brightness",
+          "meaning": "画面明暗",
+          "business_action": "视觉氛围明/暗切换"
+        },
+        {
+          "feature": "img_hue_std",
+          "meaning": "色相离散",
+          "business_action": "色彩多样性"
+        },
+        {
+          "feature": "img_contrast",
+          "meaning": "对比度",
+          "business_action": "视觉冲击 / 清晰度"
+        },
+        {
+          "feature": "img_sat_mean",
+          "meaning": "饱和度",
+          "business_action": "色彩情绪强度"
+        }
+      ],
+      "business_map_loco": [
+        {
+          "feature": "img_hue_std",
+          "meaning": "色相离散",
+          "business_action": "色彩多样性"
+        }
+      ],
+      "business_value": "图像模态被点名；驱动维 ['img_brightness', 'img_hue_std', 'img_contrast', 'img_sat_mean'] 对应画面氛围 KPI。业务动作：抽检视觉素材明暗/色温变更，避免把画面问题误判成文案情感事故。"
+    },
+    {
+      "scenario": "audio_energy_shift",
+      "top_block": "text_meta",
+      "localization_blocks": [
+        {
+          "block": "text_meta",
+          "importance": 0.00012338518500075118,
+          "p_value": 0.9135802469135802,
+          "reject": false,
+          "indices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36
+          ],
+          "package": "spacy+vader"
+        },
+        {
+          "block": "image_meta",
+          "importance": 2.4956597222221504e-06,
+          "p_value": 0.5308641975308642,
+          "reject": false,
+          "indices": [
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43
+          ],
+          "package": "opencv"
+        },
+        {
+          "block": "audio_meta",
+          "importance": 0.0,
+          "p_value": 1.0,
+          "reject": false,
+          "indices": [
+            44,
+            45,
+            46,
+            47,
+            48,
+            49
+          ],
+          "package": "wave+numpy"
+        }
+      ],
+      "driving_subset_carrier": {
+        "indices": [
+          2,
+          36,
+          10,
+          15,
+          23,
+          8,
+          22,
+          9,
+          7,
+          24,
+          11,
+          26
+        ],
+        "names": [
+          "avg_token_len",
+          "flesch_proxy",
+          "pos_verb",
+          "verb_noun_ratio",
+          "vader_pos",
+          "stopword_ratio",
+          "vader_compound",
+          "pos_noun",
+          "type_token_ratio",
+          "vader_neu",
+          "pos_adj",
+          "vader_polar_gap"
+        ],
+        "size": 12,
+        "members": [
+          {
+            "index": 2,
+            "name": "avg_token_len",
+            "importance": 0.2556803063441986,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 1
+          },
+          {
+            "index": 36,
+            "name": "flesch_proxy",
+            "importance": 0.2538034979578211,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 2
+          },
+          {
+            "index": 10,
+            "name": "pos_verb",
+            "importance": 0.19276809983892695,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 3
+          },
+          {
+            "index": 15,
+            "name": "verb_noun_ratio",
+            "importance": 0.1885876731344197,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 4
+          },
+          {
+            "index": 23,
+            "name": "vader_pos",
+            "importance": 0.18463609926241112,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 5
+          },
+          {
+            "index": 8,
+            "name": "stopword_ratio",
+            "importance": 0.17280017692287183,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 6
+          },
+          {
+            "index": 22,
+            "name": "vader_compound",
+            "importance": 0.14639331323681753,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 7
+          },
+          {
+            "index": 9,
+            "name": "pos_noun",
+            "importance": 0.14597287931107117,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 8
+          },
+          {
+            "index": 7,
+            "name": "type_token_ratio",
+            "importance": 0.1375855796756019,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 9
+          },
+          {
+            "index": 24,
+            "name": "vader_neu",
+            "importance": 0.1360068741630759,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 10
+          },
+          {
+            "index": 11,
+            "name": "pos_adj",
+            "importance": 0.12103925920445242,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 11
+          },
+          {
+            "index": 26,
+            "name": "vader_polar_gap",
+            "importance": 0.11046934285892063,
+            "p_value": 1.0,
+            "reject": false,
+            "rank": 12
+          }
+        ]
+      },
+      "driving_subset_loco": {
+        "indices": [
+          31,
+          35,
+          27,
+          32,
+          22,
+          25
+        ],
+        "names": [
+          "avg_dep_depth",
+          "repeat_char_ratio",
+          "digit_ratio",
+          "clause_like_ratio",
+          "vader_compound",
+          "vader_neg"
+        ],
+        "size": 6,
+        "members": [
+          {
+            "index": 31,
+            "name": "avg_dep_depth",
+            "importance": 6.24958093706926e-05,
+            "p_value": 0.21951219512195122,
+            "reject": false,
+            "rank": 1
+          },
+          {
+            "index": 35,
+            "name": "repeat_char_ratio",
+            "importance": 4.563561325861377e-05,
+            "p_value": 0.1951219512195122,
+            "reject": false,
+            "rank": 2
+          },
+          {
+            "index": 27,
+            "name": "digit_ratio",
+            "importance": 4.2429318181967824e-05,
+            "p_value": 0.14634146341463414,
+            "reject": false,
+            "rank": 3
+          },
+          {
+            "index": 32,
+            "name": "clause_like_ratio",
+            "importance": 4.0039062499999886e-05,
+            "p_value": 0.24390243902439024,
+            "reject": false,
+            "rank": 4
+          },
+          {
+            "index": 22,
+            "name": "vader_compound",
+            "importance": 3.2573696145124844e-05,
+            "p_value": 0.2682926829268293,
+            "reject": false,
+            "rank": 5
+          },
+          {
+            "index": 25,
+            "name": "vader_neg",
+            "importance": 2.946566358024697e-05,
+            "p_value": 0.3170731707317073,
+            "reject": false,
+            "rank": 6
+          }
+        ]
+      },
+      "carrier_rank": [
+        {
+          "index": 2,
+          "name": "avg_token_len",
+          "importance": 0.2556803063441986,
+          "p_value": null,
+          "reject": null,
+          "rank": 1
+        },
+        {
+          "index": 36,
+          "name": "flesch_proxy",
+          "importance": 0.2538034979578211,
+          "p_value": null,
+          "reject": null,
+          "rank": 2
+        },
+        {
+          "index": 10,
+          "name": "pos_verb",
+          "importance": 0.19276809983892695,
+          "p_value": null,
+          "reject": null,
+          "rank": 3
+        },
+        {
+          "index": 15,
+          "name": "verb_noun_ratio",
+          "importance": 0.1885876731344197,
+          "p_value": null,
+          "reject": null,
+          "rank": 4
+        },
+        {
+          "index": 23,
+          "name": "vader_pos",
+          "importance": 0.18463609926241112,
+          "p_value": null,
+          "reject": null,
+          "rank": 5
+        },
+        {
+          "index": 8,
+          "name": "stopword_ratio",
+          "importance": 0.17280017692287183,
+          "p_value": null,
+          "reject": null,
+          "rank": 6
+        },
+        {
+          "index": 22,
+          "name": "vader_compound",
+          "importance": 0.14639331323681753,
+          "p_value": null,
+          "reject": null,
+          "rank": 7
+        },
+        {
+          "index": 9,
+          "name": "pos_noun",
+          "importance": 0.14597287931107117,
+          "p_value": null,
+          "reject": null,
+          "rank": 8
+        },
+        {
+          "index": 7,
+          "name": "type_token_ratio",
+          "importance": 0.1375855796756019,
+          "p_value": null,
+          "reject": null,
+          "rank": 9
+        },
+        {
+          "index": 24,
+          "name": "vader_neu",
+          "importance": 0.1360068741630759,
+          "p_value": null,
+          "reject": null,
+          "rank": 10
+        }
+      ],
+      "loco_rank": [
+        {
+          "index": 31,
+          "name": "avg_dep_depth",
+          "importance": 6.24958093706926e-05,
+          "p_value": 0.21951219512195122,
+          "reject": false,
+          "rank": 1
+        },
+        {
+          "index": 35,
+          "name": "repeat_char_ratio",
+          "importance": 4.563561325861377e-05,
+          "p_value": 0.1951219512195122,
+          "reject": false,
+          "rank": 2
+        },
+        {
+          "index": 27,
+          "name": "digit_ratio",
+          "importance": 4.2429318181967824e-05,
+          "p_value": 0.14634146341463414,
+          "reject": false,
+          "rank": 3
+        },
+        {
+          "index": 32,
+          "name": "clause_like_ratio",
+          "importance": 4.0039062499999886e-05,
+          "p_value": 0.24390243902439024,
+          "reject": false,
+          "rank": 4
+        },
+        {
+          "index": 22,
+          "name": "vader_compound",
+          "importance": 3.2573696145124844e-05,
+          "p_value": 0.2682926829268293,
+          "reject": false,
+          "rank": 5
+        },
+        {
+          "index": 25,
+          "name": "vader_neg",
+          "importance": 2.946566358024697e-05,
+          "p_value": 0.3170731707317073,
+          "reject": false,
+          "rank": 6
+        },
+        {
+          "index": 24,
+          "name": "vader_neu",
+          "importance": 2.341905253837062e-05,
+          "p_value": 0.34146341463414637,
+          "reject": false,
+          "rank": 7
+        },
+        {
+          "index": 6,
+          "name": "question_ratio",
+          "importance": 1.2924382716049253e-05,
+          "p_value": 0.34146341463414637,
+          "reject": false,
+          "rank": 8
+        },
+        {
+          "index": 21,
+          "name": "ent_date",
+          "importance": 1.594387755102038e-06,
+          "p_value": 0.36585365853658536,
+          "reject": false,
+          "rank": 9
+        },
+        {
+          "index": 20,
+          "name": "ent_gpe",
+          "importance": 1.4949845679012548e-06,
+          "p_value": 0.43902439024390244,
+          "reject": false,
+          "rank": 10
+        }
+      ],
+      "business_map_carrier": [
+        {
+          "feature": "avg_token_len",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "flesch_proxy",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "pos_verb",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "verb_noun_ratio",
+          "meaning": "动名比",
+          "business_action": "叙事动态 vs 名物化"
+        },
+        {
+          "feature": "vader_pos",
+          "meaning": "正向情感质量",
+          "business_action": "正向内容占比监控"
+        },
+        {
+          "feature": "stopword_ratio",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "vader_compound",
+          "meaning": "文本综合情感极性",
+          "business_action": "情绪路由 / 情感漂移告警轴"
+        },
+        {
+          "feature": "pos_noun",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "type_token_ratio",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "vader_neu",
+          "meaning": "中性/含糊质量",
+          "business_action": "回避与暧昧语气识别"
+        },
+        {
+          "feature": "pos_adj",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "vader_polar_gap",
+          "meaning": "正负冲突强度",
+          "business_action": "矛盾表述 / 讽刺候选"
+        }
+      ],
+      "business_map_loco": [
+        {
+          "feature": "avg_dep_depth",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "repeat_char_ratio",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "digit_ratio",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "clause_like_ratio",
+          "meaning": "(unnamed meta)",
+          "business_action": "需人工释义"
+        },
+        {
+          "feature": "vader_compound",
+          "meaning": "文本综合情感极性",
+          "business_action": "情绪路由 / 情感漂移告警轴"
+        },
+        {
+          "feature": "vader_neg",
+          "meaning": "负向情感质量",
+          "business_action": "负面情绪升温检测"
+        }
+      ],
+      "business_value": "文本模态被点名；驱动维 ['avg_token_len', 'flesch_proxy', 'pos_verb', 'verb_noun_ratio', 'vader_pos', 'stopword_ratio', 'vader_compound', 'pos_noun', 'type_token_ratio', 'vader_neu', 'pos_adj', 'vader_polar_gap'] 直接对应情绪监控 KPI（极性、负面质量、冲突）。业务动作：对文案通道告警并回放样本，不牵动视觉/音频产线。"
+    }
+  ]
+}

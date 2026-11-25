@@ -1,0 +1,74 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,amsmath,amssymb,enumitem}
+\usepackage[T1]{fontenc}
+
+\title{Concept-Drift Synthetic Cross-Check:\\
+$(\Delta\mathrm{Power},\,\rho_{\mathrm{PO}})$ With vs Without Meta}
+\author{SAPerm shift-detect}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+We argue that power change and PO-risk ratio are not rival metrics.
+Under controlled concept / covariate DGPs, their \emph{joint} signature
+with vs without meta-features is the cross-validation of embed$\times$meta
+interaction---and it must match the known data-generating process.
+\end{abstract}
+
+\section{Quantities}
+\[
+\rho_{\mathrm{PO}}=\frac{\mathrm{PO}(Z{+}M)}{\mathrm{PO}(Z)},
+\quad
+\mathrm{PO}=\mathbb{E}[\tau(X)^2],\
+\tau\approx(Y-\mu(X))(W-e(X)).
+\]
+$\Delta\mathrm{Power}$: rejection rate on embed+meta minus embed-only
+(RFPerm / DRPerm). $\Delta\mathrm{CF}$: CFPerm power on the meta block
+minus a size-matched embed placebo.
+
+\section{Synthetic DGPs (known truth)}
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+DGP & Mechanism & Predicted signature \\
+\midrule
+\texttt{null} & no shift & Type-I $\approx\alpha$; $\rho\approx 1$ \\
+\texttt{covariate\_meta} & $M$ shifts; $P(Y\mid X)$ fixed &
+  $\rho_{\mathrm{PO}}\ll 1$, DR power stays low (\textbf{absorb}) \\
+\texttt{concept\_embed} & $P(Y\mid Z)$ changes; $M$ irrelevant &
+  $\rho_{\mathrm{PO}}\approx 1$, DR high both sides (\textbf{residual}) \\
+\texttt{concept\_meta} & $P(Y\mid M)$ changes across batch &
+  DR high with meta; $\Delta\mathrm{CF}>0$ (\textbf{localize}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Why this is cross-validation}
+If meta truly interacts with the shift channel, the triple
+$(\Delta\mathrm{Power},\,\rho_{\mathrm{PO}},\,\Delta\mathrm{CF})$ must
+land in the predicted cell of the table above.
+\begin{itemize}[leftmargin=*]
+  \item Absorb without power rise is \emph{success} under covariate\_meta.
+  \item Power high and $\rho\approx 1$ under concept\_embed means meta
+        cannot invent a false absorb story.
+  \item Localize under concept\_meta means CFPerm names the interacting
+        coordinates while PO still flags concept.
+\end{itemize}
+Mismatch would falsify the interpretation; match is positive evidence
+that power and PO-risk \emph{jointly} read interaction.
+
+\section{Results}
+Filled from \texttt{power\_concept\_po\_full.md} ($B{=}100$, $N_{\mathrm{perm}}{=}100$):
+
+\textit{(table merged on completion)}
+
+\section{Takeaway}
+Concept-drift synthetic makes the claim falsifiable:
+\textbf{power and PO-risk cross-check each other by agreeing with the DGP},
+and that agreement \emph{is} the interaction evidence for with/without meta.
+
+\end{document}

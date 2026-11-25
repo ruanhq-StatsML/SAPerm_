@@ -1,0 +1,80 @@
+% ModaSense power comparison — drop into manuscript.
+% RF outcome; B=80, N_perm=100, n=500, X=[M_text, M_image] (+ audio for π).
+% Source: power_mm_modasense_full.json + mmd_two_datasets.json.
+
+\begin{table*}[ht]
+\centering
+\caption{ModaSense power comparison (Random Forest outcome).
+Detection is RFPerm; DRPerm is PO-risk power; CFPerm is block LOCO power
+on text vs.\ image meta. MMD share $\pi$ uses z-scored text/image/audio
+blocks ($B_{\mathrm{MMD}}{=}50$).
+$\rho_{\mathrm{PO}}=\mathrm{PO}([M_t,M_i])/\mathrm{PO}(M_t)$.}
+\label{tab:modasense_power}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccl}
+\toprule
+Scenario
+& $\pi_{T/I/A}$
+& RFPerm
+& DRPerm
+& CFPerm
+& $\rho_{\mathrm{PO}}$
+& Signature
+& Localization \\
+&
+& $T\!\to\!$MM
+& $T\!\to\!$MM
+& $T/I$
+&
+&
+& \\
+\midrule
+Null
+& $.35/.34/.31$
+& $.01\!\to\!.01$
+& $.05\!\to\!.06$
+& $.03/.06$
+& $2.14$
+& Type-I
+& --- \\
+Text sentiment
+& $\mathbf{.91}/.03/.06$
+& $\mathbf{1.00\!\to\!1.00}$
+& $.28\!\to\!.64$
+& $\mathbf{1.00}/.54$
+& $1.95$
+& detect+localize
+& \texttt{vader\_neg}, \texttt{compound}, \texttt{polar\_gap}, \texttt{neu} \\
+Image brightness
+& $.03/\mathbf{.95}/.02$
+& $.00\!\to\!.05$
+& $.00\!\to\!.00$
+& $.00/.01$
+& $\mathbf{0.62}$
+& silent absorb
+& brightness, contrast, hue, sat$^\dagger$ \\
+Audio energy
+& $.02/.02/\mathbf{.95}$
+& ${\approx}0$
+& ${\approx}0$
+& $A{\approx}0$
+& ${\sim}1.06$
+& MMD-only
+& --- \\
+\bottomrule
+\end{tabular}%
+}
+
+\vspace{4pt}
+\begin{minipage}{\textwidth}
+\footnotesize
+\textit{Notes.}
+$T/I/A$: text / image / audio.
+RFPerm/DRPerm report text-only $\to$ multimodal ($[M_t,M_i]$).
+CFPerm is rejection rate of LOCO on the named modality block ($B{=}80$).
+Localization uses packaged \texttt{subset\_localize} after block CFPerm;
+$^\dagger$carrier ranking without strong CF reject (descriptive only).
+Null $\rho_{\mathrm{PO}}$ is unstable and not interpreted as absorb.
+Audio CF/$\rho$ from smoke / single-window checks; MMD share is full.
+\end{minipage}
+\end{table*}

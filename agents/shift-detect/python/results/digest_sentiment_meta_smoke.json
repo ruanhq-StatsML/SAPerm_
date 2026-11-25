@@ -1,0 +1,611 @@
+{
+  "scenario": "sentiment_meta",
+  "embed": {
+    "RFPerm": {
+      "p": 0.9512195121951219,
+      "reject": false,
+      "stat": -0.05295701489984231
+    },
+    "DRPerm": {
+      "p": 0.9512195121951219,
+      "reject": false,
+      "stat": 0.00590922765252308
+    }
+  },
+  "embed_meta": {
+    "RFPerm": {
+      "p": 0.9024390243902439,
+      "reject": false,
+      "stat": -0.032713415931903383
+    },
+    "DRPerm": {
+      "p": 1.0,
+      "reject": false,
+      "stat": 0.0015143299970398945
+    }
+  },
+  "interaction": {
+    "PO_embed": 0.00590922765252308,
+    "PO_meta": 0.0015143299970398945,
+    "rho_PO": 0.2562652999827002,
+    "delta_RF": 0,
+    "delta_DR": 0
+  },
+  "localization_blocks": [
+    {
+      "block": "spacy_style",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "indices": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32
+      ]
+    },
+    {
+      "block": "spacy_syntax",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "indices": [
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ]
+    },
+    {
+      "block": "spacy_ner",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "indices": [
+        40,
+        41,
+        42,
+        43,
+        44,
+        45
+      ]
+    },
+    {
+      "block": "vader_sent",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "indices": [
+        46,
+        47,
+        48,
+        49,
+        50
+      ]
+    },
+    {
+      "block": "discourse",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "indices": [
+        51,
+        52,
+        53,
+        54
+      ]
+    },
+    {
+      "block": "structure_cues",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "indices": [
+        55,
+        56,
+        57,
+        58,
+        59,
+        60
+      ]
+    }
+  ],
+  "top_block": "spacy_style",
+  "driving_subset_loco": {
+    "indices": [
+      24,
+      25,
+      26
+    ],
+    "names": [
+      "n_tokens",
+      "n_sents",
+      "avg_token_len"
+    ],
+    "size": 3,
+    "members": [
+      {
+        "index": 24,
+        "name": "n_tokens",
+        "importance": 0.0,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 1
+      },
+      {
+        "index": 25,
+        "name": "n_sents",
+        "importance": 0.0,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 2
+      },
+      {
+        "index": 26,
+        "name": "avg_token_len",
+        "importance": 0.0,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 3
+      }
+    ]
+  },
+  "driving_subset_carrier": {
+    "indices": [
+      46,
+      49,
+      50,
+      48,
+      24,
+      25,
+      54,
+      31,
+      27,
+      58
+    ],
+    "names": [
+      "vader_compound",
+      "vader_neg",
+      "vader_polar_gap",
+      "vader_neu",
+      "n_tokens",
+      "n_sents",
+      "negation_cues",
+      "type_token_ratio",
+      "avg_sent_len",
+      "intensifier_cues"
+    ],
+    "size": 10,
+    "members": [
+      {
+        "index": 46,
+        "name": "vader_compound",
+        "importance": 5.844567782820177,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 1
+      },
+      {
+        "index": 49,
+        "name": "vader_neg",
+        "importance": 2.3119575405948636,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 2
+      },
+      {
+        "index": 50,
+        "name": "vader_polar_gap",
+        "importance": 2.0502072494127668,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 3
+      },
+      {
+        "index": 48,
+        "name": "vader_neu",
+        "importance": 1.3566996941537013,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 4
+      },
+      {
+        "index": 24,
+        "name": "n_tokens",
+        "importance": 0.9969767086736401,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 5
+      },
+      {
+        "index": 25,
+        "name": "n_sents",
+        "importance": 0.8072560914325992,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 6
+      },
+      {
+        "index": 54,
+        "name": "negation_cues",
+        "importance": 0.6366548336979136,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 7
+      },
+      {
+        "index": 31,
+        "name": "type_token_ratio",
+        "importance": 0.6199147021253862,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 8
+      },
+      {
+        "index": 27,
+        "name": "avg_sent_len",
+        "importance": 0.4321551278146039,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 9
+      },
+      {
+        "index": 58,
+        "name": "intensifier_cues",
+        "importance": 0.391605192231171,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 10
+      }
+    ]
+  },
+  "subset_rank_loco": [
+    {
+      "index": 24,
+      "name": "n_tokens",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "rank": 1
+    },
+    {
+      "index": 25,
+      "name": "n_sents",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "rank": 2
+    },
+    {
+      "index": 26,
+      "name": "avg_token_len",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "rank": 3
+    },
+    {
+      "index": 27,
+      "name": "avg_sent_len",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "rank": 4
+    },
+    {
+      "index": 28,
+      "name": "punct_ratio",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "rank": 5
+    },
+    {
+      "index": 29,
+      "name": "exclam_ratio",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "rank": 6
+    },
+    {
+      "index": 30,
+      "name": "question_ratio",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "rank": 7
+    },
+    {
+      "index": 31,
+      "name": "type_token_ratio",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "rank": 8
+    },
+    {
+      "index": 32,
+      "name": "stopword_ratio",
+      "importance": 0.0,
+      "p_value": 1.0,
+      "reject": false,
+      "rank": 9
+    }
+  ],
+  "carrier_rank": [
+    {
+      "index": 46,
+      "name": "vader_compound",
+      "importance": 5.844567782820177,
+      "p_value": null,
+      "reject": null,
+      "rank": 1
+    },
+    {
+      "index": 49,
+      "name": "vader_neg",
+      "importance": 2.3119575405948636,
+      "p_value": null,
+      "reject": null,
+      "rank": 2
+    },
+    {
+      "index": 50,
+      "name": "vader_polar_gap",
+      "importance": 2.0502072494127668,
+      "p_value": null,
+      "reject": null,
+      "rank": 3
+    },
+    {
+      "index": 48,
+      "name": "vader_neu",
+      "importance": 1.3566996941537013,
+      "p_value": null,
+      "reject": null,
+      "rank": 4
+    },
+    {
+      "index": 24,
+      "name": "n_tokens",
+      "importance": 0.9969767086736401,
+      "p_value": null,
+      "reject": null,
+      "rank": 5
+    },
+    {
+      "index": 25,
+      "name": "n_sents",
+      "importance": 0.8072560914325992,
+      "p_value": null,
+      "reject": null,
+      "rank": 6
+    },
+    {
+      "index": 54,
+      "name": "negation_cues",
+      "importance": 0.6366548336979136,
+      "p_value": null,
+      "reject": null,
+      "rank": 7
+    },
+    {
+      "index": 31,
+      "name": "type_token_ratio",
+      "importance": 0.6199147021253862,
+      "p_value": null,
+      "reject": null,
+      "rank": 8
+    },
+    {
+      "index": 27,
+      "name": "avg_sent_len",
+      "importance": 0.4321551278146039,
+      "p_value": null,
+      "reject": null,
+      "rank": 9
+    },
+    {
+      "index": 58,
+      "name": "intensifier_cues",
+      "importance": 0.391605192231171,
+      "p_value": null,
+      "reject": null,
+      "rank": 10
+    },
+    {
+      "index": 40,
+      "name": "ent_density",
+      "importance": 0.28624000902841484,
+      "p_value": null,
+      "reject": null,
+      "rank": 11
+    },
+    {
+      "index": 29,
+      "name": "exclam_ratio",
+      "importance": 0.27246998484195095,
+      "p_value": null,
+      "reject": null,
+      "rank": 12
+    },
+    {
+      "index": 59,
+      "name": "repeat_char_ratio",
+      "importance": 0.2718951923805244,
+      "p_value": null,
+      "reject": null,
+      "rank": 13
+    },
+    {
+      "index": 39,
+      "name": "verb_noun_ratio",
+      "importance": 0.26095318260679123,
+      "p_value": null,
+      "reject": null,
+      "rank": 14
+    },
+    {
+      "index": 44,
+      "name": "ent_gpe",
+      "importance": 0.21006926718216481,
+      "p_value": null,
+      "reject": null,
+      "rank": 15
+    }
+  ],
+  "sentiment_driver_subset": {
+    "indices": [
+      46,
+      49,
+      50,
+      48
+    ],
+    "names": [
+      "vader_compound",
+      "vader_neg",
+      "vader_polar_gap",
+      "vader_neu"
+    ],
+    "size": 4,
+    "members": [
+      {
+        "index": 46,
+        "name": "vader_compound",
+        "importance": 5.844567782820177,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 1
+      },
+      {
+        "index": 49,
+        "name": "vader_neg",
+        "importance": 2.3119575405948636,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 2
+      },
+      {
+        "index": 50,
+        "name": "vader_polar_gap",
+        "importance": 2.0502072494127668,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 3
+      },
+      {
+        "index": 48,
+        "name": "vader_neu",
+        "importance": 1.3566996941537013,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 4
+      }
+    ]
+  },
+  "sentiment_driver_rank": [
+    {
+      "index": 46,
+      "name": "vader_compound",
+      "importance": 5.844567782820177,
+      "p_value": null,
+      "reject": null,
+      "rank": 1
+    },
+    {
+      "index": 49,
+      "name": "vader_neg",
+      "importance": 2.3119575405948636,
+      "p_value": null,
+      "reject": null,
+      "rank": 2
+    },
+    {
+      "index": 50,
+      "name": "vader_polar_gap",
+      "importance": 2.0502072494127668,
+      "p_value": null,
+      "reject": null,
+      "rank": 3
+    },
+    {
+      "index": 48,
+      "name": "vader_neu",
+      "importance": 1.3566996941537013,
+      "p_value": null,
+      "reject": null,
+      "rank": 4
+    },
+    {
+      "index": 47,
+      "name": "vader_pos",
+      "importance": 0.1252230677261709,
+      "p_value": null,
+      "reject": null,
+      "rank": 5
+    }
+  ],
+  "business": "Sentiment-change drivers (vader_sent subset) = ['vader_compound', 'vader_neg', 'vader_polar_gap', 'vader_neu']; global carriers = ['vader_compound', 'vader_neg', 'vader_polar_gap', 'vader_neu', 'n_tokens'].",
+  "driving_subset": {
+    "indices": [
+      46,
+      49,
+      50,
+      48
+    ],
+    "names": [
+      "vader_compound",
+      "vader_neg",
+      "vader_polar_gap",
+      "vader_neu"
+    ],
+    "size": 4,
+    "members": [
+      {
+        "index": 46,
+        "name": "vader_compound",
+        "importance": 5.844567782820177,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 1
+      },
+      {
+        "index": 49,
+        "name": "vader_neg",
+        "importance": 2.3119575405948636,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 2
+      },
+      {
+        "index": 50,
+        "name": "vader_polar_gap",
+        "importance": 2.0502072494127668,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 3
+      },
+      {
+        "index": 48,
+        "name": "vader_neu",
+        "importance": 1.3566996941537013,
+        "p_value": 1.0,
+        "reject": false,
+        "rank": 4
+      }
+    ]
+  },
+  "claims": {
+    "A_power_increase": "compare embed vs embed_meta rejects / stats",
+    "B_interaction_and_subset": "rho_PO + top_block + driving_subset names"
+  }
+}

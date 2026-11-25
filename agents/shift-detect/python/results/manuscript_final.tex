@@ -1,0 +1,128 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,amsmath,amssymb,enumitem,graphicx,url}
+\usepackage[T1]{fontenc}
+
+\title{Meta Features, Multimodal Localization, and PO-Risk:\\
+Interpretable Distribution-Shift Evidence}
+\author{SAPerm shift-detect}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+We study distribution-shift detection and localization with a portable
+digestion $\to$ interaction $\to$ subset pipeline.
+The primary objects are RFPerm / DRPerm / CFPerm power (Random Forest
+outcome), modality MMD share $\pi_m$, the PO-risk ratio
+$\rho_{\mathrm{PO}}$, and packaged CFPerm LOCO $\to$ feature-subset
+localization.
+Across feature-only DGPs, BiasFinder embeddings with named meta, and
+ModaSense multimodal emotion~\cite{modasense_emotion_2026}, the same
+read applies: MMD marks the moving channel, power decides whether the
+shift is rejectable, $\rho_{\mathrm{PO}}$ decides absorb vs residual, and
+localization names executable features---not anonymous PCA dims.
+A closing empirical chapter reports the full ModaSense method comparison
+($B{=}100$, $N_{\mathrm{perm}}{=}150$) under random split and concept drift.
+\end{abstract}
+
+%% ------------------------------------------------------------------
+\section{Setup}
+%% ------------------------------------------------------------------
+Digestion returns a typed object $X$ with named blocks:
+\[
+X \;=\;
+\begin{cases}
+[Z_{\mathrm{PCA}},\,M] & \text{BiasFinder}\\[2pt]
+[M_t,M_i,M_a] & \text{ModaSense}
+\end{cases}
+\]
+Software surface: \texttt{digest} / \texttt{interactions} /
+\texttt{subset\_localize} / \texttt{run\_benchmark\_all}.
+Localization is the packaged CFPerm block LOCO followed by
+\texttt{subset\_localize} (no new method).
+
+\[
+\rho_{\mathrm{PO}}=\frac{\mathrm{PO}(X_{\mathrm{rich}})}{\mathrm{PO}(X_{\mathrm{base}})},
+\quad
+\pi_m=\frac{\mathrm{MMD}_m}{\sum_{m'}\mathrm{MMD}_{m'}}.
+\]
+
+%% ------------------------------------------------------------------
+\section{Joint characterization}
+\label{sec:joint}
+%% ------------------------------------------------------------------
+\input{joint_shift_analysis.tex}
+
+\paragraph{Reading.}
+Panel~A: crude named meta alone saturates sentiment/syntax power.
+Panel~B: even on top of BERT PCA, meta still absorbs ($\rho{\ll}1$) or
+localizes ($\Delta$CF${>}0$)---\textbf{embedding does not represent everything}.
+Panel~C: ModaSense trichotomy---text closes the chain; image is silent
+absorb; audio is MMD-only under the reported budget.
+
+%% ------------------------------------------------------------------
+\section{ModaSense interpretation}
+\label{sec:modasense}
+%% ------------------------------------------------------------------
+On ModaSense/emotion ($n{=}500$, designed pairwise label conflict),
+routing a batch gap along one modality and reading
+RF/CF/$\pi$/$\rho_{\mathrm{PO}}$ together is unusually interpretable.
+The text-sentiment window closes
+($\pi_t{=}0.91$, RF${=}1$, CF$_t{=}1$, VADER subset, $\rho{=}1.95$).
+The image-brightness window is silent absorb
+($\pi_i{=}0.95$, $\rho{=}0.62$, RF/CF near $\alpha$).
+Audio remains MMD-only.
+When the chain closes, packaged localization returns executable names
+(e.g.\ \texttt{vader\_neg}/\texttt{compound}/\texttt{polar\_gap}),
+not anonymous coordinates.
+
+%% ------------------------------------------------------------------
+\section{Full power comparison on ModaSense}
+\label{sec:fullpower}
+%% ------------------------------------------------------------------
+Outcome model: Random Forest throughout.
+Table~\ref{tab:modasense_power} is the manuscript-ready comparison
+($B{=}80$, $N_{\mathrm{perm}}{=}100$ on $[M_t,M_i]$; MMD share with audio).
+An extended all-methods sweep ($B{=}100$, $N_{\mathrm{perm}}{=}150$,
+including random-split / concept-drift) writes
+\texttt{benchmark\_all\_full.csv} and refreshes
+\texttt{full\_power\_modasense.tex} when complete.
+
+\input{modasense_power_comparison.tex}
+
+\subsection*{Extended sweep (when available)}
+\input{full_power_modasense.tex}
+
+\paragraph{Protocol.}
+Declare a modality (or block) as the driver only when MMD share, RFPerm,
+CFPerm, and (when relevant) $\rho_{\mathrm{PO}}$ agree; otherwise report
+the split.
+Never upgrade high $\pi$ alone into a localization claim.
+
+%% ------------------------------------------------------------------
+\section{Takeaway}
+%% ------------------------------------------------------------------
+\begin{enumerate}[leftmargin=*]
+  \item Digestion + interactions + packaged subset localization is enough
+        software.
+  \item $\rho_{\mathrm{PO}}$ separates absorb from residual; CFPerm names
+        the interacting block; \texttt{subset\_localize} names features.
+  \item Embeddings are incomplete for shift work: crude meta still moves
+        power, absorption, and localization on top of $Z$.
+  \item ModaSense makes the multimodal story readable: closed chain on
+        text, silent absorb on image, MMD-only on audio (pending full
+        $B{=}100$ table in Section~\ref{sec:fullpower}).
+\end{enumerate}
+
+\begin{thebibliography}{9}
+\bibitem{modasense_emotion_2026}
+Tri-PvP.
+\newblock {ModaSense/emotion}: Multimodal Emotion with Cross-Modal Label Conflict.
+\newblock Hugging Face Datasets, 2026.
+\newblock \url{https://huggingface.co/datasets/ModaSense/emotion}.
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,31 @@
+{
+  "config": {
+    "n": 80,
+    "B": 8,
+    "grid": 4,
+    "mask_frac": 0.5,
+    "scenario": "image_brightness_shift"
+  },
+  "table": {
+    "text_only": {
+      "RF_power": 0.0,
+      "DR_power": 0.0,
+      "PO": 0.0008272292432553049
+    },
+    "mm_full": {
+      "RF_power": 0.0,
+      "DR_power": 0.0,
+      "PO": 0.0014803381782010762
+    },
+    "mm_masked": {
+      "RF_power": 0.0,
+      "DR_power": 0.0,
+      "PO": 0.0014989588666337982
+    }
+  },
+  "rho_PO_mask_over_full": 1.0125786720270569,
+  "delta_RF_mask_minus_full": 0.0,
+  "delta_DR_mask_minus_full": 0.0,
+  "mean_img_meta_l1": 0.08950865379829277,
+  "read": "Masking patches ablates visual signal before meta extract. If image channel mattered, mm_masked should lose RF power and/or move PO vs mm_full under the same brightness windows."
+}

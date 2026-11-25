@@ -1,0 +1,285 @@
+{
+  "config": {
+    "B": 150,
+    "n_perm": 120,
+    "n_doc": 120,
+    "pca_k": 24,
+    "n_estimators": 40,
+    "n_max": 2000,
+    "seed": 2026,
+    "scenarios": [
+      "syntax_meta"
+    ],
+    "meta_blocks": {
+      "spacy_style": [
+        "n_tokens",
+        "n_sents",
+        "avg_token_len",
+        "avg_sent_len",
+        "punct_ratio",
+        "exclam_ratio",
+        "question_ratio",
+        "type_token_ratio",
+        "stopword_ratio"
+      ],
+      "spacy_syntax": [
+        "pos_noun",
+        "pos_verb",
+        "pos_adj",
+        "pos_adv",
+        "pos_propn",
+        "pos_pron",
+        "verb_noun_ratio"
+      ],
+      "spacy_ner": [
+        "ent_density",
+        "ent_count",
+        "ent_person",
+        "ent_org",
+        "ent_gpe",
+        "ent_date"
+      ],
+      "vader_sent": [
+        "vader_compound",
+        "vader_pos",
+        "vader_neu",
+        "vader_neg",
+        "vader_polar_gap"
+      ],
+      "discourse": [
+        "digit_ratio",
+        "upper_ratio",
+        "url_like",
+        "negation_cues"
+      ],
+      "structure_cues": [
+        "avg_dep_depth",
+        "clause_like_ratio",
+        "hedge_cues",
+        "intensifier_cues",
+        "repeat_char_ratio",
+        "flesch_proxy"
+      ]
+    },
+    "meta_dim": 37,
+    "packages": [
+      "spacy:en_core_web_sm",
+      "vaderSentiment",
+      "sklearn.RF"
+    ],
+    "elapsed_sec": 4965.6123015880585
+  },
+  "summary": {
+    "table": [
+      {
+        "scenario": "syntax_meta",
+        "feature_set": "embed",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.10666666666666667,
+          "DRPerm": 0.0,
+          "CFPerm": 0.21333333333333335
+        },
+        "mean_p": {
+          "RFPerm": 0.4053443526170799,
+          "DRPerm": 0.9707988980716254,
+          "CFPerm": 0.4703030303030302
+        },
+        "mean_stat": {
+          "RFPerm": 0.00789473342821125,
+          "DRPerm": 0.005265482476722269,
+          "CFPerm": 0.000389761367572211
+        }
+      },
+      {
+        "scenario": "syntax_meta",
+        "feature_set": "embed_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.06666666666666667,
+          "DRPerm": 0.0,
+          "CFPerm": 0.30666666666666664
+        },
+        "mean_p": {
+          "RFPerm": 0.42991735537190096,
+          "DRPerm": 1.0,
+          "CFPerm": 0.3148209366391184
+        },
+        "mean_stat": {
+          "RFPerm": 0.004683024347675764,
+          "DRPerm": 0.0010061402025709147,
+          "CFPerm": 0.0003929845762003407
+        }
+      }
+    ],
+    "deltas": [
+      {
+        "scenario": "syntax_meta",
+        "delta_power": {
+          "RFPerm": -0.04000000000000001,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0933333333333333
+        }
+      }
+    ]
+  },
+  "po_risk_note": "DRPerm PO-risk = E[\u03c4(X)^2], \u03c4\u2248(Y\u2212\u03bc(X))(W\u2212e(X)). If adding M shrinks residual batch\u2013outcome dependence, DRPerm power may drop (better nuisance adjustment). If M exposes concept signal that Z missed, power rises. Both are scientifically informative for incremental value.",
+  "rows_tail": [
+    {
+      "scenario": "syntax_meta",
+      "feature_set": "embed_meta",
+      "RFPerm": {
+        "method": "RFPerm",
+        "statistic": -0.008594549951814662,
+        "p_value": 0.6694214876033058,
+        "reject": false
+      },
+      "DRPerm": {
+        "method": "DRPerm",
+        "statistic": 0.001007823270772113,
+        "p_value": 1.0,
+        "reject": false,
+        "po_risk": 0.001007823270772113,
+        "mu_hat_mean": 0.5436383011763599,
+        "e_hat_mean": 0.4795697369759869
+      },
+      "CFPerm": {
+        "method": "CFPerm_loco_block",
+        "statistic": 1.2863254272722505e-05,
+        "p_value": 0.6528925619834711,
+        "reject": false,
+        "n_test_features": 37
+      }
+    },
+    {
+      "scenario": "syntax_meta",
+      "feature_set": "embed_meta",
+      "RFPerm": {
+        "method": "RFPerm",
+        "statistic": -0.00377276610437971,
+        "p_value": 0.512396694214876,
+        "reject": false
+      },
+      "DRPerm": {
+        "method": "DRPerm",
+        "statistic": 0.0010481003446990661,
+        "p_value": 1.0,
+        "reject": false,
+        "po_risk": 0.0010481003446990661,
+        "mu_hat_mean": 0.5754886149882038,
+        "e_hat_mean": 0.5070416533697784
+      },
+      "CFPerm": {
+        "method": "CFPerm_loco_block",
+        "statistic": 1.2262134640459272e-05,
+        "p_value": 0.7024793388429752,
+        "reject": false,
+        "n_test_features": 37
+      }
+    },
+    {
+      "scenario": "syntax_meta",
+      "feature_set": "embed_meta",
+      "RFPerm": {
+        "method": "RFPerm",
+        "statistic": -0.008594549951814662,
+        "p_value": 0.6694214876033058,
+        "reject": false
+      },
+      "DRPerm": {
+        "method": "DRPerm",
+        "statistic": 0.001007823270772113,
+        "p_value": 1.0,
+        "reject": false,
+        "po_risk": 0.001007823270772113,
+        "mu_hat_mean": 0.5436383011763599,
+        "e_hat_mean": 0.4795697369759869
+      },
+      "CFPerm": {
+        "method": "CFPerm_loco_block",
+        "statistic": 1.2863254272722505e-05,
+        "p_value": 0.6528925619834711,
+        "reject": false,
+        "n_test_features": 37
+      }
+    },
+    {
+      "scenario": "syntax_meta",
+      "feature_set": "embed_meta",
+      "RFPerm": {
+        "method": "RFPerm",
+        "statistic": 0.01608358070369037,
+        "p_value": 0.1322314049586777,
+        "reject": false
+      },
+      "DRPerm": {
+        "method": "DRPerm",
+        "statistic": 0.0010771519955174952,
+        "p_value": 1.0,
+        "reject": false,
+        "po_risk": 0.0010771519955174952,
+        "mu_hat_mean": 0.5742747547877676,
+        "e_hat_mean": 0.48568042394696803
+      },
+      "CFPerm": {
+        "method": "CFPerm_loco_block",
+        "statistic": 0.0,
+        "p_value": 1.0,
+        "reject": false,
+        "n_test_features": 37
+      }
+    },
+    {
+      "scenario": "syntax_meta",
+      "feature_set": "embed_meta",
+      "RFPerm": {
+        "method": "RFPerm",
+        "statistic": -0.004658125505889038,
+        "p_value": 0.5867768595041323,
+        "reject": false
+      },
+      "DRPerm": {
+        "method": "DRPerm",
+        "statistic": 0.0010453720986055525,
+        "p_value": 1.0,
+        "reject": false,
+        "po_risk": 0.0010453720986055525,
+        "mu_hat_mean": 0.5803620944266504,
+        "e_hat_mean": 0.5017211139384852
+      },
+      "CFPerm": {
+        "method": "CFPerm_loco_block",
+        "statistic": 0.0018467405555563552,
+        "p_value": 0.008264462809917356,
+        "reject": true,
+        "n_test_features": 37
+      }
+    },
+    {
+      "scenario": "syntax_meta",
+      "feature_set": "embed_meta",
+      "RFPerm": {
+        "method": "RFPerm",
+        "statistic": -0.029859155665404313,
+        "p_value": 0.9256198347107438,
+        "reject": false
+      },
+      "DRPerm": {
+        "method": "DRPerm",
+        "statistic": 0.0008201121642104748,
+        "p_value": 1.0,
+        "reject": false,
+        "po_risk": 0.0008201121642104748,
+        "mu_hat_mean": 0.553595713968658,
+        "e_hat_mean": 0.5110058303964554
+      },
+      "CFPerm": {
+        "method": "CFPerm_loco_block",
+        "statistic": 0.00012015886220082905,
+        "p_value": 0.2809917355371901,
+        "reject": false,
+        "n_test_features": 37
+      }
+    }
+  ]
+}

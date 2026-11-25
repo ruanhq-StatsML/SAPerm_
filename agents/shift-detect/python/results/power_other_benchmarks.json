@@ -1,0 +1,112 @@
+{
+  "config": {
+    "nRep": 30,
+    "nPerm": 150,
+    "nDoc": 40,
+    "seed": 11,
+    "files": [
+      "HYP-sarc-notsarc.csv",
+      "RQ-sarc-notsarc.csv",
+      "GEN-sarc-notsarc.csv"
+    ],
+    "alpha": 0.05
+  },
+  "results": [
+    {
+      "benchmark": "HYP-sarc-notsarc.csv",
+      "rows": [
+        {
+          "benchmark": "HYP-sarc-notsarc.csv",
+          "featureSet": "baseline",
+          "power": 0.06666666666666667,
+          "meanP": 0.33951434878587194,
+          "nFeatures": 5,
+          "nSarc": 582,
+          "nNot": 582
+        },
+        {
+          "benchmark": "HYP-sarc-notsarc.csv",
+          "featureSet": "meta",
+          "power": 0.26666666666666666,
+          "meanP": 0.19624724061810153,
+          "nFeatures": 37,
+          "nSarc": 582,
+          "nNot": 582
+        },
+        {
+          "benchmark": "HYP-sarc-notsarc.csv",
+          "featureSet": "both",
+          "power": 0.16666666666666666,
+          "meanP": 0.28719646799117,
+          "nFeatures": 42,
+          "nSarc": 582,
+          "nNot": 582
+        }
+      ]
+    },
+    {
+      "benchmark": "RQ-sarc-notsarc.csv",
+      "rows": [
+        {
+          "benchmark": "RQ-sarc-notsarc.csv",
+          "featureSet": "baseline",
+          "power": 0.2,
+          "meanP": 0.3792494481236203,
+          "nFeatures": 5,
+          "nSarc": 851,
+          "nNot": 851
+        },
+        {
+          "benchmark": "RQ-sarc-notsarc.csv",
+          "featureSet": "meta",
+          "power": 0.6666666666666666,
+          "meanP": 0.0955849889624724,
+          "nFeatures": 37,
+          "nSarc": 851,
+          "nNot": 851
+        },
+        {
+          "benchmark": "RQ-sarc-notsarc.csv",
+          "featureSet": "both",
+          "power": 0.3,
+          "meanP": 0.13686534216335539,
+          "nFeatures": 42,
+          "nSarc": 851,
+          "nNot": 851
+        }
+      ]
+    },
+    {
+      "benchmark": "GEN-sarc-notsarc.csv",
+      "rows": [
+        {
+          "benchmark": "GEN-sarc-notsarc.csv",
+          "featureSet": "baseline",
+          "power": 0.8666666666666667,
+          "meanP": 0.02803532008830022,
+          "nFeatures": 5,
+          "nSarc": 3260,
+          "nNot": 3260
+        },
+        {
+          "benchmark": "GEN-sarc-notsarc.csv",
+          "featureSet": "meta",
+          "power": 0.8,
+          "meanP": 0.0390728476821192,
+          "nFeatures": 37,
+          "nSarc": 3260,
+          "nNot": 3260
+        },
+        {
+          "benchmark": "GEN-sarc-notsarc.csv",
+          "featureSet": "both",
+          "power": 0.9,
+          "meanP": 0.04812362030905078,
+          "nFeatures": 42,
+          "nSarc": 3260,
+          "nNot": 3260
+        }
+      ]
+    }
+  ]
+}

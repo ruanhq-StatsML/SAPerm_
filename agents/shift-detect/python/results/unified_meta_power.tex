@@ -1,0 +1,198 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,amsmath,amssymb,enumitem}
+\usepackage[T1]{fontenc}
+
+\title{Meta $\times$ Embed: Power and $\rho_{\mathrm{PO}}$ Signatures}
+\author{SAPerm shift-detect}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Primary object is the PO-risk ratio
+$\rho_{\mathrm{PO}}=\mathrm{PO}(X_{\mathrm{rich}})/\mathrm{PO}(X_{\mathrm{base}})$
+together with detection power. Direction of $\rho$ (absorb / residual) plus
+CFPerm block power (localize) is the whole story. Feature builders
+(spaCy+VADER, OpenCV) are fixed inputs.
+\end{abstract}
+
+\section{$\rho_{\mathrm{PO}}$ first}
+\[
+\rho_{\mathrm{PO}}=\frac{\mathrm{PO}(X_{\mathrm{rich}})}{\mathrm{PO}(X_{\mathrm{base}})},
+\quad
+\mathrm{PO}=\mathbb{E}[\tau(X)^2],\
+\tau\approx(Y-\mu)(W-e).
+\]
+\begin{center}
+\begin{tabular}{llcl}
+\toprule
+$\rho$ & Power & Name & Reading \\
+\midrule
+$\ll 1$ & DR stays low & \textbf{absorb} & rich $X$ eats the covariate channel \\
+$\approx 1$ & RF/DR high & \textbf{residual} & shift orthogonal to the add-on \\
+any & $\Delta$CF${>}0$ & \textbf{localize} & named block carries the interaction \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{BiasFinder directions ($B{=}150$)}
+$X_{\mathrm{base}}=Z_{\mathrm{PCA}}$, $X_{\mathrm{rich}}=[Z,M]$.
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Scenario & $\rho_{\mathrm{PO}}$ & $\Delta$RF & $\Delta$CF & Signature \\
+\midrule
+null & 1.07 & $0$ & $+0.03$ & calibration \\
+sentiment\_meta & \textbf{0.25} & $+0.06$ & $+0.01$ & absorb \\
+syntax\_meta & \textbf{0.19} & $-0.04$ & $\mathbf{+0.09}$ & localize \\
+heldout & 1.03 & $0$ & $\mathbf{+0.23}$ & residual \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Feature-only power (same software)}
+Baseline$\to$meta: sentiment $0.40\to\mathbf{1.00}$; hard syntax
+$0.10\to\mathbf{1.00}$; RQ $0.20\to\mathbf{0.67}$.
+
+\section{Cross-modality: which \emph{block} contributes?}
+CFPerm LOCO power on named slices of $X=[Z_{\mathrm{PCA}},M]$ ($B{=}150$):
+\begin{center}
+\begin{tabular}{lccccc}
+\toprule
+Scenario & embed\_pca & meta & vader\_sent & spacy\_syntax & spacy\_style \\
+\midrule
+null & 0.05 & 0.07 & 0.04 & 0.09 & 0.04 \\
+sentiment\_meta & 0.01 & 0.03 & 0.02 & 0.04 & 0.06 \\
+syntax\_meta HARD & 0.16 & \textbf{0.31} & 0.18 & \textbf{0.32} & 0.20 \\
+heldout & 0.96 & \textbf{0.99} & 0.62 & 0.67 & 0.73 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Block-level ranking (what the table says).}
+\begin{itemize}[leftmargin=*]
+  \item \texttt{syntax\_meta}: largest CF is
+        $\texttt{spacy\_syntax}\,(0.32)\approx\texttt{meta}\,(0.31)
+        \gg \texttt{embed\_pca}\,(0.16)$.
+        The shift was routed by \texttt{verb\_noun\_ratio}; LOCO recovers
+        that \emph{syntax} block, not sentiment or anonymous PCA.
+  \item \texttt{sentiment\_meta}: all CF blocks stay near Type-I
+        ($0.01$--$0.06$) while $\rho_{\mathrm{PO}}{=}0.25$.
+        Contribution is not ``who rejects louder''---$M$ already absorbed
+        the polarity channel into $(\mu,e)$.
+  \item \texttt{heldout}: \texttt{embed\_pca}\,{=}\,0.96 and
+        \texttt{meta}\,{=}\,0.99 both saturate; residual lives in $Z$,
+        meta co-localizes but does not own the concept shift.
+\end{itemize}
+
+\paragraph{Feature-level drivers inside the winning meta block.}
+After block LOCO, carrier / subset rank \emph{coordinates}:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Scenario & Winning block & Driving meta-features \\
+\midrule
+sentiment\_meta & \texttt{vader\_sent}
+  (via absorb + carrier) &
+  \texttt{vader\_compound}, \texttt{vader\_neg},
+  \texttt{vader\_polar\_gap}, \texttt{vader\_neu} \\
+syntax\_meta & \texttt{spacy\_syntax} &
+  \texttt{verb\_noun\_ratio}, \texttt{pos\_verb}, \texttt{pos\_noun}
+  (routing axis + POS mass) \\
+heldout & embed residual; meta secondary &
+  style/syntax share CF ($0.62$--$0.73$), no single emotion axis \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Why these meta-features (argument).}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{VADER subset} (\texttt{compound}/\texttt{neg}/\texttt{polar\_gap}/\texttt{neu}):
+        the sentiment window is defined on \texttt{compound}; carrier
+        mass on \texttt{neg} and \texttt{polar\_gap} means the batch gap
+        is negative escalation and pos--neg conflict, not length or NER.
+        That is the meta problem being solved: \emph{named emotion
+        coordinates}, so ops can threshold negative mass without reading
+        PCA dims.
+  \item \textbf{Syntax subset} (\texttt{verb\_noun\_ratio} + POS):
+        the hard DGP flips POS under length match; CFPerm's top block is
+        exactly \texttt{spacy\_syntax}. The meta problem is
+        \emph{structure drift}: verb-heavy vs noun-heavy prose, not
+        polarity.
+  \item \textbf{Non-drivers}: \texttt{spacy\_ner}, discourse surface, and
+        trailing PCA stay low under sentiment/syntax routing---so the
+        claim is not ``any meta helps,'' but ``the aligned block and its
+        subset do.''
+\end{itemize}
+
+\section{ModaSense: which modality / which features?}
+$X=[M_{\mathrm{text}},M_{\mathrm{image}}]$ ($B{=}80$). Tri-modal case
+study adds audio; pairwise label conflict $=1$.
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Scenario & $\rho_{\mathrm{PO}}$ & CF text & CF image & Top drivers \\
+\midrule
+text\_sentiment & 1.95 & \textbf{1.00} & 0.54 &
+  \texttt{vader\_neg}, \texttt{compound}, \texttt{pos},
+  \texttt{polar\_gap}, \texttt{neu} \\
+image\_brightness & \textbf{0.62} & 0.00 & 0.01 &
+  \texttt{img\_brightness}, \texttt{hue\_std},
+  \texttt{contrast}, \texttt{sat\_mean} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Dimension contribution.}
+\begin{itemize}[leftmargin=*]
+  \item Text-routed shift: CF \texttt{text\_meta} saturates ($1.00$) with
+        importance $\gg$ image ($0.54$) and audio ($0$ in the tri-modal
+        drill). The contributing dimension is the \textbf{text block}.
+  \item Image-routed shift: detection RF stays near $0$; $\rho{=}0.62$
+        shows image meta \textbf{absorbs} when folded into $X$. Carrier
+        subset still names visual coords
+        (\texttt{brightness}/\texttt{contrast}/\texttt{sat}/\texttt{hue\_std})
+       ---the meta problem is \emph{visual atmosphere}, not copy emotion.
+\end{itemize}
+
+\paragraph{Meta-feature argument (business-readable).}
+\begin{itemize}[leftmargin=*]
+  \item \texttt{vader\_neg}/\texttt{compound}/\texttt{polar\_gap}:
+        negative escalation and conflict on the copy channel $\Rightarrow$
+        page the text/ops team; do not retrain vision.
+  \item \texttt{img\_brightness}/\texttt{contrast}/\texttt{sat\_mean}:
+        luminance and palette drift $\Rightarrow$ visual QA; CFPerm
+        prevents a false ``sentiment incident'' on text.
+  \item Audio energy windows were weak in the small drill; loudness
+        features (\texttt{aud\_rms\_energy}, \ldots) remain the intended
+        knobs when that axis is powered.
+\end{itemize}
+
+\section{POC: mask image patches (side)}
+Zero $50\%$ of $4{\times}4$ patches before image-meta extract
+(brightness windows, $B{=}40$). RF flat ($\approx 0.03$);
+$\rho_{\mathrm{PO}}^{\mathrm{image}}(\mathrm{mask}/\mathrm{full})\approx 1.95$.
+The \emph{same} image meta dims (brightness-led) lose nuisance quality
+under patch ablation $\Rightarrow$ PO-risk up, power unchanged.
+
+\section{Takeaway}
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Which dimension}: CFPerm block power picks
+        \texttt{spacy\_syntax} (syntax), \texttt{vader\_sent}/text\_meta
+        (sentiment), \texttt{embed\_pca} (heldout residual).
+  \item \textbf{Which meta-features}: VADER
+        \{\texttt{compound},\texttt{neg},\texttt{polar\_gap},\texttt{neu}\}
+        for emotion; \{\texttt{verb\_noun\_ratio}, POS\} for syntax;
+        \{\texttt{img\_brightness},\texttt{contrast},\texttt{sat}\} for
+        vision.
+  \item \textbf{$\rho_{\mathrm{PO}}$}: absorb ($0.25$/$0.19$/$0.62$) vs
+        residual ($\approx 1$) tells whether those features ate the
+        channel or left concept in $Z$.
+  \item Digested $X{=}[Z,M]$: crude $M$ still lifts CF / absorbs polarity
+        on top of $Z$---\textbf{embedding does not represent everything}.
+\end{enumerate}
+
+\end{document}

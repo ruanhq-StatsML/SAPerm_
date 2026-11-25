@@ -1,0 +1,128 @@
+{
+  "config": {
+    "B": 6,
+    "n_doc": 40,
+    "n_perm": 30,
+    "n_max": 120
+  },
+  "summary": {
+    "table": [
+      {
+        "scenario": "audio_energy_shift",
+        "B": 6,
+        "mmd": {
+          "text": 0.021941304751247875,
+          "image": 0.02015137068406107,
+          "audio": 0.14759607038334313,
+          "all": 0.055448412629853526
+        },
+        "RF_power": {
+          "text": 0.0,
+          "image": 0.0,
+          "audio": 0.0,
+          "all": 0.0
+        },
+        "DR_power": {
+          "text": 0.0,
+          "image": 0.0,
+          "audio": 0.0,
+          "all": 0.0
+        },
+        "rho_PO": {
+          "text_image_over_text": 1.8512552383984504,
+          "all_over_text": 1.0629197947842883,
+          "all_over_text_image": 0.635430401578745
+        },
+        "mmd_top_modality": "audio",
+        "align": "MMD_matches_routing"
+      },
+      {
+        "scenario": "image_brightness_shift",
+        "B": 6,
+        "mmd": {
+          "text": 0.023919163705292696,
+          "image": 0.15681507120009516,
+          "audio": 0.021355298526012385,
+          "all": 0.057178650286114796
+        },
+        "RF_power": {
+          "text": 0.0,
+          "image": 0.0,
+          "audio": 0.0,
+          "all": 0.0
+        },
+        "DR_power": {
+          "text": 0.0,
+          "image": 0.0,
+          "audio": 0.0,
+          "all": 0.0
+        },
+        "rho_PO": {
+          "text_image_over_text": 1.5758288019031343,
+          "all_over_text": 1.9406306202344978,
+          "all_over_text_image": 1.3449846344421605
+        },
+        "mmd_top_modality": "image",
+        "align": "MMD_matches_routing"
+      },
+      {
+        "scenario": "null_shift",
+        "B": 6,
+        "mmd": {
+          "text": 0.0320432393474227,
+          "image": 0.03171129474794909,
+          "audio": 0.025439369882218454,
+          "all": 0.029721036181684573
+        },
+        "RF_power": {
+          "text": 0.16666666666666666,
+          "image": 0.16666666666666666,
+          "audio": 0.16666666666666666,
+          "all": 0.16666666666666666
+        },
+        "DR_power": {
+          "text": 0.0,
+          "image": 0.0,
+          "audio": 0.0,
+          "all": 0.0
+        },
+        "rho_PO": {
+          "text_image_over_text": 1.7124922907963842,
+          "all_over_text": 2.571022040610526,
+          "all_over_text_image": 1.506112019647121
+        },
+        "mmd_top_modality": "text",
+        "align": "null"
+      },
+      {
+        "scenario": "text_sentiment_shift",
+        "B": 6,
+        "mmd": {
+          "text": 0.10113093397276524,
+          "image": 0.026365671251280642,
+          "audio": 0.034352901297411066,
+          "all": 0.06755413720651614
+        },
+        "RF_power": {
+          "text": 0.8333333333333334,
+          "image": 0.8333333333333334,
+          "audio": 0.8333333333333334,
+          "all": 0.8333333333333334
+        },
+        "DR_power": {
+          "text": 0.3333333333333333,
+          "image": 0.8333333333333334,
+          "audio": 0.5,
+          "all": 0.6666666666666666
+        },
+        "rho_PO": {
+          "text_image_over_text": 2.026018711683292,
+          "all_over_text": 1.9432224335021682,
+          "all_over_text_image": 0.9994456309994701
+        },
+        "mmd_top_modality": "text",
+        "align": "MMD_matches_routing"
+      }
+    ]
+  }
+}

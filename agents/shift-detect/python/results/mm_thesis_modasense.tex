@@ -1,0 +1,53 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,amsmath,amssymb}
+\usepackage[T1]{fontenc}
+
+\title{Multimodal Thesis Check: ModaSense/emotion}
+\author{SAPerm shift-detect}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Main thesis (what we argue)}
+Not ``more datasets for small power deltas.''
+The claim is:
+\begin{enumerate}
+  \item Portable \textbf{meta blocks} across modalities
+        (text: spaCy+VADER; image: OpenCV) sit in
+        $X=[M_{\mathrm{text}},M_{\mathrm{image}}]$ with
+        \textbf{list-indices}.
+  \item When a shift lives in one modality, detection power and/or
+        CFPerm localization concentrate on that block.
+  \item $(\Delta\mathrm{Power},\,\rho_{\mathrm{PO}})$ is
+        \textbf{interaction evidence} between modalities---not a
+        repair diagnostic.
+\end{enumerate}
+
+\section{Why ModaSense}
+HuggingFace \texttt{ModaSense/emotion} ($n{=}500$): image + audio + text
+with \emph{designed} cross-modal label conflict
+($P(\mathrm{text}\neq\mathrm{image})=1$).
+Ideal stress test for modality-block localization without needing
+video pipelines.
+
+\section{Design}
+Feature sets: \texttt{text\_only}=$M_{\mathrm{text}}$ vs
+\texttt{multimodal}=$[M_{\mathrm{text}},M_{\mathrm{image}}]$.
+DGPs: null; text routed by VADER; image routed by brightness.
+Methods: RFPerm / DRPerm / CFPerm on \texttt{text\_meta} vs
+\texttt{image\_meta} indices.
+
+\section{Results}
+See \texttt{power\_mm\_modasense\_full.md} (filled when $B{=}80$,
+$N_{\mathrm{perm}}{=}100$ finishes). Expected signature:
+text DGP $\to$ CF text high; image DGP $\to$ CF image high and/or
+$\rho_{\mathrm{PO}}$ absorb when image meta enters nuisance.
+
+\section{What we are \emph{not} claiming}
+HYP/RQ-style extras with weak incremental value are out of scope.
+This run exists only to show the \textbf{same statistical story}
+ports to a true multimodal table.
+
+\end{document}

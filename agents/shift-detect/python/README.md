@@ -1,44 +1,42 @@
-# Text meta-features (spaCy + VADER)
+# shift-detect — 5 scripts
 
-Dedicated feature script + power argument for the attribution agent.
-
-## Scripts
-
-| Script | Role |
-| --- | --- |
-| `extract_features.py` | **Only features** — spaCy style/syntax/NER + VADER sentiment |
-| `power_meta_features.py` | Type-I / power: `baseline` vs `meta` vs `both` |
-| `meta_features.py` | Fixture attribution helper used by the Agent tool |
-
-## Install
-
-```bash
-pip install -r requirements.txt
-python -m spacy download en_core_web_sm
+```
+digest.py              # 1. data digestion  → Digested
+interactions.py        # 2. PO-risk / MMD / R-risk / power-loss / RF·DR·CF
+run_benchmark_all.py   # 3. main: digest → interactions → DataFrame
+utils.py               # 4. tiny shared helpers (RF makers, folds, batch_xy)
+subset_localize.py     # 5. ORIGINAL: CFPerm block LOCO → driving feature subset
+datasets/              # dataset-specific only (BiasFinder, ModaSense, FE)
 ```
 
-## Extract features
+## Logic
 
-```bash
-python extract_features.py --demo --pretty
-python extract_features.py --set meta --json texts.json
-python extract_features.py --set baseline --json texts.json   # ablation surface stats
+```
+datasets/<name>.digest()
+        │
+        ▼
+   Digested  (X, y, schema.blocks / modality)
+        │
+        ├─ interactions.window_bundle(...)     # RF/DR/RR/MMD/C2ST/ρ_PO/π
+        │         └─ run_benchmark_all.py      # B reps → csv/parquet
+        │
+        └─ subset_localize                     # AFTER block CFPerm wins
+              loco_rank_coords / carrier_rank
+              → select_subset(names)
 ```
 
-## Power argument
+## Run
 
 ```bash
-python power_meta_features.py --n-rep 20 --n-perm 40 --n-doc 20
-# writes results/power_meta.json and results/power_meta.md
+source ./env_full.sh
+python digest.py --dataset modasense_emotion --audio --write
+python run_benchmark_all.py --dataset modasense_emotion --B 100 --n-perm 150
+# localization (packaged original):
+python -c "from interactions import localize_subset; ..."
+# or BiasFinder demo:
+# python subset_localize.py --demo-sentiment
 ```
 
-Latest offline result (α=0.05):
-
-| scenario | baseline | meta | Δ |
-| --- | ---: | ---: | ---: |
-| null Type-I | 0.05 | 0.05 | controlled |
-| sentiment_shift power | 0.55 | **1.00** | **+0.45** |
-| syntax_shift power | 0.05 | **1.00** | **+0.95** |
-| entity / style | 1.00 | 1.00 | saturated (surface also sees it) |
-
-**Claim:** when the planted signal lives in linguistic/sentiment structure (VADER polarity, spaCy POS), meta-features raise power versus a surface baseline without blowing Type-I.
+Canonical table: `results/joint_shift_analysis.tex`  
+Final manuscript: `results/manuscript_final.tex`  
+`_legacy/` = old one-offs / shims (not the surface).
