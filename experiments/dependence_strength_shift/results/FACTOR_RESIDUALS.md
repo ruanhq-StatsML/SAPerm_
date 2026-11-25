@@ -2,6 +2,10 @@
 
 Common factor removed; DSS / PO-risk / pairwise residual corr on ε.
 
+Read **both** rankings: `A` = residual redundancy regime; `po_gap` = residual
+map/hedge change. Ranking recovery: strength keeps sign agree on weaken/strengthen;
+PO-risk lights up the flip. See `INSIGHTS.md`.
+
 | Factor | kind | A (strength) | PO-risk gap | mean |Δρ| |
 | --- | --- | ---: | ---: | ---: |
 | f0 | weaken | -0.316 | 0.288 | 0.190 |

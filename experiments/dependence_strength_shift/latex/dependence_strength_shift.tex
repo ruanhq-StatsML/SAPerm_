@@ -110,13 +110,20 @@ Response & Oracle $A$ & $\widehat A$ (strength) & PO-risk gap \\
 
 The PO-risk column is largest on the flip coordinate whenever the conditional map reverses; the strength column stays near zero there and preserves the signed order of the other five levels.
 
-\subsection*{Reading}
+\subsection*{Insights from dual ranking recovery}
 
+The procedure is deliberately \emph{two} rankings, not a variance-only score.
 \begin{enumerate}[leftmargin=*]
-\item Spearman$(A)$ asks whether the method recovers the signed order of dependence intensity.
-\item The PO-risk ranking $\Delta^{\mathrm{PO}}$ is the natural companion for \emph{relationship} change;
-it is not a strength score, and it systematically over-ranks flips.
-\item Use both: PO-risk to flag that $m_{1,j}-m_{0,j}$ moved; $A_j$ to say whether redundancy rose or fell.
+\item \textbf{Strength ranking} by $A_j$ recovers signed intensity (Spearman$(A)$ high, sign agree near 1).
+Insight: who became more/less redundant / reconstructible.
+\item \textbf{PO-risk ranking} by $\Delta^{\mathrm{PO}}_j$ recovers relationship change, including flips
+(Spearman against oracle $A$ stays low by design; flips rank at the top).
+Insight: whose conditional map $m_1-m_0$ moved, even when $\eta^2$ did not.
+\item The \emph{gap} between the two Spearman numbers is the scientific payoff of ranking recovery:
+the rankings are not interchangeable. Using only PO-risk would mis-order redundancy;
+using only $A_j$ would miss pure sign flips.
+\item Operational pattern table: large $|A|$, small PO $\Rightarrow$ intensity regime;
+$A\approx 0$, large PO $\Rightarrow$ hedge/map flip; both large $\Rightarrow$ redesign both risk and hedges.
 \end{enumerate}
 
 \subsection*{Quant factor residuals}
@@ -130,10 +137,9 @@ A_j(\varepsilon)=\eta^{2}_{1,j}(\varepsilon)-\eta^{2}_{0,j}(\varepsilon),
 \Delta^{\mathrm{PO}}_j(\varepsilon)=R_j(0)-R_j(\tau),
 \end{equation}
 i.e.\ whether residual $j$ became more/less reconstructible from the other residuals, versus whether
-the residual conditional map flipped. The incremental matrix
-$V_{j\leftarrow k}=\mathrm{R}^2(\varepsilon_j\mid\varepsilon_{-j})-\mathrm{R}^2(\varepsilon_j\mid\varepsilon_{-\{j,k\}})$
-attributes the redundancy change to a particular residual partner---the residual analogue of
-``which other factor's idiosyncratic piece started explaining mine.''
-See \texttt{factor\_residuals.py} and \texttt{run\_factor\_demo}.
+the residual conditional map flipped. Ranking recovery on residuals is read the same way:
+$A(\varepsilon)$ for idiosyncratic crowding/diversification, $\Delta^{\mathrm{PO}}(\varepsilon)$ for residual hedge flips,
+and $V_{j\leftarrow k}$ for which partner residual carries the unique-information change.
+See \texttt{factor\_residuals.py}, \texttt{run\_factor\_demo}, and \texttt{results/INSIGHTS.md}.
 
 \end{document}

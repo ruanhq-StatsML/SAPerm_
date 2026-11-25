@@ -24,9 +24,16 @@ Default UCI protocol appends **six graded** factor-driven responses
 `η²`, then scores Spearman ranking recovery on that response block.
 `--uci-protocol residual` instead rewrites real columns via `m̂ + γ·residual`.
 
-Headline metric: **Spearman(A)** = rank correlation between oracle signed
-`Δη²` and estimated `strength_shift`, compared to **PO-risk ranking**
-(`po_gap = R(0)-R(τ)`).
+Not variance-only: report **both** rankings from the same fit.
+
+| Ranking | Score | Insight |
+| --- | --- | --- |
+| Strength | `A_j = η²_1 - η²_0` | redundancy / reconstructibility up or down (signed) |
+| PO-risk | `po_gap = R(0)-R(τ)` | conditional map moved (incl. flips) |
+
+**Ranking recovery** audits that these are different questions: Spearman vs oracle
+`A` is high for strength and low for PO-risk; flips have `A≈0` but top PO-risk.
+See `results/INSIGHTS.md`.
 
 ```bash
 python -m experiments.dependence_strength_shift.write_latex
