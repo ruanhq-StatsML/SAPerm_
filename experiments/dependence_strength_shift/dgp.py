@@ -12,10 +12,29 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-from sklearn.datasets import load_breast_cancer, load_digits, load_wine
+from sklearn.datasets import (
+    fetch_openml,
+    load_breast_cancer,
+    load_diabetes,
+    load_digits,
+    load_iris,
+    load_wine,
+)
 from sklearn.decomposition import PCA
 
 from experiments.deep_active_sampling.model_registry import default_model_registry
+
+# Graded target signal coefficients vs reference base_coef=1.
+# Oracle A_j = η²(|c|) - η²(1) gives a multi-level signed ranking
+# (not just three points), which makes Spearman meaningful.
+GRADED_TARGET_COEFS = (
+    ("weaken_hard", 0.20),
+    ("weaken_soft", 0.55),
+    ("near_null", 0.90),
+    ("strengthen_soft", 1.40),
+    ("strengthen_hard", 2.20),
+    ("flip", -1.00),
+)
 
 
 @dataclass(frozen=True)
@@ -32,23 +51,33 @@ def _eta2_gaussian(signal_coef: float, noise_sd: float = 1.0) -> float:
     return float(signal_coef**2 / (signal_coef**2 + noise_sd**2))
 
 
+def _kind_from_coef(coef: float, base_coef: float = 1.0) -> str:
+    if coef < 0 and abs(abs(coef) - base_coef) < 1e-12:
+        return "flip"
+    if abs(coef) < base_coef - 1e-12:
+        return "weaken"
+    if abs(coef) > base_coef + 1e-12:
+        return "strengthen"
+    return "none"
+
+
 def make_synthetic_strength_batches(
     n: int = 600,
-    p: int = 8,
+    p: int = 10,
     seed: int = 0,
-    weaken_idx: int = 0,
-    strengthen_idx: int = 1,
-    flip_idx: int = 2,
-    weaken_coef: float = 0.2,
-    strengthen_coef: float = 2.0,
     base_coef: float = 1.0,
+    graded_coefs=GRADED_TARGET_COEFS,
 ):
-    """Shared latent Z drives a few coordinates; the rest are pure noise.
+    """Shared latent Z drives graded active coordinates; the rest are noise.
 
-    Reference uses coefficient ``base_coef`` on the three active features.
-    Target keeps the same noise draws' marginal scale but changes the signal:
-    weaken / strengthen / flip. Oracle η² uses the Gaussian closed form.
+    Reference uses coefficient ``base_coef`` on every active feature. Target
+    applies the graded coefficient list (weaken hard→soft, near-null,
+    strengthen soft→hard, flip). Oracle η² uses the Gaussian closed form, so
+    Spearman(A) is scored against a multi-level signed ranking.
     """
+    graded_coefs = list(graded_coefs)
+    if p < len(graded_coefs):
+        raise ValueError("p must be at least the number of graded coefficients")
     rng = np.random.default_rng(seed)
     Z_ref = rng.normal(size=n)
     Z_new = rng.normal(size=n)
@@ -57,36 +86,25 @@ def make_synthetic_strength_batches(
     X_ref = E_ref.copy()
     X_new = E_new.copy()
 
-    specs = {
-        weaken_idx: ("weaken", weaken_coef),
-        strengthen_idx: ("strengthen", strengthen_coef),
-        flip_idx: ("flip", -base_coef),
-    }
     oracle_ref = np.zeros(p)
     oracle_new = np.zeros(p)
-    for j in range(p):
-        if j in specs:
-            X_ref[:, j] = base_coef * Z_ref + E_ref[:, j]
-            kind, coef = specs[j]
-            X_new[:, j] = coef * Z_new + E_new[:, j]
-            oracle_ref[j] = _eta2_gaussian(base_coef)
-            oracle_new[j] = _eta2_gaussian(abs(coef))
-        else:
-            oracle_ref[j] = 0.0
-            oracle_new[j] = 0.0
-
-    oracle_shift = oracle_new - oracle_ref
     kinds = np.array(["none"] * p, dtype=object)
-    for j, (kind, _) in specs.items():
-        kinds[j] = kind
+    for j, (_label, coef) in enumerate(graded_coefs):
+        X_ref[:, j] = base_coef * Z_ref + E_ref[:, j]
+        X_new[:, j] = coef * Z_new + E_new[:, j]
+        oracle_ref[j] = _eta2_gaussian(base_coef)
+        oracle_new[j] = _eta2_gaussian(abs(coef))
+        kinds[j] = _kind_from_coef(coef, base_coef)
+
     return {
         "X_ref": X_ref,
         "X_new": X_new,
         "oracle_strength_ref": oracle_ref,
         "oracle_strength_new": oracle_new,
-        "oracle_strength_shift": oracle_shift,
+        "oracle_strength_shift": oracle_new - oracle_ref,
         "kinds": kinds,
-        "name": "synthetic",
+        "name": "synthetic_graded",
+        "response_idx": np.arange(len(graded_coefs), dtype=int),
     }
 
 
@@ -170,8 +188,14 @@ def inject_residual_strength(
     }
 
 
+def _openml_numeric(name: str, version: int = 1) -> np.ndarray:
+    X, _ = fetch_openml(name, version=version, return_X_y=True, as_frame=False, parser="liac-arff")
+    X = np.asarray(X, dtype=float)
+    return X
+
+
 def load_uci_matrix(name: str, max_n: int = 2000, seed: int = 0) -> np.ndarray:
-    """Load a numeric UCI / sklearn table (features only)."""
+    """Load a numeric UCI / sklearn / OpenML table (features only)."""
     rng = np.random.default_rng(seed)
     name = name.lower()
     if name == "wine":
@@ -181,25 +205,41 @@ def load_uci_matrix(name: str, max_n: int = 2000, seed: int = 0) -> np.ndarray:
     elif name == "digits":
         X, _ = load_digits(return_X_y=True)
         X = X / 16.0
+    elif name == "diabetes":
+        X, _ = load_diabetes(return_X_y=True)
+    elif name == "iris":
+        X, _ = load_iris(return_X_y=True)
     elif name == "pendigits":
-        from sklearn.datasets import fetch_openml
-
-        X, _ = fetch_openml("pendigits", version=1, return_X_y=True, as_frame=False, parser="liac-arff")
-        X = np.asarray(X, dtype=float) / 100.0
+        X = _openml_numeric("pendigits") / 100.0
     elif name == "satimage":
-        from sklearn.datasets import fetch_openml
-
-        X, _ = fetch_openml("satimage", version=1, return_X_y=True, as_frame=False, parser="liac-arff")
-        X = np.asarray(X, dtype=float)
+        X = _openml_numeric("satimage")
+    elif name == "ionosphere":
+        X = _openml_numeric("ionosphere")
+    elif name == "spambase":
+        X = _openml_numeric("spambase")
+    elif name in {"vehicle", "statlog_vehicle", "vehicle_sensit"}:
+        # OpenML "vehicle" (Statlog); fall back to version search if needed.
+        try:
+            X = _openml_numeric("vehicle", version=1)
+        except Exception:
+            X = _openml_numeric("vehicle", version=2)
+    elif name in {"waveform", "waveform-5000"}:
+        X = _openml_numeric("waveform-5000")
+    elif name == "letter":
+        X = _openml_numeric("letter")
+    elif name == "optdigits":
+        X = _openml_numeric("optdigits")
     else:
         raise ValueError(f"unknown UCI table: {name}")
     X = np.asarray(X, dtype=float)
+    # OpenML sometimes returns object columns; keep finite numeric only.
+    X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
     if len(X) > max_n:
         X = X[rng.choice(len(X), size=max_n, replace=False)]
     # Drop near-constant columns so η² denominators stay stable.
     keep = np.std(X, axis=0) > 1e-8
     X = X[:, keep]
-    # Light PCA whitening of scale only: column-standardize.
+    # Column-standardize.
     scale = np.std(X, axis=0)
     scale = np.where(scale < 1e-8, 1.0, scale)
     return (X - X.mean(axis=0)) / scale
@@ -279,17 +319,18 @@ def make_uci_factor_batches(
     n_ref: int | None = None,
     n_new: int | None = None,
     seed: int = 0,
-    weaken_coef: float = 0.25,
-    strengthen_coef: float = 2.0,
     base_coef: float = 1.0,
+    graded_coefs=GRADED_TARGET_COEFS,
 ):
-    """UCI covariates plus three synthetic responses with known Δη².
+    """UCI covariates plus graded synthetic responses with known Δη².
 
-    A one-dimensional PCA score ``F`` of the real table drives three appended
-    coordinates. Reference uses coefficient ``base_coef``; target weakens,
-    strengthens, or flips that coefficient. Real columns keep oracle shift 0,
-    so ranking recovery is unconfounded by residual-injection spillover.
+    A PCA factor ``F`` of the real table drives ``len(graded_coefs)`` appended
+    responses. Reference uses ``base_coef``; target applies the graded list
+    (multi-level weaken / strengthen plus one flip). Real columns have oracle
+    shift 0. Ranking recovery is scored on the response block, where Spearman
+    has enough distinct oracle levels to be informative.
     """
+    graded_coefs = list(graded_coefs)
     rng = np.random.default_rng(seed)
     X = load_uci_matrix(name, max_n=2500, seed=seed)
     half = max(80, len(X) // 2)
@@ -300,44 +341,32 @@ def make_uci_factor_batches(
     if len(X) < n_ref + n_new:
         n_ref = len(X) // 2
         n_new = len(X) - n_ref
+    if n_ref < 60 or n_new < 60:
+        raise ValueError(f"{name} has only {len(X)} rows after filtering")
     order = rng.permutation(len(X))
     X_ref = X[order[:n_ref]]
     X_new = X[order[n_ref : n_ref + n_new]]
     pca = PCA(n_components=1, random_state=seed)
     f_ref = pca.fit_transform(X_ref).reshape(-1)
     f_new = pca.transform(X_new).reshape(-1)
-    # Standardize the factor so η² matches the Gaussian formula approximately.
     f_ref = (f_ref - f_ref.mean()) / (f_ref.std() + 1e-8)
     f_new = (f_new - f_new.mean()) / (f_new.std() + 1e-8)
-    e_ref = rng.normal(size=(n_ref, 3))
-    e_new = rng.normal(size=(n_new, 3))
-    y_ref = np.column_stack(
-        [
-            base_coef * f_ref + e_ref[:, 0],
-            base_coef * f_ref + e_ref[:, 1],
-            base_coef * f_ref + e_ref[:, 2],
-        ]
-    )
-    y_new = np.column_stack(
-        [
-            weaken_coef * f_new + e_new[:, 0],
-            strengthen_coef * f_new + e_new[:, 1],
-            -base_coef * f_new + e_new[:, 2],
-        ]
-    )
+    k = len(graded_coefs)
+    e_ref = rng.normal(size=(n_ref, k))
+    e_new = rng.normal(size=(n_new, k))
+    y_ref = np.column_stack([base_coef * f_ref + e_ref[:, i] for i in range(k)])
+    y_new = np.column_stack([coef * f_new + e_new[:, i] for i, (_lab, coef) in enumerate(graded_coefs)])
     X_ref_full = np.hstack([X_ref, y_ref])
     X_new_full = np.hstack([X_new, y_new])
     p = X_ref_full.shape[1]
     oracle_ref = np.zeros(p)
     oracle_new = np.zeros(p)
     kinds = np.array(["none"] * p, dtype=object)
-    idxs = [p - 3, p - 2, p - 1]
-    labels = ["weaken", "strengthen", "flip"]
-    coefs_new = [weaken_coef, strengthen_coef, base_coef]
-    for j, kind, coef in zip(idxs, labels, coefs_new):
-        kinds[j] = kind
+    idxs = list(range(p - k, p))
+    for j, (_lab, coef) in zip(idxs, graded_coefs):
+        kinds[j] = _kind_from_coef(coef, base_coef)
         oracle_ref[j] = _eta2_gaussian(base_coef)
-        oracle_new[j] = _eta2_gaussian(coef)
+        oracle_new[j] = _eta2_gaussian(abs(coef))
     return {
         "X_ref": X_ref_full,
         "X_new": X_new_full,
@@ -347,4 +376,5 @@ def make_uci_factor_batches(
         "kinds": kinds,
         "name": f"{name}_factor",
         "response_idx": np.asarray(idxs, dtype=int),
+        "graded_coefs": graded_coefs,
     }

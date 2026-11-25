@@ -19,11 +19,13 @@ python -m experiments.dependence_strength_shift --skip-uci --reps 5
 python -m pytest experiments/dependence_strength_shift/test_dependence_strength_shift.py -q
 ```
 
-Default UCI protocol appends three factor-driven responses (weaken / strengthen / flip)
-with known population `η²`, then scores ranking recovery on that response block.
+Default UCI protocol appends **six graded** factor-driven responses
+(hard/soft weaken, near-null, soft/hard strengthen, flip) with known population
+`η²`, then scores Spearman ranking recovery on that response block.
 `--uci-protocol residual` instead rewrites real columns via `m̂ + γ·residual`.
 
-Results land in `results/BOARD.md` and `results/ranking_recovery.json`.
+Headline metric: **Spearman(A)** = rank correlation between oracle signed
+`Δη²` and estimated `strength_shift`. See `results/BOARD.md`.
 
 ## API
 

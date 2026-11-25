@@ -1,15 +1,15 @@
 """Evaluate dependence-strength shift ranking recovery on synthetic + UCI.
 
-Compares four feature-level scores against the oracle signed Δη²:
+Compares feature-level scores against the oracle signed Δη²:
 
-1. ``strength_shift`` — η²_1 - η²_0 (the target estimand)
+1. ``strength_shift`` — η²_1 - η²_0 (the target estimand; signed)
 2. ``conditional_mean_shift`` — E[(m_1 - m_0)^2] (relationship change)
 3. ``pairwise_corr_shift`` — mean |Δρ| (linear association change)
 4. ``shape_change_q`` — Q-fixed relationship-shape term (flip-sensitive)
 
-The headline claim: CMS / pairwise corr rank a pure flip as a large change,
-while strength shift correctly ranks it near zero and recovers signed
-strengthen / weaken orderings.
+Spearman(A) is the primary ranking metric: correlation between the *ranks* of
+oracle A_j and estimated A_j. Graded interventions (6 distinct oracle levels)
+make this Spearman informative; a 3-point weaken/strengthen/flip design is not.
 """
 
 from __future__ import annotations
@@ -28,6 +28,8 @@ from experiments.deep_active_sampling.ood_vimp import (
     pairwise_corr_shift,
 )
 from experiments.dependence_strength_shift.dgp import (
+    GRADED_TARGET_COEFS,
+    _eta2_gaussian,
     make_synthetic_strength_batches,
     make_uci_factor_batches,
     make_uci_strength_batches,
@@ -36,12 +38,18 @@ from experiments.dependence_strength_shift.metrics import ranking_recovery
 
 ROOT = Path(__file__).resolve().parent
 RESULTS = ROOT / "results"
-DEFAULT_UCI = ("wine", "breast_cancer", "digits", "pendigits", "satimage")
-
-
-def _active_mask(kinds) -> np.ndarray:
-    kinds = np.asarray(kinds)
-    return kinds != "none"
+DEFAULT_UCI = (
+    "wine",
+    "breast_cancer",
+    "diabetes",
+    "digits",
+    "pendigits",
+    "satimage",
+    "ionosphere",
+    "spambase",
+    "waveform",
+    "optdigits",
+)
 
 
 def _score_methods(X_ref, X_new, seed: int, model_m: str):
@@ -87,29 +95,41 @@ def _strength_changing_mask(kinds) -> np.ndarray:
 def evaluate_batch(batch: dict, seed: int, model_m: str, k: int | None = None) -> dict:
     scores = _score_methods(batch["X_ref"], batch["X_new"], seed=seed, model_m=model_m)
     oracle = np.asarray(batch["oracle_strength_shift"], dtype=float)
-    # For factor-protocol batches, ranking is evaluated on the controlled response
-    # block only so high-p UCI covariates do not flood Precision@k with noise.
+    kinds = np.asarray(batch["kinds"])
+
     if "response_idx" in batch:
         idx = np.asarray(batch["response_idx"], dtype=int)
-        oracle_eval = oracle[idx]
-        kinds_eval = np.asarray(batch["kinds"])[idx]
-        score_slice = {name: np.asarray(vec, dtype=float)[idx] for name, vec in scores.items()}
+        oracle_resp = oracle[idx]
+        kinds_resp = kinds[idx]
+        score_resp = {name: np.asarray(vec, dtype=float)[idx] for name, vec in scores.items()}
     else:
-        oracle_eval = oracle
-        kinds_eval = np.asarray(batch["kinds"])
-        score_slice = scores
-    strength_changed = _strength_changing_mask(kinds_eval)
+        idx = np.arange(oracle.size)
+        oracle_resp = oracle
+        kinds_resp = kinds
+        score_resp = scores
+
+    strength_changed = _strength_changing_mask(kinds_resp)
     if k is None:
-        k = int(max(1, np.sum(strength_changed)))
-    rows = {}
-    for name, vec in score_slice.items():
+        k = int(max(1, np.sum(np.abs(oracle_resp) > 1e-8)))
+
+    metrics_resp = {}
+    for name, vec in score_resp.items():
         if name in {"strength_ref", "strength_new", "corr_q"}:
             continue
-        rows[name] = ranking_recovery(
-            oracle_eval, vec, k=k, active_mask=strength_changed
+        metrics_resp[name] = ranking_recovery(
+            oracle_resp, vec, k=k, active_mask=strength_changed
         )
-    # Flip separation: among flip coordinates, |strength| should be << CMS.
-    flip = np.asarray(batch["kinds"]) == "flip"
+
+    # Full-p ranking: includes many oracle zeros (harder; noise-sensitive).
+    metrics_full = {}
+    for name, vec in scores.items():
+        if name in {"strength_ref", "strength_new", "corr_q"}:
+            continue
+        metrics_full[name] = ranking_recovery(
+            oracle, vec, k=k, active_mask=_strength_changing_mask(kinds)
+        )
+
+    flip = kinds == "flip"
     flip_sep = {}
     if np.any(flip):
         flip_sep = {
@@ -121,17 +141,23 @@ def evaluate_batch(batch: dict, seed: int, model_m: str, k: int | None = None) -
     return {
         "name": batch.get("name", "batch"),
         "oracle_strength_shift": oracle.tolist(),
-        "kinds": [str(x) for x in batch["kinds"]],
-        "metrics": rows,
+        "oracle_response": oracle_resp.tolist(),
+        "kinds": [str(x) for x in kinds],
+        "response_idx": idx.tolist(),
+        "metrics": metrics_resp,
+        "metrics_full": metrics_full,
         "flip_separation": flip_sep,
         "estimates": {k: np.asarray(v, dtype=float).tolist() for k, v in scores.items()},
+        "estimates_response": {
+            k: np.asarray(v, dtype=float).tolist() for k, v in score_resp.items()
+        },
     }
 
 
 def run_synthetic(reps: int, seed: int, model_m: str) -> list[dict]:
     out = []
     for r in range(reps):
-        batch = make_synthetic_strength_batches(n=500, p=8, seed=seed + 17 * r)
+        batch = make_synthetic_strength_batches(n=550, p=10, seed=seed + 17 * r)
         out.append(evaluate_batch(batch, seed=seed + 101 * r, model_m=model_m))
     return out
 
@@ -161,15 +187,27 @@ def run_uci(names, reps: int, seed: int, model_m: str, protocol: str = "factor")
     return results
 
 
-def _mean_metric(rows: list[dict], method: str, key: str) -> float:
+def _mean_metric(rows: list[dict], method: str, key: str, which: str = "metrics") -> float:
     vals = []
     for row in rows:
         if "error" in row:
             continue
-        v = row["metrics"][method][key]
+        block = row.get(which, {})
+        if method not in block:
+            continue
+        v = block[method][key]
         if v is not None and np.isfinite(v):
             vals.append(float(v))
     return float(np.mean(vals)) if vals else float("nan")
+
+
+def _oracle_ladder() -> list[tuple[str, float, float]]:
+    base = _eta2_gaussian(1.0)
+    rows = []
+    for label, coef in GRADED_TARGET_COEFS:
+        eta1 = _eta2_gaussian(abs(coef))
+        rows.append((label, float(coef), eta1 - base))
+    return rows
 
 
 def summarize(synthetic_rows: list[dict], uci_rows: dict) -> str:
@@ -181,22 +219,48 @@ def summarize(synthetic_rows: list[dict], uci_rows: dict) -> str:
         "po_gap",
         "rf_domain",
     ]
+    ladder = _oracle_ladder()
+    ladder_lines = ["| Response | target coef | oracle A = Δη² |", "| --- | ---: | ---: |"]
+    for label, coef, a in ladder:
+        ladder_lines.append(f"| `{label}` | {coef:.2f} | {a:+.3f} |")
+
     lines = [
         "# Dependence Strength Shift — Ranking Recovery",
         "",
         "Estimand: for each feature `j`,",
         "",
         "```text",
-        "η²_{t,j} = Var_t(E_t[X_j | X_{-j}]) / Var_t(X_j)",
+        "η²_{t,j} ≈ 1 - MSE_t(X_j, m_{t,j}) / Var_t(X_j)   # held-out correlation ratio",
         "A_j      = η²_{1,j} - η²_{0,j}",
         "```",
         "",
-        "`A_j > 0` means the remaining features explain more of `X_j` on the target batch;",
-        "`A_j < 0` means dependence weakened. Relationship change (`conditional_mean_shift`,",
-        "`po_gap`, pairwise `|Δρ|`) answers a different question and ranks a pure sign flip",
-        "as large even when strength is unchanged.",
+        "This matches `dependence_strength_shift` in `OOD_vimp_wrapper` / `ood_vimp.py`:",
+        "per-feature T-learner for `m_0, m_1`, held-out η², plus `po_gap` as a",
+        "*relationship-change* companion (not a strength score).",
         "",
-        "## Synthetic (known population η²)",
+        "## What Spearman is measuring",
+        "",
+        "Spearman ρ is the Pearson correlation of **ranks**:",
+        "",
+        "```text",
+        "Spearman(A)     = corr( rank(oracle A_j), rank(estimated A_j) )",
+        "Spearman(|A|)   = corr( rank(|oracle A_j|), rank(|estimated A_j|) )",
+        "```",
+        "",
+        "- **Spearman(A)** answers: did we recover the *signed* order",
+        "  (most-weakened → … → most-strengthened)? This is the DSS question.",
+        "- **Spearman(|A|)** answers: did we recover *which* features moved most,",
+        "  ignoring strengthen vs weaken. Flip has oracle |A|=0, so |A|-ranking",
+        "  is a different task and is closer to what CMS / PO-gap optimize.",
+        "- With only 3 responses, Spearman is coarse (few distinct ranks).",
+        "  Here we use **6 graded oracle levels** so ρ has resolution:",
+        "",
+        *ladder_lines,
+        "",
+        "Population values assume `X = c·F + ε` with unit-variance F,ε.",
+        "Flip keeps `|c|=1` so oracle `A=0` while the map reverses.",
+        "",
+        "## Synthetic graded (response-block ranking)",
         "",
         "| Method | Spearman(A) | Spearman(|A|) | Precision@k | Sign agree |",
         "| --- | ---: | ---: | ---: | ---: |",
@@ -211,7 +275,24 @@ def summarize(synthetic_rows: list[dict], uci_rows: dict) -> str:
                 sg=_mean_metric(synthetic_rows, m, "sign_agreement"),
             )
         )
-    # Flip separation from first successful synthetic row
+    lines.extend(
+        [
+            "",
+            "Full-p Spearman (includes inert noise features with oracle A=0):",
+            "",
+            "| Method | Spearman(A) full | Spearman(|A|) full |",
+            "| --- | ---: | ---: |",
+        ]
+    )
+    for m in methods:
+        lines.append(
+            "| `{m}` | {s:.3f} | {sa:.3f} |".format(
+                m=m,
+                s=_mean_metric(synthetic_rows, m, "spearman", which="metrics_full"),
+                sa=_mean_metric(synthetic_rows, m, "spearman_abs", which="metrics_full"),
+            )
+        )
+
     flip_bits = [r["flip_separation"] for r in synthetic_rows if r.get("flip_separation")]
     if flip_bits:
         abs_s = float(np.mean([b["mean_abs_strength_shift"] for b in flip_bits]))
@@ -233,25 +314,46 @@ def summarize(synthetic_rows: list[dict], uci_rows: dict) -> str:
 
     lines.extend(
         [
-            "## UCI covariates + controlled factor responses",
+            "## UCI covariates + graded factor responses",
             "",
-            "Each UCI table is split into reference / target. A PCA factor of the real features",
-            "drives three appended responses with known population η² under weaken / strengthen / flip.",
-            "Real columns have oracle `A_j = 0`. Precision@k uses the strength-changing responses only",
-            "(flip is excluded because its oracle strength shift is zero).",
+            "Each table is split into reference / target. A PCA factor of the real features",
+            "drives six appended responses with the oracle ladder above. Ranking metrics below",
+            "are computed on that **response block** (the scientifically relevant coordinates).",
             "",
+            "### Cross-dataset summary (`strength_shift`)",
+            "",
+            "| Dataset | Spearman(A) | Spearman(|A|) | Precision@k | Sign agree |",
+            "| --- | ---: | ---: | ---: | ---: |",
         ]
     )
     for name, rows in uci_rows.items():
         ok = [r for r in rows if "error" not in r]
         if not ok:
             err = rows[0]["error"] if rows else "no runs"
-            lines.append(f"### {name}")
-            lines.append("")
-            lines.append(f"Skipped: `{err}`")
-            lines.append("")
+            lines.append(f"| `{name}` | — | — | — | skipped (`{err}`) |")
             continue
-        lines.append(f"### {name} (mean over {len(ok)} reps)")
+        lines.append(
+            "| `{name}` | {s:.3f} | {sa:.3f} | {p:.3f} | {sg:.3f} |".format(
+                name=name,
+                s=_mean_metric(ok, "strength_shift", "spearman"),
+                sa=_mean_metric(ok, "strength_shift", "spearman_abs"),
+                p=_mean_metric(ok, "strength_shift", "precision_at_k"),
+                sg=_mean_metric(ok, "strength_shift", "sign_agreement"),
+            )
+        )
+
+    lines.extend(
+        [
+            "",
+            "### Per-dataset method comparison",
+            "",
+        ]
+    )
+    for name, rows in uci_rows.items():
+        ok = [r for r in rows if "error" not in r]
+        if not ok:
+            continue
+        lines.append(f"#### {name} (mean over {len(ok)} reps)")
         lines.append("")
         lines.append("| Method | Spearman(A) | Spearman(|A|) | Precision@k | Sign agree |")
         lines.append("| --- | ---: | ---: | ---: | ---: |")
@@ -269,14 +371,25 @@ def summarize(synthetic_rows: list[dict], uci_rows: dict) -> str:
 
     lines.extend(
         [
-            "## Reading",
+            "## Argument: why these Spearman numbers support DSS",
             "",
-            "- **Strength shift** is the only score that is *signed* for redundancy:",
-            "  strengthen vs weaken is recoverable from `sign(A_j)`.",
-            "- **CMS / PO-gap / pairwise corr** recover *that a relationship moved*, including flips,",
-            "  so they over-rank flip coordinates when the question is dependence intensity.",
-            "- **Q-fixed shape term** isolates the flip / mechanism component under a common design `Q`,",
-            "  complementary to `Var_Q(m1)-Var_Q(m0)`.",
+            "1. **Signed order is the DSS estimand.** Spearman(A) rewards putting",
+            "   `weaken_hard` below `weaken_soft` below `near_null` below strengthens,",
+            "   and keeping flip near zero. CMS / pairwise / PO-gap are unsigned gap",
+            "   magnitudes, so they systematically mis-order flip and cannot achieve",
+            "   high sign agreement (chance ≈ 0.5 on binary strengthen/weaken).",
+            "2. **High Spearman(A) with graded levels is not automatic.** With 6 oracle",
+            "   ranks, a random permutation has E[ρ]=0. Recovering ρ ≳ 0.8 means the",
+            "   held-out η² differences track the population ladder, not just signs.",
+            "3. **Spearman(|A|) can lag Spearman(A).** Magnitude ranking confuses flip",
+            "   (oracle |A|=0 but large CMS) and soft near-null shifts; DSS is primarily",
+            "   a *signed* monitor. Prefer Spearman(A) + sign agreement as the headline.",
+            "4. **Full-p Spearman is a stress test.** Inert UCI/noise columns have oracle",
+            "   A=0 but finite-sample η² noise; ρ drops relative to the response block.",
+            "   That is expected and does not invalidate signed recovery on the moved coords.",
+            "5. **Complementarity.** Use CMS / `po_gap` / Q-shape to detect *that* a",
+            "   conditional map moved (including flips); use `A_j` to say whether",
+            "   reconstructibility / redundancy got stronger or weaker.",
             "",
         ]
     )
@@ -299,7 +412,7 @@ def main(argv=None):
         "--uci-protocol",
         choices=("factor", "residual"),
         default="factor",
-        help="factor: append synthetic responses with known η²; residual: rewrite real columns",
+        help="factor: append graded synthetic responses; residual: rewrite real columns",
     )
     args = parser.parse_args(argv)
 

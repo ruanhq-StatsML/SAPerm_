@@ -13,7 +13,7 @@ from experiments.dependence_strength_shift.metrics import ranking_recovery
 
 
 def test_synthetic_strength_recovers_signed_order():
-    batch = make_synthetic_strength_batches(n=400, p=6, seed=1)
+    batch = make_synthetic_strength_batches(n=450, p=10, seed=1)
     out = dependence_strength_shift(
         batch["X_ref"],
         batch["X_new"],
@@ -22,17 +22,17 @@ def test_synthetic_strength_recovers_signed_order():
         seed=2,
     )
     kinds = batch["kinds"]
-    weaken = int(np.where(kinds == "weaken")[0][0])
-    strengthen = int(np.where(kinds == "strengthen")[0][0])
-    flip = int(np.where(kinds == "flip")[0][0])
-    assert out["strength_shift"][weaken] < 0
-    assert out["strength_shift"][strengthen] > 0
-    # Flip changes the map but not the strength much relative to CMS.
-    assert abs(out["strength_shift"][flip]) < out["conditional_mean_shift"][flip]
+    weaken = np.where(kinds == "weaken")[0]
+    strengthen = np.where(kinds == "strengthen")[0]
+    flip = np.where(kinds == "flip")[0]
+    assert weaken.size and strengthen.size and flip.size
+    assert np.nanmean(out["strength_shift"][weaken]) < 0
+    assert np.nanmean(out["strength_shift"][strengthen]) > 0
+    assert abs(out["strength_shift"][flip[0]]) < out["conditional_mean_shift"][flip[0]]
 
 
 def test_q_decomposition_adds_to_cms():
-    batch = make_synthetic_strength_batches(n=300, p=5, seed=3)
+    batch = make_synthetic_strength_batches(n=300, p=10, seed=3)
     out = dependence_strength_shift_q(
         batch["X_ref"],
         batch["X_new"],
@@ -53,15 +53,13 @@ def test_ranking_recovery_dict_keys():
     assert set(metrics) >= {"spearman", "kendall", "precision_at_k", "sign_agreement"}
 
 
-def test_uci_factor_batches_known_oracle():
+def test_uci_factor_batches_graded_oracle():
     from experiments.dependence_strength_shift.dgp import make_uci_factor_batches
 
     batch = make_uci_factor_batches("wine", seed=0)
-    kinds = batch["kinds"]
-    assert "weaken" in kinds and "strengthen" in kinds and "flip" in kinds
-    weaken = int(np.where(kinds == "weaken")[0][0])
-    strengthen = int(np.where(kinds == "strengthen")[0][0])
-    flip = int(np.where(kinds == "flip")[0][0])
-    assert batch["oracle_strength_shift"][weaken] < 0
-    assert batch["oracle_strength_shift"][strengthen] > 0
-    assert abs(batch["oracle_strength_shift"][flip]) < 1e-12
+    idx = batch["response_idx"]
+    oracle = batch["oracle_strength_shift"][idx]
+    # Graded ladder should be strictly increasing in signed A except flip at 0.
+    assert oracle[0] < oracle[1] < oracle[2] < 0
+    assert 0 < oracle[3] < oracle[4]
+    assert abs(oracle[5]) < 1e-12
