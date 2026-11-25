@@ -31,7 +31,8 @@ def main(argv: list[str] | None = None) -> int:
         default=list(C.FEATURE_SETS),
         help="without_meta | with_meta | meta_only",
     )
-    p.add_argument("--out-suffix", default="", help="e.g. meta_only → power_meta_embed_full_meta_only.json")
+    p.add_argument("--out-suffix", default="", help="checkpoint tag + output suffix")
+    p.add_argument("--skip-anisotropy", action="store_true")
     p.add_argument("--smoke", action="store_true")
     p.add_argument("--anisotropy-only", action="store_true")
     args = p.parse_args(argv)
@@ -48,7 +49,11 @@ def main(argv: list[str] | None = None) -> int:
         args.scenarios = ["null_shift", "sentiment_meta"]
 
     OUT.mkdir(parents=True, exist_ok=True)
-    aniso = run_anisotropy(args.n_max, args.seed, OUT, args.embed_model)
+    aniso: dict = {}
+    if not args.skip_anisotropy:
+        aniso = run_anisotropy(args.n_max, args.seed, OUT, args.embed_model)
+    elif (OUT / "anisotropy_effective_rank.json").is_file():
+        aniso = json.loads((OUT / "anisotropy_effective_rank.json").read_text(encoding="utf-8"))
 
     if args.anisotropy_only:
         print(f"Wrote {OUT / 'anisotropy_effective_rank.json'}", file=sys.stderr)
@@ -68,6 +73,7 @@ def main(argv: list[str] | None = None) -> int:
         n_jobs=args.n_jobs,
         out_dir=OUT,
         embed_model=args.embed_model,
+        checkpoint_tag=args.out_suffix or "default",
     )
     result["anisotropy_headline"] = {
         k: {

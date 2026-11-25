@@ -71,6 +71,38 @@ def run_anisotropy(n_max: int, seed: int, out_dir: Path, embed_model: str) -> di
     return by_key
 
 
+def _job_key(dataset: str, scenario: str, feature_set: str, b: int) -> tuple[str, str, str, int]:
+    return (dataset, scenario, feature_set, b)
+
+
+def _load_checkpoint(path: Path) -> list[dict[str, Any]]:
+    if not path.is_file():
+        return []
+    z = np.load(path, allow_pickle=True)
+    return list(z["rows"])
+
+
+def _write_dataset_artifact(
+    out_dir: Path,
+    tag: str,
+    ds: str,
+  *,
+    B: int,
+    n_perm: int,
+    ds_rows: list[dict[str, Any]],
+) -> None:
+    summary = summarize(ds_rows, C.METHODS)
+    payload = {
+        "dataset": ds,
+        "B": B,
+        "n_perm": n_perm,
+        "checkpoint_tag": tag,
+        "summary": summary,
+    }
+    name = f"power_dataset_{tag}_{ds}_B{B}.json" if tag else f"power_dataset_{ds}_B{B}.json"
+    (out_dir / name).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
 def run_power(
     *,
     B: int,
@@ -86,6 +118,7 @@ def run_power(
     n_jobs: int,
     out_dir: Path,
     embed_model: str,
+    checkpoint_tag: str = "",
 ) -> dict[str, Any]:
     t0 = time.time()
     cache: dict[str, tuple] = {}
@@ -98,33 +131,43 @@ def run_power(
 
     rows: list[dict[str, Any]] = []
     out_dir.mkdir(parents=True, exist_ok=True)
-    partial_path = out_dir / "power_partial_rows.npz"
+    tag = checkpoint_tag or "default"
     n_jobs_eff = n_jobs if n_jobs > 0 else 1
 
     for ds in datasets:
         Zpca, M, y, meta_names = cache[ds]
+        ckpt_path = out_dir / f"checkpoint_{tag}_{ds}.npz"
+        ds_rows = [r for r in _load_checkpoint(ckpt_path) if r.get("dataset") == ds]
+        done = {
+            _job_key(r["dataset"], r["scenario"], r["feature_set"], int(r["b"]))
+            for r in ds_rows
+            if "b" in r
+        }
+
         jobs = [
             (ds, sc, fs, b)
             for sc in scenarios
             for fs in feature_sets
             for b in range(B)
+            if _job_key(ds, sc, fs, b) not in done
         ]
-        ds_rows: list[dict[str, Any]] = []
+        total = len(scenarios) * len(feature_sets) * B
         if n_jobs_eff == 1:
             for i, (d, sc, fs, b) in enumerate(jobs, 1):
-                ds_rows.append(
-                    run_job(
-                        d, sc, fs, b, Zpca, M, y, meta_names,
-                        n_doc=n_doc, n_perm=n_perm, seed=seed,
-                        n_estimators=n_estimators, pca_k=pca_k,
-                    )
+                rep = run_job(
+                    d, sc, fs, b, Zpca, M, y, meta_names,
+                    n_doc=n_doc, n_perm=n_perm, seed=seed,
+                    n_estimators=n_estimators, pca_k=pca_k,
                 )
-                if i % 10 == 0 or i == len(jobs):
-                    print(f"[{ds} {i}/{len(jobs)}]", file=sys.stderr)
+                rep["b"] = b
+                ds_rows.append(rep)
+                if i % 4 == 0 or i == len(jobs):
+                    np.savez_compressed(ckpt_path, rows=np.array(ds_rows, dtype=object))
+                    print(f"[{tag} {ds} {len(ds_rows)}/{total}]", file=sys.stderr, flush=True)
         else:
             from joblib import Parallel, delayed, parallel_backend
 
-            chunk = max(n_jobs_eff * 2, 4)
+            chunk = max(n_jobs_eff, 2)
             with parallel_backend("threading", n_jobs=n_jobs_eff):
                 for start in range(0, len(jobs), chunk):
                     batch = jobs[start : start + chunk]
@@ -136,17 +179,31 @@ def run_power(
                         )
                         for d, sc, fs, b in batch
                     )
-                    ds_rows.extend(batch_out)
-                    print(f"[{ds} {len(ds_rows)}/{len(jobs)}]", file=sys.stderr)
+                    for (d, sc, fs, b), rep in zip(batch, batch_out):
+                        rep["b"] = b
+                        ds_rows.append(rep)
+                    np.savez_compressed(ckpt_path, rows=np.array(ds_rows, dtype=object))
+                    print(f"[{tag} {ds} {len(ds_rows)}/{total}]", file=sys.stderr, flush=True)
 
         rows.extend(ds_rows)
-        np.savez_compressed(partial_path, rows=np.array(rows, dtype=object))
-        partial_summary = summarize(rows, C.METHODS)
-        (out_dir / "power_partial_summary.json").write_text(
-            json.dumps({"completed_datasets": [d for d in datasets if d == ds or d in {r["dataset"] for r in rows}], "summary": partial_summary}, indent=2),
+        _write_dataset_artifact(out_dir, tag, ds, B=B, n_perm=n_perm, ds_rows=ds_rows)
+        partial_summary = summarize(
+            [r for r in rows if r["dataset"] in datasets[: datasets.index(ds) + 1]], C.METHODS
+        )
+        (out_dir / f"power_partial_summary_{tag}.json").write_text(
+            json.dumps(
+                {
+                    "checkpoint_tag": tag,
+                    "completed_datasets": datasets[: datasets.index(ds) + 1],
+                    "B": B,
+                    "n_perm": n_perm,
+                    "summary": partial_summary,
+                },
+                indent=2,
+            ),
             encoding="utf-8",
         )
-        print(f"[done dataset {ds}]", file=sys.stderr)
+        print(f"[done dataset {tag} {ds}]", file=sys.stderr, flush=True)
 
     summary = summarize(rows, C.METHODS)
     return {
