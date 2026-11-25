@@ -6,12 +6,14 @@ export PYTHONUNBUFFERED=1
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 cd "$ROOT"
 MODE="${1:-embed}"
+NPROC="$(nproc)"
 LOG_DIR="$ROOT/experiments/meta_vs_embed_power/results"
 mkdir -p "$LOG_DIR"
 
 run_embed() {
+  echo "[keepalive] embed n_jobs=${NPROC} nproc=${NPROC} $(date -Is)" | tee -a "$LOG_DIR/power_b150_run.log"
   python3 -m experiments.meta_vs_embed_power \
-    --B 150 --n-perm 150 --n-estimators 150 --n-jobs 2 \
+    --B 150 --n-perm 150 --n-estimators 150 --n-jobs "${NPROC}" \
     --datasets train_bias_finder gender bias \
     --feature-sets without_meta with_meta \
   --out-suffix b150_embed --skip-anisotropy \
@@ -19,8 +21,9 @@ run_embed() {
 }
 
 run_meta_only() {
+  echo "[keepalive] meta_only n_jobs=${NPROC} nproc=${NPROC} $(date -Is)" | tee -a "$LOG_DIR/power_meta_only_b150.log"
   python3 -m experiments.meta_vs_embed_power \
-    --B 150 --n-perm 150 --n-estimators 150 --n-jobs 2 \
+    --B 150 --n-perm 150 --n-estimators 150 --n-jobs "${NPROC}" \
     --datasets train_bias_finder gender bias \
     --feature-sets meta_only \
     --out-suffix meta_only --skip-anisotropy \
