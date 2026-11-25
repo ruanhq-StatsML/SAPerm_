@@ -342,3 +342,20 @@ def get_embedding_wrapper(df_csv, text_col, MODEL_CONFIGS = MODEL_CONFIGS, delim
         embedding0 = get_embedding(df[text_col].astype(str).tolist(), model_name = model_name)
         np.save(f"{dataset_name}_{model_name}_embedding.npy", embedding0)
 
+def anistropy(X_embedding):
+    N, p = X_embedding.shape 
+    _, S, _ = np.linalg.svd(X_embedding)
+    eff_rank = S ** 2/np.sum(S**2)
+    effective_rank = -np.exp((-eff_rank * np.log(eff_rank + 1e-6)).sum())
+    cond_num = max(S)/min(S)
+    X_norm = F.normalize(X_sub, p = 2, dim = -1)
+    cos_matrix = X_norm @ X_norm.T 
+    avg_cos_sim = (cos_matrix.sum() - N)/(N * (N-1))
+    anistropy = (S**2)[0]/np.sum(S**2)
+    return {
+    'avg_cos_sim': avg_cos_sim,
+    'cond_num': cond_num,
+    'effective_rank': effective_rank,
+    'anistropy': anistropy
+    }
+
