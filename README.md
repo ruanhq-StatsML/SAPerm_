@@ -2,12 +2,9 @@
 
 ## Trustworthy Eval & Attribution Agent
 
-See [`agents/shift-detect`](agents/shift-detect) for the Agent SDK agent that covers:
-
 1. **Distribution-shift attribution** — detect → classify → pathway/LOCO attribute → Eval Gate  
-2. **Trustworthy text/multimodal LLM evaluation** — versioned rubrics/datasets, cross-model对照, same-model对齐, eval-side behavior interpretability, Trust Eval Gate  
+2. **Trustworthy text/multimodal LLM evaluation** — versioned rubrics/datasets, 
 
-It wraps methods in this repo (and sibling RFPerm / CFPerm / OnlineMonitoring / FSDS work) and provides a portable offline suite for daily eval systematization.
 
 ---
 
@@ -126,4 +123,7 @@ https://colab.research.google.com/drive/1lYQFzql9wtXdPDvEh2QQ7q7shlFMjCbv#scroll
 https://colab.research.google.com/drive/1SyI5dn7d4WPZKPXVXMMxCVZo8PePXOF0
 
 #### For the details of the dataset, please contact hank_rhq@outlook.com for more details
+
+#### Meta-Feature Based Procedures to enhance the efficiency and the interpretability
+
 
