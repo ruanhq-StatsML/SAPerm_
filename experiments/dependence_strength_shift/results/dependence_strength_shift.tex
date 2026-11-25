@@ -1,0 +1,161 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\begin{document}
+
+\title{Dual ranking for dependence shift:\\ strength $A_j$ and PO-risk $\Delta^{\mathrm{PO}}_j$}
+\author{Applied note --- SAPerm / OOD VIMP}
+\date{}
+\maketitle
+
+\noindent\textit{Direct application.} Given two batches (or factor windows), fit one
+conditional mean per feature and emit \textbf{two} rankings: dependence-strength
+shift $A_j$ (signed redundancy) and PO-risk gap $\Delta^{\mathrm{PO}}_j$
+(relationship / map change, including flips). Ranking recovery shows they are not
+interchangeable. On factor panels, run the same scores on residuals after removing $G$.
+
+\section{Two scores from one fit}
+
+For coordinate $X_j$ and batch $t\in\{0,1\}$, fit $m_{t,j}=\widehat{\mathbb{E}}_t[X_j\mid X_{-j}]$.
+Held-out correlation ratio and signed strength shift:
+\begin{equation}
+\eta^{2}_{t,j}=1-\frac{\mathrm{MSE}_t(X_j,m_{t,j})}{\widehat{\mathrm{Var}}_t(X_j)},
+\qquad
+A_j=\eta^{2}_{1,j}-\eta^{2}_{0,j}.
+\label{eq:Aj}
+\end{equation}
+$A_j>0$: peers explain more of $X_j$ on the target (redundancy up).
+$A_j<0$: dependence weakened.
+
+Same fits, PO-risk ranking. With propensity $\pi$, contrast $\tau_j=m_{1,j}-m_{0,j}$,
+and doubly robust pseudo-outcome $\phi$ (batch as treatment),
+\begin{equation}
+R(\tau)=\widehat{\mathbb{E}}[(\phi-\tau)^2],
+\qquad
+\Delta^{\mathrm{PO}}_j=R(0)-R(\tau_j).
+\label{eq:PO}
+\end{equation}
+Rank by $\Delta^{\mathrm{PO}}_j$ to find where the \emph{conditional map} moved.
+Large PO-risk does \emph{not} mean stronger dependence: a pure sign flip has $A_j\approx 0$
+and large $\Delta^{\mathrm{PO}}_j$.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Ranking & Score & Question \\
+\midrule
+Strength & $A_j$ \eqref{eq:Aj} & Intensity up/down (signed) \\
+PO-risk & $\Delta^{\mathrm{PO}}_j$ \eqref{eq:PO} & Map changed? (incl.\ flip) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Factor residuals (quant application)}
+
+Write $F_j=\beta_j^\top G+\varepsilon_j$. Apply \eqref{eq:Aj}--\eqref{eq:PO} to the residual
+panel $(\varepsilon_1,\ldots,\varepsilon_p)$ across two windows:
+\begin{itemize}[leftmargin=*]
+\item $A_j(\varepsilon)$: idiosyncratic crowding / diversification.
+\item $\Delta^{\mathrm{PO}}_j(\varepsilon)$: residual hedge / conditional-map flip.
+\item Optional $V_{j\leftarrow k}$: which partner residual's unique $R^2$ changed.
+\end{itemize}
+Pairwise $\mathrm{Corr}(\varepsilon_j,\varepsilon_k)$ is the linear special case.
+API: \texttt{factor\_residual\_dependence\_shift(F\_ref, F\_new, n\_common=1)}.
+
+\section{Ranking recovery}
+
+Graded oracle (reference coef $c_0=1$):
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+Response & Target coef & Oracle $A$ \\
+\midrule
+\texttt{weaken\_hard} & 0.20 & -0.462 \\
+\texttt{weaken\_soft} & 0.55 & -0.268 \\
+\texttt{near\_null} & 0.90 & -0.052 \\
+\texttt{strengthen\_soft} & 1.40 & +0.162 \\
+\texttt{strengthen\_hard} & 2.20 & +0.329 \\
+\texttt{flip} & -1.00 & +0.000 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Spearman$(A)=\mathrm{corr}(\mathrm{rank}(A^{\mathrm{oracle}}),\mathrm{rank}(\mathrm{score}))$.
+Strength should recover the signed ladder; PO-risk should not (it over-ranks flips).
+
+\paragraph{Synthetic.}
+Strength: Spearman$(A)=0.971$, sign agree $1.000$. 
+PO-risk: Spearman$(A)=0.329$, sign agree $0.400$. 
+On flips, mean $|A|=0.043$ vs mean CMS $3.172$.
+
+\begin{table}[h]
+\centering
+\caption{UCI factor protocol: strength ranking vs PO-risk ranking (response block).}
+\label{tab:dss-po}
+\begin{tabular}{lrrrr}
+\toprule
+Dataset & Spearman $A$ & Spearman PO & Sign $A$ & Sign PO \\
+\midrule
+\texttt{wine} & 0.729 & 0.300 & 0.700 & 0.700 \\
+\texttt{breast\_cancer} & 0.929 & 0.529 & 1.000 & 0.800 \\
+\texttt{diabetes} & 0.929 & 0.300 & 1.000 & 0.450 \\
+\texttt{digits} & 0.914 & 0.257 & 0.900 & 0.700 \\
+\texttt{pendigits} & 0.986 & 0.229 & 0.950 & 0.600 \\
+\texttt{satimage} & 0.957 & 0.243 & 0.950 & 0.600 \\
+\texttt{ionosphere} & 0.686 & 0.186 & 0.850 & 0.650 \\
+\texttt{spambase} & 0.800 & 0.229 & 0.800 & 0.750 \\
+\texttt{waveform} & 1.000 & 0.257 & 0.950 & 0.700 \\
+\texttt{optdigits} & 0.857 & 0.357 & 0.850 & 0.750 \\
+\midrule
+Mean & 0.879 & 0.289 & 0.895 & 0.670 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Illustration.}
+One replicate on \texttt{waveform}:
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+Response & Oracle $A$ & $\widehat A$ & PO-risk $\Delta^{\mathrm{PO}}$ \\
+\midrule
+\texttt{weaken\_hard} & -0.462 & -0.636 & 0.401 \\
+\texttt{weaken\_soft} & -0.268 & -0.162 & -0.203 \\
+\texttt{near\_null} & -0.052 & -0.035 & -0.411 \\
+\texttt{strengthen\_soft} & +0.162 & +0.233 & -0.348 \\
+\texttt{strengthen\_hard} & +0.329 & +0.417 & 1.397 \\
+\texttt{flip} & +0.000 & -0.030 & 4.799 \\
+\bottomrule
+\end{tabular}
+\end{center}
+PO-risk peaks on \texttt{flip}; $\widehat A$ stays near zero there and keeps the signed order elsewhere.
+
+\section{How to read the two rankings}
+
+\begin{center}
+\begin{tabular}{lllp{5.8cm}}
+\toprule
+$A_j$ & $\Delta^{\mathrm{PO}}$ & Pattern & Action \\
+\midrule
+$\downarrow$ large & small--mid & Diversification & Peers explain less; residual risk more unique \\
+$\uparrow$ large & small--mid & Crowding & Residuals more reconstructible \\
+$\approx 0$ & $\uparrow$ large & Map / hedge flip & Re-check hedges, not only variance \\
+large & large & Both moved & Redesign intensity and relationship \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Ranking recovery's insight is the \emph{gap}: mean UCI Spearman$(A)$ is 
+0.879 for strength vs 0.289 for PO-risk. 
+Use both; neither replaces the other.
+
+\paragraph{One-liner usage.}
+\begin{verbatim}
+from OOD_vimp_wrapper import dependence_strength_shift
+out = dependence_strength_shift(X_ref, X_new)  # A_j, po_gap
+# factors: factor_residual_dependence_shift(F_ref, F_new, n_common=1)
+\end{verbatim}
+
+\end{document}

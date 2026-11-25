@@ -605,3 +605,232 @@ def cauchy_combine_pval(p_values) -> float:
         raise ValueError("p_values is empty")
     statistic = float(np.mean(np.tan(np.pi * (0.5 - p))))
     return float(0.5 - np.arctan(statistic) / np.pi)
+
+
+def _heldout_r2(y, y_hat) -> float:
+    """Held-out correlation-ratio proxy ``1 - MSE / Var`` (may be negative)."""
+    y = _as_1d(y)
+    y_hat = _as_1d(y_hat)
+    denom = float(np.var(y))
+    if denom <= 0.0:
+        return float("nan")
+    return float(1.0 - np.mean((y - y_hat) ** 2) / denom)
+
+
+def _propensity_1d(model_e, fit_obj, Z) -> np.ndarray:
+    raw = np.asarray(model_e["predict"](fit_obj, Z))
+    if raw.ndim == 2 and raw.shape[1] == 2:
+        return _as_1d(raw[:, 1])
+    return _as_1d(raw)
+
+
+def dependence_strength_shift(
+    X_ref,
+    X_new,
+    model_registry=None,
+    model_m: str = "rf_regressor",
+    model_e: str = "logistic_classifier",
+    test_size: float = 0.3,
+    clip_e: float = 0.01,
+    seed: int = 2026,
+):
+    """Feature-wise dependence strength ``η²_t = 1 - E[(X_j - m_{t,j})^2] / Var(X_j)``.
+
+    For each coordinate ``j``, ``m_{t,j}(X_{-j}) = E_t[X_j | X_{-j}]`` is fit on
+    the training split of domain ``t``. Held-out correlation ratios on the two
+    domains give
+
+        A_j = η²_1,j - η²_0,j
+
+    which is signed: positive means the remaining features explain more of
+    ``X_j`` on the target batch; negative means dependence weakened.
+
+    ``po_gap`` is the pseudo-outcome risk drop from the zero contrast to the
+    fitted T-learner contrast ``m_1 - m_0``. It tracks relationship *change*,
+    not strength change, and can be large under a pure sign flip of ``m``.
+    """
+    if model_registry is None:
+        model_registry = MODEL_REGISTRY
+    X_ref = np.asarray(X_ref, dtype=float)
+    X_new = np.asarray(X_new, dtype=float)
+    if X_ref.ndim != 2 or X_new.ndim != 2:
+        raise ValueError("X_ref and X_new must be 2-d feature matrices")
+    if X_ref.shape[1] != X_new.shape[1]:
+        raise ValueError("X_ref and X_new must share the same number of columns")
+    if X_ref.shape[1] < 2:
+        raise ValueError("need at least two features")
+    if len(X_ref) < 4 or len(X_new) < 4:
+        raise ValueError("each batch needs at least four rows")
+
+    X = np.vstack([X_ref, X_new])
+    T = np.concatenate([np.zeros(len(X_ref), dtype=int), np.ones(len(X_new), dtype=int)])
+    X_tr, X_te, T_tr, T_te = train_test_split(
+        X, T, test_size=test_size, stratify=T, random_state=seed
+    )
+    model_m_spec = model_registry[model_m]
+    model_e_spec = model_registry[model_e]
+    p = X.shape[1]
+    strength_ref = np.full(p, np.nan)
+    strength_new = np.full(p, np.nan)
+    po_risks = np.full(p, np.nan)
+    po_gaps = np.full(p, np.nan)
+    cms = np.full(p, np.nan)
+
+    for j in range(p):
+        Z_tr = np.delete(X_tr, j, axis=1)
+        Z_te = np.delete(X_te, j, axis=1)
+        y_tr = X_tr[:, j]
+        y_te = X_te[:, j]
+        mu = []
+        for g in (0, 1):
+            mask = T_tr == g
+            if int(mask.sum()) < 2:
+                mu.append(np.full(len(X_te), float(np.mean(y_tr))))
+                continue
+            fit = model_m_spec["fit"](Z_tr[mask], y_tr[mask], seed=seed + j + 17 * g)
+            mu.append(_as_1d(model_m_spec["predict"](fit, Z_te)))
+        pi = np.clip(
+            _propensity_1d(model_e_spec, model_e_spec["fit"](Z_tr, T_tr, seed=seed + j + 91), Z_te),
+            clip_e,
+            1.0 - clip_e,
+        )
+        for g, store in ((0, strength_ref), (1, strength_new)):
+            mask = T_te == g
+            if int(mask.sum()) < 2:
+                continue
+            store[j] = _heldout_r2(y_te[mask], mu[g][mask])
+        tau = mu[1] - mu[0]
+        cms[j] = float(np.mean(tau ** 2))
+        r0 = po_risk(0.0, y_te, T_te, mu[0], mu[1], pi, clip=clip_e)
+        r1 = po_risk(tau, y_te, T_te, mu[0], mu[1], pi, clip=clip_e)
+        po_risks[j] = r1
+        po_gaps[j] = r0 - r1
+
+    return {
+        "strength_ref": strength_ref,
+        "strength_new": strength_new,
+        "strength_shift": strength_new - strength_ref,
+        "conditional_mean_shift": cms,
+        "po_risk": po_risks,
+        "po_gap": po_gaps,
+    }
+
+
+def dependence_strength_shift_q(
+    X_ref,
+    X_new,
+    model_registry=None,
+    model_m: str = "rf_regressor",
+    test_size: float = 0.3,
+    seed: int = 2026,
+    q: str = "pool",
+):
+    """Q-fixed strength / shape decomposition of the conditional-mean gap.
+
+    Fit ``m_0`` and ``m_1`` on the training split, then evaluate both on a
+    common reference design ``Q`` (pooled held-out rows by default). With
+    centered maps ``g_t = m_t - E_Q[m_t]``,
+
+        E_Q[(g_1 - g_0)^2] = (s_1 - s_0)^2 + 2 s_0 s_1 (1 - r)
+
+    where ``s_t = sqrt(E_Q[g_t^2])`` and ``r = Corr_Q(g_0, g_1)``. The first
+    term is strength change under ``Q``; the second is relationship-shape
+    change (including sign flips). Also reports
+
+        Δ_j^Q = Var_Q(m_1) - Var_Q(m_0) = Var_Q(τ) + 2 Cov_Q(m_0, τ).
+    """
+    if model_registry is None:
+        model_registry = MODEL_REGISTRY
+    if q not in {"pool", "ref", "new"}:
+        raise ValueError("q must be one of {'pool', 'ref', 'new'}")
+    X_ref = np.asarray(X_ref, dtype=float)
+    X_new = np.asarray(X_new, dtype=float)
+    if X_ref.ndim != 2 or X_new.ndim != 2 or X_ref.shape[1] != X_new.shape[1]:
+        raise ValueError("expected two feature matrices with a shared width")
+    if X_ref.shape[1] < 2:
+        raise ValueError("need at least two features")
+
+    X = np.vstack([X_ref, X_new])
+    T = np.concatenate([np.zeros(len(X_ref), dtype=int), np.ones(len(X_new), dtype=int)])
+    X_tr, X_te, T_tr, T_te = train_test_split(
+        X, T, test_size=test_size, stratify=T, random_state=seed
+    )
+    if q == "pool":
+        X_q = X_te
+    elif q == "ref":
+        X_q = X_te[T_te == 0]
+    else:
+        X_q = X_te[T_te == 1]
+    if len(X_q) < 2:
+        raise ValueError("Q design is too small after the split")
+
+    model_m_spec = model_registry[model_m]
+    p = X.shape[1]
+    strength_q = np.full(p, np.nan)
+    shape_q = np.full(p, np.nan)
+    cms_q = np.full(p, np.nan)
+    var_shift_q = np.full(p, np.nan)
+    corr_q = np.full(p, np.nan)
+    s0 = np.full(p, np.nan)
+    s1 = np.full(p, np.nan)
+
+    for j in range(p):
+        Z_tr = np.delete(X_tr, j, axis=1)
+        Z_q = np.delete(X_q, j, axis=1)
+        y_tr = X_tr[:, j]
+        fits = []
+        for g in (0, 1):
+            mask = T_tr == g
+            if int(mask.sum()) < 2:
+                fits.append(None)
+                continue
+            fits.append(model_m_spec["fit"](Z_tr[mask], y_tr[mask], seed=seed + j + 31 * g))
+        if fits[0] is None or fits[1] is None:
+            continue
+        m0 = _as_1d(model_m_spec["predict"](fits[0], Z_q))
+        m1 = _as_1d(model_m_spec["predict"](fits[1], Z_q))
+        g0 = m0 - float(np.mean(m0))
+        g1 = m1 - float(np.mean(m1))
+        s0_j = float(np.sqrt(np.mean(g0 ** 2)))
+        s1_j = float(np.sqrt(np.mean(g1 ** 2)))
+        s0[j] = s0_j
+        s1[j] = s1_j
+        if s0_j > 0.0 and s1_j > 0.0:
+            corr = float(np.mean(g0 * g1) / (s0_j * s1_j))
+            corr = float(np.clip(corr, -1.0, 1.0))
+        else:
+            corr = 1.0 if s0_j == 0.0 and s1_j == 0.0 else 0.0
+        corr_q[j] = corr
+        strength_q[j] = (s1_j - s0_j) ** 2
+        shape_q[j] = 2.0 * s0_j * s1_j * (1.0 - corr)
+        cms_q[j] = float(np.mean((g1 - g0) ** 2))
+        tau = m1 - m0
+        var_shift_q[j] = float(np.var(m1) - np.var(m0))
+        # Identity check: Var(m1)-Var(m0) = Var(tau) + 2 Cov(m0, tau)
+        _ = float(np.var(tau) + 2.0 * np.cov(m0, tau, ddof=0)[0, 1])
+
+    return {
+        "strength_change_q": strength_q,
+        "shape_change_q": shape_q,
+        "conditional_mean_shift_q": cms_q,
+        "var_shift_q": var_shift_q,
+        "corr_q": corr_q,
+        "s0_q": s0,
+        "s1_q": s1,
+    }
+
+
+def pairwise_corr_shift(X_ref, X_new) -> np.ndarray:
+    """Mean absolute pairwise Pearson correlation shift for each feature."""
+    X_ref = np.asarray(X_ref, dtype=float)
+    X_new = np.asarray(X_new, dtype=float)
+    p = X_ref.shape[1]
+    if p < 2:
+        return np.zeros(p)
+    c0 = np.corrcoef(X_ref, rowvar=False)
+    c1 = np.corrcoef(X_new, rowvar=False)
+    c0 = np.nan_to_num(c0, nan=0.0)
+    c1 = np.nan_to_num(c1, nan=0.0)
+    diff = np.abs(c1 - c0)
+    np.fill_diagonal(diff, 0.0)
+    return diff.mean(axis=1)
