@@ -28,7 +28,9 @@ def extract_embeddings(
     out_dir.mkdir(parents=True, exist_ok=True)
     path = cache_path(out_dir, dataset, model)
     if path.exists() and not force:
-        return np.load(path)
+        cached = np.load(path)
+        if len(cached) == len(texts):
+            return cached
     if model not in MODEL_CONFIGS:
         raise KeyError(f"Unknown model {model!r}; keys={list(MODEL_CONFIGS)}")
     # batch_size fixed to 32 in MODEL_CONFIGS entries

@@ -12,6 +12,7 @@ End-to-end pipeline (notebook / Colab aligned)
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -168,7 +169,7 @@ def run_power(
             from joblib import Parallel, delayed, parallel_backend
 
             chunk = max(n_jobs_eff, 2)
-            with parallel_backend("threading", n_jobs=n_jobs_eff):
+            with parallel_backend(os.environ.get("POWER_BACKEND", "threading"), n_jobs=n_jobs_eff):
                 for start in range(0, len(jobs), chunk):
                     batch = jobs[start : start + chunk]
                     batch_out = Parallel()(
