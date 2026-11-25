@@ -25,6 +25,13 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--datasets", nargs="*", default=list(C.DATASETS))
     p.add_argument("--scenarios", nargs="*", default=list(C.SCENARIOS))
     p.add_argument("--embed-model", default="MiniLM_L6")
+    p.add_argument(
+        "--feature-sets",
+        nargs="*",
+        default=list(C.FEATURE_SETS),
+        help="without_meta | with_meta | meta_only",
+    )
+    p.add_argument("--out-suffix", default="", help="e.g. meta_only → power_meta_embed_full_meta_only.json")
     p.add_argument("--smoke", action="store_true")
     p.add_argument("--anisotropy-only", action="store_true")
     args = p.parse_args(argv)
@@ -57,6 +64,7 @@ def main(argv: list[str] | None = None) -> int:
         seed=args.seed,
         datasets=args.datasets,
         scenarios=args.scenarios,
+        feature_sets=args.feature_sets,
         n_jobs=args.n_jobs,
         out_dir=OUT,
         embed_model=args.embed_model,
@@ -70,7 +78,8 @@ def main(argv: list[str] | None = None) -> int:
     }
 
     tag = "smoke" if args.smoke else "full"
-    out_json = OUT / f"power_meta_embed_{tag}.json"
+    suf = f"_{args.out_suffix}" if args.out_suffix else ""
+    out_json = OUT / f"power_meta_embed_{tag}{suf}.json"
     out_json.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(json.dumps(result["summary"], indent=2))
     print(f"Wrote {out_json}", file=sys.stderr)

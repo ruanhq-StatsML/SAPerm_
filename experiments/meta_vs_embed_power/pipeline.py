@@ -14,8 +14,6 @@ from __future__ import annotations
 import json
 import sys
 import time
-
-import json as _json  # noqa: F811 — used in partial checkpoint writes
 from pathlib import Path
 from typing import Any
 
@@ -84,6 +82,7 @@ def run_power(
     seed: int,
     datasets: list[str],
     scenarios: list[str],
+    feature_sets: list[str],
     n_jobs: int,
     out_dir: Path,
     embed_model: str,
@@ -105,17 +104,17 @@ def run_power(
     for ds in datasets:
         Zpca, M, y, meta_names = cache[ds]
         jobs = [
-            (ds, sc, with_meta, b)
+            (ds, sc, fs, b)
             for sc in scenarios
-            for with_meta in (False, True)
+            for fs in feature_sets
             for b in range(B)
         ]
         ds_rows: list[dict[str, Any]] = []
         if n_jobs_eff == 1:
-            for i, (d, sc, wm, b) in enumerate(jobs, 1):
+            for i, (d, sc, fs, b) in enumerate(jobs, 1):
                 ds_rows.append(
                     run_job(
-                        d, sc, wm, b, Zpca, M, y, meta_names,
+                        d, sc, fs, b, Zpca, M, y, meta_names,
                         n_doc=n_doc, n_perm=n_perm, seed=seed,
                         n_estimators=n_estimators, pca_k=pca_k,
                     )
@@ -131,11 +130,11 @@ def run_power(
                     batch = jobs[start : start + chunk]
                     batch_out = Parallel()(
                         delayed(run_job)(
-                            d, sc, wm, b, Zpca, M, y, meta_names,
+                            d, sc, fs, b, Zpca, M, y, meta_names,
                             n_doc=n_doc, n_perm=n_perm, seed=seed,
                             n_estimators=n_estimators, pca_k=pca_k,
                         )
-                        for d, sc, wm, b in batch
+                        for d, sc, fs, b in batch
                     )
                     ds_rows.extend(batch_out)
                     print(f"[{ds} {len(ds_rows)}/{len(jobs)}]", file=sys.stderr)
@@ -165,7 +164,8 @@ def run_power(
             "scenarios": scenarios,
             "outcome_model": C.OUTCOME_MODEL,
             "meta_source": "utils.text_meta",
-            "contrast": "without_meta=PCA(embedding); with_meta=hstack(PCA(embedding), text_meta)",
+            "contrast": "without_meta=PCA(Z); with_meta=hstack(Z,M); meta_only=M",
+            "feature_sets": feature_sets,
             "methods": list(C.METHODS),
             "elapsed_sec": time.time() - t0,
         },

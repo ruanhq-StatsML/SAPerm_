@@ -12,7 +12,7 @@ from experiments.meta_vs_embed_power.power import run_one_rep
 def run_job(
     dataset: str,
     scenario: str,
-    with_meta: bool,
+    feature_set: str,
     b: int,
     Zpca: np.ndarray,
     M: np.ndarray,
@@ -25,10 +25,10 @@ def run_job(
     n_estimators: int,
     pca_k: int,
 ) -> dict[str, Any]:
-    rep_seed = seed + 1000 * hash((dataset, with_meta)) % 997 + 17 * b + abs(hash(scenario)) % 89
+    rep_seed = seed + 1000 * hash((dataset, feature_set)) % 997 + 17 * b + abs(hash(scenario)) % 89
     rep = run_one_rep(
         scenario,
-        with_meta,
+        feature_set,
         Zpca,
         M,
         y,

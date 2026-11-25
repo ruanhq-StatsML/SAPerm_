@@ -26,7 +26,7 @@ def make_windows(
     meta_names: list[str],
     n_doc: int,
     rng: np.random.Generator,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     n = len(y)
     if scenario == "null_shift":
         idx = rng.permutation(n)
@@ -54,12 +54,12 @@ def make_windows(
     ye, yn = y[a], y[b]
     Ze, Zn = Zpca[a], Zpca[b]
     Me, Mn = M[a], M[b]
-    return Ze, ye, Zn, yn, np.hstack([Ze, Me]), np.hstack([Zn, Mn])
+    return Ze, ye, Zn, yn, np.hstack([Ze, Me]), np.hstack([Zn, Mn]), Me, Mn
 
 
 def run_one_rep(
     scenario: str,
-    with_meta: bool,
+    feature_set: str,
     Zpca: np.ndarray,
     M: np.ndarray,
     y: np.ndarray,
@@ -72,17 +72,20 @@ def run_one_rep(
     pca_k: int,
 ) -> dict[str, Any]:
     rng = np.random.default_rng(seed)
-    Xe_e, ye, Xn_e, yn, Xe_b, Xn_b = make_windows(
+    Xe_e, ye, Xn_e, yn, Xe_b, Xn_b, Me, Mn = make_windows(
         scenario, Zpca, M, y, meta_names, n_doc, rng
     )
-    if not with_meta:
+    if feature_set == "without_meta":
         Xe, Xn = Xe_e, Xn_e
-        meta_idx = np.array([], dtype=int)
-        fs = "without_meta"
-    else:
+        test_idx = np.arange(max(0, Xe.shape[1] - min(8, M.shape[1])), Xe.shape[1])
+    elif feature_set == "with_meta":
         Xe, Xn = Xe_b, Xn_b
-        meta_idx = np.arange(pca_k, pca_k + M.shape[1])
-        fs = "with_meta"
+        test_idx = np.arange(pca_k, pca_k + M.shape[1])
+    elif feature_set == "meta_only":
+        Xe, Xn = Me, Mn
+        test_idx = np.arange(M.shape[1])
+    else:
+        raise ValueError(feature_set)
 
     X = np.vstack([Xe, Xn])
     Y = np.concatenate([ye, yn])
@@ -90,14 +93,13 @@ def run_one_rep(
 
     out: dict[str, Any] = {
         "scenario": scenario,
-        "feature_set": fs,
+        "feature_set": feature_set,
         "RFPerm": rfperm_single_pvalue(
             Xe, ye, Xn, yn, n_perm=n_perm, seed=seed, n_estimators=max(n_estimators, 150)
-        ),  # RFPerm_Generalized.PermValTest
+        ),
         "DRPerm": drperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators),
         "RRPerm": rrperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 11, n_estimators=n_estimators),
     }
-    test_idx = meta_idx if with_meta else np.arange(max(0, Xe.shape[1] - min(8, M.shape[1])), Xe.shape[1])
     out["CFPerm"] = cfperm_loco_pvalue(
         X, Y, W, test_indices=test_idx, n_perm=n_perm, seed=seed + 5, n_estimators=n_estimators
     )

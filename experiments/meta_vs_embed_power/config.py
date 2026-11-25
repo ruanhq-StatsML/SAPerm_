@@ -21,6 +21,6 @@ N_PC_GRID = np.linspace(30, 330, 25, dtype=int)
 
 DATASETS = ("train_bias_finder", "gender", "bias")
 SCENARIOS = ("null_shift", "sentiment_meta", "syntax_meta", "train_vs_heldout")
-FEATURE_SETS = ("without_meta", "with_meta")  # PCA(embed) vs hstack(embed, text_meta)
+FEATURE_SETS = ("without_meta", "with_meta", "meta_only")  # PCA(Z) | hstack(Z,M) | M only
 
 METHODS = ("RFPerm", "DRPerm", "CFPerm", "RRPerm")
