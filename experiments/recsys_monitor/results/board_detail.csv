@@ -1,0 +1,17 @@
+scenario,n_reject,false_alarms,detected,delay,first_reject_t,top_block_at_detect,rep,ticket_top3
+none,0,0,0,,,,0,
+none,0,0,0,,,,1,
+none,0,0,0,,,,2,
+none,0,0,0,,,,3,
+concept,1,0,1,0.0,8.0,item,0,"item,review,user"
+concept,1,0,1,0.0,8.0,item,1,"item,review,user"
+concept,1,0,1,0.0,8.0,item,2,"item,review,context"
+concept,1,0,1,0.0,8.0,item,3,"item,review,context"
+covariate,2,1,1,2.0,10.0,user,0,"review,context,item"
+covariate,1,0,1,0.0,8.0,user,1,"user,review,context"
+covariate,1,0,1,0.0,8.0,user,2,"user,review,context"
+covariate,1,0,1,0.0,8.0,user,3,"user,review,context"
+both,2,0,1,0.0,8.0,user,0,"user,review,item"
+both,1,0,1,0.0,8.0,user,1,"user,review,context"
+both,2,0,1,0.0,8.0,user,2,"user,review,item"
+both,2,0,1,0.0,8.0,user,3,"user,review,context"
