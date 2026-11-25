@@ -103,6 +103,88 @@ def _write_dataset_artifact(
     (out_dir / name).write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
+def _write_scenario_artifact(
+    out_dir: Path,
+    tag: str,
+    ds: str,
+    scenario: str,
+    *,
+    B: int,
+    n_perm: int,
+    scen_rows: list[dict[str, Any]],
+) -> None:
+    summary = summarize(scen_rows, C.METHODS)
+    payload = {
+        "dataset": ds,
+        "scenario": scenario,
+        "B": B,
+        "n_perm": n_perm,
+        "checkpoint_tag": tag,
+        "summary": summary,
+    }
+    name = f"power_scenario_{tag}_{ds}_{scenario}_B{B}.json"
+    (out_dir / name).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    print(f"[done scenario {tag} {ds} {scenario}]", file=sys.stderr, flush=True)
+
+
+def _run_job_batches(
+    jobs: list[tuple[str, str, str, int]],
+    *,
+    ds_rows: list[dict[str, Any]],
+    Zpca: np.ndarray,
+    M: np.ndarray,
+    y: np.ndarray,
+    meta_names: list[str],
+    n_doc: int,
+    n_perm: int,
+    seed: int,
+    n_estimators: int,
+    pca_k: int,
+    n_jobs_eff: int,
+    ckpt_path: Path,
+    tag: str,
+    ds: str,
+    progress_label: str,
+    total: int,
+) -> None:
+    from experiments.meta_vs_embed_power.worker import run_job
+
+    if not jobs:
+        return
+    if n_jobs_eff == 1:
+        for i, (d, sc, fs, b) in enumerate(jobs, 1):
+            rep = run_job(
+                d, sc, fs, b, Zpca, M, y, meta_names,
+                n_doc=n_doc, n_perm=n_perm, seed=seed,
+                n_estimators=n_estimators, pca_k=pca_k,
+            )
+            rep["b"] = b
+            ds_rows.append(rep)
+            if i % 4 == 0 or i == len(jobs):
+                np.savez_compressed(ckpt_path, rows=np.array(ds_rows, dtype=object))
+                print(f"[{tag} {ds} {progress_label} {len(ds_rows)}/{total}]", file=sys.stderr, flush=True)
+    else:
+        from joblib import Parallel, delayed, parallel_backend
+
+        chunk = max(n_jobs_eff, 2)
+        with parallel_backend("threading", n_jobs=n_jobs_eff):
+            for start in range(0, len(jobs), chunk):
+                batch = jobs[start : start + chunk]
+                batch_out = Parallel()(
+                    delayed(run_job)(
+                        d, sc, fs, b, Zpca, M, y, meta_names,
+                        n_doc=n_doc, n_perm=n_perm, seed=seed,
+                        n_estimators=n_estimators, pca_k=pca_k,
+                    )
+                    for d, sc, fs, b in batch
+                )
+                for (d, sc, fs, b), rep in zip(batch, batch_out):
+                    rep["b"] = b
+                    ds_rows.append(rep)
+                np.savez_compressed(ckpt_path, rows=np.array(ds_rows, dtype=object))
+                print(f"[{tag} {ds} {progress_label} {len(ds_rows)}/{total}]", file=sys.stderr, flush=True)
+
+
 def run_power(
     *,
     B: int,
@@ -144,46 +226,40 @@ def run_power(
             if "b" in r
         }
 
-        jobs = [
-            (ds, sc, fs, b)
-            for sc in scenarios
-            for fs in feature_sets
-            for b in range(B)
-            if _job_key(ds, sc, fs, b) not in done
-        ]
         total = len(scenarios) * len(feature_sets) * B
-        if n_jobs_eff == 1:
-            for i, (d, sc, fs, b) in enumerate(jobs, 1):
-                rep = run_job(
-                    d, sc, fs, b, Zpca, M, y, meta_names,
-                    n_doc=n_doc, n_perm=n_perm, seed=seed,
-                    n_estimators=n_estimators, pca_k=pca_k,
+        for scenario in scenarios:
+            jobs = [
+                (ds, scenario, fs, b)
+                for fs in feature_sets
+                for b in range(B)
+                if _job_key(ds, scenario, fs, b) not in done
+            ]
+            _run_job_batches(
+                jobs,
+                ds_rows=ds_rows,
+                Zpca=Zpca,
+                M=M,
+                y=y,
+                meta_names=meta_names,
+                n_doc=n_doc,
+                n_perm=n_perm,
+                seed=seed,
+                n_estimators=n_estimators,
+                pca_k=pca_k,
+                n_jobs_eff=n_jobs_eff,
+                ckpt_path=ckpt_path,
+                tag=tag,
+                ds=ds,
+                progress_label=f"{scenario}",
+                total=total,
+            )
+            for r in jobs:
+                done.add(_job_key(ds, r[1], r[2], r[3]))
+            scen_rows = [r for r in ds_rows if r.get("scenario") == scenario]
+            if len(scen_rows) >= len(feature_sets) * B:
+                _write_scenario_artifact(
+                    out_dir, tag, ds, scenario, B=B, n_perm=n_perm, scen_rows=scen_rows
                 )
-                rep["b"] = b
-                ds_rows.append(rep)
-                if i % 4 == 0 or i == len(jobs):
-                    np.savez_compressed(ckpt_path, rows=np.array(ds_rows, dtype=object))
-                    print(f"[{tag} {ds} {len(ds_rows)}/{total}]", file=sys.stderr, flush=True)
-        else:
-            from joblib import Parallel, delayed, parallel_backend
-
-            chunk = max(n_jobs_eff, 2)
-            with parallel_backend("threading", n_jobs=n_jobs_eff):
-                for start in range(0, len(jobs), chunk):
-                    batch = jobs[start : start + chunk]
-                    batch_out = Parallel()(
-                        delayed(run_job)(
-                            d, sc, fs, b, Zpca, M, y, meta_names,
-                            n_doc=n_doc, n_perm=n_perm, seed=seed,
-                            n_estimators=n_estimators, pca_k=pca_k,
-                        )
-                        for d, sc, fs, b in batch
-                    )
-                    for (d, sc, fs, b), rep in zip(batch, batch_out):
-                        rep["b"] = b
-                        ds_rows.append(rep)
-                    np.savez_compressed(ckpt_path, rows=np.array(ds_rows, dtype=object))
-                    print(f"[{tag} {ds} {len(ds_rows)}/{total}]", file=sys.stderr, flush=True)
 
         rows.extend(ds_rows)
         _write_dataset_artifact(out_dir, tag, ds, B=B, n_perm=n_perm, ds_rows=ds_rows)
