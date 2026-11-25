@@ -15,5 +15,7 @@ Call `list_method_catalog` for the live list. Shortcut:
 | Feature drivers of concept | `attribute_shift` mode=loco | CFPerm, OOD_variable_importance |
 | Joint (X,Y) permute-refit | catalog external RFPerm | RFPerm / OnlineRFPerm |
 | Feature selection under shift | catalog FSDS | FSDS-FeatureSelection_for_DistributionShift |
+| Recsys rating monitor + refresh | `experiments/recsys_monitor` | OnlineRFPerm → CFPerm blocks → refresh ticket |
 
 Prefer portable agent tools first. Mention external repos when the user needs production-grade RF/XGB permute tests.
+For recommender landing see `experiments/recsys_monitor/ROADMAP.md`.

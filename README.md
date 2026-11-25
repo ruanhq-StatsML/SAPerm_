@@ -1,5 +1,11 @@
 # Hypothesis Testing Procedure for Distribution Shift with Application on Sentiment Analysis and Image Embedding
 
+## RecSys landing (OnlineRFPerm × CFPerm)
+
+See [`experiments/recsys_monitor`](experiments/recsys_monitor) for the recommender
+roadmap and runnable detect → attribute → refresh pipeline (rating-MSE monitor
+with online FDR, user/item/context/review block attribution).
+
 ## Trustworthy Eval & Attribution Agent
 
 See [`agents/shift-detect`](agents/shift-detect) for the Agent SDK agent that covers:
