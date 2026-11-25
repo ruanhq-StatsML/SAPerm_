@@ -43,3 +43,32 @@ from OOD_vimp_wrapper import dependence_strength_shift, dependence_strength_shif
 out = dependence_strength_shift(X_ref, X_new)   # η²_0, η²_1, A_j, CMS, po_gap
 q   = dependence_strength_shift_q(X_ref, X_new) # Q-fixed strength vs shape split
 ```
+
+## Quant factor residuals
+
+In multi-factor panels the relevant object is usually the **residual** after a
+common component (market / PCA / style) is removed:
+
+```text
+F_j = β_j' G + ε_j
+η²_j(ε) = Var(E[ε_j | ε_{-j}]) / Var(ε_j)
+A_j     = η²_1(ε) - η²_0(ε)     # residual redundancy up/down across windows
+```
+
+Pairwise residual correlation is the linear special case; DSS is the
+multivariate residual-interaction strength; `po_gap` ranks residual
+*relationship* changes (including sign flips).
+
+```python
+from experiments.dependence_strength_shift.factor_residuals import (
+    factor_residual_dependence_shift,
+)
+
+out = factor_residual_dependence_shift(F_ref, F_new, n_common=1)
+# out["strength_shift"], out["po_gap"], out["residual_corr_shift"],
+# out["incremental_shift"]  # Δ V_{j←k} unique residual information
+```
+
+```bash
+python -m experiments.dependence_strength_shift.run_factor_demo
+```
