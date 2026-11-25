@@ -1,0 +1,29 @@
+{
+  "coarse_window": {
+    "episode": 42,
+    "site": 0,
+    "horizon": 10
+  },
+  "fine_cell": {
+    "site": 0,
+    "name": "weekly_primary",
+    "horizon": 10,
+    "n_windows": 12,
+    "oracle": 0.8074999999999998,
+    "delta": 0.39973480150548596,
+    "signed": 0.7943889168108792,
+    "support_rate": 1.0,
+    "ip_edit_in_window": true
+  },
+  "fine_peak_horizon": 10,
+  "peak_matches_query": true,
+  "sign_matches": true,
+  "post_anomaly_unchanged": true,
+  "horizons_without_ip_edit": [
+    15,
+    20
+  ],
+  "coarse_signed": 1.0085806814389118,
+  "fine_signed": 0.7943889168108792,
+  "no_intervention_delta": 0.021114390508244128
+}
