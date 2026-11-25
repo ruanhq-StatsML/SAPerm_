@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 export PYTHONPATH="$ROOT"
 export PYTHONUNBUFFERED=1
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+export POWER_BACKEND=loky
 cd "$ROOT"
 NPROC="${POWER_N_JOBS:-4}"
 LOG="$ROOT/experiments/meta_vs_embed_power/results/bf_embed_b50.log"
