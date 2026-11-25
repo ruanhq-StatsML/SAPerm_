@@ -29,6 +29,7 @@ def write_summary(path: Path, diagnostics: pd.DataFrame, policy: pd.DataFrame, a
         f"- propensity clip: [{config['clip_e']}, {1.0 - config['clip_e']}]",
         f"- source replay: off",
         f"- adaptation protocol: matched epochs ({config['adapt_epochs']}), full-batch Adam",
+        f"- PO outcome and tau model: {config.get('outcome_model', 'rf')} (FSDS forest, 150 trees, when rf)",
         "",
         "PO-distance is mean(tau(X)^2) on held-out overlap rows. Selection uses the task-label PO-distance. The squared-loss PO-distance is reported beside it and is not a second selector. `po_squared_prediction_error` is the installed residual mean((psi - tau)^2) from `experiments/deep_active_sampling/ood_vimp.py`.",
         "",

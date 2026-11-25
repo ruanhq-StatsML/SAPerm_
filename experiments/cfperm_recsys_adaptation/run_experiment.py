@@ -45,6 +45,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--scenarios", default=",".join(SCENARIOS))
     parser.add_argument("--input", default=None)
     parser.add_argument("--output", default=None)
+    parser.add_argument("--outcome-model", default="rf", choices=("rf", "ridge"))
     args = parser.parse_args(argv)
     scenarios = [part.strip() for part in args.scenarios.split(",") if part.strip()]
     unknown = [name for name in scenarios if name not in SCENARIOS]
@@ -76,6 +77,7 @@ def main(argv: list[str] | None = None) -> int:
         "label_budgets": _budgets(args.label_budgets, args.quick),
         "scenarios": scenarios,
         "output": output,
+        "outcome_model": args.outcome_model,
     }
     run_experiment(config)
     print(f"wrote {output}")

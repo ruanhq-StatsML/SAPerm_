@@ -24,6 +24,9 @@ CLIP_E = 0.05
 RIDGE_ALPHA = 1.0
 TAU_ALPHA = 0.1
 LOGIT_ALPHA = 1.0
+# FSDS random-forest regression: ntree 150, max_features p/3, leaf sqrt(n)/2.
+FSDS_NTREE = 150
+OUTCOME_MODELS = ("rf", "ridge")
 N_FOLDS = 2
 EVAL_FRACTION = 0.4
 SUBSETS = {
@@ -119,16 +122,49 @@ def _folds(domain: np.ndarray, n_folds: int, seed: int) -> list[np.ndarray]:
     return [np.asarray(b, dtype=int) for b in buckets]
 
 
-def _domain_mean_predict(x_te: np.ndarray, x_tr: np.ndarray, y_tr: np.ndarray) -> np.ndarray:
-    if len(y_tr) == 0:
-        return np.full(x_te.shape[0], 0.5)
-    if len(y_tr) < 4 or x_tr.shape[1] == 0:
-        return np.full(x_te.shape[0], float(np.mean(y_tr)))
-    beta = fit_ridge(x_tr, y_tr)
-    return predict_ridge(beta, x_te)
+def _fit_regressor(x: np.ndarray, y: np.ndarray, seed: int, kind: str, alpha: float = RIDGE_ALPHA):
+    """Fit E[Y|X]. ``rf`` is the FSDS forest. ``ridge`` is the earlier smoke model."""
+    y = np.asarray(y, dtype=float).reshape(-1)
+    if len(y) == 0:
+        return ("mean", 0.5)
+    if x.shape[1] == 0 or len(y) < 4:
+        return ("mean", float(np.mean(y)))
+    if kind == "ridge":
+        return ("ridge", fit_ridge(x, y, alpha=alpha))
+    if kind != "rf":
+        raise ValueError(f"unknown outcome model: {kind}")
+    from sklearn.ensemble import RandomForestRegressor
+
+    n, p = x.shape
+    leaf = max(1, int(round(np.sqrt(n) / 2.0)))
+    model = RandomForestRegressor(
+        n_estimators=FSDS_NTREE,
+        max_features=max(1, int(round(p / 3.0))),
+        min_samples_leaf=min(leaf, n),
+        random_state=int(seed) % (2**32),
+        n_jobs=1,
+    )
+    model.fit(np.asarray(x, dtype=float), y)
+    return ("rf", model)
 
 
-def cross_fit_nuisance(x: np.ndarray, y: np.ndarray, domain: np.ndarray, seed: int, n_folds: int = N_FOLDS):
+def _predict_regressor(fitted, x: np.ndarray) -> np.ndarray:
+    kind, obj = fitted
+    if kind == "mean":
+        return np.full(x.shape[0], float(obj))
+    if kind == "ridge":
+        return predict_ridge(obj, x)
+    return np.asarray(obj.predict(np.asarray(x, dtype=float)), dtype=float).reshape(-1)
+
+
+def cross_fit_nuisance(
+    x: np.ndarray,
+    y: np.ndarray,
+    domain: np.ndarray,
+    seed: int,
+    n_folds: int = N_FOLDS,
+    outcome_model: str = "rf",
+):
     """Out-of-fold mu_0, mu_1, and raw propensity on the rows that are passed in."""
     n = len(y)
     mu0 = np.zeros(n, dtype=float)
@@ -142,8 +178,12 @@ def cross_fit_nuisance(x: np.ndarray, y: np.ndarray, domain: np.ndarray, seed: i
         x_tr, y_tr, d_tr = x[train_idx], y[train_idx], domain[train_idx]
         src = d_tr == 0
         tgt = d_tr == 1
-        mu0[test_idx] = _domain_mean_predict(x[test_idx], x_tr[src], y_tr[src])
-        mu1[test_idx] = _domain_mean_predict(x[test_idx], x_tr[tgt], y_tr[tgt])
+        mu0[test_idx] = _predict_regressor(
+            _fit_regressor(x_tr[src], y_tr[src], seed + 10 + fold_id, outcome_model), x[test_idx]
+        )
+        mu1[test_idx] = _predict_regressor(
+            _fit_regressor(x_tr[tgt], y_tr[tgt], seed + 20 + fold_id, outcome_model), x[test_idx]
+        )
         if len(np.unique(d_tr)) < 2:
             propensity[test_idx] = float(np.mean(d_tr)) if len(d_tr) else 0.5
         else:
@@ -151,34 +191,6 @@ def cross_fit_nuisance(x: np.ndarray, y: np.ndarray, domain: np.ndarray, seed: i
             propensity[test_idx] = predict_logistic(beta, x[test_idx])
         del fold_id
     return mu0, mu1, propensity
-
-
-def _fit_on_all(x: np.ndarray, y: np.ndarray, domain: np.ndarray):
-    src = domain == 0
-    tgt = domain == 1
-    if x.shape[1] == 0:
-        mu0_beta = np.array([float(np.mean(y[src])) if src.any() else 0.5])
-        mu1_beta = np.array([float(np.mean(y[tgt])) if tgt.any() else 0.5])
-    else:
-        mu0_beta = fit_ridge(x[src], y[src]) if src.sum() >= 4 else np.array([float(np.mean(y[src])) if src.any() else 0.5])
-        mu1_beta = fit_ridge(x[tgt], y[tgt]) if tgt.sum() >= 4 else np.array([float(np.mean(y[tgt])) if tgt.any() else 0.5])
-        if src.sum() < 4:
-            mu0_beta = np.concatenate([[mu0_beta[0]], np.zeros(x.shape[1])])
-        if tgt.sum() < 4:
-            mu1_beta = np.concatenate([[mu1_beta[0]], np.zeros(x.shape[1])])
-    if len(np.unique(domain)) < 2 or x.shape[1] == 0:
-        e_beta = None
-        e_const = float(np.mean(domain))
-    else:
-        e_beta = fit_logistic(x, domain.astype(float))
-        e_const = None
-    return mu0_beta, mu1_beta, e_beta, e_const
-
-
-def _predict_mu(beta: np.ndarray, x: np.ndarray) -> np.ndarray:
-    if x.shape[1] == 0 or len(beta) == 1:
-        return np.full(x.shape[0], float(beta[0]))
-    return predict_ridge(beta, x)
 
 
 def subset_scores(
@@ -190,38 +202,52 @@ def subset_scores(
     mask: np.ndarray,
     blocks: tuple[str, ...],
     seed: int,
+    outcome_model: str = "rf",
+    score_residual: bool = True,
 ) -> dict:
-    """PO-distance and the installed squared-residual risk on one feature subset."""
+    """PO-distance on one feature subset.
+
+    The selection score is mean(tau^2). ``po_squared_prediction_error`` is the
+    installed residual mean((psi - tau)^2) and is not the selection score.
+    Mu and tau use ``outcome_model``. The propensity stays logistic.
+    """
     x_fit = columns_for(x[fit_idx], blocks)
     y_fit = y[fit_idx]
     d_fit = domain[fit_idx]
-    mu0, mu1, e_raw = cross_fit_nuisance(x_fit, y_fit, d_fit, seed=seed)
+    mu0, mu1, e_raw = cross_fit_nuisance(x_fit, y_fit, d_fit, seed=seed, outcome_model=outcome_model)
     psi = pseudo_outcome(y_fit, d_fit, mu0, mu1, e_raw, clip=CLIP_E)
-    tau_beta = fit_ridge(x_fit, psi, alpha=TAU_ALPHA)
+    tau_fit = _fit_regressor(x_fit, psi, seed + 30, outcome_model, alpha=TAU_ALPHA)
     x_eval = columns_for(x[eval_idx], blocks)
-    tau_eval = predict_ridge(tau_beta, x_eval)
+    tau_eval = _predict_regressor(tau_fit, x_eval)
     used = mask.astype(bool)
     if not np.any(used):
         po_distance = float("nan")
         sqerr = float("nan")
     else:
         po_distance = float(np.mean(tau_eval[used] ** 2))
-        mu0_beta, mu1_beta, e_beta, e_const = _fit_on_all(x_fit, y_fit, d_fit)
-        mu0_eval = _predict_mu(mu0_beta, x_eval)
-        mu1_eval = _predict_mu(mu1_beta, x_eval)
-        if e_beta is None:
-            e_eval = np.full(x_eval.shape[0], e_const)
-        else:
-            e_eval = predict_logistic(e_beta, x_eval)
-        sqerr = po_risk(
-            tau_eval[used],
-            y[eval_idx][used],
-            domain[eval_idx][used],
-            mu0_eval[used],
-            mu1_eval[used],
-            e_eval[used],
-            clip=CLIP_E,
-        )
+        sqerr = float("nan")
+        if score_residual:
+            src = d_fit == 0
+            tgt = d_fit == 1
+            mu0_eval = _predict_regressor(
+                _fit_regressor(x_fit[src], y_fit[src], seed + 40, outcome_model), x_eval
+            )
+            mu1_eval = _predict_regressor(
+                _fit_regressor(x_fit[tgt], y_fit[tgt], seed + 41, outcome_model), x_eval
+            )
+            if len(np.unique(d_fit)) < 2 or x_fit.shape[1] == 0:
+                e_eval = np.full(x_eval.shape[0], float(np.mean(d_fit)) if len(d_fit) else 0.5)
+            else:
+                e_eval = predict_logistic(fit_logistic(x_fit, d_fit.astype(float)), x_eval)
+            sqerr = po_risk(
+                tau_eval[used],
+                y[eval_idx][used],
+                domain[eval_idx][used],
+                mu0_eval[used],
+                mu1_eval[used],
+                e_eval[used],
+                clip=CLIP_E,
+            )
     return {"po_distance": po_distance, "po_squared_prediction_error": float(sqerr)}
 
 
@@ -287,14 +313,55 @@ def interaction_contrasts(po: dict[str, float]) -> dict[str, float]:
     }
 
 
-def _observed_po(x, y, domain, fit_idx, eval_idx, mask, seed: int) -> dict[str, dict]:
+def _observed_po(x, y, domain, fit_idx, eval_idx, mask, seed: int, outcome_model: str) -> dict[str, dict]:
     out = {}
     for name, blocks in SUBSETS.items():
-        out[name] = subset_scores(x, y, domain, fit_idx, eval_idx, mask, blocks, seed + SUBSETS_SEED[name])
+        out[name] = subset_scores(
+            x,
+            y,
+            domain,
+            fit_idx,
+            eval_idx,
+            mask,
+            blocks,
+            seed + SUBSETS_SEED[name],
+            outcome_model=outcome_model,
+            score_residual=True,
+        )
     return out
 
 
 SUBSETS_SEED = {name: i * 17 for i, name in enumerate(SUBSETS)}
+
+
+def _perm_shifts(
+    x: np.ndarray,
+    y: np.ndarray,
+    domain_b: np.ndarray,
+    fit_idx: np.ndarray,
+    eval_idx: np.ndarray,
+    seed: int,
+    outcome_model: str,
+) -> dict[str, float]:
+    info = overlap_mask(x, domain_b, fit_idx, eval_idx, seed)
+    po = {}
+    for name in PERM_SUBSETS:
+        scored = subset_scores(
+            x,
+            y,
+            domain_b,
+            fit_idx,
+            eval_idx,
+            info["mask"],
+            SUBSETS[name],
+            seed,
+            outcome_model=outcome_model,
+            score_residual=False,
+        )
+        po[name] = scored["po_distance"]
+    if not np.isfinite(po["TAV"]):
+        return {block: 0.0 for block in BLOCKS}
+    return _shift_from_po(po)
 
 
 def permute_shift(
@@ -305,6 +372,7 @@ def permute_shift(
     eval_idx: np.ndarray,
     n_perm: int,
     seed: int,
+    outcome_model: str = "rf",
 ) -> dict:
     """Joint-null max statistic for the three block PO-distance scores.
 
@@ -315,35 +383,28 @@ def permute_shift(
     """
     rng = np.random.default_rng(seed)
     observed_domain = domain.copy()
-    # Overlap mask stays on the observed full-block propensity. Permutations
-    # recompute their own mask from the permuted full-block propensity so the
-    # refit is the complete scoring procedure. The observed caller's mask is
-    # separate.
+    # Each replicate permutes the domain label and refits propensity, outcome, and tau.
+    orders = [rng.permutation(len(observed_domain)) for _ in range(n_perm)]
+    from joblib import Parallel, delayed
+
+    shifts = Parallel(n_jobs=4, backend="loky")(
+        delayed(_perm_shifts)(
+            x,
+            y,
+            observed_domain[order],
+            fit_idx,
+            eval_idx,
+            seed + 1000 + b,
+            outcome_model,
+        )
+        for b, order in enumerate(orders)
+    )
     null = {block: np.zeros(n_perm, dtype=float) for block in BLOCKS}
     null_max = np.zeros(n_perm, dtype=float)
-    for b in range(n_perm):
-        domain_b = rng.permutation(observed_domain)
-        info = overlap_mask(x, domain_b, fit_idx, eval_idx, seed + b)
-        po = {}
-        for name in PERM_SUBSETS:
-            scored = subset_scores(
-                x,
-                y,
-                domain_b,
-                fit_idx,
-                eval_idx,
-                info["mask"],
-                SUBSETS[name],
-                seed + 1000 + b,
-            )
-            po[name] = scored["po_distance"]
-        if not np.isfinite(po["TAV"]):
-            shifts = {block: 0.0 for block in BLOCKS}
-        else:
-            shifts = _shift_from_po(po)
+    for b, shift in enumerate(shifts):
         for block in BLOCKS:
-            null[block][b] = shifts[block]
-        null_max[b] = float(max(shifts.values()))
+            null[block][b] = shift[block]
+        null_max[b] = float(max(shift.values()))
     return {"null_shift": null, "null_max": null_max}
 
 
@@ -620,16 +681,19 @@ def attribute_outcome(
     n_perm: int,
     seed: int,
     with_r_risk: bool,
+    outcome_model: str = "rf",
 ) -> tuple[Attribution, dict, np.ndarray, np.ndarray]:
+    if outcome_model not in OUTCOME_MODELS:
+        raise ValueError(f"unknown outcome model: {outcome_model}")
     fit_idx, eval_idx = _split_fit_eval(domain, seed)
     support = overlap_mask(x, domain, fit_idx, eval_idx, seed)
-    observed = _observed_po(x, y, domain, fit_idx, eval_idx, support["mask"], seed)
+    observed = _observed_po(x, y, domain, fit_idx, eval_idx, support["mask"], seed, outcome_model)
     po = {name: observed[name]["po_distance"] for name in SUBSETS}
     sq = {name: observed[name]["po_squared_prediction_error"] for name in SUBSETS}
     shift = _shift_from_po(po)
     interactions = interaction_contrasts(po)
     if n_perm > 0:
-        null = permute_shift(x, y, domain, fit_idx, eval_idx, n_perm, seed + 501)
+        null = permute_shift(x, y, domain, fit_idx, eval_idx, n_perm, seed + 501, outcome_model)
         stat = float(max(shift.values()))
         global_p = float((1.0 + np.sum(null["null_max"] >= stat)) / (n_perm + 1.0))
         block_p, perm_mean, perm_q = {}, {}, {}

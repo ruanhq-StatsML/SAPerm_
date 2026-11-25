@@ -28,6 +28,6 @@ Outputs land in `experiments/cfperm_recsys_adaptation/results/`.
 
 - MMD-only: smallest modality-wise permutation p-value below 0.05, otherwise no update. Distances are not treated as percentage shares.
 - Predictive-risk-only: Brier gap of frozen logistic subset models. No update when the full-model gap is at most 0.01.
-- CFPerm-guided: joint-null max statistic of the block PO-distance on the task label. PO(S) is mean(tau_S^2) on held-out rows inside the full-block overlap mask. Propensity clip is [0.05, 0.95]. The same contrast on frozen-model squared loss is written out and is not used to pick the arm.
+- CFPerm-guided: joint-null max statistic of the block PO-distance on the task label. PO(S) is mean(tau_S^2) on held-out rows inside the full-block overlap mask. Mu and tau are the FSDS random forest (150 trees, `max_features = p/3`, leaf `sqrt(n)/2`). The propensity stays logistic. Propensity clip is [0.05, 0.95]. The same contrast on frozen-model squared loss is written out and is not used to pick the arm. `--outcome-model ridge` repeats the earlier linear nuisance.
 - The installed `po_risk` residual, mean((psi - tau)^2), is written as `po_squared_prediction_error` and is not the selection score.
 - CFPerm0 and CFPerm1 are not separate functions in the inspected CFPerm entry points, so this runner does not report them.

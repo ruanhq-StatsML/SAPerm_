@@ -138,12 +138,13 @@ def run_experiment(config: dict) -> dict[str, pd.DataFrame]:
                 prob = predict_proba(reference, splits[name].x)
                 loss_parts.append((splits[name].y - prob) ** 2)
             loss = np.concatenate(loss_parts)
+            outcome_model = config.get("outcome_model", "rf")
             label_attr, support, _, _ = attribute_outcome(
-                x, y, domain, config["permutations"], seed, with_r_risk=True
+                x, y, domain, config["permutations"], seed, with_r_risk=True, outcome_model=outcome_model
             )
             label_attr.outcome = "task_label"
             loss_attr, _, _, _ = attribute_outcome(
-                x, loss, domain, config["permutations"], seed, with_r_risk=False
+                x, loss, domain, config["permutations"], seed, with_r_risk=False, outcome_model=outcome_model
             )
             loss_attr.outcome = "squared_loss"
             mmd = block_mmd(
@@ -242,6 +243,7 @@ def run_experiment(config: dict) -> dict[str, pd.DataFrame]:
         "sizes": sizes,
         "clip_e": CLIP_E,
         "adapt_epochs": adapt_epochs,
+        "outcome_model": config.get("outcome_model", "rf"),
     }
     write_summary(output / "summary.md", diagnostics, policy, adaptation, summary_config)
     plot_dir = output / "plots"

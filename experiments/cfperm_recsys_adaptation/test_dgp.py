@@ -87,7 +87,9 @@ class DGPTest(unittest.TestCase):
             np.zeros(splits["source_diagnostic"].n, dtype=int),
             np.ones(splits["target_diagnostic"].n, dtype=int),
         ])
-        attr, _, _, _ = attribute_outcome(x, y, domain, n_perm=0, seed=11, with_r_risk=False)
+        attr, _, _, _ = attribute_outcome(
+            x, y, domain, n_perm=0, seed=11, with_r_risk=False, outcome_model="ridge"
+        )
         ranked = max(attr.shift_score, key=attr.shift_score.get)
         self.assertEqual(ranked, "visual")
         self.assertGreater(attr.shift_score["visual"], 0.0)

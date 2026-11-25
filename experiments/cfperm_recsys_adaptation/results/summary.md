@@ -13,6 +13,7 @@ Existing CFPerm and RFPerm sources were not modified. CFPerm0 and CFPerm1 are no
 - propensity clip: [0.05, 0.95]
 - source replay: off
 - adaptation protocol: matched epochs (20), full-batch Adam
+- PO outcome and tau model: rf (FSDS forest, 150 trees, when rf)
 
 PO-distance is mean(tau(X)^2) on held-out overlap rows. Selection uses the task-label PO-distance. The squared-loss PO-distance is reported beside it and is not a second selector. `po_squared_prediction_error` is the installed residual mean((psi - tau)^2) from `experiments/deep_active_sampling/ood_vimp.py`.
 
@@ -47,11 +48,11 @@ label_rate target_validation    0.500889
 
 ```
         scenario  cfperm_guided  cfperm_interaction  cfperm_localization  exhaustive_validation  mmd_only  periodic_full  predictive_risk_only  random_module
-benign_covariate       0.211456            0.208914             0.214429               0.199375  0.211456       0.276365              0.190663       0.197685
-     cross_modal       0.249246            0.249246             0.249246               0.240422  0.252872       0.296166              0.247428       0.241585
+benign_covariate       0.205822            0.210962             0.207850               0.199375  0.211456       0.276365              0.190663       0.197685
+     cross_modal       0.250909            0.248715             0.258629               0.240422  0.252872       0.296166              0.247428       0.241585
        localized       0.225574            0.225574             0.225574               0.213501  0.225574       0.294254              0.230610       0.213107
-           mixed       0.242497            0.242497             0.257882               0.231807  0.243661       0.277954              0.247102       0.246345
-modality_concept       0.259611            0.259611             0.259611               0.228193  0.326348       0.289939              0.259611       0.270860
+           mixed       0.242497            0.244383             0.257882               0.231807  0.243661       0.277954              0.247102       0.246345
+modality_concept       0.259611            0.245711             0.259611               0.228193  0.326348       0.289939              0.259611       0.270860
             null       0.196314            0.196314             0.196314               0.197461  0.196314       0.295626              0.203779       0.206849
 ```
 
@@ -59,9 +60,9 @@ modality_concept       0.259611            0.259611             0.259611        
 
 ```
                policy  target_brier  source_brier  target_gain  source_forgetting
-        cfperm_guided      0.230783      0.213400     0.008350           0.015241
-   cfperm_interaction      0.230359      0.213382     0.008774           0.015223
-  cfperm_localization      0.233843      0.217418     0.005290           0.019259
+        cfperm_guided      0.230121      0.214129     0.009012           0.015970
+   cfperm_interaction      0.228610      0.216389     0.010523           0.018230
+  cfperm_localization      0.234310      0.218031     0.004823           0.019873
 exhaustive_validation      0.218460      0.217932     0.020673           0.019773
              mmd_only      0.242704      0.205784    -0.003571           0.007625
         periodic_full      0.288384      0.285074    -0.049251           0.086915
@@ -71,7 +72,7 @@ exhaustive_validation      0.218460      0.217932     0.020673           0.01977
 
 ## Primary comparison (lower target Brier is better)
 
-- cfperm_guided: 0.230783
+- cfperm_guided: 0.230121
 - mmd_only: 0.242704
 - predictive_risk_only: 0.229865
 - cfperm_guided lower than mmd_only: True
@@ -81,9 +82,9 @@ exhaustive_validation      0.218460      0.217932     0.020673           0.01977
 
 ```
                policy  hit_rate
-        cfperm_guided  0.444444
-   cfperm_interaction  0.444444
-  cfperm_localization  0.333333
+        cfperm_guided  0.500000
+   cfperm_interaction  0.500000
+  cfperm_localization  0.388889
 exhaustive_validation  0.388889
              mmd_only  0.500000
         periodic_full  0.166667
@@ -95,10 +96,13 @@ exhaustive_validation  0.388889
 
 ```
         scenario                policy           arm  n
-benign_covariate         cfperm_guided   visual_only  3
-benign_covariate    cfperm_interaction       pair_AV  1
-benign_covariate    cfperm_interaction   visual_only  2
-benign_covariate   cfperm_localization targeted_data  3
+benign_covariate         cfperm_guided     no_update  1
+benign_covariate         cfperm_guided   visual_only  2
+benign_covariate    cfperm_interaction   fusion_only  1
+benign_covariate    cfperm_interaction     no_update  1
+benign_covariate    cfperm_interaction       pair_TV  1
+benign_covariate   cfperm_localization     no_update  1
+benign_covariate   cfperm_localization targeted_data  2
 benign_covariate exhaustive_validation    audio_only  1
 benign_covariate exhaustive_validation     no_update  2
 benign_covariate              mmd_only   visual_only  3
@@ -106,9 +110,12 @@ benign_covariate         periodic_full          full  3
 benign_covariate  predictive_risk_only     no_update  3
 benign_covariate         random_module     head_only  2
 benign_covariate         random_module     text_only  1
-     cross_modal         cfperm_guided     no_update  3
-     cross_modal    cfperm_interaction     no_update  3
-     cross_modal   cfperm_localization     no_update  3
+     cross_modal         cfperm_guided     no_update  2
+     cross_modal         cfperm_guided   visual_only  1
+     cross_modal    cfperm_interaction   fusion_only  1
+     cross_modal    cfperm_interaction     no_update  2
+     cross_modal   cfperm_localization     no_update  2
+     cross_modal   cfperm_localization targeted_data  1
      cross_modal exhaustive_validation   fusion_only  1
      cross_modal exhaustive_validation     head_only  1
      cross_modal exhaustive_validation   visual_only  1
@@ -134,8 +141,9 @@ benign_covariate         random_module     text_only  1
        localized         random_module     head_only  1
            mixed         cfperm_guided     no_update  1
            mixed         cfperm_guided   visual_only  2
+           mixed    cfperm_interaction   fusion_only  1
            mixed    cfperm_interaction     no_update  1
-           mixed    cfperm_interaction   visual_only  2
+           mixed    cfperm_interaction   visual_only  1
            mixed   cfperm_localization     no_update  1
            mixed   cfperm_localization targeted_data  2
            mixed exhaustive_validation     head_only  2
@@ -147,7 +155,8 @@ benign_covariate         random_module     text_only  1
            mixed         random_module   fusion_only  2
            mixed         random_module     text_only  1
 modality_concept         cfperm_guided   visual_only  3
-modality_concept    cfperm_interaction   visual_only  3
+modality_concept    cfperm_interaction   fusion_only  1
+modality_concept    cfperm_interaction   visual_only  2
 modality_concept   cfperm_localization   visual_only  3
 modality_concept exhaustive_validation   fusion_only  3
 modality_concept              mmd_only     no_update  3
