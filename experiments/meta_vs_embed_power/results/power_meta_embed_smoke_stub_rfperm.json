@@ -1,0 +1,190 @@
+{
+  "config": {
+    "B": 4,
+    "n_perm": 20,
+    "n_doc": 60,
+    "pca_k": 12,
+    "n_estimators": 30,
+    "n_max": 400,
+    "row_cap": 1000,
+    "embed_batch_size": 32,
+    "seed": 2026,
+    "datasets": [
+      "train_bias_finder",
+      "gender"
+    ],
+    "scenarios": [
+      "null_shift",
+      "sentiment_meta"
+    ],
+    "outcome_model": "RandomForest",
+    "meta_source": "utils.text_meta",
+    "contrast": "without_meta=PCA(embedding); with_meta=hstack(PCA(embedding), text_meta)",
+    "methods": [
+      "RFPerm",
+      "DRPerm",
+      "CFPerm",
+      "RRPerm"
+    ],
+    "elapsed_sec": 79.8074722290039
+  },
+  "summary": {
+    "table": [
+      {
+        "dataset": "gender",
+        "scenario": "null_shift",
+        "feature_set": "with_meta",
+        "B": 4,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.25,
+          "RRPerm": 0.25
+        },
+        "mean_p": {
+          "RFPerm": 0.8095238095238095,
+          "DRPerm": 0.369047619047619,
+          "CFPerm": 0.19047619047619047,
+          "RRPerm": 0.4523809523809524
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "null_shift",
+        "feature_set": "without_meta",
+        "B": 4,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.7142857142857143,
+          "DRPerm": 0.7142857142857143,
+          "CFPerm": 0.7261904761904762,
+          "RRPerm": 0.7023809523809523
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 4,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.75,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.7738095238095237,
+          "DRPerm": 1.0,
+          "CFPerm": 0.05952380952380952,
+          "RRPerm": 0.17857142857142855
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 4,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.5,
+          "CFPerm": 0.25,
+          "RRPerm": 0.25
+        },
+        "mean_p": {
+          "RFPerm": 0.75,
+          "DRPerm": 0.2142857142857143,
+          "CFPerm": 0.26190476190476186,
+          "RRPerm": 0.10714285714285714
+        }
+      },
+      {
+        "dataset": "train_bias_finder",
+        "scenario": "null_shift",
+        "feature_set": "with_meta",
+        "B": 4,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 1.0,
+          "DRPerm": 1.0,
+          "CFPerm": 1.0,
+          "RRPerm": 1.0
+        }
+      },
+      {
+        "dataset": "train_bias_finder",
+        "scenario": "null_shift",
+        "feature_set": "without_meta",
+        "B": 4,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 1.0,
+          "DRPerm": 1.0,
+          "CFPerm": 1.0,
+          "RRPerm": 1.0
+        }
+      },
+      {
+        "dataset": "train_bias_finder",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 4,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 1.0,
+          "DRPerm": 1.0,
+          "CFPerm": 1.0,
+          "RRPerm": 1.0
+        }
+      },
+      {
+        "dataset": "train_bias_finder",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 4,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 1.0,
+          "DRPerm": 1.0,
+          "CFPerm": 1.0,
+          "RRPerm": 1.0
+        }
+      }
+    ]
+  },
+  "rows_count": 32,
+  "anisotropy_headline": {
+    "train_bias_finder_bert": {
+      "anisotropy_at_max_pc": 0.17634954735299704,
+      "effective_rank_at_max_pc": 60.134134589254614
+    },
+    "train_bias_finder_MiniLM_L6": {
+      "anisotropy_at_max_pc": 0.06762558411314681,
+      "effective_rank_at_max_pc": 116.08586181024154
+    }
+  }
+}

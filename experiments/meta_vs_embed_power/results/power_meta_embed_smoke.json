@@ -26,7 +26,7 @@
       "CFPerm",
       "RRPerm"
     ],
-    "elapsed_sec": 79.8074722290039
+    "elapsed_sec": 65.92867875099182
   },
   "summary": {
     "table": [
@@ -38,14 +38,14 @@
         "power": {
           "RFPerm": 0.0,
           "DRPerm": 0.0,
-          "CFPerm": 0.25,
-          "RRPerm": 0.25
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
         },
         "mean_p": {
-          "RFPerm": 0.8095238095238095,
-          "DRPerm": 0.369047619047619,
-          "CFPerm": 0.19047619047619047,
-          "RRPerm": 0.4523809523809524
+          "RFPerm": 0.6428571428571428,
+          "DRPerm": 0.7738095238095238,
+          "CFPerm": 0.5238095238095238,
+          "RRPerm": 0.5714285714285714
         }
       },
       {
@@ -54,16 +54,16 @@
         "feature_set": "without_meta",
         "B": 4,
         "power": {
-          "RFPerm": 0.0,
+          "RFPerm": 0.25,
           "DRPerm": 0.0,
           "CFPerm": 0.0,
           "RRPerm": 0.0
         },
         "mean_p": {
-          "RFPerm": 0.7142857142857143,
-          "DRPerm": 0.7142857142857143,
-          "CFPerm": 0.7261904761904762,
-          "RRPerm": 0.7023809523809523
+          "RFPerm": 0.39285714285714285,
+          "DRPerm": 0.5714285714285714,
+          "CFPerm": 0.6547619047619047,
+          "RRPerm": 0.5238095238095238
         }
       },
       {
@@ -74,14 +74,14 @@
         "power": {
           "RFPerm": 0.0,
           "DRPerm": 0.0,
-          "CFPerm": 0.75,
-          "RRPerm": 0.0
+          "CFPerm": 1.0,
+          "RRPerm": 0.75
         },
         "mean_p": {
-          "RFPerm": 0.7738095238095237,
+          "RFPerm": 0.5238095238095238,
           "DRPerm": 1.0,
-          "CFPerm": 0.05952380952380952,
-          "RRPerm": 0.17857142857142855
+          "CFPerm": 0.047619047619047616,
+          "RRPerm": 0.05952380952380952
         }
       },
       {
@@ -90,16 +90,16 @@
         "feature_set": "without_meta",
         "B": 4,
         "power": {
-          "RFPerm": 0.0,
-          "DRPerm": 0.5,
-          "CFPerm": 0.25,
-          "RRPerm": 0.25
+          "RFPerm": 0.25,
+          "DRPerm": 0.75,
+          "CFPerm": 0.5,
+          "RRPerm": 0.75
         },
         "mean_p": {
-          "RFPerm": 0.75,
-          "DRPerm": 0.2142857142857143,
-          "CFPerm": 0.26190476190476186,
-          "RRPerm": 0.10714285714285714
+          "RFPerm": 0.2738095238095238,
+          "DRPerm": 0.07142857142857142,
+          "CFPerm": 0.13095238095238093,
+          "RRPerm": 0.08333333333333333
         }
       },
       {
@@ -108,13 +108,13 @@
         "feature_set": "with_meta",
         "B": 4,
         "power": {
-          "RFPerm": 0.0,
+          "RFPerm": 1.0,
           "DRPerm": 0.0,
           "CFPerm": 0.0,
           "RRPerm": 0.0
         },
         "mean_p": {
-          "RFPerm": 1.0,
+          "RFPerm": 0.047619047619047616,
           "DRPerm": 1.0,
           "CFPerm": 1.0,
           "RRPerm": 1.0
@@ -126,13 +126,13 @@
         "feature_set": "without_meta",
         "B": 4,
         "power": {
-          "RFPerm": 0.0,
+          "RFPerm": 1.0,
           "DRPerm": 0.0,
           "CFPerm": 0.0,
           "RRPerm": 0.0
         },
         "mean_p": {
-          "RFPerm": 1.0,
+          "RFPerm": 0.047619047619047616,
           "DRPerm": 1.0,
           "CFPerm": 1.0,
           "RRPerm": 1.0
@@ -144,13 +144,13 @@
         "feature_set": "with_meta",
         "B": 4,
         "power": {
-          "RFPerm": 0.0,
+          "RFPerm": 1.0,
           "DRPerm": 0.0,
           "CFPerm": 0.0,
           "RRPerm": 0.0
         },
         "mean_p": {
-          "RFPerm": 1.0,
+          "RFPerm": 0.047619047619047616,
           "DRPerm": 1.0,
           "CFPerm": 1.0,
           "RRPerm": 1.0
@@ -162,13 +162,13 @@
         "feature_set": "without_meta",
         "B": 4,
         "power": {
-          "RFPerm": 0.0,
+          "RFPerm": 1.0,
           "DRPerm": 0.0,
           "CFPerm": 0.0,
           "RRPerm": 0.0
         },
         "mean_p": {
-          "RFPerm": 1.0,
+          "RFPerm": 0.047619047619047616,
           "DRPerm": 1.0,
           "CFPerm": 1.0,
           "RRPerm": 1.0

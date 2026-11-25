@@ -13,7 +13,7 @@ B = 150
 N_PERM = 150
 N_DOC = 120
 PCA_K = 24
-RF_N_ESTIMATORS = 50
+RF_N_ESTIMATORS = 150
 OUTCOME_MODEL = "RandomForest"
 
 # Anisotropy / effective rank

@@ -14,6 +14,8 @@ from __future__ import annotations
 import json
 import sys
 import time
+
+import json as _json  # noqa: F811 — used in partial checkpoint writes
 from pathlib import Path
 from typing import Any
 
@@ -93,42 +95,59 @@ def run_power(
             ds, n_max=n_max, seed=seed, pca_k=pca_k, out_dir=out_dir, embed_model=embed_model
         )
 
-    jobs = [(ds, sc, with_meta, b) for ds in datasets for sc in scenarios for with_meta in (False, True) for b in range(B)]
-
-    def _worker(job: tuple[str, str, bool, int]) -> dict[str, Any]:
-        ds, scenario, with_meta, b = job
-        Zpca, M, y, meta_names = cache[ds]
-        rep_seed = seed + 1000 * hash((ds, with_meta)) % 997 + 17 * b + abs(hash(scenario)) % 89
-        rep = run_one_rep(
-            scenario,
-            with_meta,
-            Zpca,
-            M,
-            y,
-            meta_names,
-            n_doc=n_doc,
-            n_perm=n_perm,
-            seed=rep_seed,
-            n_estimators=n_estimators,
-            pca_k=pca_k,
-        )
-        rep["dataset"] = ds
-        return rep
+    from experiments.meta_vs_embed_power.worker import run_job
 
     rows: list[dict[str, Any]] = []
-    if n_jobs == 1:
-        for i, job in enumerate(jobs, 1):
-            rows.append(_worker(job))
-            if i % 10 == 0 or i == len(jobs):
-                print(f"[power {i}/{len(jobs)}]", file=sys.stderr)
-    else:
-        from joblib import Parallel, delayed
+    out_dir.mkdir(parents=True, exist_ok=True)
+    partial_path = out_dir / "power_partial_rows.npz"
+    n_jobs_eff = n_jobs if n_jobs > 0 else 1
 
-        chunk = max(n_jobs * 3, 6)
-        for start in range(0, len(jobs), chunk):
-            batch = jobs[start : start + chunk]
-            rows.extend(Parallel(n_jobs=n_jobs)(delayed(_worker)(j) for j in batch))
-            print(f"[power {len(rows)}/{len(jobs)}]", file=sys.stderr)
+    for ds in datasets:
+        Zpca, M, y, meta_names = cache[ds]
+        jobs = [
+            (ds, sc, with_meta, b)
+            for sc in scenarios
+            for with_meta in (False, True)
+            for b in range(B)
+        ]
+        ds_rows: list[dict[str, Any]] = []
+        if n_jobs_eff == 1:
+            for i, (d, sc, wm, b) in enumerate(jobs, 1):
+                ds_rows.append(
+                    run_job(
+                        d, sc, wm, b, Zpca, M, y, meta_names,
+                        n_doc=n_doc, n_perm=n_perm, seed=seed,
+                        n_estimators=n_estimators, pca_k=pca_k,
+                    )
+                )
+                if i % 10 == 0 or i == len(jobs):
+                    print(f"[{ds} {i}/{len(jobs)}]", file=sys.stderr)
+        else:
+            from joblib import Parallel, delayed, parallel_backend
+
+            chunk = max(n_jobs_eff * 2, 4)
+            with parallel_backend("threading", n_jobs=n_jobs_eff):
+                for start in range(0, len(jobs), chunk):
+                    batch = jobs[start : start + chunk]
+                    batch_out = Parallel()(
+                        delayed(run_job)(
+                            d, sc, wm, b, Zpca, M, y, meta_names,
+                            n_doc=n_doc, n_perm=n_perm, seed=seed,
+                            n_estimators=n_estimators, pca_k=pca_k,
+                        )
+                        for d, sc, wm, b in batch
+                    )
+                    ds_rows.extend(batch_out)
+                    print(f"[{ds} {len(ds_rows)}/{len(jobs)}]", file=sys.stderr)
+
+        rows.extend(ds_rows)
+        np.savez_compressed(partial_path, rows=np.array(rows, dtype=object))
+        partial_summary = summarize(rows, C.METHODS)
+        (out_dir / "power_partial_summary.json").write_text(
+            json.dumps({"completed_datasets": [d for d in datasets if d == ds or d in {r["dataset"] for r in rows}], "summary": partial_summary}, indent=2),
+            encoding="utf-8",
+        )
+        print(f"[done dataset {ds}]", file=sys.stderr)
 
     summary = summarize(rows, C.METHODS)
     return {

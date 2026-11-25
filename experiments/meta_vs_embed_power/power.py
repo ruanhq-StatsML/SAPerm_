@@ -7,12 +7,8 @@ from typing import Any
 
 import numpy as np
 
-from experiments.meta_vs_embed_power.perm_lib import (
-    cfperm_loco_pvalue,
-    drperm_pvalue,
-    rfperm_pvalue,
-    rrperm_pvalue,
-)
+from experiments.meta_vs_embed_power.perm_lib import cfperm_loco_pvalue, drperm_pvalue, rrperm_pvalue
+from experiments.meta_vs_embed_power.rfperm_official import rfperm_single_pvalue
 
 
 def _col_index(meta_names: list[str], *candidates: str) -> int:
@@ -95,7 +91,9 @@ def run_one_rep(
     out: dict[str, Any] = {
         "scenario": scenario,
         "feature_set": fs,
-        "RFPerm": rfperm_pvalue(Xe, ye, Xn, yn, n_perm=n_perm, seed=seed, n_estimators=n_estimators),
+        "RFPerm": rfperm_single_pvalue(
+            Xe, ye, Xn, yn, n_perm=n_perm, seed=seed, n_estimators=max(n_estimators, 150)
+        ),  # RFPerm_Generalized.PermValTest
         "DRPerm": drperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators),
         "RRPerm": rrperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 11, n_estimators=n_estimators),
     }
