@@ -433,7 +433,15 @@ def main(argv=None):
     (RESULTS / "ranking_recovery.json").write_text(json.dumps(payload, indent=2))
     board = summarize(synthetic_rows, uci_rows)
     (RESULTS / "BOARD.md").write_text(board)
+    from experiments.dependence_strength_shift.write_latex import build_tex
+
+    tex = build_tex(payload)
+    latex_dir = ROOT / "latex"
+    latex_dir.mkdir(parents=True, exist_ok=True)
+    (latex_dir / "dependence_strength_shift.tex").write_text(tex)
+    (RESULTS / "dependence_strength_shift.tex").write_text(tex)
     print(board)
+    print(f"wrote {latex_dir / 'dependence_strength_shift.tex'}")
 
 
 if __name__ == "__main__":

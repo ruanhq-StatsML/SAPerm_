@@ -25,7 +25,15 @@ Default UCI protocol appends **six graded** factor-driven responses
 `--uci-protocol residual` instead rewrites real columns via `m̂ + γ·residual`.
 
 Headline metric: **Spearman(A)** = rank correlation between oracle signed
-`Δη²` and estimated `strength_shift`. See `results/BOARD.md`.
+`Δη²` and estimated `strength_shift`, compared to **PO-risk ranking**
+(`po_gap = R(0)-R(τ)`).
+
+```bash
+python -m experiments.dependence_strength_shift.write_latex
+```
+
+Writes `latex/dependence_strength_shift.tex` (also copied under `results/`).
+See `results/BOARD.md` for the markdown board.
 
 ## API
 
