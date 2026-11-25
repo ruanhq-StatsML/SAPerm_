@@ -1,0 +1,133 @@
+window concept seed 1/20
+window concept seed 2/20
+window concept seed 3/20
+window concept seed 4/20
+window concept seed 5/20
+window concept seed 6/20
+window concept seed 7/20
+window concept seed 8/20
+window concept seed 9/20
+window concept seed 10/20
+window concept seed 11/20
+window concept seed 12/20
+window concept seed 13/20
+window concept seed 14/20
+window concept seed 15/20
+window concept seed 16/20
+window concept seed 17/20
+window concept seed 18/20
+window concept seed 19/20
+window concept seed 20/20
+window covariate seed 1/20
+window covariate seed 2/20
+window covariate seed 3/20
+window covariate seed 4/20
+window covariate seed 5/20
+window covariate seed 6/20
+window covariate seed 7/20
+window covariate seed 8/20
+window covariate seed 9/20
+window covariate seed 10/20
+window covariate seed 11/20
+window covariate seed 12/20
+window covariate seed 13/20
+window covariate seed 14/20
+window covariate seed 15/20
+window covariate seed 16/20
+window covariate seed 17/20
+window covariate seed 18/20
+window covariate seed 19/20
+window covariate seed 20/20
+slide concept seed 1/20
+slide concept seed 2/20
+slide concept seed 3/20
+slide concept seed 4/20
+slide concept seed 5/20
+slide concept seed 6/20
+slide concept seed 7/20
+slide concept seed 8/20
+slide concept seed 9/20
+slide concept seed 10/20
+slide concept seed 11/20
+slide concept seed 12/20
+slide concept seed 13/20
+slide concept seed 14/20
+slide concept seed 15/20
+slide concept seed 16/20
+slide concept seed 17/20
+slide concept seed 18/20
+slide concept seed 19/20
+slide concept seed 20/20
+slide covariate seed 1/20
+slide covariate seed 2/20
+slide covariate seed 3/20
+slide covariate seed 4/20
+slide covariate seed 5/20
+slide covariate seed 6/20
+slide covariate seed 7/20
+slide covariate seed 8/20
+slide covariate seed 9/20
+slide covariate seed 10/20
+slide covariate seed 11/20
+slide covariate seed 12/20
+slide covariate seed 13/20
+slide covariate seed 14/20
+slide covariate seed 15/20
+slide covariate seed 16/20
+slide covariate seed 17/20
+slide covariate seed 18/20
+slide covariate seed 19/20
+slide covariate seed 20/20
+
+=== window summary ===
+ scenario phase tau_kind  seeds  tau2  po_risk  top_shap_driver  top_rf_driver  top_mmd_driver  driver_shap  noise_shap  driver_vimp  noise_vimp  driver_rf  noise_rf  driver_mmd  noise_mmd
+  concept  post       rf     20 2.634    2.638              1.0           0.35            0.05        0.645       0.115        2.099       0.291      0.132     0.123      -0.000     -0.000
+  concept   pre       rf     20 0.411    2.285              0.2           0.20            0.05        0.103       0.118        0.283       0.301      0.126     0.125       0.000     -0.000
+  concept  post    ridge     20 4.290    3.432              1.0           0.35            0.05        0.909       0.154        2.725       0.114      0.132     0.123      -0.000     -0.000
+  concept   pre    ridge     20 0.410    3.485              0.2           0.20            0.05        0.144       0.159        0.126       0.126      0.126     0.125       0.000     -0.000
+covariate  post       rf     20 0.503    2.863              0.2           1.00            1.00        0.138       0.118        0.333       0.297      0.370     0.090       0.052     -0.007
+covariate   pre       rf     20 0.475    2.243              0.1           0.10            0.45        0.118       0.118        0.283       0.298      0.124     0.125       0.000     -0.000
+covariate  post    ridge     20 0.614    3.975              0.2           1.00            1.00        0.237       0.193        0.246       0.180      0.370     0.090       0.052     -0.007
+covariate   pre    ridge     20 0.509    3.395              0.2           0.10            0.45        0.199       0.172        0.187       0.146      0.124     0.125       0.000     -0.000
+
+=== feature means (post) ===
+ scenario tau_kind feature  is_driver  po_shapley  po_vimp  rf_vimp  MMD_vimp
+  concept       rf      x0          0       0.105    0.270    0.124    -0.000
+  concept       rf      x1          0       0.164    0.371    0.113     0.000
+  concept       rf      x2          1       0.624    1.925    0.133    -0.000
+  concept       rf      x3          1       0.665    2.272    0.131    -0.000
+  concept       rf      x4          0       0.091    0.257    0.125    -0.000
+  concept       rf      x5          0       0.132    0.321    0.131     0.000
+  concept       rf      x6          0       0.094    0.260    0.116    -0.000
+  concept       rf      x7          0       0.106    0.267    0.127    -0.000
+  concept    ridge      x0          0       0.153    0.125    0.124    -0.000
+  concept    ridge      x1          0       0.186    0.157    0.113     0.000
+  concept    ridge      x2          1       0.870    2.419    0.133    -0.000
+  concept    ridge      x3          1       0.948    3.030    0.131    -0.000
+  concept    ridge      x4          0       0.123    0.068    0.125    -0.000
+  concept    ridge      x5          0       0.179    0.137    0.131     0.000
+  concept    ridge      x6          0       0.147    0.100    0.116    -0.000
+  concept    ridge      x7          0       0.134    0.095    0.127    -0.000
+covariate       rf      x0          1       0.138    0.333    0.370     0.052
+covariate       rf      x1          0       0.099    0.276    0.100    -0.007
+covariate       rf      x2          0       0.111    0.272    0.090    -0.007
+covariate       rf      x3          0       0.124    0.277    0.091    -0.007
+covariate       rf      x4          0       0.102    0.257    0.086    -0.008
+covariate       rf      x5          0       0.121    0.325    0.094    -0.007
+covariate       rf      x6          0       0.125    0.321    0.082    -0.007
+covariate       rf      x7          0       0.145    0.352    0.087    -0.006
+covariate    ridge      x0          1       0.237    0.246    0.370     0.052
+covariate    ridge      x1          0       0.182    0.155    0.100    -0.007
+covariate    ridge      x2          0       0.185    0.189    0.090    -0.007
+covariate    ridge      x3          0       0.205    0.203    0.091    -0.007
+covariate    ridge      x4          0       0.172    0.116    0.086    -0.008
+covariate    ridge      x5          0       0.172    0.165    0.094    -0.007
+covariate    ridge      x6          0       0.228    0.227    0.082    -0.007
+covariate    ridge      x7          0       0.204    0.203    0.087    -0.006
+
+=== slide summary ===
+ scenario phase tau_kind  n_windows  seeds  top_driver_rate  driver_shap  noise_shap  tau2  po_risk
+  concept  post       rf        140     20            0.443        0.197       0.122 0.738    2.673
+  concept   pre       rf        100     20            0.260        0.112       0.116 0.442    2.305
+covariate  post       rf        140     20            0.100        0.116       0.114 0.472    2.277
+covariate   pre       rf        100     20            0.120        0.109       0.115 0.441    2.259

@@ -1,0 +1,2 @@
+dataset,scenario,B,tau2_mean,po_risk_mean,mmd2_mean,RFPerm_power,DRPerm_power,MMD_power,shap_driver_hit,rf_driver_hit,mmd_driver_hit
+modasense,text_polarity,3,1.0,0.0009199231186163516,0.0932043259947248,0.0,0.0,0.0,0.0,1.0,1.0
