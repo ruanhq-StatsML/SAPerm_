@@ -1,0 +1,52 @@
+{
+  "primary_endpoint": "attribution_hit_rate",
+  "seeds": [
+    202601,
+    202602,
+    202603
+  ],
+  "permutations": 49,
+  "summary": [
+    {
+      "mechanism": "benign_covariate",
+      "n": 3,
+      "hit_rate": 0.6666666666666666,
+      "mean_p": 0.29333333333333333,
+      "reject_rate_p05": 0.0,
+      "mean_po_all": 0.014081137492319875,
+      "mean_brier_gap": 0.007875343180399166,
+      "top_mode": "prompt_meta"
+    },
+    {
+      "mechanism": "concept_content",
+      "n": 3,
+      "hit_rate": 1.0,
+      "mean_p": 0.02,
+      "reject_rate_p05": 1.0,
+      "mean_po_all": 0.08575590884394228,
+      "mean_brier_gap": 0.1221500449022801,
+      "top_mode": "content_signal"
+    },
+    {
+      "mechanism": "concept_style",
+      "n": 3,
+      "hit_rate": 1.0,
+      "mean_p": 0.02,
+      "reject_rate_p05": 1.0,
+      "mean_po_all": 0.06871481672329804,
+      "mean_brier_gap": 0.06474184774814169,
+      "top_mode": "response_style"
+    },
+    {
+      "mechanism": "no_shift",
+      "n": 3,
+      "hit_rate": 1.0,
+      "mean_p": 0.6333333333333333,
+      "reject_rate_p05": 0.0,
+      "mean_po_all": 0.013727482829429033,
+      "mean_brier_gap": 0.009214533130435363,
+      "top_mode": "prompt_meta"
+    }
+  ],
+  "n_rows": 12
+}

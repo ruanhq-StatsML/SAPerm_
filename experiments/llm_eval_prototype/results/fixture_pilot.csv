@@ -1,0 +1,2 @@
+fixture,n,top_block,p_value,po_all,shift_prompt_meta,shift_response_style,shift_content_signal,brier_source,brier_target,brier_gap,note
+experiments/llm_eval_prototype/fixtures/mock_judge_batch.csv,560,content_signal,0.03333333333333333,0.10612408950372301,0.004943445481481221,0.004528032965964768,0.08490957902983469,0.16826917165548244,0.3435253306304441,0.17525615897496166,Frozen mock-judge fixture; not a live LLM API run.
