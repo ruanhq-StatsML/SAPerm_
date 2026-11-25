@@ -13,3 +13,7 @@ experiments/primary_driver_10site/latex/*.blg
 data/
 *.egg-info/
 .venv/
+
+# Agent SDK project
+fsds-review-agent/node_modules/
+fsds-review-agent/.agent-sdk/
