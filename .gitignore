@@ -13,3 +13,6 @@ experiments/primary_driver_10site/latex/*.blg
 data/
 *.egg-info/
 .venv/
+
+# TabReD local CSV caches (downloaded at runtime)
+experiments/fsds_tabred/data/**/*.csv

@@ -1,0 +1,163 @@
+
+===== batch_size=100 =====
+[weather] n=8000 p=97 blocks=[24, 24, 24, 25] mode=contiguous_quarters thr=28.0
+  running fsds_vimp ...
+    fsds_vimp: mean_reward=-0.1440 acc=0.796 arms=[52, 3, 13, 4] late_w=[0.067, 0.089, 0.041, 0.803] (35.1s)
+  running fsds_logo ...
+    fsds_logo: mean_reward=-0.1303 acc=0.814 arms=[5, 2, 2, 63] late_w=[0.37, 0.324, 0.295, 0.01] (11.9s)
+  running ts_flat ...
+    ts_flat: mean_reward=-0.1329 acc=0.812 arms=[35, 2, 2, 33] late_w=[0.25, 0.25, 0.25, 0.25] (0.1s)
+  running boot_fsds_vimp ...
+    boot_fsds_vimp: mean_reward=-0.1472 acc=0.792 arms=[50, 1, 19, 2] late_w=[0.067, 0.089, 0.041, 0.803] (35.0s)
+[ecom-offers] n=8000 p=110 blocks=[27, 28, 27, 28] mode=contiguous_quarters thr=None
+  running fsds_vimp ...
+    fsds_vimp: mean_reward=-0.1918 acc=0.731 arms=[37, 14, 9, 12] late_w=[0.288, 0.202, 0.243, 0.267] (38.3s)
+  running fsds_logo ...
+    fsds_logo: mean_reward=-0.1900 acc=0.731 arms=[51, 5, 5, 11] late_w=[0.0, 0.38, 0.409, 0.211] (9.5s)
+  running ts_flat ...
+    ts_flat: mean_reward=-0.1904 acc=0.731 arms=[38, 2, 4, 28] late_w=[0.25, 0.25, 0.25, 0.25] (0.1s)
+  running boot_fsds_vimp ...
+    boot_fsds_vimp: mean_reward=-0.1913 acc=0.731 arms=[38, 10, 13, 11] late_w=[0.288, 0.202, 0.243, 0.267] (38.6s)
+[sberbank-housing] n=8000 p=392 blocks=[98, 98, 98, 98] mode=vimp_cluster thr=11.877969
+  running fsds_vimp ...
+    fsds_vimp: mean_reward=-0.1418 acc=0.782 arms=[17, 14, 22, 19] late_w=[0.233, 0.335, 0.198, 0.234] (93.6s)
+  running fsds_logo ...
+    fsds_logo: mean_reward=-0.1428 acc=0.783 arms=[12, 23, 9, 28] late_w=[0.264, 0.236, 0.293, 0.208] (36.3s)
+  running ts_flat ...
+    ts_flat: mean_reward=-0.1498 acc=0.782 arms=[7, 61, 2, 2] late_w=[0.25, 0.25, 0.25, 0.25] (0.1s)
+  running boot_fsds_vimp ...
+    boot_fsds_vimp: mean_reward=-0.1415 acc=0.783 arms=[17, 13, 22, 20] late_w=[0.233, 0.335, 0.198, 0.234] (91.3s)
+[homesite-insurance] n=8000 p=246 blocks=[62, 62, 61, 61] mode=vimp_cluster thr=None
+  running fsds_vimp ...
+    fsds_vimp: mean_reward=-0.1276 acc=0.817 arms=[21, 13, 21, 17] late_w=[0.213, 0.308, 0.21, 0.27] (65.9s)
+  running fsds_logo ...
+    fsds_logo: mean_reward=-0.1292 acc=0.817 arms=[17, 41, 6, 8] late_w=[0.332, 0.007, 0.346, 0.316] (18.1s)
+  running ts_flat ...
+    ts_flat: mean_reward=-0.1273 acc=0.817 arms=[22, 17, 31, 2] late_w=[0.25, 0.25, 0.25, 0.25] (0.1s)
+  running boot_fsds_vimp ...
+    boot_fsds_vimp: mean_reward=-0.1281 acc=0.816 arms=[20, 18, 16, 18] late_w=[0.213, 0.308, 0.21, 0.27] (67.1s)
+
+===== batch_size=200 =====
+[weather] n=8000 p=97 blocks=[24, 24, 24, 25] mode=contiguous_quarters thr=28.0
+  running fsds_vimp ...
+    fsds_vimp: mean_reward=-0.1552 acc=0.774 arms=[16, 2, 14, 4] late_w=[0.141, 0.106, 0.093, 0.66] (18.9s)
+  running fsds_logo ...
+    fsds_logo: mean_reward=-0.1344 acc=0.804 arms=[3, 2, 2, 29] late_w=[0.317, 0.216, 0.468, 0.0] (9.1s)
+  running ts_flat ...
+    ts_flat: mean_reward=-0.1363 acc=0.801 arms=[10, 2, 2, 22] late_w=[0.25, 0.25, 0.25, 0.25] (0.1s)
+  running boot_fsds_vimp ...
+    boot_fsds_vimp: mean_reward=-0.1522 acc=0.783 arms=[18, 1, 14, 3] late_w=[0.141, 0.106, 0.093, 0.66] (19.0s)
+[ecom-offers] n=8000 p=110 blocks=[27, 28, 27, 28] mode=contiguous_quarters thr=None
+  running fsds_vimp ...
+    fsds_vimp: mean_reward=-0.1927 acc=0.731 arms=[14, 10, 4, 8] late_w=[0.273, 0.215, 0.238, 0.275] (20.3s)
+  running fsds_logo ...
+    fsds_logo: mean_reward=-0.1900 acc=0.731 arms=[26, 2, 2, 6] late_w=[0.041, 0.543, 0.218, 0.197] (9.9s)
+  running ts_flat ...
+    ts_flat: mean_reward=-0.1916 acc=0.731 arms=[2, 3, 2, 29] late_w=[0.25, 0.25, 0.25, 0.25] (0.1s)
+  running boot_fsds_vimp ...
+    boot_fsds_vimp: mean_reward=-0.1925 acc=0.731 arms=[16, 12, 1, 7] late_w=[0.273, 0.215, 0.238, 0.275] (20.5s)
+[sberbank-housing] n=8000 p=392 blocks=[98, 98, 98, 98] mode=vimp_cluster thr=11.877969
+  running fsds_vimp ...
+    fsds_vimp: mean_reward=-0.1439 acc=0.778 arms=[10, 10, 7, 9] late_w=[0.234, 0.275, 0.243, 0.249] (50.0s)
+  running fsds_logo ...
+    fsds_logo: mean_reward=-0.1462 acc=0.780 arms=[4, 16, 8, 8] late_w=[0.31, 0.2, 0.303, 0.187] (21.7s)
+  running ts_flat ...
+    ts_flat: mean_reward=-0.1513 acc=0.778 arms=[2, 29, 2, 3] late_w=[0.25, 0.25, 0.25, 0.25] (0.1s)
+  running boot_fsds_vimp ...
+    boot_fsds_vimp: mean_reward=-0.1431 acc=0.780 arms=[8, 10, 10, 8] late_w=[0.234, 0.275, 0.243, 0.249] (50.3s)
+[homesite-insurance] n=8000 p=246 blocks=[62, 62, 61, 61] mode=vimp_cluster thr=None
+  running fsds_vimp ...
+    fsds_vimp: mean_reward=-0.1283 acc=0.817 arms=[8, 8, 10, 10] late_w=[0.231, 0.246, 0.185, 0.337] (39.4s)
+  running fsds_logo ...
+    fsds_logo: mean_reward=-0.1276 acc=0.817 arms=[11, 8, 12, 5] late_w=[0.059, 0.0, 0.442, 0.499] (11.3s)
+  running ts_flat ...
+    ts_flat: mean_reward=-0.1284 acc=0.817 arms=[3, 3, 24, 6] late_w=[0.25, 0.25, 0.25, 0.25] (0.1s)
+  running boot_fsds_vimp ...
+    boot_fsds_vimp: mean_reward=-0.1281 acc=0.817 arms=[9, 8, 10, 9] late_w=[0.231, 0.246, 0.185, 0.337] (36.2s)
+
+===== batch_size=400 =====
+[weather] n=8000 p=97 blocks=[24, 24, 24, 25] mode=contiguous_quarters thr=28.0
+  running fsds_vimp ...
+    fsds_vimp: mean_reward=-0.1594 acc=0.766 arms=[9, 4, 3, 2] late_w=[0.123, 0.098, 0.098, 0.682] (11.1s)
+  running fsds_logo ...
+    fsds_logo: mean_reward=-0.1441 acc=0.790 arms=[2, 2, 2, 12] late_w=[0.425, 0.299, 0.277, 0.0] (3.7s)
+  running ts_flat ...
+    ts_flat: mean_reward=-0.1453 acc=0.787 arms=[3, 2, 2, 11] late_w=[0.25, 0.25, 0.25, 0.25] (0.0s)
+  running boot_fsds_vimp ...
+    boot_fsds_vimp: mean_reward=-0.1467 acc=0.789 arms=[13, 2, 2, 1] late_w=[0.123, 0.098, 0.098, 0.682] (10.9s)
+[ecom-offers] n=8000 p=110 blocks=[27, 28, 27, 28] mode=contiguous_quarters thr=None
+  running fsds_vimp ...
+    fsds_vimp: mean_reward=-0.1909 acc=0.731 arms=[7, 2, 5, 4] late_w=[0.18, 0.289, 0.213, 0.318] (11.7s)
+  running fsds_logo ...
+    fsds_logo: mean_reward=-0.1907 acc=0.731 arms=[9, 2, 3, 4] late_w=[0.023, 0.614, 0.164, 0.199] (3.7s)
+  running ts_flat ...
+    ts_flat: mean_reward=-0.1911 acc=0.731 arms=[7, 2, 4, 5] late_w=[0.25, 0.25, 0.25, 0.25] (0.0s)
+  running boot_fsds_vimp ...
+    boot_fsds_vimp: mean_reward=-0.1902 acc=0.731 arms=[9, 4, 2, 3] late_w=[0.18, 0.289, 0.213, 0.318] (11.9s)
+[sberbank-housing] n=8000 p=392 blocks=[98, 98, 98, 98] mode=vimp_cluster thr=11.877969
+  running fsds_vimp ...
+    fsds_vimp: mean_reward=-0.1415 acc=0.788 arms=[6, 3, 6, 3] late_w=[0.283, 0.261, 0.213, 0.243] (30.0s)
+  running fsds_logo ...
+    fsds_logo: mean_reward=-0.1415 acc=0.785 arms=[5, 3, 6, 4] late_w=[0.219, 0.111, 0.325, 0.346] (14.1s)
+  running ts_flat ...
+    ts_flat: mean_reward=-0.1415 acc=0.786 arms=[6, 2, 8, 2] late_w=[0.25, 0.25, 0.25, 0.25] (0.0s)
+  running boot_fsds_vimp ...
+    boot_fsds_vimp: mean_reward=-0.1470 acc=0.775 arms=[2, 6, 8, 2] late_w=[0.283, 0.261, 0.213, 0.243] (30.3s)
+[homesite-insurance] n=8000 p=246 blocks=[62, 62, 61, 61] mode=vimp_cluster thr=None
+  running fsds_vimp ...
+    fsds_vimp: mean_reward=-0.1282 acc=0.817 arms=[4, 2, 6, 6] late_w=[0.204, 0.38, 0.162, 0.254] (22.0s)
+  running fsds_logo ...
+    fsds_logo: mean_reward=-0.1279 acc=0.817 arms=[6, 8, 2, 2] late_w=[0.156, 0.06, 0.423, 0.361] (7.6s)
+  running ts_flat ...
+    ts_flat: mean_reward=-0.1266 acc=0.817 arms=[6, 3, 7, 2] late_w=[0.25, 0.25, 0.25, 0.25] (0.0s)
+  running boot_fsds_vimp ...
+    boot_fsds_vimp: mean_reward=-0.1262 acc=0.817 arms=[7, 1, 6, 4] late_w=[0.204, 0.38, 0.162, 0.254] (21.4s)
+           dataset            tag    policy         penalty  lam         serve  batch_size  ref_batch_size    n   p  n_batches  mean_reward  mean_accuracy  final_cum_reward       arm_counts                                  early_w                                   late_w  elapsed_sec
+           weather      fsds_vimp  gaussian        sum_VIMP  1.0 keep_selected         100             800 8000  97         72    -0.143959       0.796250        -10.365071   [52, 3, 13, 4] [0.018788, 0.016612, 0.014787, 0.949813]  [0.067104, 0.088995, 0.04053, 0.803371]    35.121030
+           weather      fsds_logo  gaussian leave_one_group  1.0 keep_selected         100             800 8000  97         72    -0.130276       0.814167         -9.379866    [5, 2, 2, 63]      [0.303623, 0.394041, 0.302336, 0.0] [0.370315, 0.324353, 0.294916, 0.010417]    11.925853
+           weather        ts_flat  gaussian            none  0.0 keep_selected         100             800 8000  97         72    -0.132928       0.811528         -9.570839   [35, 2, 2, 33]                 [0.25, 0.25, 0.25, 0.25]                 [0.25, 0.25, 0.25, 0.25]     0.126877
+           weather boot_fsds_vimp bootstrap        sum_VIMP  1.0 keep_selected         100             800 8000  97         72    -0.147159       0.791667        -10.595420   [50, 1, 19, 2] [0.018788, 0.016612, 0.014787, 0.949813]  [0.067104, 0.088995, 0.04053, 0.803371]    34.976451
+       ecom-offers      fsds_vimp  gaussian        sum_VIMP  1.0 keep_selected         100             800 8000 110         72    -0.191774       0.730556        -13.807749  [37, 14, 9, 12] [0.223611, 0.202528, 0.258208, 0.315652] [0.287572, 0.202254, 0.242936, 0.267237]    38.326300
+       ecom-offers      fsds_logo  gaussian leave_one_group  1.0 keep_selected         100             800 8000 110         72    -0.190031       0.730556        -13.682216   [51, 5, 5, 11] [0.030429, 0.518829, 0.211743, 0.238998]       [0.0, 0.379873, 0.408797, 0.21133]     9.545227
+       ecom-offers        ts_flat  gaussian            none  0.0 keep_selected         100             800 8000 110         72    -0.190391       0.730556        -13.708150   [38, 2, 4, 28]                 [0.25, 0.25, 0.25, 0.25]                 [0.25, 0.25, 0.25, 0.25]     0.124583
+       ecom-offers boot_fsds_vimp bootstrap        sum_VIMP  1.0 keep_selected         100             800 8000 110         72    -0.191288       0.730556        -13.772728 [38, 10, 13, 11] [0.223611, 0.202528, 0.258208, 0.315652] [0.287572, 0.202254, 0.242936, 0.267237]    38.578797
+  sberbank-housing      fsds_vimp  gaussian        sum_VIMP  1.0 keep_selected         100             800 8000 392         72    -0.141773       0.782361        -10.207630 [17, 14, 22, 19]  [0.217669, 0.24124, 0.212737, 0.328354]  [0.23326, 0.334845, 0.197808, 0.234087]    93.581701
+  sberbank-housing      fsds_logo  gaussian leave_one_group  1.0 keep_selected         100             800 8000 392         72    -0.142842       0.783333        -10.284601  [12, 23, 9, 28] [0.294581, 0.185552, 0.268872, 0.250995]  [0.264098, 0.235672, 0.29269, 0.207539]    36.295006
+  sberbank-housing        ts_flat  gaussian            none  0.0 keep_selected         100             800 8000 392         72    -0.149757       0.781944        -10.782473    [7, 61, 2, 2]                 [0.25, 0.25, 0.25, 0.25]                 [0.25, 0.25, 0.25, 0.25]     0.130137
+  sberbank-housing boot_fsds_vimp bootstrap        sum_VIMP  1.0 keep_selected         100             800 8000 392         72    -0.141450       0.783056        -10.184423 [17, 13, 22, 20]  [0.217669, 0.24124, 0.212737, 0.328354]  [0.23326, 0.334845, 0.197808, 0.234087]    91.289591
+homesite-insurance      fsds_vimp  gaussian        sum_VIMP  1.0 keep_selected         100             800 8000 246         72    -0.127553       0.816806         -9.183798 [21, 13, 21, 17]  [0.17116, 0.249454, 0.295892, 0.283493] [0.212653, 0.307813, 0.209986, 0.269548]    65.926663
+homesite-insurance      fsds_logo  gaussian leave_one_group  1.0 keep_selected         100             800 8000 246         72    -0.129152       0.816667         -9.298968   [17, 41, 6, 8] [0.389692, 0.041669, 0.311605, 0.257034] [0.331771, 0.006645, 0.345707, 0.315876]    18.098338
+homesite-insurance        ts_flat  gaussian            none  0.0 keep_selected         100             800 8000 246         72    -0.127344       0.816944         -9.168752  [22, 17, 31, 2]                 [0.25, 0.25, 0.25, 0.25]                 [0.25, 0.25, 0.25, 0.25]     0.131027
+homesite-insurance boot_fsds_vimp bootstrap        sum_VIMP  1.0 keep_selected         100             800 8000 246         72    -0.128062       0.816250         -9.220469 [20, 18, 16, 18]  [0.17116, 0.249454, 0.295892, 0.283493] [0.212653, 0.307813, 0.209986, 0.269548]    67.137016
+           weather      fsds_vimp  gaussian        sum_VIMP  1.0 keep_selected         200             800 8000  97         36    -0.155190       0.773889         -5.586843   [16, 2, 14, 4]  [0.050463, 0.04197, 0.035309, 0.872258]  [0.140604, 0.10601, 0.093317, 0.660069]    18.923909
+           weather      fsds_logo  gaussian leave_one_group  1.0 keep_selected         200             800 8000  97         36    -0.134412       0.803889         -4.838837    [3, 2, 2, 29] [0.343707, 0.290104, 0.351695, 0.014493]        [0.3166, 0.215877, 0.467523, 0.0]     9.119901
+           weather        ts_flat  gaussian            none  0.0 keep_selected         200             800 8000  97         36    -0.136318       0.800694         -4.907457   [10, 2, 2, 22]                 [0.25, 0.25, 0.25, 0.25]                 [0.25, 0.25, 0.25, 0.25]     0.068845
+           weather boot_fsds_vimp bootstrap        sum_VIMP  1.0 keep_selected         200             800 8000  97         36    -0.152200       0.782500         -5.479188   [18, 1, 14, 3]  [0.050463, 0.04197, 0.035309, 0.872258]  [0.140604, 0.10601, 0.093317, 0.660069]    19.011229
+       ecom-offers      fsds_vimp  gaussian        sum_VIMP  1.0 keep_selected         200             800 8000 110         36    -0.192655       0.730556         -6.935566   [14, 10, 4, 8] [0.161271, 0.225734, 0.334596, 0.278399]  [0.272863, 0.214903, 0.237624, 0.27461]    20.286647
+       ecom-offers      fsds_logo  gaussian leave_one_group  1.0 keep_selected         200             800 8000 110         36    -0.190012       0.730556         -6.840425    [26, 2, 2, 6] [0.071878, 0.474573, 0.221186, 0.232364] [0.041095, 0.543179, 0.218437, 0.197289]     9.889727
+       ecom-offers        ts_flat  gaussian            none  0.0 keep_selected         200             800 8000 110         36    -0.191616       0.730556         -6.898188    [2, 3, 2, 29]                 [0.25, 0.25, 0.25, 0.25]                 [0.25, 0.25, 0.25, 0.25]     0.066726
+       ecom-offers boot_fsds_vimp bootstrap        sum_VIMP  1.0 keep_selected         200             800 8000 110         36    -0.192492       0.730556         -6.929722   [16, 12, 1, 7] [0.161271, 0.225734, 0.334596, 0.278399]  [0.272863, 0.214903, 0.237624, 0.27461]    20.494633
+  sberbank-housing      fsds_vimp  gaussian        sum_VIMP  1.0 keep_selected         200             800 8000 392         36    -0.143918       0.777639         -5.181056   [10, 10, 7, 9] [0.294794, 0.198199, 0.185204, 0.321803] [0.233661, 0.274699, 0.242529, 0.249112]    49.954923
+  sberbank-housing      fsds_logo  gaussian leave_one_group  1.0 keep_selected         200             800 8000 392         36    -0.146201       0.780139         -5.263230    [4, 16, 8, 8]   [0.29911, 0.19771, 0.244064, 0.259116] [0.309889, 0.199839, 0.303235, 0.187036]    21.734400
+  sberbank-housing        ts_flat  gaussian            none  0.0 keep_selected         200             800 8000 392         36    -0.151276       0.777639         -5.445944    [2, 29, 2, 3]                 [0.25, 0.25, 0.25, 0.25]                 [0.25, 0.25, 0.25, 0.25]     0.073410
+  sberbank-housing boot_fsds_vimp bootstrap        sum_VIMP  1.0 keep_selected         200             800 8000 392         36    -0.143105       0.779722         -5.151775   [8, 10, 10, 8] [0.294794, 0.198199, 0.185204, 0.321803] [0.233661, 0.274699, 0.242529, 0.249112]    50.290410
+homesite-insurance      fsds_vimp  gaussian        sum_VIMP  1.0 keep_selected         200             800 8000 246         36    -0.128278       0.816667         -4.618013   [8, 8, 10, 10] [0.153083, 0.282635, 0.282389, 0.281894] [0.231256, 0.246427, 0.184909, 0.337408]    39.389445
+homesite-insurance      fsds_logo  gaussian leave_one_group  1.0 keep_selected         200             800 8000 246         36    -0.127587       0.816944         -4.593134   [11, 8, 12, 5] [0.304413, 0.104167, 0.282466, 0.308954]       [0.05866, 0.0, 0.442366, 0.498974]    11.265168
+homesite-insurance        ts_flat  gaussian            none  0.0 keep_selected         200             800 8000 246         36    -0.128427       0.817222         -4.623380    [3, 3, 24, 6]                 [0.25, 0.25, 0.25, 0.25]                 [0.25, 0.25, 0.25, 0.25]     0.069852
+homesite-insurance boot_fsds_vimp bootstrap        sum_VIMP  1.0 keep_selected         200             800 8000 246         36    -0.128149       0.816806         -4.613382    [9, 8, 10, 9] [0.153083, 0.282635, 0.282389, 0.281894] [0.231256, 0.246427, 0.184909, 0.337408]    36.195113
+           weather      fsds_vimp  gaussian        sum_VIMP  1.0 keep_selected         400             800 8000  97         18    -0.159385       0.766250         -2.868923     [9, 4, 3, 2] [0.022972, 0.045668, 0.022833, 0.908527]  [0.12254, 0.097788, 0.097721, 0.681951]    11.131421
+           weather      fsds_logo  gaussian leave_one_group  1.0 keep_selected         400             800 8000  97         18    -0.144113       0.790278         -2.594032    [2, 2, 2, 12]       [0.386636, 0.26374, 0.349624, 0.0]       [0.424936, 0.298515, 0.27655, 0.0]     3.717745
+           weather        ts_flat  gaussian            none  0.0 keep_selected         400             800 8000  97         18    -0.145310       0.787083         -2.615572    [3, 2, 2, 11]                 [0.25, 0.25, 0.25, 0.25]                 [0.25, 0.25, 0.25, 0.25]     0.039034
+           weather boot_fsds_vimp bootstrap        sum_VIMP  1.0 keep_selected         400             800 8000  97         18    -0.146697       0.789028         -2.640549    [13, 2, 2, 1] [0.022972, 0.045668, 0.022833, 0.908527]  [0.12254, 0.097788, 0.097721, 0.681951]    10.863025
+       ecom-offers      fsds_vimp  gaussian        sum_VIMP  1.0 keep_selected         400             800 8000 110         18    -0.190889       0.730556         -3.436001     [7, 2, 5, 4] [0.167318, 0.249695, 0.329389, 0.253597] [0.180331, 0.288695, 0.212873, 0.318101]    11.662834
+       ecom-offers      fsds_logo  gaussian leave_one_group  1.0 keep_selected         400             800 8000 110         18    -0.190682       0.730556         -3.432270     [9, 2, 3, 4] [0.063713, 0.432676, 0.291641, 0.211971]  [0.022586, 0.614392, 0.163592, 0.19943]     3.747471
+       ecom-offers        ts_flat  gaussian            none  0.0 keep_selected         400             800 8000 110         18    -0.191120       0.730556         -3.440162     [7, 2, 4, 5]                 [0.25, 0.25, 0.25, 0.25]                 [0.25, 0.25, 0.25, 0.25]     0.036257
+       ecom-offers boot_fsds_vimp bootstrap        sum_VIMP  1.0 keep_selected         400             800 8000 110         18    -0.190219       0.730556         -3.423936     [9, 4, 2, 3] [0.167318, 0.249695, 0.329389, 0.253597] [0.180331, 0.288695, 0.212873, 0.318101]    11.940187
+  sberbank-housing      fsds_vimp  gaussian        sum_VIMP  1.0 keep_selected         400             800 8000 392         18    -0.141458       0.788056         -2.546251     [6, 3, 6, 3]   [0.22118, 0.236465, 0.24137, 0.300985] [0.283286, 0.260818, 0.212945, 0.242951]    29.966993
+  sberbank-housing      fsds_logo  gaussian leave_one_group  1.0 keep_selected         400             800 8000 392         18    -0.141478       0.785417         -2.546609     [5, 3, 6, 4] [0.278061, 0.168646, 0.283147, 0.270146] [0.219021, 0.110588, 0.324591, 0.345799]    14.053820
+  sberbank-housing        ts_flat  gaussian            none  0.0 keep_selected         400             800 8000 392         18    -0.141499       0.785694         -2.546975     [6, 2, 8, 2]                 [0.25, 0.25, 0.25, 0.25]                 [0.25, 0.25, 0.25, 0.25]     0.040227
+  sberbank-housing boot_fsds_vimp bootstrap        sum_VIMP  1.0 keep_selected         400             800 8000 392         18    -0.146954       0.775278         -2.645175     [2, 6, 8, 2]   [0.22118, 0.236465, 0.24137, 0.300985] [0.283286, 0.260818, 0.212945, 0.242951]    30.262243
+homesite-insurance      fsds_vimp  gaussian        sum_VIMP  1.0 keep_selected         400             800 8000 246         18    -0.128240       0.816667         -2.308315     [4, 2, 6, 6] [0.147723, 0.341219, 0.268511, 0.242547] [0.203897, 0.380119, 0.162146, 0.253837]    21.951500
+homesite-insurance      fsds_logo  gaussian leave_one_group  1.0 keep_selected         400             800 8000 246         18    -0.127907       0.817222         -2.302318     [6, 8, 2, 2]      [0.280366, 0.0, 0.343005, 0.376629]  [0.155973, 0.060376, 0.42294, 0.360711]     7.610404
+homesite-insurance        ts_flat  gaussian            none  0.0 keep_selected         400             800 8000 246         18    -0.126621       0.816944         -2.279179     [6, 3, 7, 2]                 [0.25, 0.25, 0.25, 0.25]                 [0.25, 0.25, 0.25, 0.25]     0.040295
+homesite-insurance boot_fsds_vimp bootstrap        sum_VIMP  1.0 keep_selected         400             800 8000 246         18    -0.126228       0.816944         -2.272106     [7, 1, 6, 4] [0.147723, 0.341219, 0.268511, 0.242547] [0.203897, 0.380119, 0.162146, 0.253837]    21.377512
