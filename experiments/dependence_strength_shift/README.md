@@ -39,8 +39,9 @@ See `results/INSIGHTS.md`.
 python -m experiments.dependence_strength_shift.write_latex
 ```
 
-Writes `latex/dependence_strength_shift.tex` (also copied under `results/`).
-See `results/BOARD.md` for the markdown board.
+**Delivery LaTeX (applied note):** `latex/dependence_strength_shift.tex`  
+— dual ranking \(A_j\) + PO-risk, factor-residual application, UCI table, readout.  
+Also copied under `results/`. Markdown board: `results/BOARD.md`; insights: `results/INSIGHTS.md`.
 
 ## API
 

@@ -1,7 +1,6 @@
-"""Emit a short manuscript-style LaTeX note from ranking_recovery.json.
+"""Emit a delivery-ready applied LaTeX note: dual ranking (A_j + PO-risk).
 
-Headline comparison: signed dependence-strength ranking vs PO-risk ranking
-(``po_gap`` = risk drop from the zero contrast to the fitted T-learner contrast).
+Regenerate from ranking_recovery.json after the eval run.
 """
 
 from __future__ import annotations
@@ -45,22 +44,25 @@ def build_tex(payload: dict) -> str:
     uci = payload.get("uci", {})
     base = _eta2_gaussian(1.0)
 
-    ladder_rows = []
+    ladder = []
     for label, coef in GRADED_TARGET_COEFS:
         a = _eta2_gaussian(abs(coef)) - base
-        ladder_rows.append(
-            f"\\texttt{{{_tex_escape(label)}}} & {coef:.2f} & {a:+.3f} \\\\"
-        )
+        ladder.append(f"\\texttt{{{_tex_escape(label)}}} & {coef:.2f} & {a:+.3f} \\\\")
 
     dss_s = _mean(synthetic, "strength_shift", "spearman")
     po_s = _mean(synthetic, "po_gap", "spearman")
     dss_sg = _mean(synthetic, "strength_shift", "sign_agreement")
     po_sg = _mean(synthetic, "po_gap", "sign_agreement")
-    dss_pk = _mean(synthetic, "strength_shift", "precision_at_k")
-    po_pk = _mean(synthetic, "po_gap", "precision_at_k")
+
+    flip_bits = [r["flip_separation"] for r in synthetic if r.get("flip_separation")]
+    if flip_bits:
+        abs_a = float(np.mean([b["mean_abs_strength_shift"] for b in flip_bits]))
+        cms = float(np.mean([b["mean_cms"] for b in flip_bits]))
+    else:
+        abs_a = cms = float("nan")
 
     uci_lines = []
-    dss_sp_all, po_sp_all, dss_sg_all, po_sg_all = [], [], [], []
+    dss_sp, po_sp, dss_sg_u, po_sg_u = [], [], [], []
     for name, rows in uci.items():
         ok = [r for r in rows if "error" not in r]
         if not ok:
@@ -69,65 +71,56 @@ def build_tex(payload: dict) -> str:
         ps = _mean(ok, "po_gap", "spearman")
         dg = _mean(ok, "strength_shift", "sign_agreement")
         pg = _mean(ok, "po_gap", "sign_agreement")
-        dss_sp_all.append(ds)
-        po_sp_all.append(ps)
-        dss_sg_all.append(dg)
-        po_sg_all.append(pg)
+        dss_sp.append(ds)
+        po_sp.append(ps)
+        dss_sg_u.append(dg)
+        po_sg_u.append(pg)
         uci_lines.append(
             f"\\texttt{{{_tex_escape(name)}}} & {_fmt(ds)} & {_fmt(ps)} & {_fmt(dg)} & {_fmt(pg)} \\\\"
         )
 
-    # Flip separation from synthetic
-    flip_bits = [r["flip_separation"] for r in synthetic if r.get("flip_separation")]
-    if flip_bits:
-        abs_a = float(np.mean([b["mean_abs_strength_shift"] for b in flip_bits]))
-        cms = float(np.mean([b["mean_cms"] for b in flip_bits]))
-        corr = float(np.mean([b["mean_corr_q"] for b in flip_bits]))
-    else:
-        abs_a = cms = corr = float("nan")
+    mean_dss = float(np.mean(dss_sp)) if dss_sp else float("nan")
+    mean_po = float(np.mean(po_sp)) if po_sp else float("nan")
+    mean_dss_sg = float(np.mean(dss_sg_u)) if dss_sg_u else float("nan")
+    mean_po_sg = float(np.mean(po_sg_u)) if po_sg_u else float("nan")
 
-    # One concrete waveform-style example if present
-    example_block = ""
+    # Compact waveform (or first available) example
+    example_rows = []
+    example_name = None
     for name in ("waveform", "pendigits", "breast_cancer"):
-        rows = uci.get(name, [])
-        ok = [r for r in rows if "error" not in r and "estimates_response" in r]
-        if not ok:
+        rows = [r for r in uci.get(name, []) if "error" not in r and "estimates_response" in r]
+        if not rows:
             continue
-        r0 = ok[0]
+        example_name = name
+        r0 = rows[0]
         ora = np.asarray(r0["oracle_response"], dtype=float)
         est = np.asarray(r0["estimates_response"]["strength_shift"], dtype=float)
         pog = np.asarray(r0["estimates_response"]["po_gap"], dtype=float)
-        example_block = "\n".join(
+        for i, (lab, _) in enumerate(GRADED_TARGET_COEFS):
+            example_rows.append(
+                f"\\texttt{{{_tex_escape(lab)}}} & {ora[i]:+.3f} & {est[i]:+.3f} & {pog[i]:.3f} \\\\"
+            )
+        break
+
+    example_tex = ""
+    if example_name is not None:
+        example_tex = "\n".join(
             [
-                r"\subsection*{One replicate on \texttt{" + _tex_escape(name) + r"}}",
-                "",
-                "Oracle ladder, estimated strength shift, and PO-risk gap on the six responses:",
+                r"\paragraph{Illustration.}",
+                f"One replicate on \\texttt{{{_tex_escape(example_name)}}}:",
                 r"\begin{center}",
                 r"\begin{tabular}{lrrr}",
                 r"\toprule",
-                r"Response & Oracle $A$ & $\widehat A$ (strength) & PO-risk gap \\",
+                r"Response & Oracle $A$ & $\widehat A$ & PO-risk $\Delta^{\mathrm{PO}}$ \\",
                 r"\midrule",
-            ]
-            + [
-                f"\\texttt{{{_tex_escape(lab)}}} & {ora[i]:+.3f} & {est[i]:+.3f} & {pog[i]:.3f} \\\\"
-                for i, (lab, _) in enumerate(GRADED_TARGET_COEFS)
-            ]
-            + [
+                *example_rows,
                 r"\bottomrule",
                 r"\end{tabular}",
                 r"\end{center}",
-                "",
-                r"The PO-risk column is largest on the flip coordinate whenever the conditional map reverses; "
-                r"the strength column stays near zero there and preserves the signed order of the other five levels.",
+                r"PO-risk peaks on \texttt{flip}; $\widehat A$ stays near zero there and keeps the signed order elsewhere.",
                 "",
             ]
         )
-        break
-
-    mean_dss = float(np.mean(dss_sp_all)) if dss_sp_all else float("nan")
-    mean_po = float(np.mean(po_sp_all)) if po_sp_all else float("nan")
-    mean_dss_sg = float(np.mean(dss_sg_all)) if dss_sg_all else float("nan")
-    mean_po_sg = float(np.mean(po_sg_all)) if po_sg_all else float("nan")
 
     lines = [
         r"\documentclass[11pt]{article}",
@@ -136,67 +129,91 @@ def build_tex(payload: dict) -> str:
         r"\usepackage{amsmath,amssymb}",
         r"\usepackage{enumitem}",
         r"\begin{document}",
-        r"\section*{Dependence strength shift versus PO-risk ranking}",
         "",
-        r"For each feature $X_j$ and batch $t\in\{0,1\}$, fit",
-        r"$m_{t,j}(X_{-j})=\widehat{\mathbb{E}}_t[X_j\mid X_{-j}]$ and score the held-out correlation ratio",
+        r"\title{Dual ranking for dependence shift:\\ strength $A_j$ and PO-risk $\Delta^{\mathrm{PO}}_j$}",
+        r"\author{Applied note --- SAPerm / OOD VIMP}",
+        r"\date{}",
+        r"\maketitle",
+        "",
+        r"\noindent\textit{Direct application.} Given two batches (or factor windows), fit one",
+        r"conditional mean per feature and emit \textbf{two} rankings: dependence-strength",
+        r"shift $A_j$ (signed redundancy) and PO-risk gap $\Delta^{\mathrm{PO}}_j$",
+        r"(relationship / map change, including flips). Ranking recovery shows they are not",
+        r"interchangeable. On factor panels, run the same scores on residuals after removing $G$.",
+        "",
+        r"\section{Two scores from one fit}",
+        "",
+        r"For coordinate $X_j$ and batch $t\in\{0,1\}$, fit $m_{t,j}=\widehat{\mathbb{E}}_t[X_j\mid X_{-j}]$.",
+        r"Held-out correlation ratio and signed strength shift:",
         r"\begin{equation}",
-        r"\eta^{2}_{t,j}=1-\frac{\widehat{\mathbb{E}}\bigl[(X_j-m_{t,j})^2\bigr]}{\widehat{\mathrm{Var}}(X_j)},",
-        r"\qquad A_j=\eta^{2}_{1,j}-\eta^{2}_{0,j}.",
+        r"\eta^{2}_{t,j}=1-\frac{\mathrm{MSE}_t(X_j,m_{t,j})}{\widehat{\mathrm{Var}}_t(X_j)},",
+        r"\qquad",
+        r"A_j=\eta^{2}_{1,j}-\eta^{2}_{0,j}.",
+        r"\label{eq:Aj}",
         r"\end{equation}",
-        r"Signed $A_j$ is the dependence-strength shift: positive means $X_{-j}$ explains more of $X_j$ on the target batch.",
+        r"$A_j>0$: peers explain more of $X_j$ on the target (redundancy up).",
+        r"$A_j<0$: dependence weakened.",
         "",
-        r"The same fits give a PO-risk ranking. With propensity $\pi$ and contrast $\tau=m_{1,j}-m_{0,j}$,",
+        r"Same fits, PO-risk ranking. With propensity $\pi$, contrast $\tau_j=m_{1,j}-m_{0,j}$,",
+        r"and doubly robust pseudo-outcome $\phi$ (batch as treatment),",
         r"\begin{equation}",
-        r"R(\tau)=\widehat{\mathbb{E}}\bigl[(\phi-\tau)^2\bigr],",
-        r"\qquad \Delta^{\mathrm{PO}}_j=R(0)-R(\tau),",
+        r"R(\tau)=\widehat{\mathbb{E}}[(\phi-\tau)^2],",
+        r"\qquad",
+        r"\Delta^{\mathrm{PO}}_j=R(0)-R(\tau_j).",
+        r"\label{eq:PO}",
         r"\end{equation}",
-        r"where $\phi$ is the doubly robust pseudo-outcome for treating batch as the ``treatment''.",
-        r"Ranking features by $\Delta^{\mathrm{PO}}_j$ (equivalently by the PO-risk gap) answers whether the",
-        r"\emph{conditional mean relationship} changed, not whether dependence strengthened or weakened.",
+        r"Rank by $\Delta^{\mathrm{PO}}_j$ to find where the \emph{conditional map} moved.",
+        r"Large PO-risk does \emph{not} mean stronger dependence: a pure sign flip has $A_j\approx 0$",
+        r"and large $\Delta^{\mathrm{PO}}_j$.",
         "",
-        r"\subsection*{Graded oracle ladder}",
+        r"\begin{center}",
+        r"\begin{tabular}{lll}",
+        r"\toprule",
+        r"Ranking & Score & Question \\",
+        r"\midrule",
+        r"Strength & $A_j$ \eqref{eq:Aj} & Intensity up/down (signed) \\",
+        r"PO-risk & $\Delta^{\mathrm{PO}}_j$ \eqref{eq:PO} & Map changed? (incl.\ flip) \\",
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{center}",
         "",
-        r"Reference uses coefficient $c_0=1$ on a shared factor; the target applies the coefficients below.",
-        r"Population $A=\eta^{2}(|c|)-\eta^{2}(1)$ under $X=cF+\varepsilon$ with unit-variance noise.",
-        r"Spearman$(A)$ is the rank correlation between oracle $A$ and a method's feature scores.",
+        r"\section{Factor residuals (quant application)}",
         "",
+        r"Write $F_j=\beta_j^\top G+\varepsilon_j$. Apply \eqref{eq:Aj}--\eqref{eq:PO} to the residual",
+        r"panel $(\varepsilon_1,\ldots,\varepsilon_p)$ across two windows:",
+        r"\begin{itemize}[leftmargin=*]",
+        r"\item $A_j(\varepsilon)$: idiosyncratic crowding / diversification.",
+        r"\item $\Delta^{\mathrm{PO}}_j(\varepsilon)$: residual hedge / conditional-map flip.",
+        r"\item Optional $V_{j\leftarrow k}$: which partner residual's unique $R^2$ changed.",
+        r"\end{itemize}",
+        r"Pairwise $\mathrm{Corr}(\varepsilon_j,\varepsilon_k)$ is the linear special case.",
+        r"API: \texttt{factor\_residual\_dependence\_shift(F\_ref, F\_new, n\_common=1)}.",
+        "",
+        r"\section{Ranking recovery}",
+        "",
+        r"Graded oracle (reference coef $c_0=1$):",
         r"\begin{center}",
         r"\begin{tabular}{lrr}",
         r"\toprule",
         r"Response & Target coef & Oracle $A$ \\",
         r"\midrule",
-        *ladder_rows,
+        *ladder,
         r"\bottomrule",
         r"\end{tabular}",
         r"\end{center}",
         "",
-        r"\subsection*{Synthetic ranking recovery}",
+        r"Spearman$(A)=\mathrm{corr}(\mathrm{rank}(A^{\mathrm{oracle}}),\mathrm{rank}(\mathrm{score}))$.",
+        r"Strength should recover the signed ladder; PO-risk should not (it over-ranks flips).",
         "",
-        r"\begin{center}",
-        r"\begin{tabular}{lrrr}",
-        r"\toprule",
-        r"Ranking score & Spearman$(A)$ & Sign agree & Precision@$k$ \\",
-        r"\midrule",
-        f"Strength shift $A_j$ & {_fmt(dss_s)} & {_fmt(dss_sg)} & {_fmt(dss_pk)} \\\\",
-        f"PO-risk gap $\\Delta^{{\\mathrm{{PO}}}}_j$ & {_fmt(po_s)} & {_fmt(po_sg)} & {_fmt(po_pk)} \\\\",
-        r"\bottomrule",
-        r"\end{tabular}",
-        r"\end{center}",
-        "",
-        f"On flip coordinates, mean $|A|$ is {_fmt(abs_a)} while mean conditional-mean shift is {_fmt(cms)}",
-        f"(Q-fixed map correlation {_fmt(corr)}, near $-1$).",
-        r"PO-risk ranking therefore treats the flip as a large change; strength ranking does not.",
-        "",
-        r"\subsection*{UCI factor protocol}",
-        "",
-        r"Each table is split into reference/target. A PCA factor of the real covariates drives the six",
-        r"graded responses above. Metrics are Spearman ranking recovery on that response block.",
+        r"\paragraph{Synthetic.}",
+        f"Strength: Spearman$(A)={_fmt(dss_s)}$, sign agree ${_fmt(dss_sg)}$. ",
+        f"PO-risk: Spearman$(A)={_fmt(po_s)}$, sign agree ${_fmt(po_sg)}$. ",
+        f"On flips, mean $|A|={_fmt(abs_a)}$ vs mean CMS ${_fmt(cms)}$.",
         "",
         r"\begin{table}[h]",
         r"\centering",
-        r"\caption{Signed ranking recovery: dependence strength shift versus PO-risk gap.}",
-        r"\label{tab:dss-vs-porisk}",
+        r"\caption{UCI factor protocol: strength ranking vs PO-risk ranking (response block).}",
+        r"\label{tab:dss-po}",
         r"\begin{tabular}{lrrrr}",
         r"\toprule",
         r"Dataset & Spearman $A$ & Spearman PO & Sign $A$ & Sign PO \\",
@@ -208,38 +225,32 @@ def build_tex(payload: dict) -> str:
         r"\end{tabular}",
         r"\end{table}",
         "",
-        example_block,
-        r"\subsection*{Insights from dual ranking recovery}",
+        example_tex,
+        r"\section{How to read the two rankings}",
         "",
-        r"The procedure is deliberately \emph{two} rankings, not a variance-only score.",
-        r"\begin{enumerate}[leftmargin=*]",
-        r"\item \textbf{Strength ranking} by $A_j$ recovers signed intensity (Spearman$(A)$ high, sign agree near 1).",
-        r"Insight: who became more/less redundant / reconstructible.",
-        r"\item \textbf{PO-risk ranking} by $\Delta^{\mathrm{PO}}_j$ recovers relationship change, including flips",
-        r"(Spearman against oracle $A$ stays low by design; flips rank at the top).",
-        r"Insight: whose conditional map $m_1-m_0$ moved, even when $\eta^2$ did not.",
-        r"\item The \emph{gap} between the two Spearman numbers is the scientific payoff of ranking recovery:",
-        r"the rankings are not interchangeable. Using only PO-risk would mis-order redundancy;",
-        r"using only $A_j$ would miss pure sign flips.",
-        r"\item Operational pattern table: large $|A|$, small PO $\Rightarrow$ intensity regime;",
-        r"$A\approx 0$, large PO $\Rightarrow$ hedge/map flip; both large $\Rightarrow$ redesign both risk and hedges.",
-        r"\end{enumerate}",
+        r"\begin{center}",
+        r"\begin{tabular}{lllp{5.8cm}}",
+        r"\toprule",
+        r"$A_j$ & $\Delta^{\mathrm{PO}}$ & Pattern & Action \\",
+        r"\midrule",
+        r"$\downarrow$ large & small--mid & Diversification & Peers explain less; residual risk more unique \\",
+        r"$\uparrow$ large & small--mid & Crowding & Residuals more reconstructible \\",
+        r"$\approx 0$ & $\uparrow$ large & Map / hedge flip & Re-check hedges, not only variance \\",
+        r"large & large & Both moved & Redesign intensity and relationship \\",
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{center}",
         "",
-        r"\subsection*{Quant factor residuals}",
+        r"Ranking recovery's insight is the \emph{gap}: mean UCI Spearman$(A)$ is ",
+        f"{_fmt(mean_dss)} for strength vs {_fmt(mean_po)} for PO-risk. ",
+        r"Use both; neither replaces the other.",
         "",
-        r"In a multi-factor panel write $F_j=\beta_j^\top G+\varepsilon_j$. Pairwise residual correlation",
-        r"$\mathrm{Corr}(\varepsilon_j,\varepsilon_k)$ is the linear special case. Applying the same",
-        r"estimators to the residual matrix $(\varepsilon_1,\ldots,\varepsilon_p)$ across two windows yields",
-        r"\begin{equation}",
-        r"A_j(\varepsilon)=\eta^{2}_{1,j}(\varepsilon)-\eta^{2}_{0,j}(\varepsilon),",
-        r"\qquad",
-        r"\Delta^{\mathrm{PO}}_j(\varepsilon)=R_j(0)-R_j(\tau),",
-        r"\end{equation}",
-        r"i.e.\ whether residual $j$ became more/less reconstructible from the other residuals, versus whether",
-        r"the residual conditional map flipped. Ranking recovery on residuals is read the same way:",
-        r"$A(\varepsilon)$ for idiosyncratic crowding/diversification, $\Delta^{\mathrm{PO}}(\varepsilon)$ for residual hedge flips,",
-        r"and $V_{j\leftarrow k}$ for which partner residual carries the unique-information change.",
-        r"See \texttt{factor\_residuals.py}, \texttt{run\_factor\_demo}, and \texttt{results/INSIGHTS.md}.",
+        r"\paragraph{One-liner usage.}",
+        r"\begin{verbatim}",
+        r"from OOD_vimp_wrapper import dependence_strength_shift",
+        r"out = dependence_strength_shift(X_ref, X_new)  # A_j, po_gap",
+        r"# factors: factor_residual_dependence_shift(F_ref, F_new, n_common=1)",
+        r"\end{verbatim}",
         "",
         r"\end{document}",
         "",
@@ -249,22 +260,13 @@ def build_tex(payload: dict) -> str:
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--json",
-        type=Path,
-        default=RESULTS / "ranking_recovery.json",
-    )
-    parser.add_argument(
-        "--out",
-        type=Path,
-        default=LATEX / "dependence_strength_shift.tex",
-    )
+    parser.add_argument("--json", type=Path, default=RESULTS / "ranking_recovery.json")
+    parser.add_argument("--out", type=Path, default=LATEX / "dependence_strength_shift.tex")
     args = parser.parse_args(argv)
     payload = json.loads(args.json.read_text())
     tex = build_tex(payload)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(tex)
-    # Also drop a copy next to BOARD.md for the results folder.
     (RESULTS / "dependence_strength_shift.tex").write_text(tex)
     print(f"wrote {args.out}")
     print(f"wrote {RESULTS / 'dependence_strength_shift.tex'}")
