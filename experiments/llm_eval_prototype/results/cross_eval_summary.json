@@ -1,0 +1,11 @@
+{
+  "mean_delta_data": 0.050974867592583926,
+  "mean_delta_model": 0.19287485298188642,
+  "mean_delta_joint": 0.24384972057447038,
+  "mean_R_M0_D0": 0.1437775432953061,
+  "mean_R_M0_D1": 0.19475241088789,
+  "mean_R_M1_D1": 0.3876272638697764,
+  "n_seeds": 3,
+  "n_per_cell": 300,
+  "note": "R=Brier failure risk; delta_data=R(M0,D1)-R(M0,D0); delta_model=R(M1,D1)-R(M0,D1)"
+}
