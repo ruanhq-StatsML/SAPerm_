@@ -1,13 +1,11 @@
 """One-pass deep active sampling.
 
-A continuous loader yields ``(x, y, index)`` in row order. ``one_pass`` reads
-it once. The prefix is the reference window. The remainder is the pool.
-Digits, pen digits, and satimage use that same digestion.
+Heavy torch / dataloader imports are lazy so label-free monitors such as
+``dependence_strength_shift`` can reuse ``ood_vimp`` and ``model_registry``
+without installing the sampling stack.
 """
 
-from experiments.deep_active_sampling.data import continuous_loader
-from experiments.deep_active_sampling.query_strategies import QUERY_STRATEGIES
-from experiments.deep_active_sampling.sampling import deep_active_sampling, one_pass
+from __future__ import annotations
 
 __all__ = [
     "QUERY_STRATEGIES",
@@ -15,3 +13,19 @@ __all__ = [
     "deep_active_sampling",
     "one_pass",
 ]
+
+
+def __getattr__(name: str):
+    if name == "QUERY_STRATEGIES":
+        from experiments.deep_active_sampling.query_strategies import QUERY_STRATEGIES
+
+        return QUERY_STRATEGIES
+    if name == "continuous_loader":
+        from experiments.deep_active_sampling.data import continuous_loader
+
+        return continuous_loader
+    if name in {"deep_active_sampling", "one_pass"}:
+        from experiments.deep_active_sampling import sampling
+
+        return getattr(sampling, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
