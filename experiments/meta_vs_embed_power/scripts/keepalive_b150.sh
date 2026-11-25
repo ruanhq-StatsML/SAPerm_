@@ -6,7 +6,11 @@ export PYTHONUNBUFFERED=1
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 cd "$ROOT"
 MODE="${1:-embed}"
-NPROC="$(nproc)"
+NPROC="${POWER_N_JOBS:-$(getconf _NPROCESSORS_ONLN 2>/dev/null || nproc)}"
+# Cloud pods sometimes report nproc=1; prefer online CPUs.
+if [[ "${NPROC}" -lt 2 ]]; then
+  NPROC="$(getconf _NPROCESSORS_ONLN)"
+fi
 LOG_DIR="$ROOT/experiments/meta_vs_embed_power/results"
 mkdir -p "$LOG_DIR"
 
