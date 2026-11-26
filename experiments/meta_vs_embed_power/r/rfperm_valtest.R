@@ -64,6 +64,11 @@ if (n_cls <= 6) {
 
 result <- RFPerm:::permTest_(val_err, test_err, B = B)
 d0 <- result$d0
-p_one <- (sum(d0 > result$d_list) + 1) / (B + 1)
-p_two <- (sum(abs(d0) > abs(result$d_list)) + 1) / (B + 1)
-cat(sprintf("p_value=%s\np_value_two_sided=%s\nstatistic=%s\n", p_one, p_two, d0))
+d_list <- result$d_list
+p_upper <- (sum(d_list >= d0) + 1) / (B + 1)
+p_lower <- (sum(d0 > d_list) + 1) / (B + 1)
+p_abs <- (sum(abs(d_list) >= abs(d0)) + 1) / (B + 1)
+cat(sprintf(
+  "p_value=%s\np_value_upper=%s\np_value_lower=%s\np_value_abs=%s\np_value_two_sided=%s\nstatistic=%s\n",
+  p_upper, p_upper, p_lower, p_abs, p_abs, d0
+))
