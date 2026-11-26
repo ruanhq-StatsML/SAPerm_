@@ -2,12 +2,11 @@
   "dataset": "gender",
   "B": 50,
   "n_perm": 150,
-  "n_jobs": 4,
+  "n_jobs": 2,
   "outcome_model": "RandomForest",
   "arms": [
     "without_meta",
-    "with_meta",
-    "meta_only"
+    "with_meta"
   ],
   "methods": [
     "RFPerm",
@@ -16,29 +15,13 @@
     "CFPerm"
   ],
   "scenarios_done": [
-    "sentiment_meta"
+    "sentiment_meta",
+    "syntax_meta",
+    "train_vs_heldout"
   ],
-  "elapsed_sec_last": 2726.721636533737,
+  "elapsed_sec_last": 234.20117044448853,
   "by_scenario": {
     "sentiment_meta": [
-      {
-        "dataset": "gender",
-        "scenario": "sentiment_meta",
-        "feature_set": "meta_only",
-        "B": 50,
-        "power": {
-          "RFPerm": 0.22,
-          "DRPerm": 0.0,
-          "CFPerm": 0.0,
-          "RRPerm": 0.84
-        },
-        "mean_p": {
-          "RFPerm": 0.3764238410596027,
-          "DRPerm": 1.0,
-          "CFPerm": 1.0,
-          "RRPerm": 0.024370860927152318
-        }
-      },
       {
         "dataset": "gender",
         "scenario": "sentiment_meta",
@@ -73,6 +56,82 @@
           "DRPerm": 0.049801324503311255,
           "CFPerm": 0.05258278145695366,
           "RRPerm": 0.007152317880794701
+        }
+      }
+    ],
+    "syntax_meta": [
+      {
+        "dataset": "gender",
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.02,
+          "DRPerm": 0.0,
+          "CFPerm": 0.68,
+          "RRPerm": 0.32
+        },
+        "mean_p": {
+          "RFPerm": 0.7709933774834437,
+          "DRPerm": 1.0,
+          "CFPerm": 0.05443708609271523,
+          "RRPerm": 0.263046357615894
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "syntax_meta",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.02,
+          "DRPerm": 0.4,
+          "CFPerm": 0.6,
+          "RRPerm": 0.74
+        },
+        "mean_p": {
+          "RFPerm": 0.7165562913907286,
+          "DRPerm": 0.18980132450331128,
+          "CFPerm": 0.18,
+          "RRPerm": 0.05178807947019867
+        }
+      }
+    ],
+    "train_vs_heldout": [
+      {
+        "dataset": "gender",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.06,
+          "DRPerm": 0.0,
+          "CFPerm": 0.04,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.4625165562913907,
+          "DRPerm": NaN,
+          "CFPerm": 0.5062251655629139,
+          "RRPerm": 0.5550993377483444
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "train_vs_heldout",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.04,
+          "DRPerm": 0.02,
+          "CFPerm": 0.02,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.47523178807947025,
+          "DRPerm": 0.4900662251655629,
+          "CFPerm": 0.5068874172185431,
+          "RRPerm": 0.5368211920529802
         }
       }
     ]
@@ -82,24 +141,6 @@
       {
         "dataset": "gender",
         "scenario": "sentiment_meta",
-        "feature_set": "meta_only",
-        "B": 50,
-        "power": {
-          "RFPerm": 0.22,
-          "DRPerm": 0.0,
-          "CFPerm": 0.0,
-          "RRPerm": 0.84
-        },
-        "mean_p": {
-          "RFPerm": 0.3764238410596027,
-          "DRPerm": 1.0,
-          "CFPerm": 1.0,
-          "RRPerm": 0.024370860927152318
-        }
-      },
-      {
-        "dataset": "gender",
-        "scenario": "sentiment_meta",
         "feature_set": "with_meta",
         "B": 50,
         "power": {
@@ -132,8 +173,80 @@
           "CFPerm": 0.05258278145695366,
           "RRPerm": 0.007152317880794701
         }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.02,
+          "DRPerm": 0.0,
+          "CFPerm": 0.68,
+          "RRPerm": 0.32
+        },
+        "mean_p": {
+          "RFPerm": 0.7709933774834437,
+          "DRPerm": 1.0,
+          "CFPerm": 0.05443708609271523,
+          "RRPerm": 0.263046357615894
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "syntax_meta",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.02,
+          "DRPerm": 0.4,
+          "CFPerm": 0.6,
+          "RRPerm": 0.74
+        },
+        "mean_p": {
+          "RFPerm": 0.7165562913907286,
+          "DRPerm": 0.18980132450331128,
+          "CFPerm": 0.18,
+          "RRPerm": 0.05178807947019867
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.06,
+          "DRPerm": 0.0,
+          "CFPerm": 0.04,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.4625165562913907,
+          "DRPerm": NaN,
+          "CFPerm": 0.5062251655629139,
+          "RRPerm": 0.5550993377483444
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "train_vs_heldout",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.04,
+          "DRPerm": 0.02,
+          "CFPerm": 0.02,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.47523178807947025,
+          "DRPerm": 0.4900662251655629,
+          "CFPerm": 0.5068874172185431,
+          "RRPerm": 0.5368211920529802
+        }
       }
     ]
   },
-  "markdown": "| scenario | arm | B | RF | DR | RR | CF |\n|---|---|---|---|---|---|---|\n| sentiment_meta | without_meta | 50 | 0.06 | 0.76 | 1.00 | 0.92 |\n| sentiment_meta | with_meta | 50 | 0.08 | 0.00 | 0.90 | 0.98 |\n| sentiment_meta | meta_only | 50 | 0.22 | 0.00 | 0.84 | 0.00 |"
+  "markdown": "| scenario | arm | B | RF | DR | RR | CF |\n|---|---|---|---|---|---|---|\n| sentiment_meta | without_meta | 50 | 0.06 | 0.76 | 1.00 | 0.92 |\n| sentiment_meta | with_meta | 50 | 0.08 | 0.00 | 0.90 | 0.98 |\n| syntax_meta | without_meta | 50 | 0.02 | 0.40 | 0.74 | 0.60 |\n| syntax_meta | with_meta | 50 | 0.02 | 0.00 | 0.32 | 0.68 |\n| train_vs_heldout | without_meta | 50 | 0.04 | 0.02 | 0.00 | 0.02 |\n| train_vs_heldout | with_meta | 50 | 0.06 | 0.00 | 0.00 | 0.04 |"
 }

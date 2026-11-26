@@ -1,0 +1,96 @@
+{
+  "dataset": "gender",
+  "B": 50,
+  "n_perm": 150,
+  "rows": [
+    {
+      "scenario": "sentiment_meta",
+      "feature_set": "without_meta",
+      "RF": 0.06,
+      "RR": 1.0,
+      "CF": 0.92,
+      "B": 50,
+      "DR": 0.88
+    },
+    {
+      "scenario": "sentiment_meta",
+      "feature_set": "with_meta",
+      "RF": 0.08,
+      "RR": 0.9,
+      "CF": 0.98,
+      "B": 50,
+      "DR": 0.08
+    },
+    {
+      "scenario": "sentiment_meta",
+      "feature_set": "meta_only",
+      "DR": 0.04
+    },
+    {
+      "scenario": "syntax_meta",
+      "feature_set": "without_meta",
+      "RF": 0.02,
+      "RR": 0.74,
+      "CF": 0.6,
+      "B": 50,
+      "DR": 0.6
+    },
+    {
+      "scenario": "syntax_meta",
+      "feature_set": "with_meta",
+      "RF": 0.02,
+      "RR": 0.32,
+      "CF": 0.68,
+      "B": 50,
+      "DR": 0.12
+    },
+    {
+      "scenario": "syntax_meta",
+      "feature_set": "meta_only",
+      "DR": 0.06
+    },
+    {
+      "scenario": "train_vs_heldout",
+      "feature_set": "without_meta",
+      "RF": 0.04,
+      "RR": 0.0,
+      "CF": 0.02,
+      "B": 50,
+      "DR": 0.02
+    },
+    {
+      "scenario": "train_vs_heldout",
+      "feature_set": "with_meta",
+      "RF": 0.06,
+      "RR": 0.0,
+      "CF": 0.04,
+      "B": 50,
+      "DR": 0.02
+    },
+    {
+      "scenario": "train_vs_heldout",
+      "feature_set": "meta_only",
+      "RF": 0.06,
+      "RR": 0.0,
+      "CF": 0.0,
+      "B": 50,
+      "DR": 0.04
+    },
+    {
+      "scenario": "null_shift",
+      "feature_set": "without_meta",
+      "DR": 0.12
+    },
+    {
+      "scenario": "null_shift",
+      "feature_set": "with_meta",
+      "DR": 0.08
+    },
+    {
+      "scenario": "null_shift",
+      "feature_set": "meta_only",
+      "DR": 0.04
+    }
+  ],
+  "markdown": "| scenario | arm | RF | DR | RR | CF |\n|---|---|--:|--:|--:|--:|\n| sentiment_meta | without_meta | 0.06 | 0.88 | 1.00 | 0.92 |\n| sentiment_meta | with_meta | 0.08 | 0.08 | 0.90 | 0.98 |\n| sentiment_meta | meta_only | \u2014 | 0.04 | \u2014 | \u2014 |\n| syntax_meta | without_meta | 0.02 | 0.60 | 0.74 | 0.60 |\n| syntax_meta | with_meta | 0.02 | 0.12 | 0.32 | 0.68 |\n| syntax_meta | meta_only | \u2014 | 0.06 | \u2014 | \u2014 |\n| train_vs_heldout | without_meta | 0.04 | 0.02 | 0.00 | 0.02 |\n| train_vs_heldout | with_meta | 0.06 | 0.02 | 0.00 | 0.04 |\n| train_vs_heldout | meta_only | 0.06 | 0.04 | 0.00 | 0.00 |\n| null_shift | without_meta | \u2014 | 0.12 | \u2014 | \u2014 |\n| null_shift | with_meta | \u2014 | 0.08 | \u2014 | \u2014 |\n| null_shift | meta_only | \u2014 | 0.04 | \u2014 | \u2014 |"
+}
