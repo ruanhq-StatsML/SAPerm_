@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections import defaultdict
 from typing import Any
 
@@ -9,6 +10,46 @@ import numpy as np
 
 from experiments.meta_vs_embed_power.perm_lib import cfperm_loco_pvalue, drperm_pvalue, rrperm_pvalue
 from experiments.meta_vs_embed_power.rfperm_official import rfperm_single_pvalue
+
+
+META_BLOCK_PATTERNS = {
+    "surface": ("char_len", "word_count", "space_ratio", "digit_ratio", "upper_ratio", "token_count",
+                "sent_count", "avg_token_len", "avg_sent_len", "type_token_ratio", "hapax_ratio",
+                "punct_ratio", "exclam_ratio", "question_ratio"),
+    "syntax": ("noun_ratio", "verb_ratio", "entity_density", "avg_dep_depth", "max_dep_depth",
+               "avg_dep_distance", "neg_ratio", "clause_ratio", "hedge_ratio", "contrast_ratio",
+               "modal_ratio", "verb_noun_ratio"),
+    "sentiment": ("vader_neg", "vader_neu", "vader_pos", "vader_compound", "polar_gap", "sentiment_std"),
+}
+
+
+def meta_blocks(meta_names: list[str]) -> dict[str, np.ndarray]:
+    blocks = {
+        k: np.array([meta_names.index(c) for c in cols if c in meta_names], dtype=int)
+        for k, cols in META_BLOCK_PATTERNS.items()
+    }
+    return {k: v for k, v in blocks.items() if v.size}
+
+
+def cfperm_blocks_pvalue(X, Y, W, blocks, *, n_perm, seed, n_estimators):
+    """CFPerm LOCO per meta sub-block; Bonferroni-adjusted min p across blocks (any-block rejection)."""
+    per = {}
+    for j, (name, idx) in enumerate(blocks.items()):
+        per[name] = cfperm_loco_pvalue(
+            X, Y, W, test_indices=idx, n_perm=n_perm, seed=seed + 31 * j, n_estimators=n_estimators
+        )
+    k = len(per)
+    p_adj = min(1.0, k * min(r["p_value"] for r in per.values()))
+    return {
+        "method": "CFPerm_loco_blocks",
+        "statistic": float(max(r["statistic"] for r in per.values())),
+        "p_value": float(p_adj),
+        "reject": bool(p_adj < 0.05),
+        "blocks": {n: {"statistic": r["statistic"], "p_value": r["p_value"],
+                       "n_features": r["n_test_features"],
+                       "r_risk_full": r["r_risk_full"], "r_risk_minus": r["r_risk_minus"]}
+                   for n, r in per.items()},
+    }
 
 
 def _col_index(meta_names: list[str], *candidates: str) -> int:
@@ -97,12 +138,20 @@ def run_one_rep(
         "RFPerm": rfperm_single_pvalue(
             Xe, ye, Xn, yn, n_perm=n_perm, seed=seed, n_estimators=max(n_estimators, 150)
         ),
-        "DRPerm": drperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators),
+        "DRPerm": drperm_pvalue(
+            X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators,
+            null_scheme=os.environ.get("POWER_DR_NULL", "residual"),
+        ),
         "RRPerm": rrperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 11, n_estimators=n_estimators),
     }
-    out["CFPerm"] = cfperm_loco_pvalue(
-        X, Y, W, test_indices=test_idx, n_perm=n_perm, seed=seed + 5, n_estimators=n_estimators
-    )
+    if feature_set == "meta_only":
+        out["CFPerm"] = cfperm_blocks_pvalue(
+            X, Y, W, meta_blocks(meta_names), n_perm=n_perm, seed=seed + 5, n_estimators=n_estimators
+        )
+    else:
+        out["CFPerm"] = cfperm_loco_pvalue(
+            X, Y, W, test_indices=test_idx, n_perm=n_perm, seed=seed + 5, n_estimators=n_estimators
+        )
     return out
 
 

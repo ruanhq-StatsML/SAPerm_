@@ -25,8 +25,16 @@ def main() -> None:
     new = [r for r in _load(NEW) if r["feature_set"] == "meta_only"]
     rows += new
     summ = summarize(rows, METHODS)
+    dr_path = RES / "power_bias_B50_dr_residual.json"
+    if dr_path.is_file():
+        dr = json.loads(dr_path.read_text(encoding="utf-8"))["table"]
+        for t in summ["table"]:
+            e = dr.get(f"{t['scenario']}/{t['feature_set']}")
+            if e:
+                t["power"]["DRPerm"] = e["power_DR"]
+                t["mean_p"]["DRPerm"] = e["mean_p_DR"]
     out = {"dataset": "bias", "B_target": 50, "n_perm": 150, "outcome_model": "RandomForest",
-           "note": "meta_only CFPerm = LOCO per meta sub-block, Bonferroni min-p (commit d2f3e00); old numbers in prefix_fix/",
+           "note": "DR column = residual-null rerun (power_bias_B50_dr_residual.json); old refit-null DR void. meta_only CFPerm = LOCO per meta sub-block, Bonferroni min-p (commit d2f3e00); old numbers in prefix_fix/",
            "rows_count": len(rows), "summary": summ}
     (RES / "power_bias_B50.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
     tab = {(t["scenario"], t["feature_set"]): t for t in summ["table"]}
