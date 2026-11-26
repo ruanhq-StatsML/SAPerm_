@@ -27,6 +27,10 @@ Row order is `data.load_gender(1000, 2026)`.
 
 Decorr rule (τ = 0.3, same as `decorr_features.py` on the amazon branch): drop any column with |spearman(column, y)| ≥ 0.3 on the 1000-row gender frame. On gender this drops `vader_neg`, `vader_pos`, `vader_compound`, `polar_gap` from M (28 kept). No spaCy column reaches 0.3, so `with_spacy_decorr` equals `with_spacy` and is not run. Windows are always selected on the full M.
 
+VADER-focused kinds: `vader` = [Z_k, vader_neg, vader_pos, vader_compound, polar_gap] (label `with_vader`), single columns `v_neg` / `v_pos` / `v_compound` / `v_polar_gap`, and `vader_spacy` = [Z_k, VADER4, S]. "M minus VADER" is `with_decorr`.
+
+Per-feature ablation kinds (MiniLM, k = 24 and full; rows in `results/dim_scan_gender_ablation.jsonl`): `all` = [Z_k, M, S] (label `with_all_meta`), `add:<col>` = [Z_k, col] (label `add[<col>]`), `loo:<col>` = [Z_k, M, S] without col (label `loo[<col>]`); spaCy columns are named `spacy:<name>`. `--kinds ablation` expands to all 137. Summary: `summarize_ablation.py` → `results/ablation_gender.{md,json}`; `--select` prints the 5 largest and 5 smallest single-column gains (mean over sentiment_meta and syntax_meta, k=24, random split) for the DR/RR check (`--tests dr` = DRPerm + RRPerm only).
+
 `--mtry 7` adds RF-only control arms (`..._mtry7`) with the RFPerm classifier mtry fixed at round(√(24+32)) = 7.
 
 ## Seeds and pairing

@@ -50,6 +50,21 @@ VADER_KINDS = {
     "vader_spacy": (VADER, True),
 }
 KINDS = ("without", "with", "spacy", "with_decorr", "spacy_decorr", *VADER_KINDS)
+# Per-feature ablation kinds (columns of [M, S]; spaCy columns carry a "spacy:" prefix):
+#   "all"        -> [Z, M, S]
+#   "add:<col>"  -> [Z, col]
+#   "loo:<col>"  -> [Z, M, S] without col
+ABL_PREFIXES = ("add:", "loo:")
+
+
+def ms_columns() -> list[str]:
+    d = load_base()
+    return list(d["names"]) + [f"spacy:{n}" for n in d["s_names"]]
+
+
+def ablation_kinds() -> list[str]:
+    cols = ms_columns()
+    return ["all"] + [f"add:{c}" for c in cols] + [f"loo:{c}" for c in cols]
 SEED, N_DOC, N_EST, N_PERM, TAU = 2026, 120, 150, 150, 0.3
 BASE_EMB = "MiniLM_L6"
 
@@ -107,6 +122,10 @@ def rep_seed(scenario: str, b: int) -> int:
 
 
 def arm_name(kind: str, k: str, mtry: int | None, emb: str = BASE_EMB) -> str:
+    pre = "" if emb == BASE_EMB else f"{emb}:"
+    if kind == "all" or kind.startswith(ABL_PREFIXES):
+        label = "with_all_meta" if kind == "all" else f"{kind[:3]}[{kind[4:]}]"
+        return f"{pre}{label}_k{k}" + (f"_mtry{mtry}" if mtry else "")
     base = {"without": "without_meta", "with": "with_meta", "spacy": "with_spacy",
             "with_decorr": "with_meta_decorr", "spacy_decorr": "with_spacy_decorr",
             "vader": "with_vader", "v_neg": "with_vader_neg", "v_pos": "with_vader_pos",
@@ -135,6 +154,16 @@ def build(kind: str, k: str, scenario: str, b: int, emb: str = BASE_EMB):
         if with_s:
             idx = np.concatenate([idx, n_meta + np.arange(d["S"].shape[1])])
         blocks[vk] = (MSe[:, idx], MSn[:, idx])
+    if kind == "all" or kind.startswith(ABL_PREFIXES):
+        cols = ms_columns()
+        if kind == "all":
+            idx = np.arange(len(cols))
+        elif kind.startswith("add:"):
+            idx = np.array([cols.index(kind[4:])])
+        else:
+            idx = np.array([j for j, c in enumerate(cols) if c != kind[4:]])
+            assert len(idx) == len(cols) - 1, kind
+        blocks[kind] = (MSe[:, idx], MSn[:, idx])
     dz = Zk.shape[1]
     if kind == "without":
         Xe, Xn = Ze, Zn
@@ -170,18 +199,20 @@ def run_job(kind: str, k: str, mtry: int | None, scenario: str, b: int, tests: s
         row["DR"] = slim(drperm_pvalue(X, Y, W, n_perm=N_PERM, seed=seed + 3, n_estimators=N_EST,
                                        null_scheme="residual"))
         row["RR"] = slim(rrperm_pvalue(X, Y, W, n_perm=N_PERM, seed=seed + 11, n_estimators=N_EST))
-        row["CF"] = slim(cfperm_loco_pvalue(X, Y, W, test_indices=test_idx, n_perm=N_PERM, seed=seed + 5,
-                                            n_estimators=N_EST))
+        if tests == "drc":
+            row["CF"] = slim(cfperm_loco_pvalue(X, Y, W, test_indices=test_idx, n_perm=N_PERM, seed=seed + 5,
+                                                n_estimators=N_EST))
     row["sec"] = time.time() - t0
     return row
 
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--tests", choices=("rf", "drc"), required=True)
+    p.add_argument("--tests", choices=("rf", "drc", "dr"), required=True, help="dr = DRPerm + RRPerm only")
     p.add_argument("--emb", default=BASE_EMB)
     p.add_argument("--ks", nargs="+", default=["full", "128"])
-    p.add_argument("--kinds", nargs="+", default=["without", "with", "spacy"], choices=KINDS)
+    p.add_argument("--kinds", nargs="+", default=["without", "with", "spacy"],
+                   help=f"{KINDS}, 'all', 'add:<col>', 'loo:<col>', or 'ablation' (= all + every add/loo)")
     p.add_argument("--mtry", type=int, default=None)
     p.add_argument("--scenarios", nargs="+", default=list(SCENARIOS))
     p.add_argument("--b0", type=int, default=0)
@@ -191,6 +222,14 @@ def main() -> None:
     a = p.parse_args()
 
     load_data(a.emb)
+    kinds = []
+    for kd in a.kinds:
+        kinds += ablation_kinds() if kd == "ablation" else [kd]
+    cols = set(ms_columns())
+    for kd in kinds:
+        if not (kd in KINDS or kd == "all" or (kd.startswith(ABL_PREFIXES) and kd[4:] in cols)):
+            p.error(f"unknown kind {kd!r}")
+    a.kinds = kinds
     done = set()
     if a.log.is_file():
         done = {json.loads(line)["key"] for line in a.log.open() if line.strip()}
@@ -202,7 +241,8 @@ def main() -> None:
         for sc in a.scenarios
         if f"{arm_name(kind, k, a.mtry, a.emb)}|{sc}|{b}|{a.tests}" not in done
     ]
-    print(f"[dim_scan] {a.emb} {a.tests} ks={a.ks} kinds={a.kinds} mtry={a.mtry}: "
+    shown = a.kinds if len(a.kinds) <= 12 else f"{len(a.kinds)} kinds"
+    print(f"[dim_scan] {a.emb} {a.tests} ks={a.ks} kinds={shown} mtry={a.mtry}: "
           f"{len(jobs)} jobs ({len(done)} rows on disk)", flush=True)
     t0 = time.time()
     with a.log.open("a") as fh:

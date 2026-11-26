@@ -18,7 +18,7 @@ EMBS = ("MiniLM_L6", "qwen3-0.6b")
 KINDS = ("without", "with", "spacy", "with_decorr")
 VADER_COLS = ("without", "with", "vader", "v_compound", "v_neg", "v_pos", "v_polar_gap", "with_decorr",
               "spacy", "vader_spacy")
-TESTS = {"rf": ("RF_random", "RF_ordered"), "drc": ("DR", "RR", "CF")}
+TESTS = {"rf": ("RF_random", "RF_ordered"), "drc": ("DR", "RR", "CF"), "dr": ("DR", "RR")}
 LABEL = {"without": "without_meta", "with": "with_meta", "spacy": "with_spacy", "with_decorr": "with_meta_decorr",
          "vader": "Z+VADER4", "v_compound": "Z+compound", "v_neg": "Z+neg", "v_pos": "Z+pos",
          "v_polar_gap": "Z+polar_gap", "vader_spacy": "Z+VADER4+S"}
