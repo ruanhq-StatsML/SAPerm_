@@ -43,8 +43,10 @@ if (n_cls <= 6) {
   )
   prob_val <- predict(model1, df_val[, 1:p, drop = FALSE])$predictions
   prob_te <- predict(model1, df_new[, 1:p, drop = FALSE])$predictions
-  col <- if (ncol(prob_val) >= 2) 2 else 1
-  val_err <- (as.numeric(df_val$Y) - prob_val[, col])^2
+  ynum <- as.numeric(df_val$Y)
+  cn <- colnames(prob_val)
+  col <- if ("1" %in% cn) which(cn == "1") else if (ncol(prob_val) >= 2) 2 else 1
+  val_err <- (ynum - prob_val[, col])^2
   test_err <- (as.numeric(df_new$Y) - prob_te[, col])^2
 } else {
   mtry_fit <- max(1L, round(n_col / 3))
@@ -62,6 +64,11 @@ if (n_cls <= 6) {
 
 result <- RFPerm:::permTest_(val_err, test_err, B = B)
 d0 <- result$d0
-p_one <- (sum(d0 > result$d_list) + 1) / (B + 1)
-p_two <- (sum(abs(d0) > abs(result$d_list)) + 1) / (B + 1)
-cat(sprintf("p_value=%s\np_value_two_sided=%s\nstatistic=%s\n", p_one, p_two, d0))
+d_list <- result$d_list
+p_upper <- (sum(d_list >= d0) + 1) / (B + 1)
+p_lower <- (sum(d0 > d_list) + 1) / (B + 1)
+p_abs <- (sum(abs(d_list) >= abs(d0)) + 1) / (B + 1)
+cat(sprintf(
+  "p_value=%s\np_value_upper=%s\np_value_lower=%s\np_value_abs=%s\np_value_two_sided=%s\nstatistic=%s\n",
+  p_upper, p_upper, p_lower, p_abs, p_abs, d0
+))

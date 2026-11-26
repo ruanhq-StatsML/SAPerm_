@@ -65,25 +65,26 @@ def rfperm_r_permval_single(
         if proc.returncode != 0:
             raise RuntimeError(f"R RFPerm failed: {proc.stderr or proc.stdout}")
 
-        p_one = p_two = stat = None
+        vals = {}
         for line in proc.stdout.splitlines():
-            if line.startswith("p_value="):
-                p_one = float(line.split("=", 1)[1])
-            elif line.startswith("p_value_two_sided="):
-                p_two = float(line.split("=", 1)[1])
-            elif line.startswith("statistic="):
-                stat = float(line.split("=", 1)[1])
-        if p_one is None:
+            key, sep, val = line.partition("=")
+            if sep:
+                vals[key.strip()] = float(val)
+        if "p_value" not in vals:
             raise RuntimeError(f"R output parse failed: {proc.stdout!r}")
 
+    p_upper = vals.get("p_value_upper", vals["p_value"])
     return {
         "method": "RFPerm",
         "variant": "R_permrf_valtest",
         "backend": "rfperm_r",
-        "statistic": stat,
-        "p_value": float(p_one),
-        "p_value_two_sided": float(p_two),
-        "reject": bool(p_one < alpha),
+        "statistic": vals.get("statistic"),
+        "p_value": p_upper,
+        "p_value_upper": p_upper,
+        "p_value_lower": vals.get("p_value_lower"),
+        "p_value_abs": vals.get("p_value_abs", vals.get("p_value_two_sided")),
+        "p_value_two_sided": vals.get("p_value_two_sided"),
+        "reject": bool(p_upper < alpha),
         "alpha": alpha,
     }
 
