@@ -1,0 +1,37 @@
+{
+  "table": {
+    "sentiment_meta/without_meta": {
+      "scenario": "sentiment_meta",
+      "feature_set": "without_meta",
+      "B": 50,
+      "n_perm": 150,
+      "power_DR": 0.02,
+      "mean_p_DR": 0.6116556291390728,
+      "abs_w_resid_mean": 0.4887002316448699,
+      "elapsed_sec": 183.37774181365967
+    },
+    "syntax_meta/without_meta": {
+      "scenario": "syntax_meta",
+      "feature_set": "without_meta",
+      "B": 50,
+      "n_perm": 150,
+      "power_DR": 0.12,
+      "mean_p_DR": 0.5131125827814569,
+      "abs_w_resid_mean": 0.4913813537189792,
+      "elapsed_sec": 182.01849007606506
+    },
+    "train_vs_heldout/without_meta": {
+      "scenario": "train_vs_heldout",
+      "feature_set": "without_meta",
+      "B": 50,
+      "n_perm": 150,
+      "power_DR": 0.06,
+      "mean_p_DR": 0.5462251655629139,
+      "abs_w_resid_mean": 0.5007200873166794,
+      "elapsed_sec": 181.12832260131836
+    }
+  },
+  "dataset": "bias",
+  "null_scheme": "residual",
+  "outcome_model": "RandomForest"
+}
