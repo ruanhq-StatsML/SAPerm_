@@ -2311,14 +2311,104 @@
   },
   "b50": {
     "amazon_MiniLM_L6|full|sentiment_meta|without_meta|DRPerm": {
-      "n_reps": 24,
+      "n_reps": 30,
       "power": 1.0,
-      "mean_p": 0.006622516556291391
+      "mean_p": 0.0066225165562913925
     },
     "amazon_MiniLM_L6|full|sentiment_meta|without_meta|RRPerm": {
-      "n_reps": 24,
+      "n_reps": 30,
       "power": 1.0,
-      "mean_p": 0.006622516556291391
+      "mean_p": 0.0066225165562913925
+    },
+    "amazon_MiniLM_L6|full|sentiment_meta|with_meta|DRPerm": {
+      "n_reps": 12,
+      "power": 0.9166666666666666,
+      "mean_p": 0.014348785871964682
+    },
+    "amazon_MiniLM_L6|full|sentiment_meta|with_meta|RRPerm": {
+      "n_reps": 12,
+      "power": 1.0,
+      "mean_p": 0.0066225165562913925
+    },
+    "amazon_MiniLM_L6|full|sentiment_meta|with_spacy|DRPerm": {
+      "n_reps": 13,
+      "power": 1.0,
+      "mean_p": 0.0066225165562913925
+    },
+    "amazon_MiniLM_L6|full|sentiment_meta|with_spacy|RRPerm": {
+      "n_reps": 13,
+      "power": 1.0,
+      "mean_p": 0.0066225165562913925
+    },
+    "amazon_MiniLM_L6|full|sentiment_meta|with_vader4|DRPerm": {
+      "n_reps": 13,
+      "power": 0.9230769230769231,
+      "mean_p": 0.011716760061130925
+    },
+    "amazon_MiniLM_L6|full|sentiment_meta|with_vader4|RRPerm": {
+      "n_reps": 13,
+      "power": 1.0,
+      "mean_p": 0.0066225165562913925
+    },
+    "amazon_MiniLM_L6|full|sentiment_meta|with_meta_decorr|DRPerm": {
+      "n_reps": 12,
+      "power": 1.0,
+      "mean_p": 0.0066225165562913925
+    },
+    "amazon_MiniLM_L6|full|sentiment_meta|with_meta_decorr|RRPerm": {
+      "n_reps": 12,
+      "power": 1.0,
+      "mean_p": 0.0066225165562913925
+    },
+    "amazon_MiniLM_L6|full|syntax_meta|without_meta|DRPerm": {
+      "n_reps": 12,
+      "power": 0.4166666666666667,
+      "mean_p": 0.17108167770419425
+    },
+    "amazon_MiniLM_L6|full|syntax_meta|without_meta|RRPerm": {
+      "n_reps": 12,
+      "power": 0.6666666666666666,
+      "mean_p": 0.2113686534216335
+    },
+    "amazon_MiniLM_L6|full|syntax_meta|with_meta|DRPerm": {
+      "n_reps": 13,
+      "power": 0.46153846153846156,
+      "mean_p": 0.15384615384615385
+    },
+    "amazon_MiniLM_L6|full|syntax_meta|with_meta|RRPerm": {
+      "n_reps": 13,
+      "power": 0.38461538461538464,
+      "mean_p": 0.35455934793683136
+    },
+    "amazon_MiniLM_L6|full|syntax_meta|with_spacy|DRPerm": {
+      "n_reps": 12,
+      "power": 0.4166666666666667,
+      "mean_p": 0.1479028697571744
+    },
+    "amazon_MiniLM_L6|full|syntax_meta|with_spacy|RRPerm": {
+      "n_reps": 12,
+      "power": 0.75,
+      "mean_p": 0.19370860927152314
+    },
+    "amazon_MiniLM_L6|full|syntax_meta|with_vader4|DRPerm": {
+      "n_reps": 13,
+      "power": 0.38461538461538464,
+      "mean_p": 0.12939378502292412
+    },
+    "amazon_MiniLM_L6|full|syntax_meta|with_vader4|RRPerm": {
+      "n_reps": 13,
+      "power": 0.5384615384615384,
+      "mean_p": 0.35303107488537955
+    },
+    "amazon_MiniLM_L6|full|syntax_meta|with_meta_decorr|DRPerm": {
+      "n_reps": 13,
+      "power": 0.5384615384615384,
+      "mean_p": 0.1283749363219562
+    },
+    "amazon_MiniLM_L6|full|syntax_meta|with_meta_decorr|RRPerm": {
+      "n_reps": 13,
+      "power": 0.46153846153846156,
+      "mean_p": 0.35506877228731526
     }
   },
   "diagnostics": {

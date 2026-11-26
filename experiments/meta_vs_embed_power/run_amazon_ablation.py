@@ -181,6 +181,9 @@ def _run_rf_arms(
             pca_k = k_to_pca_k(k_label)
             for split in splits:
                 os.environ["RF_SPLIT"] = split
+                from joblib.externals.loky import get_reusable_executor
+
+                get_reusable_executor().shutdown(wait=True)
                 suf = "" if split == "random" else "_ordered"
                 tag = f"{tag_prefix}_k{k_label}{suf}"
                 for spec in ("gift", "cross"):
@@ -206,7 +209,12 @@ def _run_rf_arms(
                     )
 
 
-def run_vader_rf(encoders: list[str], n_jobs: int, k_vals: tuple[str, ...] = ("full",)) -> None:
+def run_vader_rf(
+    encoders: list[str],
+    n_jobs: int,
+    k_vals: tuple[str, ...] = ("full",),
+    splits: tuple[str, ...] = ("random", "ordered"),
+) -> None:
     _run_rf_arms(
         encoders=encoders,
         k_vals=k_vals,
@@ -214,6 +222,7 @@ def run_vader_rf(encoders: list[str], n_jobs: int, k_vals: tuple[str, ...] = ("f
         scenarios=None,
         tag_prefix="fg_vader",
         n_jobs=n_jobs,
+        splits=splits,
     )
 
 
@@ -514,6 +523,7 @@ def main() -> int:
     ap.add_argument("--vader-diag", action="store_true")
     ap.add_argument("--vader-rf", action="store_true")
     ap.add_argument("--vader-summarize", action="store_true")
+    ap.add_argument("--vader-splits", nargs="*", default=["random", "ordered"])
     ap.add_argument("--col-diag", action="store_true")
     ap.add_argument("--col-rf", action="store_true")
     ap.add_argument("--col-mode", choices=["single", "loo", "all"], default="all")
@@ -528,7 +538,7 @@ def main() -> int:
     if args.vader_diag:
         run_vader_diag(args.encoders, args.diag_r, n_jobs, k_vals=k_tup)
     if args.vader_rf:
-        run_vader_rf(args.encoders, n_jobs, k_vals=k_tup)
+        run_vader_rf(args.encoders, n_jobs, k_vals=k_tup, splits=tuple(args.vader_splits))
     if args.vader_summarize:
         summarize_vader()
     if args.col_diag:

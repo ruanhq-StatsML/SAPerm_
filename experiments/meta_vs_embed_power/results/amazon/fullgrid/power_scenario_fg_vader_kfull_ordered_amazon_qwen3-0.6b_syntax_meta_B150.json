@@ -12,13 +12,13 @@
         "feature_set": "with_col_polar_gap",
         "B": 150,
         "power": {
-          "RFPerm": 0.14,
+          "RFPerm": 0.006666666666666667,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.34529801324503306,
+          "RFPerm": 0.6364238410596027,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -30,13 +30,13 @@
         "feature_set": "with_col_sentiment_std",
         "B": 150,
         "power": {
-          "RFPerm": 0.14,
+          "RFPerm": 0.006666666666666667,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.3419426048565121,
+          "RFPerm": 0.6344812362030905,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -48,13 +48,13 @@
         "feature_set": "with_col_vader_compound",
         "B": 150,
         "power": {
-          "RFPerm": 0.15333333333333332,
+          "RFPerm": 0.006666666666666667,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.34551876379690954,
+          "RFPerm": 0.6358940397350993,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -66,13 +66,13 @@
         "feature_set": "with_col_vader_neg",
         "B": 150,
         "power": {
-          "RFPerm": 0.14666666666666667,
+          "RFPerm": 0.006666666666666667,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.3346578366445916,
+          "RFPerm": 0.6269315673289183,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -84,13 +84,13 @@
         "feature_set": "with_col_vader_neu",
         "B": 150,
         "power": {
-          "RFPerm": 0.15333333333333332,
+          "RFPerm": 0.006666666666666667,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.34622516556291383,
+          "RFPerm": 0.6400441501103753,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -102,13 +102,13 @@
         "feature_set": "with_col_vader_pos",
         "B": 150,
         "power": {
-          "RFPerm": 0.14666666666666667,
+          "RFPerm": 0.006666666666666667,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.34445916114790287,
+          "RFPerm": 0.6345253863134658,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -120,13 +120,13 @@
         "feature_set": "with_m_no_vader",
         "B": 150,
         "power": {
-          "RFPerm": 0.14666666666666667,
+          "RFPerm": 0.006666666666666667,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.3447240618101545,
+          "RFPerm": 0.6491832229580574,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -138,13 +138,13 @@
         "feature_set": "with_vader4",
         "B": 150,
         "power": {
-          "RFPerm": 0.14666666666666667,
+          "RFPerm": 0.0,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.35116997792494475,
+          "RFPerm": 0.6261368653421634,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -156,13 +156,13 @@
         "feature_set": "with_vader_all",
         "B": 150,
         "power": {
-          "RFPerm": 0.14666666666666667,
+          "RFPerm": 0.006666666666666667,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.3418543046357616,
+          "RFPerm": 0.6300220750551876,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null

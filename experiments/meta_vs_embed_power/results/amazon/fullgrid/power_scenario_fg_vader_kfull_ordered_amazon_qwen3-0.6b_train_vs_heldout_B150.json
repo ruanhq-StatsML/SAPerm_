@@ -12,13 +12,13 @@
         "feature_set": "with_col_polar_gap",
         "B": 150,
         "power": {
-          "RFPerm": 0.18,
+          "RFPerm": 0.17333333333333334,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.29050772626931565,
+          "RFPerm": 0.296953642384106,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -36,7 +36,7 @@
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.2875496688741722,
+          "RFPerm": 0.28860927152317883,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -48,13 +48,13 @@
         "feature_set": "with_col_vader_compound",
         "B": 150,
         "power": {
-          "RFPerm": 0.17333333333333334,
+          "RFPerm": 0.19333333333333333,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.28622516556291394,
+          "RFPerm": 0.29050772626931565,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -72,7 +72,7 @@
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.28847682119205303,
+          "RFPerm": 0.2866666666666667,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -84,13 +84,13 @@
         "feature_set": "with_col_vader_neu",
         "B": 150,
         "power": {
-          "RFPerm": 0.16666666666666666,
+          "RFPerm": 0.18666666666666668,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.2834437086092716,
+          "RFPerm": 0.28706401766004414,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -102,13 +102,13 @@
         "feature_set": "with_col_vader_pos",
         "B": 150,
         "power": {
-          "RFPerm": 0.17333333333333334,
+          "RFPerm": 0.16,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.2889183222958058,
+          "RFPerm": 0.2948785871964679,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -126,7 +126,7 @@
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.2809271523178808,
+          "RFPerm": 0.2760264900662252,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -138,13 +138,13 @@
         "feature_set": "with_vader4",
         "B": 150,
         "power": {
-          "RFPerm": 0.16666666666666666,
+          "RFPerm": 0.19333333333333333,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.2909933774834437,
+          "RFPerm": 0.27871964679911704,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
@@ -156,13 +156,13 @@
         "feature_set": "with_vader_all",
         "B": 150,
         "power": {
-          "RFPerm": 0.16666666666666666,
+          "RFPerm": 0.19333333333333333,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null
         },
         "mean_p": {
-          "RFPerm": 0.2996467991169978,
+          "RFPerm": 0.2934216335540839,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null

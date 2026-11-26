@@ -9,7 +9,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 export PYTHONPATH="$PWD" PYTHONUNBUFFERED=1
 export RF_PERM_BACKEND=python POWER_DR_NULL=residual POWER_BACKEND=loky
-export POWER_N_JOBS="${POWER_N_JOBS:-$(nproc)}"
+export POWER_N_JOBS="${POWER_N_JOBS:-$(nproc --all)}"
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 export POWER_SHARD="$SHARD"
 
