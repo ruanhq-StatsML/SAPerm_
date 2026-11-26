@@ -109,7 +109,8 @@ def run_one_rep(
     }
     if os.environ.get("RF_ONLY_RUN") != "1":
         out["DRPerm"] = drperm_pvalue(
-            X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators
+            X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators,
+            null_scheme=os.environ.get("POWER_DR_NULL", "residual"),
         )
         out["RRPerm"] = rrperm_pvalue(
             X, Y, W, n_perm=n_perm, seed=seed + 11, n_estimators=n_estimators
