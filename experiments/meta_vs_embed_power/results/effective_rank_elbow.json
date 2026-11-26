@@ -1,0 +1,150 @@
+{
+  "spec_pca_k": 24,
+  "method": "kneedle concave increasing on truncated effective_rank(n_pc); bootstrap row resample B=50",
+  "elbow_by_curve": [
+    {
+      "dataset": "amazon_gift",
+      "encoder": "MiniLM_L6",
+      "variant": "with_meta",
+      "elbow_point": 164,
+      "bootstrap_median": 164.0,
+      "bootstrap_iqr_low": 164.0,
+      "bootstrap_iqr_high": 174.0,
+      "bootstrap_B": 50,
+      "n_samples": 50,
+      "delta_from_spec24": 140,
+      "k_trunc_reach_90pct_full_eff": 185,
+      "full_effective_rank": 105.78416109899317
+    },
+    {
+      "dataset": "amazon_gift",
+      "encoder": "MiniLM_L6",
+      "variant": "without_meta",
+      "elbow_point": 164,
+      "bootstrap_median": 164.0,
+      "bootstrap_iqr_low": 164.0,
+      "bootstrap_iqr_high": 174.0,
+      "bootstrap_B": 50,
+      "n_samples": 50,
+      "delta_from_spec24": 140,
+      "k_trunc_reach_90pct_full_eff": 216,
+      "full_effective_rank": 105.78416109899317,
+      "full_k_cumvar_90": 127
+    },
+    {
+      "dataset": "bias",
+      "encoder": "MiniLM_L6",
+      "variant": "with_meta",
+      "elbow_point": 174,
+      "bootstrap_median": 174.0,
+      "bootstrap_iqr_low": 164.0,
+      "bootstrap_iqr_high": 174.0,
+      "bootstrap_B": 50,
+      "n_samples": 50,
+      "delta_from_spec24": 150,
+      "k_trunc_reach_90pct_full_eff": 185,
+      "full_effective_rank": 147.895310361137
+    },
+    {
+      "dataset": "bias",
+      "encoder": "MiniLM_L6",
+      "variant": "with_spacy",
+      "elbow_point": 174,
+      "bootstrap_median": 174.0,
+      "bootstrap_iqr_low": 164.0,
+      "bootstrap_iqr_high": 174.0,
+      "bootstrap_B": 50,
+      "n_samples": 50,
+      "delta_from_spec24": 150,
+      "k_trunc_reach_90pct_full_eff": 185,
+      "full_effective_rank": 147.895310361137
+    },
+    {
+      "dataset": "bias",
+      "encoder": "MiniLM_L6",
+      "variant": "without_meta",
+      "elbow_point": 174,
+      "bootstrap_median": 174.0,
+      "bootstrap_iqr_low": 174.0,
+      "bootstrap_iqr_high": 185.0,
+      "bootstrap_B": 50,
+      "n_samples": 50,
+      "delta_from_spec24": 150,
+      "k_trunc_reach_90pct_full_eff": 216,
+      "full_effective_rank": 147.895310361137,
+      "full_k_cumvar_90": 141
+    },
+    {
+      "dataset": "gender",
+      "encoder": "MiniLM_L6",
+      "variant": "with_meta",
+      "elbow_point": 174,
+      "bootstrap_median": 174.0,
+      "bootstrap_iqr_low": 164.0,
+      "bootstrap_iqr_high": 174.0,
+      "bootstrap_B": 50,
+      "n_samples": 50,
+      "delta_from_spec24": 150,
+      "k_trunc_reach_90pct_full_eff": 195,
+      "full_effective_rank": 147.07309670876174
+    },
+    {
+      "dataset": "gender",
+      "encoder": "MiniLM_L6",
+      "variant": "with_spacy",
+      "elbow_point": 174,
+      "bootstrap_median": 174.0,
+      "bootstrap_iqr_low": 164.0,
+      "bootstrap_iqr_high": 174.0,
+      "bootstrap_B": 50,
+      "n_samples": 50,
+      "delta_from_spec24": 150,
+      "k_trunc_reach_90pct_full_eff": 185,
+      "full_effective_rank": 147.07309670876174
+    },
+    {
+      "dataset": "gender",
+      "encoder": "MiniLM_L6",
+      "variant": "without_meta",
+      "elbow_point": 174,
+      "bootstrap_median": 174.0,
+      "bootstrap_iqr_low": 174.0,
+      "bootstrap_iqr_high": 185.0,
+      "bootstrap_B": 50,
+      "n_samples": 50,
+      "delta_from_spec24": 150,
+      "k_trunc_reach_90pct_full_eff": 226,
+      "full_effective_rank": 147.07309670876174,
+      "full_k_cumvar_90": 142
+    }
+  ],
+  "full_spectrum": [
+    {
+      "dataset": "amazon_gift",
+      "encoder": "MiniLM_L6",
+      "effective_rank_full": 105.78416109899317,
+      "n_components_max": 384,
+      "k_cumvar_80": 81,
+      "k_cumvar_90": 127,
+      "k_cumvar_95": 169
+    },
+    {
+      "dataset": "bias",
+      "encoder": "MiniLM_L6",
+      "effective_rank_full": 147.895310361137,
+      "n_components_max": 384,
+      "k_cumvar_80": 97,
+      "k_cumvar_90": 141,
+      "k_cumvar_95": 180
+    },
+    {
+      "dataset": "gender",
+      "encoder": "MiniLM_L6",
+      "effective_rank_full": 147.07309670876174,
+      "n_components_max": 384,
+      "k_cumvar_80": 98,
+      "k_cumvar_90": 142,
+      "k_cumvar_95": 181
+    }
+  ]
+}

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from collections import defaultdict
 from pathlib import Path
 
@@ -38,10 +39,27 @@ LABEL_MAP = {
 }
 
 
+def _load_elbows() -> dict[str, float]:
+    p = OUT / "effective_rank_elbow.json"
+    if not p.is_file():
+        return {}
+    data = json.loads(p.read_text(encoding="utf-8"))
+    out: dict[str, float] = {}
+    for row in data.get("elbow_by_curve", []):
+        med = row.get("bootstrap_median")
+        if med is None:
+            continue
+        lab = f"{row['dataset']}|{row['encoder']}|{row['variant']}"
+        out[lab] = float(med)
+    return out
+
+
 def main() -> None:
     stats = read_csv(OUT / "rmt_geometry_sweep.csv")
+    elbows = _load_elbows()
     fig, axes = plt.subplots(2, 3, figsize=(16, 10))
     by_lab: dict[str, list] = defaultdict(list)
+    line_colors: dict[str, str] = {}
     for r in stats:
         lab = f"{r['dataset']}|{r['encoder']}|{r['variant']}"
         by_lab[lab].append(r)
@@ -56,9 +74,15 @@ def main() -> None:
                 ms=2,
                 label=LABEL_MAP.get(lab, lab),
             )
+            line_colors[lab] = line.get_color()
             if met == STAT_METRICS[0] and LABEL_MAP.get(lab, lab) not in labels:
                 handles.append(line)
                 labels.append(LABEL_MAP.get(lab, lab))
+            if met == "effective_rank" and lab in elbows:
+                k = elbows[lab]
+                ax.axvline(k, color=line.get_color(), ls="--", lw=0.9, alpha=0.85)
+        if met == "effective_rank":
+            ax.axvline(24, color="0.4", ls=":", lw=1.2, alpha=0.9, label="_spec PCA_K=24")
         ax.set_title(met)
         ax.set_xlabel("n_pc (30–330, 30 pts)")
         ax.grid(alpha=0.3)
