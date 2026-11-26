@@ -21,6 +21,50 @@ def _rfperm_pvalue():
     return rfperm_r_single_pvalue
 
 
+META_BLOCK_PATTERNS = {
+    "surface": ("char_len", "word_count", "space_ratio", "digit_ratio", "upper_ratio", "token_count",
+                "sent_count", "avg_token_len", "avg_sent_len", "type_token_ratio", "hapax_ratio",
+                "punct_ratio", "exclam_ratio", "question_ratio"),
+    "syntax": ("noun_ratio", "verb_ratio", "entity_density", "avg_dep_depth", "max_dep_depth",
+               "avg_dep_distance", "neg_ratio", "clause_ratio", "hedge_ratio", "contrast_ratio",
+               "modal_ratio", "verb_noun_ratio"),
+    "sentiment": ("vader_neg", "vader_neu", "vader_pos", "vader_compound", "polar_gap", "sentiment_std"),
+}
+
+
+def meta_blocks(meta_names: list[str]) -> dict[str, np.ndarray]:
+    blocks = {
+        k: np.array([meta_names.index(c) for c in cols if c in meta_names], dtype=int)
+        for k, cols in META_BLOCK_PATTERNS.items()
+    }
+    return {k: v for k, v in blocks.items() if v.size}
+
+
+def cfperm_blocks_pvalue(X, Y, W, blocks, *, n_perm, seed, n_estimators):
+    """CFPerm LOCO per meta sub-block; Bonferroni-adjusted min p across blocks (any-block rejection)."""
+    per = {}
+    for j, (name, idx) in enumerate(blocks.items()):
+        per[name] = cfperm_loco_pvalue(
+            X, Y, W, test_indices=idx, n_perm=n_perm, seed=seed + 31 * j, n_estimators=n_estimators
+        )
+    k = len(per)
+    p_adj = min(1.0, k * min(r["p_value"] for r in per.values()))
+    return {
+        "method": "CFPerm_loco_blocks",
+        "statistic": float(max(r["statistic"] for r in per.values())),
+        "p_value": float(p_adj),
+        "reject": bool(p_adj < 0.05),
+        "blocks": {n: {"statistic": r["statistic"], "p_value": r["p_value"]} for n, r in per.items()},
+    }
+
+
+def _enabled_tests() -> set[str]:
+    if os.environ.get("RF_ONLY_RUN") == "1":
+        return {"RFPerm"}
+    raw = os.environ.get("POWER_TESTS", "")
+    return {t.strip() for t in raw.split(",") if t.strip()} or set(C.METHODS)
+
+
 def _col_index(meta_names: list[str], *candidates: str) -> int:
     for c in candidates:
         if c in meta_names:
@@ -101,26 +145,31 @@ def run_one_rep(
     Y = np.concatenate([ye, yn])
     W = np.concatenate([np.zeros(len(ye), dtype=int), np.ones(len(yn), dtype=int)])
 
-    out: dict[str, Any] = {
-        "scenario": scenario,
-        "feature_set": feature_set,
-        "RFPerm": _rfperm_pvalue()(
-            Xe, ye, Xn, yn, n_perm=n_perm, seed=seed, n_estimators=max(n_estimators, 150)
-        ),
-    }
-    if os.environ.get("RF_ONLY_RUN") != "1":
-        out["DRPerm"] = drperm_pvalue(
-            X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators
+    tests = _enabled_tests()
+    stub = {"p_value": float("nan"), "reject": False, "skipped": True}
+    out: dict[str, Any] = {"scenario": scenario, "feature_set": feature_set}
+    out["RFPerm"] = (
+        _rfperm_pvalue()(Xe, ye, Xn, yn, n_perm=n_perm, seed=seed, n_estimators=max(n_estimators, 150))
+        if "RFPerm" in tests else stub
+    )
+    out["DRPerm"] = (
+        drperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators)
+        if "DRPerm" in tests else stub
+    )
+    out["RRPerm"] = (
+        rrperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 11, n_estimators=n_estimators)
+        if "RRPerm" in tests else stub
+    )
+    if "CFPerm" not in tests:
+        out["CFPerm"] = stub
+    elif feature_set == "meta_only":
+        out["CFPerm"] = cfperm_blocks_pvalue(
+            X, Y, W, meta_blocks(meta_names), n_perm=n_perm, seed=seed + 5, n_estimators=n_estimators
         )
-        out["RRPerm"] = rrperm_pvalue(
-            X, Y, W, n_perm=n_perm, seed=seed + 11, n_estimators=n_estimators
-        )
+    else:
         out["CFPerm"] = cfperm_loco_pvalue(
             X, Y, W, test_indices=test_idx, n_perm=n_perm, seed=seed + 5, n_estimators=n_estimators
         )
-    else:
-        stub = {"p_value": float("nan"), "reject": False, "skipped": True}
-        out["DRPerm"] = out["RRPerm"] = out["CFPerm"] = stub
     return out
 
 
@@ -133,9 +182,12 @@ def summarize(rows: list[dict[str, Any]], methods: tuple[str, ...]) -> dict[str,
     for (dataset, scenario, fs), reps in sorted(bucket.items()):
         entry = {"dataset": dataset, "scenario": scenario, "feature_set": fs, "B": len(reps), "power": {}, "mean_p": {}}
         for method in methods:
-            ps = [float(rep[method]["p_value"]) for rep in reps]
-            rejs = [bool(rep[method]["reject"]) for rep in reps]
-            entry["power"][method] = float(np.mean(rejs))
-            entry["mean_p"][method] = float(np.mean(ps))
+            done = [rep[method] for rep in reps if not rep[method].get("skipped")]
+            if not done:
+                entry["power"][method] = None
+                entry["mean_p"][method] = None
+                continue
+            entry["power"][method] = float(np.mean([bool(r["reject"]) for r in done]))
+            entry["mean_p"][method] = float(np.mean([float(r["p_value"]) for r in done]))
         table.append(entry)
     return {"table": table}

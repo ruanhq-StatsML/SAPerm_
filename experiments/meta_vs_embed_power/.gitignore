@@ -1,4 +1,7 @@
 results/*.npy
 results/*.npz
 results/*.log
+results/amazon/*.npz
+results/amazon/*.log
+results/amazon/checkpoint_*
 __pycache__/

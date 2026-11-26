@@ -67,13 +67,16 @@ MODEL_CONFIGS: dict[str, EmbeddingModelConfig] = {
 }
 
 
-def get_embedding(texts: list[str], model_name: str = "MiniLM_L6") -> np.ndarray:
+def get_embedding(
+    texts: list[str], model_name: str = "MiniLM_L6", batch_size: int | None = None
+) -> np.ndarray:
     """Notebook-aligned mean/CLS/last pooling (subset of ``utils.get_embedding``)."""
     import torch
     from tqdm import tqdm
     from transformers import AutoModel, AutoTokenizer
 
     cfg = MODEL_CONFIGS[model_name]
+    bs = batch_size or cfg.batch_size
     device = "cuda" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(cfg.name, trust_remote_code=cfg.trust_remote_code)
     model = AutoModel.from_pretrained(cfg.name, trust_remote_code=cfg.trust_remote_code).to(device)
@@ -89,8 +92,8 @@ def get_embedding(texts: list[str], model_name: str = "MiniLM_L6") -> np.ndarray
 
     chunks = []
     with torch.no_grad():
-        for i in tqdm(range(0, len(processed), cfg.batch_size), desc=f"embed {model_name}"):
-            batch = processed[i : i + cfg.batch_size]
+        for i in tqdm(range(0, len(processed), bs), desc=f"embed {model_name}"):
+            batch = processed[i : i + bs]
             inputs = tokenizer(
                 batch,
                 padding=True,
