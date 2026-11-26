@@ -8,6 +8,7 @@ B=10 vs R: power **0.25 vs 0.20**, p corr **~0.52**; gaps mostly **train/val spl
 ```bash
 export PYTHONPATH=/agent/repos/SAPerm   # repo root
 export RF_PERM_BACKEND=python         # or rfperm_r
+export RF_SPLIT=ordered               # exist window: first 70% train, last 30% val (default: random)
 export RF_ONLY_RUN=1                  # skip DR/RR/CF
 export POWER_BACKEND=loky
 export POWER_N_JOBS=4                 # one dataset per VM; do not oversubscribe

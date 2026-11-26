@@ -1,0 +1,65 @@
+{
+  "dataset": "gender",
+  "scenario": "sentiment_meta",
+  "B": 150,
+  "n_perm": 150,
+  "checkpoint_tag": "rf_b150_gender_random",
+  "summary": {
+    "table": [
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.02666666666666667,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.6874172185430464,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.03333333333333333,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.6830022075055188,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.1,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.5470198675496689,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      }
+    ]
+  }
+}
