@@ -338,10 +338,11 @@ def main() -> int:
     decorr_block = (
         f"""\\begin{{table}}[ht]
 \\centering
-\\caption{{Decorrelated arms (MiniLM-L6, Gift Cards, $B{{=}}{B}$, windows paired with the main $B{{=}}{B}$ chain).
-$M_\\tau$ / $S_\\tau$: $M$ or $S$ without features with full-frame $|\\rho_{{\\mathrm{{Spearman}}}}(f,y)|\\ge\\tau$
-(diagnostic ablation; the filter sees $y$). $M_{{0.2}}\\setminus\\{{v,n\\}}$ also drops \\texttt{{verb\\_ratio}} and
-\\texttt{{noun\\_ratio}}, the components of the syntax selection variable. AUC$_W$ and residual-variance ratio as in
+\\caption{{Decorrelated arms (MiniLM-L6, Gift Cards, $B{{=}}{B}$; same paired windows as the main chain).
+$M_\\tau$ and $S_\\tau$ remove features with full-frame $|\\rho_{{\\mathrm{{Spearman}}}}(f,y)|\\ge\\tau$.
+This is a diagnostic ablation, since the filter uses $y$.
+$M_{{0.2}}\\setminus\\{{v,n\\}}$ also removes \\texttt{{verb\\_ratio}} and \\texttt{{noun\\_ratio}}, the two components of
+the syntax selection variable. AUC$_W$ and the residual-variance ratio are defined as in
 Table~\\ref{{tab:amazon_absorption}}.}}
 \\label{{tab:amazon_decorr}}
 {dtab}
