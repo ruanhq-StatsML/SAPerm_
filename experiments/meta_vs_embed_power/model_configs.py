@@ -79,7 +79,10 @@ def get_embedding(
     bs = batch_size or cfg.batch_size
     device = "cuda" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(cfg.name, trust_remote_code=cfg.trust_remote_code)
-    model = AutoModel.from_pretrained(cfg.name, trust_remote_code=cfg.trust_remote_code).to(device)
+    # Newer transformers load the checkpoint dtype (bf16 for Qwen3); bf16 on CPU makes rows batch-dependent.
+    model = AutoModel.from_pretrained(
+        cfg.name, trust_remote_code=cfg.trust_remote_code, dtype=torch.float32
+    ).to(device)
     model.eval()
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token

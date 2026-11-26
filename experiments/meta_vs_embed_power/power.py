@@ -159,7 +159,10 @@ def run_one_rep(
         if "RFPerm" in tests else stub
     )
     out["DRPerm"] = (
-        drperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators)
+        drperm_pvalue(
+            X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators,
+            null_scheme=os.environ.get("POWER_DR_NULL", "residual"),
+        )
         if "DRPerm" in tests else stub
     )
     out["RRPerm"] = (

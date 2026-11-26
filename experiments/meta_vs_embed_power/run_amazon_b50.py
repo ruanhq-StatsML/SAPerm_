@@ -236,7 +236,7 @@ def power_table(encoders: list[str]) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--spec", choices=["gift", "cross", "all"], default="gift")
-    ap.add_argument("--tests", default="RFPerm,CFPerm,RRPerm")
+    ap.add_argument("--tests", default="RFPerm,CFPerm,RRPerm,DRPerm")
     ap.add_argument("--tag", default="main")
     ap.add_argument("--encoders", nargs="*", default=list(ENCODERS))
     ap.add_argument("--scenarios", nargs="*", default=None)
