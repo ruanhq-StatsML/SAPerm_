@@ -1,0 +1,63 @@
+{
+  "dataset": "train_bias_finder",
+  "feature_set": "meta_only",
+  "B": 50,
+  "n_perm": 150,
+  "outcome_model": "RandomForest",
+  "table": [
+    {
+      "dataset": "train_bias_finder",
+      "scenario": "sentiment_meta",
+      "feature_set": "meta_only",
+      "B": 50,
+      "power": {
+        "RFPerm": 0.04,
+        "DRPerm": 0.0,
+        "CFPerm": 0.0,
+        "RRPerm": 0.02
+      },
+      "mean_p": {
+        "RFPerm": 0.4656953642384106,
+        "DRPerm": 1.0,
+        "CFPerm": 1.0,
+        "RRPerm": 0.6947019867549669
+      }
+    },
+    {
+      "dataset": "train_bias_finder",
+      "scenario": "syntax_meta",
+      "feature_set": "meta_only",
+      "B": 50,
+      "power": {
+        "RFPerm": 0.04,
+        "DRPerm": 0.0,
+        "CFPerm": 0.0,
+        "RRPerm": 0.0
+      },
+      "mean_p": {
+        "RFPerm": 0.5659602649006623,
+        "DRPerm": 1.0,
+        "CFPerm": 1.0,
+        "RRPerm": 0.7103311258278145
+      }
+    },
+    {
+      "dataset": "train_bias_finder",
+      "scenario": "train_vs_heldout",
+      "feature_set": "meta_only",
+      "B": 50,
+      "power": {
+        "RFPerm": 0.06,
+        "DRPerm": 0.0,
+        "CFPerm": 0.0,
+        "RRPerm": 0.0
+      },
+      "mean_p": {
+        "RFPerm": 0.565430463576159,
+        "DRPerm": 0.5833112582781457,
+        "CFPerm": 1.0,
+        "RRPerm": 0.5537748344370861
+      }
+    }
+  ]
+}

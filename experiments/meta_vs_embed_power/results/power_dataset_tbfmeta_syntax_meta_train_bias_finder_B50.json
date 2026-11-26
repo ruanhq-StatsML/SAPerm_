@@ -1,0 +1,28 @@
+{
+  "dataset": "train_bias_finder",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "tbfmeta_syntax_meta",
+  "summary": {
+    "table": [
+      {
+        "dataset": "train_bias_finder",
+        "scenario": "syntax_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.04,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.5659602649006623,
+          "DRPerm": 1.0,
+          "CFPerm": 1.0,
+          "RRPerm": 0.7103311258278145
+        }
+      }
+    ]
+  }
+}

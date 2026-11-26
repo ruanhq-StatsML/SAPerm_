@@ -1,0 +1,28 @@
+{
+  "dataset": "train_bias_finder",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "tbfmeta_sentiment_meta",
+  "summary": {
+    "table": [
+      {
+        "dataset": "train_bias_finder",
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.04,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.02
+        },
+        "mean_p": {
+          "RFPerm": 0.4656953642384106,
+          "DRPerm": 1.0,
+          "CFPerm": 1.0,
+          "RRPerm": 0.6947019867549669
+        }
+      }
+    ]
+  }
+}

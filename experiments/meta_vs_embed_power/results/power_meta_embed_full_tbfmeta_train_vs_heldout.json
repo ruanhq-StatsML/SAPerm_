@@ -1,0 +1,65 @@
+{
+  "config": {
+    "B": 50,
+    "n_perm": 150,
+    "n_doc": 120,
+    "pca_k": 24,
+    "n_estimators": 150,
+    "n_max": 1000,
+    "row_cap": 1000,
+    "embed_batch_size": 32,
+    "seed": 2026,
+    "datasets": [
+      "train_bias_finder"
+    ],
+    "scenarios": [
+      "train_vs_heldout"
+    ],
+    "outcome_model": "RandomForest",
+    "meta_source": "utils.text_meta",
+    "contrast": "without_meta=PCA(Z); with_meta=hstack(Z,M); meta_only=M",
+    "feature_sets": [
+      "meta_only"
+    ],
+    "methods": [
+      "RFPerm",
+      "DRPerm",
+      "CFPerm",
+      "RRPerm"
+    ],
+    "elapsed_sec": 1375.8017177581787
+  },
+  "summary": {
+    "table": [
+      {
+        "dataset": "train_bias_finder",
+        "scenario": "train_vs_heldout",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.06,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.565430463576159,
+          "DRPerm": 0.5833112582781457,
+          "CFPerm": 1.0,
+          "RRPerm": 0.5537748344370861
+        }
+      }
+    ]
+  },
+  "rows_count": 50,
+  "anisotropy_headline": {
+    "train_bias_finder_bert": {
+      "anisotropy_at_max_pc": 0.1544442896718856,
+      "effective_rank_at_max_pc": 81.06955204247613
+    },
+    "train_bias_finder_MiniLM_L6": {
+      "anisotropy_at_max_pc": 0.06762558411314681,
+      "effective_rank_at_max_pc": 116.08586181024154
+    }
+  }
+}

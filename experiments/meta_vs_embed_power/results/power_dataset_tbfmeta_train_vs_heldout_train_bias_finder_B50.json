@@ -1,0 +1,28 @@
+{
+  "dataset": "train_bias_finder",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "tbfmeta_train_vs_heldout",
+  "summary": {
+    "table": [
+      {
+        "dataset": "train_bias_finder",
+        "scenario": "train_vs_heldout",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.06,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.565430463576159,
+          "DRPerm": 0.5833112582781457,
+          "CFPerm": 1.0,
+          "RRPerm": 0.5537748344370861
+        }
+      }
+    ]
+  }
+}
