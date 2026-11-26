@@ -45,6 +45,42 @@
       {
         "dataset": "amazon_MiniLM_L6",
         "scenario": "sentiment_meta",
+        "feature_set": "with_meta_decorr",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.8533333333333334,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.025916114790286975,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta_decorr_t02",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.7933333333333333,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.038852097130242826,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "sentiment_meta",
         "feature_set": "with_spacy",
         "B": 150,
         "power": {
@@ -55,6 +91,42 @@
         },
         "mean_p": {
           "RFPerm": 0.022913907284768217,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_spacy_decorr",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.88,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.022339955849889622,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_spacy_decorr_t02",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.8733333333333333,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.024282560706401758,
           "DRPerm": null,
           "CFPerm": null,
           "RRPerm": null

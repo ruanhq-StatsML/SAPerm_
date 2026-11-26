@@ -80,9 +80,43 @@ def markdown(payload: dict) -> str:
     return "\n".join(lines)
 
 
+DECORR = ("with_meta", "with_meta_decorr", "with_spacy", "with_spacy_decorr")
+
+
+def markdown_decorr(payload: dict) -> str:
+    rnd, ordr = payload["splits"]["random"], payload["splits"].get("ordered", {})
+    f = lambda v: "—" if v is None else f"{v:.2f}"
+    dl = lambda a, b: "—" if a is None or b is None else f"{a - b:+.2f}"
+    lines = []
+    for ds, cells in rnd.items():
+        if not any(k.endswith("_decorr") for k in cells):
+            continue
+        oc = ordr.get(ds, {})
+        g = lambda c, s, a: (c.get(f"{s}|{a}") or {}).get("power")
+        lines += [f"**{ds}**", "",
+                  "| 场景 | w/o | with_meta | meta_decorr | with_spacy | spacy_decorr | Δmeta | Δmeta_decorr | Δspacy | Δspacy_decorr "
+                  "| τ=0.2 Δmeta_decorr / Δspacy_decorr | ordered Δmeta_decorr / Δspacy_decorr |",
+                  "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
+        for s in ORDER:
+            base = g(cells, s, "without_meta")
+            if base is None:
+                continue
+            p = {a: g(cells, s, a) for a in DECORR + ("with_meta_decorr_t02", "with_spacy_decorr_t02")}
+            ob = g(oc, s, "without_meta")
+            lines.append(
+                f"| {s} | {f(base)} | " + " | ".join(f(p[a]) for a in DECORR) + " | "
+                + " | ".join(dl(p[a], base) for a in DECORR)
+                + f" | {dl(p['with_meta_decorr_t02'], base)} / {dl(p['with_spacy_decorr_t02'], base)}"
+                + f" | {dl(g(oc, s, 'with_meta_decorr'), ob)} / {dl(g(oc, s, 'with_spacy_decorr'), ob)} |"
+            )
+        lines.append("")
+    return "\n".join(lines)
+
+
 def main() -> int:
     payload = build()
     (OUT_DIR / "power_amazon_rf_b150.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    (OUT_DIR / "power_amazon_rf_b150_decorr.md").write_text(markdown_decorr(payload), encoding="utf-8")
     md = markdown(payload)
     (OUT_DIR / "power_amazon_rf_b150.md").write_text(md, encoding="utf-8")
     print(md)

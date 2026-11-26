@@ -11,7 +11,7 @@ export POWER_BACKEND=loky POWER_N_JOBS="${POWER_N_JOBS:-4}" POWER_CHUNK_MULT="${
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 A=experiments/meta_vs_embed_power/results/amazon
 R="python3 -m experiments.meta_vs_embed_power.run_amazon_b50 --tests RFPerm"
-ARMS="without_meta with_meta with_spacy meta_only"
+ARMS="${ARMS:-without_meta with_meta with_spacy meta_only}"
 
 for f in alignment_report.json alignment_report_cross.json alignment_report_spacy_gift.json alignment_report_spacy_cross.json; do
   python3 -c "import json,sys; sys.exit(0 if json.load(open('$A/$f'))['passed'] else 1)"

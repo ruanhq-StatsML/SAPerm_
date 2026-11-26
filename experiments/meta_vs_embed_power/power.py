@@ -133,8 +133,11 @@ def run_one_rep(
     seed: int,
     n_estimators: int,
     pca_k: int,
+    drop: frozenset[str] = frozenset(),
 ) -> dict[str, Any]:
+    """``drop``: column names removed in the ``with_{meta,spacy}_decorr*`` arms."""
     rng = np.random.default_rng(seed)
+    all_names = list(meta_names)
     # Windows are drawn on the full matrix (names select the window coordinate); spaCy
     # columns ("spacy:" prefix) are then split off so with_meta / meta_only keep M only.
     Xe_e, ye, Xn_e, yn, _, _, Mfe, Mfn = make_windows(
@@ -159,6 +162,16 @@ def run_one_rep(
     elif feature_set == "meta_only":
         Xe, Xn = Me, Mn
         test_idx = np.arange(n_meta)
+    elif feature_set.startswith(("with_meta_decorr", "with_spacy_decorr")):
+        spacy_blk = feature_set.startswith("with_spacy")
+        cols = np.array([
+            i for i, n in enumerate(all_names)
+            if n.startswith("spacy:") == spacy_blk and n not in drop
+        ], dtype=int)
+        if not drop or cols.size == 0:
+            raise ValueError(f"{feature_set}: empty drop list or no kept columns")
+        Xe, Xn = np.hstack([Xe_e, Mfe[:, cols]]), np.hstack([Xn_e, Mfn[:, cols]])
+        test_idx = np.arange(pca_k, pca_k + cols.size)
     else:
         raise ValueError(feature_set)
 

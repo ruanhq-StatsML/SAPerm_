@@ -29,6 +29,12 @@ def run_job(
     # Depends only on (scenario, b): every arm and encoder sees the same windows (paired), and
     # str hash() is salted per process, so it must not be used here.
     rep_seed = seed + 10_007 * (zlib.crc32(scenario.encode()) % 997) + 17 * b
+    drop: frozenset[str] = frozenset()
+    if "_decorr" in feature_set:
+        from experiments.meta_vs_embed_power.decorr_features import dropped
+
+        spec = "cross" if dataset.startswith("amazon-cross_") else "gift"
+        drop = dropped(spec, feature_set.split("_decorr", 1)[1])
     rep = run_one_rep(
         scenario,
         feature_set,
@@ -41,6 +47,7 @@ def run_job(
         seed=rep_seed,
         n_estimators=n_estimators,
         pca_k=pca_k,
+        drop=drop,
     )
     rep["dataset"] = dataset
     return rep
