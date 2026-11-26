@@ -59,7 +59,14 @@ def _datasets(spec: str, encoders: list[str]) -> list[tuple[str, str]]:
     return [(s, f"{PREFIX[s]}_{e}") for s in _specs(spec) for e in encoders if emb_path(e, s).is_file()]
 
 
-def run_tests(tests: str, tag: str, spec: str, encoders: list[str], scenarios: list[str] | None = None) -> None:
+def run_tests(
+    tests: str,
+    tag: str,
+    spec: str,
+    encoders: list[str],
+    scenarios: list[str] | None = None,
+    arms: list[str] | None = None,
+) -> None:
     os.environ.setdefault("RF_PERM_BACKEND", "python")
     os.environ.pop("RF_ONLY_RUN", None)
     os.environ["POWER_TESTS"] = tests
@@ -79,7 +86,7 @@ def run_tests(tests: str, tag: str, spec: str, encoders: list[str], scenarios: l
             seed=SEED,
             datasets=[ds],
             scenarios=scens,
-            feature_sets=list(C.FEATURE_SETS),
+            feature_sets=arms or list(C.FEATURE_SETS),
             n_jobs=n_jobs,
             out_dir=OUT_DIR,
             embed_model=ds.split("_", 1)[1],
@@ -240,6 +247,7 @@ def main() -> int:
     ap.add_argument("--tag", default="main")
     ap.add_argument("--encoders", nargs="*", default=list(ENCODERS))
     ap.add_argument("--scenarios", nargs="*", default=None)
+    ap.add_argument("--arms", nargs="*", default=None)
     ap.add_argument("--merge", action="store_true")
     ap.add_argument("--aniso", action="store_true")
     ap.add_argument("--shift-evidence", action="store_true")
@@ -254,7 +262,7 @@ def main() -> int:
     elif args.merge:
         print(json.dumps(merge(args.encoders), indent=2))
     else:
-        run_tests(args.tests, args.tag, args.spec, args.encoders, args.scenarios)
+        run_tests(args.tests, args.tag, args.spec, args.encoders, args.scenarios, args.arms)
     return 0
 
 

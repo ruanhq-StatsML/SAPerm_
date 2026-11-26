@@ -172,7 +172,7 @@ def _run_job_batches(
     else:
         from joblib import Parallel, delayed, parallel_backend
 
-        chunk = max(n_jobs_eff, 2)
+        chunk = max(n_jobs_eff, 2) * int(os.environ.get("POWER_CHUNK_MULT", "1"))
         backend = os.environ.get("POWER_BACKEND", "threading")
         with parallel_backend(backend, n_jobs=n_jobs_eff):
             for start in range(0, len(jobs), chunk):
