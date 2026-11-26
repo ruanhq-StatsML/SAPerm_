@@ -55,18 +55,18 @@ Examples: `with_meta_kfull|syntax_meta|3|rf`, `qwen3-0.6b:without_meta_k128|null
 
 Each machine appends to its own file (`--log`); the driver skips keys already in that file. `summarize_dim_scan.py` merges every `results/dim_scan_gender*.jsonl`, deduplicating by key.
 
-## Batches
+## Batches (2026-11-26 06:20: full embedding only)
+
+Per-feature ablation is cancelled. The VADER-focused grid keeps k = full (k = 24 / 128 rows already on disk are kept).
 
 | batch | content | where |
 |---|---|---|
-| RF | all arms, B = 150, random + ordered, plus mtry=7 controls | main VM |
-| 1 | DR/RR/CF, MiniLM, k = full and 128 | main VM |
-| 2 | DR/RR/CF, Qwen, k = full and 128 | second VM |
-| 3 | DR/RR/CF, `with_meta_decorr` at full, both embeddings | main VM |
-| 4 | DR/RR/CF, MiniLM, k = 24 and 64, plus decorr at 24 | main VM |
-| 5 | DR/RR/CF, Qwen, k = 24 and 64, plus decorr at 24 | second VM |
+| RF | remaining k = full arms (Qwen VADER, decorr, mtry=7), B = 150, random + ordered | main VM |
+| full-M | DR/RR/CF, MiniLM, k = full: without, with_meta, with_spacy, Z+VADER4, with_meta_decorr | main VM |
+| full-Q | DR/RR/CF, Qwen, k = full, same five arms | second VM |
+| optional | DR/RR/CF at k = 128 (three base arms), k = 24 / 64 (three base arms), k = 24 (VADER4, decorr) | both, last |
 
 Main VM: `bash experiments/meta_vs_embed_power/scripts/run_dim_scan_gender.sh`.
-Second VM: `bash experiments/meta_vs_embed_power/scripts/run_dim_scan_gender_qwen_drc.sh` (writes `results/dim_scan_gender_qwen_vm.jsonl`).
+Second VM: `bash experiments/meta_vs_embed_power/scripts/run_dim_scan_gender_qwen_drc.sh` (writes `results/dim_scan_gender_qwen_vm.jsonl`). `OPTIONAL=0` stops either script after k = full.
 
-Cost (4 cores): one DR+RR+CF rep is about 70 core-seconds at k = 24, 95 at MiniLM full, about 130 at Qwen full. Batches 2 + 5 are about 64 core-hours (about 16 h on 4 cores).
+Cost (4 cores): one DR+RR+CF rep is about 70 core-seconds at k = 24, 95 at MiniLM full, about 130 at Qwen full. Five arms at k = full are about 26 core-hours for MiniLM (about 6.5 h on 4 cores) and about 36 core-hours for Qwen (about 9 h).
