@@ -1,5 +1,8 @@
 | 编码器 | 场景 | 检验 | without_meta | with_meta | Δ(with−without) | with_spacy | Δ(spacy−without) | meta_only |
 |---|---|---|--:|--:|--:|--:|--:|--:|
+| MiniLM_L6 | null_shift | CFPerm | 0.02 | — | — | — | — | — |
+| MiniLM_L6 | null_shift | RRPerm | 0.06 | — | — | — | — | — |
+| MiniLM_L6 | null_shift | DRPerm | 0.02 | — | — | — | — | — |
 | MiniLM_L6 | sentiment_meta | CFPerm | 0.94 | 1.00 | +0.06 | 1.00 | +0.06 | — |
 | MiniLM_L6 | sentiment_meta | RRPerm | 1.00 | 1.00 | +0.00 | 1.00 | +0.00 | — |
 | MiniLM_L6 | sentiment_meta | DRPerm | 1.00 | 0.18 | -0.82 | 1.00 | +0.00 | — |
@@ -9,6 +12,21 @@
 | MiniLM_L6 | train_vs_heldout | CFPerm | 0.46 | 0.80 | +0.34 | 0.78 | +0.32 | — |
 | MiniLM_L6 | train_vs_heldout | RRPerm | 0.78 | 0.60 | -0.18 | 0.74 | -0.04 | — |
 | MiniLM_L6 | train_vs_heldout | DRPerm | 0.36 | 0.28 | -0.08 | 0.48 | +0.12 | — |
+| qwen3-0.6b | sentiment_meta | CFPerm | 0.76 | 1.00 | +0.24 | — | — | — |
+| qwen3-0.6b | sentiment_meta | RRPerm | 1.00 | 1.00 | +0.00 | — | — | — |
+| qwen3-0.6b | sentiment_meta | DRPerm | 1.00 | 0.14 | -0.86 | — | — | — |
+| qwen3-0.6b | syntax_meta | CFPerm | 0.40 | 0.90 | +0.50 | — | — | — |
+| qwen3-0.6b | syntax_meta | RRPerm | 0.84 | 0.32 | -0.52 | — | — | — |
+| qwen3-0.6b | syntax_meta | DRPerm | 0.46 | 0.16 | -0.30 | — | — | — |
+| qwen3-0.6b | train_vs_heldout | CFPerm | 0.50 | 0.76 | +0.26 | — | — | — |
+| qwen3-0.6b | train_vs_heldout | RRPerm | 0.82 | 0.52 | -0.30 | — | — | — |
+| qwen3-0.6b | train_vs_heldout | DRPerm | 0.44 | 0.20 | -0.24 | — | — | — |
+| MiniLM_L6 | null_shift | CFPerm | 0.04 | — | — | — | — | — |
+| MiniLM_L6 | null_shift | RRPerm | 0.02 | — | — | — | — | — |
+| MiniLM_L6 | null_shift | DRPerm | 0.04 | — | — | — | — | — |
 | MiniLM_L6 | domain_shift | CFPerm | 0.02 | 0.02 | +0.00 | 0.02 | +0.00 | — |
 | MiniLM_L6 | domain_shift | RRPerm | 0.00 | 0.16 | +0.16 | 0.02 | +0.02 | — |
 | MiniLM_L6 | domain_shift | DRPerm | 0.36 | 0.56 | +0.20 | 0.56 | +0.20 | — |
+| qwen3-0.6b | domain_shift | CFPerm | 0.12 | 0.10 | -0.02 | — | — | — |
+| qwen3-0.6b | domain_shift | RRPerm | 0.20 | 0.16 | -0.04 | — | — | — |
+| qwen3-0.6b | domain_shift | DRPerm | 0.90 | 0.68 | -0.22 | — | — | — |
