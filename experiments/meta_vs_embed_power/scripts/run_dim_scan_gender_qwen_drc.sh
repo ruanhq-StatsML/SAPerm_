@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # gender full-embedding (no PCA) scan, second VM: Qwen DR/RR/CF at k=full, then optional k = 128 / 64 / 24.
 # Resume-safe. Writes results/dim_scan_gender_qwen_vm.jsonl; summarize_dim_scan merges every
-# dim_scan_gender*.jsonl by key. Set OPTIONAL=0 to stop after k=full.
+# dim_scan_gender*.jsonl by key. The k = 128/64/24 batches are cancelled: OPTIONAL defaults to 0 (set 1 to run them).
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
 export PYTHONPATH=$PWD PYTHONWARNINGS=ignore OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
@@ -16,7 +16,7 @@ fi
 $S $DRC --ks full --kinds without with spacy vader with_decorr
 echo "[chain] qwen full DR/RR/CF done"
 
-if [ "${OPTIONAL:-1}" = "1" ]; then
+if [ "${OPTIONAL:-0}" = "1" ]; then
   $S $DRC --ks 128 --kinds without with spacy
   $S $DRC --ks 24 64 --kinds without with spacy
   $S $DRC --ks 24 --kinds vader with_decorr

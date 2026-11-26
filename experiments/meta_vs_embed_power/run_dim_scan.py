@@ -218,8 +218,19 @@ def main() -> None:
     p.add_argument("--b0", type=int, default=0)
     p.add_argument("--b1", type=int, default=50)
     p.add_argument("--n-jobs", type=int, default=4)
-    p.add_argument("--log", type=Path, default=LOG, help="jsonl to append to (one file per machine)")
+    p.add_argument("--log", type=Path, default=None, help="jsonl to append to (one file per machine)")
+    p.add_argument("--shard", default=None, metavar="i/N",
+                   help="run only jobs with crc32(key) %% N == i; log defaults to dim_scan_gender_shard{i}.jsonl; "
+                        "keys already in any results/dim_scan_gender*.jsonl are skipped")
     a = p.parse_args()
+    shard = None
+    if a.shard:
+        si, sn = (int(x) for x in a.shard.split("/"))
+        if not 0 <= si < sn:
+            p.error("--shard needs 0 <= i < N")
+        shard = (si, sn)
+    if a.log is None:
+        a.log = LOG.with_name(f"dim_scan_gender_shard{shard[0]}.jsonl") if shard else LOG
 
     load_data(a.emb)
     kinds = []
@@ -231,15 +242,24 @@ def main() -> None:
             p.error(f"unknown kind {kd!r}")
     a.kinds = kinds
     done = set()
-    if a.log.is_file():
-        done = {json.loads(line)["key"] for line in a.log.open() if line.strip()}
+    sources = sorted(LOG.parent.glob("dim_scan_gender*.jsonl")) if shard else []
+    if a.log not in sources:
+        sources.append(a.log)
+    for src in sources:
+        if src.is_file():
+            done |= {json.loads(line)["key"] for line in src.open() if line.strip()}
+
+    def job_key(kind, k, sc, b):
+        return f"{arm_name(kind, k, a.mtry, a.emb)}|{sc}|{b}|{a.tests}"
+
     jobs = [
         (kind, k, a.mtry, sc, b, a.tests, a.emb)
         for b in range(a.b0, a.b1)
         for k in a.ks
         for kind in a.kinds
         for sc in a.scenarios
-        if f"{arm_name(kind, k, a.mtry, a.emb)}|{sc}|{b}|{a.tests}" not in done
+        if job_key(kind, k, sc, b) not in done
+        and (shard is None or zlib.crc32(job_key(kind, k, sc, b).encode()) % shard[1] == shard[0])
     ]
     shown = a.kinds if len(a.kinds) <= 12 else f"{len(a.kinds)} kinds"
     print(f"[dim_scan] {a.emb} {a.tests} ks={a.ks} kinds={shown} mtry={a.mtry}: "

@@ -55,18 +55,21 @@ Examples: `with_meta_kfull|syntax_meta|3|rf`, `qwen3-0.6b:without_meta_k128|null
 
 Each machine appends to its own file (`--log`); the driver skips keys already in that file. `summarize_dim_scan.py` merges every `results/dim_scan_gender*.jsonl`, deduplicating by key.
 
-## Batches (2026-11-26 06:20: full embedding only)
+## Batches (2026-11-26 07:00: core arms only, sharded)
 
-Per-feature ablation is cancelled. The VADER-focused grid keeps k = full (k = 24 / 128 rows already on disk are kept).
+Core arms: without_meta, with_meta, with_spacy, Z+VADER4 (`vader`), with_meta_decorr. Cancelled: per-feature ablation, per-column VADER arms (beyond the finished RF rows), mtry controls (beyond the finished RF rows), DR/RR/CF at k = 24 / 64 / 128. Finished rows are kept.
 
-| batch | content | where |
-|---|---|---|
-| RF | remaining k = full arms (Qwen VADER, decorr, mtry=7), B = 150, random + ordered | main VM |
-| full-M | DR/RR/CF, MiniLM, k = full: without, with_meta, with_spacy, Z+VADER4, with_meta_decorr | main VM |
-| full-Q | DR/RR/CF, Qwen, k = full, same five arms | second VM |
-| optional | DR/RR/CF at k = 128 (three base arms), k = 24 / 64 (three base arms), k = 24 (VADER4, decorr) | both, last |
+Remaining: DR/RR/CF at k = full, B = 50, five core arms, 4 scenarios, for MiniLM (sharded) and Qwen (separate VM, `run_dim_scan_gender_qwen_drc.sh`).
 
-Main VM: `bash experiments/meta_vs_embed_power/scripts/run_dim_scan_gender.sh`.
-Second VM: `bash experiments/meta_vs_embed_power/scripts/run_dim_scan_gender_qwen_drc.sh` (writes `results/dim_scan_gender_qwen_vm.jsonl`). `OPTIONAL=0` stops either script after k = full.
+Sharding: `--shard i/N` keeps jobs with `crc32(key) % N == i` (the key is `arm|scenario|b|tests`), writes `results/dim_scan_gender_shard{i}.jsonl`, and skips keys already present in any `results/dim_scan_gender*.jsonl`. Seeds and settings are unchanged; a sharded run reproduces the unsharded p-values exactly (checked on 8 jobs, 0 mismatches). N = 4 for MiniLM:
+
+```
+bash experiments/meta_vs_embed_power/scripts/run_dim_scan_gender_shard.sh 0 4   # this VM
+bash experiments/meta_vs_embed_power/scripts/run_dim_scan_gender_shard.sh 1 4
+bash experiments/meta_vs_embed_power/scripts/run_dim_scan_gender_shard.sh 2 4
+bash experiments/meta_vs_embed_power/scripts/run_dim_scan_gender_shard.sh 3 4
+```
+
+The optional third argument is the embedding (default `MiniLM_L6`; the same script works for `qwen3-0.6b`). Merge by putting all shard jsonl files in `results/`; `summarize_dim_scan.py` dedups by key.
 
 Cost (4 cores): one DR+RR+CF rep is about 70 core-seconds at k = 24, 95 at MiniLM full, about 130 at Qwen full. Five arms at k = full are about 26 core-hours for MiniLM (about 6.5 h on 4 cores) and about 36 core-hours for Qwen (about 9 h).
