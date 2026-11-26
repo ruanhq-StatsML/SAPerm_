@@ -207,8 +207,24 @@ def rfperm_pvalue(
 
 
 def drperm_pvalue(
-    X, Y, W, *, n_perm: int = 120, n_splits: int = 2, seed: int = 0, clip_e: float = 0.05, n_estimators: int = 60
+    X,
+    Y,
+    W,
+    *,
+    n_perm: int = 120,
+    n_splits: int = 2,
+    seed: int = 0,
+    clip_e: float = 0.05,
+    n_estimators: int = 60,
+    null_scheme: str = "refit",
 ) -> dict:
+    """PO-risk permutation test.
+
+    ``null_scheme="refit"`` permutes W and refits e(X) per draw. When W is predictable
+    from X this null has |W_b - e_b| ~ 0.5 while the observed |W - e| is small, so p -> 1.
+    ``null_scheme="residual"`` permutes the cross-fitted residual W - e(X), keeping its
+    magnitude under the null.
+    """
     X = np.asarray(X, dtype=float)
     Y, W = as_1d(Y), as_1d(W).astype(int)
     n = X.shape[0]
@@ -263,12 +279,22 @@ def drperm_pvalue(
         }
     rng = np.random.default_rng(seed + 7)
     null = np.zeros(n_perm)
-    for b in range(n_perm):
-        Wb = rng.permutation(W)
-        null[b] = _po(Wb, _crossfit_e(Wb, seed + 300 + 17 * b), seed + 400 + b)
+    if null_scheme == "residual":
+        r_w = W - e_hat
+        for b in range(n_perm):
+            po_b = residual_y * rng.permutation(r_w)
+            tau_b = rf_regressor(seed + 400 + b, n_estimators=n_estimators)
+            tau_b.fit(X, po_b)
+            null[b] = float(np.mean(tau_b.predict(X) ** 2))
+    else:
+        for b in range(n_perm):
+            Wb = rng.permutation(W)
+            null[b] = _po(Wb, _crossfit_e(Wb, seed + 300 + 17 * b), seed + 400 + b)
     p = (1.0 + np.sum(null >= observed - 1e-15)) / (1 + n_perm)
     return {
         "method": "DRPerm",
+        "null_scheme": null_scheme,
+        "abs_w_resid_mean": float(np.mean(np.abs(W - e_hat))),
         "statistic": observed,
         "p_value": float(p),
         "reject": p < 0.05,
