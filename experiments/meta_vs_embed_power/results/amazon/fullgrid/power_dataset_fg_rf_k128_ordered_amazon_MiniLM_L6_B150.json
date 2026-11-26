@@ -1,0 +1,226 @@
+{
+  "dataset": "amazon_MiniLM_L6",
+  "B": 150,
+  "n_perm": 150,
+  "checkpoint_tag": "fg_rf_k128_ordered",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "null_shift",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.006666666666666667,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.584194260485651,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "null_shift",
+        "feature_set": "with_spacy",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.04,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.5837969094922738,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "null_shift",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.04666666666666667,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.5586754966887417,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.6066666666666667,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.10128035320088301,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_spacy",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.9066666666666666,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.018807947019867554,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.88,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.025916114790286972,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.006666666666666667,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.5001324503311259,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "syntax_meta",
+        "feature_set": "with_spacy",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.03333333333333333,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.4549668874172186,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "syntax_meta",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.2,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.24825607064017666,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.18666666666666668,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.2883443708609272,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_spacy",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.3,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.21439293598233994,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "train_vs_heldout",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.3,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.2060927152317881,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,226 @@
+{
+  "dataset": "amazon_qwen3-0.6b",
+  "B": 150,
+  "n_perm": 150,
+  "checkpoint_tag": "fg_rf_k128_ordered",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "null_shift",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.02666666666666667,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.5888741721854306,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "null_shift",
+        "feature_set": "with_spacy",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.04666666666666667,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.5967328918322297,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "null_shift",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.02666666666666667,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.6046357615894039,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.6333333333333333,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.09690949227373068,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_spacy",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.9266666666666666,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.016865342163355408,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.9266666666666666,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.025298013245033116,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.013333333333333334,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.4805739514348786,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "syntax_meta",
+        "feature_set": "with_spacy",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.03333333333333333,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.4569094922737307,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "syntax_meta",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.1,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.2901103752759382,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.18666666666666668,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.275849889624724,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_spacy",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.35333333333333333,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.2188962472406181,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "train_vs_heldout",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.37333333333333335,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.17770419426048564,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      }
+    ]
+  }
+}

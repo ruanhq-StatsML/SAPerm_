@@ -7,4 +7,7 @@ results/amazon/checkpoint_*
 results/amazon/archive_rf_r/*.npz
 results/amazon/archive_rf_r/*.log
 results/amazon/archive_bf16/
-__pycache__/results/amazon/archive_hashseed/
+__pycache__/
+results/amazon/archive_hashseed/
+results/amazon/fullgrid/*.npz
+results/amazon/fullgrid/*.log

@@ -1,0 +1,101 @@
+{
+  "dataset": "amazon-cross_MiniLM_L6",
+  "scenario": "domain_shift",
+  "B": 150,
+  "n_perm": 150,
+  "checkpoint_tag": "fg_rf_kfull",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "domain_shift",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.62,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.11973509933774835,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "domain_shift",
+        "feature_set": "with_meta_decorr",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.64,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.09284768211920531,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "domain_shift",
+        "feature_set": "with_spacy",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.64,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.10406181015452538,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "domain_shift",
+        "feature_set": "with_spacy_decorr",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.62,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.10697571743929359,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "domain_shift",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.5733333333333334,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.12247240618101546,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      }
+    ]
+  }
+}

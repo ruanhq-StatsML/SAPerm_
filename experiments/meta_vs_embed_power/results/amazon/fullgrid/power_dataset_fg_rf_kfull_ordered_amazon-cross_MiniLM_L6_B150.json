@@ -1,0 +1,190 @@
+{
+  "dataset": "amazon-cross_MiniLM_L6",
+  "B": 150,
+  "n_perm": 150,
+  "checkpoint_tag": "fg_rf_kfull_ordered",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "domain_shift",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.4066666666666667,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.1655187637969095,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "domain_shift",
+        "feature_set": "with_meta_decorr",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.5466666666666666,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.12335540838852097,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "domain_shift",
+        "feature_set": "with_spacy",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.49333333333333335,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.12710816777041947,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "domain_shift",
+        "feature_set": "with_spacy_decorr",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.52,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.1251655629139073,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "domain_shift",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.5333333333333333,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.1317439293598234,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "null_shift",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.013333333333333334,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.6056070640176601,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "null_shift",
+        "feature_set": "with_meta_decorr",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.02,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.6339955849889626,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "null_shift",
+        "feature_set": "with_spacy",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.013333333333333334,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.6584547461368654,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "null_shift",
+        "feature_set": "with_spacy_decorr",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.013333333333333334,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.639381898454746,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "null_shift",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.013333333333333334,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.6533774834437086,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      }
+    ]
+  }
+}

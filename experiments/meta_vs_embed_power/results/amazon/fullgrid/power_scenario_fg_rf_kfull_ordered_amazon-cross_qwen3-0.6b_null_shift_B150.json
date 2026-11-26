@@ -1,0 +1,101 @@
+{
+  "dataset": "amazon-cross_qwen3-0.6b",
+  "scenario": "null_shift",
+  "B": 150,
+  "n_perm": 150,
+  "checkpoint_tag": "fg_rf_kfull_ordered",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon-cross_qwen3-0.6b",
+        "scenario": "null_shift",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.006666666666666667,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.6575717439293599,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_qwen3-0.6b",
+        "scenario": "null_shift",
+        "feature_set": "with_meta_decorr",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.006666666666666667,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.6714790286975718,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_qwen3-0.6b",
+        "scenario": "null_shift",
+        "feature_set": "with_spacy",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.006666666666666667,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.6692715231788081,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_qwen3-0.6b",
+        "scenario": "null_shift",
+        "feature_set": "with_spacy_decorr",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.006666666666666667,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.6783664459161147,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      },
+      {
+        "dataset": "amazon-cross_qwen3-0.6b",
+        "scenario": "null_shift",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        },
+        "mean_p": {
+          "RFPerm": 0.6699779249448125,
+          "DRPerm": null,
+          "CFPerm": null,
+          "RRPerm": null
+        }
+      }
+    ]
+  }
+}

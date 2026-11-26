@@ -412,16 +412,23 @@ def load_cache_embedding(encoder: str, spec: str = "gift") -> np.ndarray:
 
 
 def load_aligned(
-    encoder: str, pca_k: int, seed: int = SEED, spec: str = "gift"
+    encoder: str, pca_k: int | None, seed: int = SEED, spec: str = "gift"
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, list[str]]:
-    """Return (Zpca, [M | S], y, names) after re-verifying keys against the frame.
+    """Return (Z_feat, [M | S], y, names) after re-verifying keys against the frame.
 
+    When ``pca_k`` is ``None`` or ``<= 0``, returns standardized full embeddings without PCA.
     spaCy columns carry a ``spacy:`` prefix; ``power.run_one_rep`` splits them off.
     """
     df, meta, emb, spacy = _verified(encoder, spec)
     M = np.hstack([meta["M"], spacy["S"]])
     names = list(meta["meta_names"]) + [f"spacy:{n}" for n in spacy["spacy_names"]]
-    return pca_embed(emb["Z"], pca_k, seed=seed), M, df["y"].to_numpy(dtype=float), names
+    if pca_k is None or pca_k <= 0:
+        from sklearn.preprocessing import StandardScaler
+
+        Zfeat = StandardScaler().fit_transform(emb["Z"])
+    else:
+        Zfeat = pca_embed(emb["Z"], pca_k, seed=seed)
+    return Zfeat, M, df["y"].to_numpy(dtype=float), names
 
 
 def main(argv: list[str] | None = None) -> int:

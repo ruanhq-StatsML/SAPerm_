@@ -148,17 +148,18 @@ def run_one_rep(
     Me, Mn = Mfe[:, keep], Mfn[:, keep]
     meta_names = [meta_names[i] for i in keep]
     n_meta = len(keep)
+    emb_dim = Xe_e.shape[1]
     if feature_set == "without_meta":
         Xe, Xn = Xe_e, Xn_e
         test_idx = np.arange(max(0, Xe.shape[1] - min(8, n_meta)), Xe.shape[1])
     elif feature_set == "with_meta":
         Xe, Xn = np.hstack([Xe_e, Me]), np.hstack([Xn_e, Mn])
-        test_idx = np.arange(pca_k, pca_k + n_meta)
+        test_idx = np.arange(emb_dim, emb_dim + n_meta)
     elif feature_set == "with_spacy":
         if sp.size == 0:
             raise ValueError("with_spacy requested but no spacy: columns were loaded")
         Xe, Xn = np.hstack([Xe_e, Mfe[:, sp]]), np.hstack([Xn_e, Mfn[:, sp]])
-        test_idx = np.arange(pca_k, pca_k + sp.size)
+        test_idx = np.arange(emb_dim, emb_dim + sp.size)
     elif feature_set == "meta_only":
         Xe, Xn = Me, Mn
         test_idx = np.arange(n_meta)
@@ -171,7 +172,41 @@ def run_one_rep(
         if not drop or cols.size == 0:
             raise ValueError(f"{feature_set}: empty drop list or no kept columns")
         Xe, Xn = np.hstack([Xe_e, Mfe[:, cols]]), np.hstack([Xn_e, Mfn[:, cols]])
-        test_idx = np.arange(pca_k, pca_k + cols.size)
+        test_idx = np.arange(emb_dim, emb_dim + cols.size)
+    elif feature_set in ("with_vader_all", "with_vader4", "with_m_no_vader"):
+        vcols = META_BLOCK_PATTERNS["sentiment"] if feature_set != "with_vader4" else (
+            "vader_neg", "vader_neu", "vader_pos", "vader_compound"
+        )
+        vset = set(vcols)
+        if feature_set == "with_m_no_vader":
+            cols = np.array([i for i, n in enumerate(all_names) if not n.startswith("spacy:") and n not in vset], dtype=int)
+        else:
+            cols = np.array([i for i, n in enumerate(all_names) if n in vset], dtype=int)
+        if cols.size == 0:
+            raise ValueError(f"{feature_set}: no matched columns")
+        Xe, Xn = np.hstack([Xe_e, Mfe[:, cols]]), np.hstack([Xn_e, Mfn[:, cols]])
+        test_idx = np.arange(emb_dim, emb_dim + cols.size)
+    elif feature_set.startswith("with_col_"):
+        target = feature_set[len("with_col_"):]
+        if target not in all_names:
+            raise ValueError(f"{feature_set}: unknown column {target!r}")
+        cols = np.array([all_names.index(target)], dtype=int)
+        Xe, Xn = np.hstack([Xe_e, Mfe[:, cols]]), np.hstack([Xn_e, Mfn[:, cols]])
+        test_idx = np.arange(emb_dim, emb_dim + 1)
+    elif feature_set.startswith("with_m_loo_"):
+        target = feature_set[len("with_m_loo_"):]
+        cols = np.array([i for i, n in enumerate(all_names) if not n.startswith("spacy:") and n != target], dtype=int)
+        if cols.size == n_meta:
+            raise ValueError(f"{feature_set}: unknown M column {target!r}")
+        Xe, Xn = np.hstack([Xe_e, Mfe[:, cols]]), np.hstack([Xn_e, Mfn[:, cols]])
+        test_idx = np.arange(emb_dim, emb_dim + cols.size)
+    elif feature_set.startswith("with_s_loo_"):
+        target = "spacy:" + feature_set[len("with_s_loo_"):]
+        cols = np.array([i for i, n in enumerate(all_names) if n.startswith("spacy:") and n != target], dtype=int)
+        if cols.size == sp.size:
+            raise ValueError(f"{feature_set}: unknown S column {target!r}")
+        Xe, Xn = np.hstack([Xe_e, Mfe[:, cols]]), np.hstack([Xn_e, Mfn[:, cols]])
+        test_idx = np.arange(emb_dim, emb_dim + cols.size)
     else:
         raise ValueError(feature_set)
 
