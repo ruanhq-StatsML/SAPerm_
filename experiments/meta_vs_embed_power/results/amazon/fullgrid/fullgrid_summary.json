@@ -2309,7 +2309,18 @@
       }
     }
   },
-  "b50": {},
+  "b50": {
+    "amazon_MiniLM_L6|full|sentiment_meta|without_meta|DRPerm": {
+      "n_reps": 24,
+      "power": 1.0,
+      "mean_p": 0.006622516556291391
+    },
+    "amazon_MiniLM_L6|full|sentiment_meta|without_meta|RRPerm": {
+      "n_reps": 24,
+      "power": 1.0,
+      "mean_p": 0.006622516556291391
+    }
+  },
   "diagnostics": {
     "R_windows": 50,
     "seed": 2026,

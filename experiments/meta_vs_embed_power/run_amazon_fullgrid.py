@@ -30,7 +30,7 @@ from experiments.meta_vs_embed_power.amazon_extract import (
     load_aligned,
 )
 from experiments.meta_vs_embed_power.decorr_features import dropped
-from experiments.meta_vs_embed_power.pipeline import run_power
+from experiments.meta_vs_embed_power.pipeline import load_shard_rows, parse_shard, run_power
 from experiments.meta_vs_embed_power.power import make_windows
 from experiments.meta_vs_embed_power.stats_utils import make_folds, rf_classifier
 
@@ -177,6 +177,7 @@ def run_stage(
     scenarios: list[str] | None,
     arms: list[str] | None,
     B: int,
+    shard: tuple[int, int] | None = None,
 ) -> None:
     FULLGRID_DIR.mkdir(parents=True, exist_ok=True)
     os.environ["RF_PERM_BACKEND"] = "python"
@@ -211,7 +212,25 @@ def run_stage(
             out_dir=FULLGRID_DIR,
             embed_model=ds.split("_", 1)[1],
             checkpoint_tag=tag,
+            shard=shard,
         )
+
+
+def _rows_by_tag_ds(tag: str) -> dict[str, list[dict]]:
+    """Rows of one checkpoint tag per dataset: npz checkpoints (unsharded runs) plus every
+    ``fullgrid_shard*.jsonl``, deduplicated by (dataset, scenario, arm, b)."""
+    out: dict[str, dict[tuple, dict]] = defaultdict(dict)
+    for ck in sorted(FULLGRID_DIR.glob(f"checkpoint_{tag}_*.npz")):
+        ds = ck.stem[len(f"checkpoint_{tag}_"):]
+        if not ds.startswith(("amazon_", "amazon-cross_")):
+            continue
+        for r in np.load(ck, allow_pickle=True)["rows"]:
+            out[ds].setdefault((r["scenario"], r["feature_set"], int(r["b"])), r)
+    for jl in sorted(FULLGRID_DIR.glob("fullgrid_shard*.jsonl")):
+        for r in load_shard_rows(jl):
+            if r.get("tag") == tag and "b" in r:
+                out[r["dataset"]].setdefault((r["scenario"], r["feature_set"], int(r["b"])), r)
+    return {ds: list(v.values()) for ds, v in out.items()}
 
 
 def _extract_rf_from_ckpt(ckpt_path: Path, alpha: float = 0.05) -> dict[tuple[str, str, str], dict]:
@@ -219,6 +238,11 @@ def _extract_rf_from_ckpt(ckpt_path: Path, alpha: float = 0.05) -> dict[tuple[st
     if not ckpt_path.is_file():
         return out
     rows = np.load(ckpt_path, allow_pickle=True)["rows"]
+    return _extract_rf_from_rows(rows, alpha)
+
+
+def _extract_rf_from_rows(rows: Any, alpha: float = 0.05) -> dict[tuple[str, str, str], dict]:
+    out: dict[tuple[str, str, str], dict] = {}
     bucket = defaultdict(list)
     for r in rows:
         rf = r["RFPerm"]
@@ -236,11 +260,8 @@ def _extract_rf_from_ckpt(ckpt_path: Path, alpha: float = 0.05) -> dict[tuple[st
     return out
 
 
-def _extract_tests_from_ckpt(ckpt_path: Path, alpha: float = 0.05) -> dict[tuple[str, str, str, str], dict]:
+def _extract_tests_from_rows(rows: Any, alpha: float = 0.05) -> dict[tuple[str, str, str, str], dict]:
     out: dict[tuple[str, str, str, str], dict] = {}
-    if not ckpt_path.is_file():
-        return out
-    rows = np.load(ckpt_path, allow_pickle=True)["rows"]
     bucket = defaultdict(list)
     for r in rows:
         for t in ("RFPerm", "DRPerm", "RRPerm", "CFPerm"):
@@ -283,19 +304,16 @@ def summarize_all() -> dict[str, Any]:
     for k_label in ("64", "128", "full"):
         for split, suf in (("random", ""), ("ordered", "_ordered")):
             tag = f"fg_rf_k{k_label}{suf}"
-            for ck in sorted(FULLGRID_DIR.glob(f"checkpoint_{tag}_*.npz")):
-                ds = ck.stem[len(f"checkpoint_{tag}_"):]
-                if not ds.startswith(("amazon_", "amazon-cross_")):
-                    continue
-                for (d, scen, arm), val in _extract_rf_from_ckpt(ck).items():
+            for ds, rws in _rows_by_tag_ds(tag).items():
+                for (d, scen, arm), val in _extract_rf_from_rows(rws).items():
                     rf_data[split][f"{d}|{k_label}|{scen}|{arm}"] = val
 
     # 3. Fullgrid DR/RR/CF checkpoints
     b50_data: dict[str, dict] = {}
     for k_label in K_VALUES:
         for tag in (f"fg_drrr_k{k_label}", f"fg_cf_k{k_label}", f"fg_dr_k{k_label}", f"fg_rr_k{k_label}"):
-            for ck in sorted(FULLGRID_DIR.glob(f"checkpoint_{tag}_*.npz")):
-                for (d, scen, arm, t), val in _extract_tests_from_ckpt(ck).items():
+            for ds, rws in _rows_by_tag_ds(tag).items():
+                for (d, scen, arm, t), val in _extract_tests_from_rows(rws).items():
                     b50_data[f"{d}|{k_label}|{scen}|{arm}|{t}"] = val
 
     summary = {"rf_b150": rf_data, "b50": b50_data, "diagnostics": diag}
@@ -412,6 +430,12 @@ def main() -> int:
     ap.add_argument("--arms", nargs="*", default=None)
     ap.add_argument("--b", type=int, default=50)
     ap.add_argument("--summarize", action="store_true")
+    ap.add_argument(
+        "--shard",
+        default=os.environ.get("POWER_SHARD"),
+        help="i/N: run only jobs with crc32('dataset|scenario|arm|b') %% N == i; "
+        "appends to fullgrid_shard{i}.jsonl and skips keys already there",
+    )
     args = ap.parse_args()
 
     n_jobs = int(os.environ.get("POWER_N_JOBS", "4"))
@@ -429,6 +453,7 @@ def main() -> int:
             scenarios=args.scenarios,
             arms=args.arms,
             B=args.b,
+            shard=parse_shard(args.shard),
         )
     elif args.summarize:
         summarize_all()

@@ -15,6 +15,7 @@ import json
 import os
 import sys
 import time
+import zlib
 from pathlib import Path
 from typing import Any
 
@@ -79,6 +80,54 @@ def run_anisotropy(n_max: int, seed: int, out_dir: Path, embed_model: str) -> di
 
 def _job_key(dataset: str, scenario: str, feature_set: str, b: int) -> tuple[str, str, str, int]:
     return (dataset, scenario, feature_set, b)
+
+
+def parse_shard(spec: str | None) -> tuple[int, int] | None:
+    if not spec:
+        return None
+    i, n = (int(x) for x in spec.split("/"))
+    if n < 1 or not 0 <= i < n:
+        raise ValueError(f"bad shard {spec!r}: need 0 <= i < N")
+    return i, n
+
+
+def shard_of(key: tuple[str, str, str, int], n: int) -> int:
+    """Stable job -> shard map; ``str`` hash() is salted per process so crc32 is used."""
+    return zlib.crc32("|".join(map(str, key)).encode()) % n
+
+
+def shard_path(out_dir: Path, i: int) -> Path:
+    return out_dir / f"fullgrid_shard{i}.jsonl"
+
+
+def _json_default(o: Any) -> Any:
+    if isinstance(o, np.generic):
+        return o.item()
+    if isinstance(o, np.ndarray):
+        return o.tolist()
+    raise TypeError(type(o))
+
+
+def load_shard_rows(path: Path) -> list[dict[str, Any]]:
+    if not path.is_file():
+        return []
+    out = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line:
+            try:
+                out.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return out
+
+
+def _append_shard_rows(path: Path, tag: str, rows: list[dict[str, Any]]) -> None:
+    with path.open("a", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps({**r, "tag": tag}, default=_json_default) + "\n")
+        f.flush()
+        os.fsync(f.fileno())
 
 
 def _load_checkpoint(path: Path) -> list[dict[str, Any]]:
@@ -152,6 +201,7 @@ def _run_job_batches(
     ds: str,
     progress_label: str,
     total: int,
+    sink: Any = None,
 ) -> None:
     from experiments.meta_vs_embed_power.worker import run_job
 
@@ -166,8 +216,11 @@ def _run_job_batches(
             )
             rep["b"] = b
             ds_rows.append(rep)
+            if sink is not None:
+                sink([rep])
             if i % 4 == 0 or i == len(jobs):
-                np.savez_compressed(ckpt_path, rows=np.array(ds_rows, dtype=object))
+                if sink is None:
+                    np.savez_compressed(ckpt_path, rows=np.array(ds_rows, dtype=object))
                 print(f"[{tag} {ds} {progress_label} {len(ds_rows)}/{total}]", file=sys.stderr, flush=True)
     else:
         from joblib import Parallel, delayed, parallel_backend
@@ -185,10 +238,15 @@ def _run_job_batches(
                     )
                     for d, sc, fs, b in batch
                 )
+                new_rows = []
                 for (d, sc, fs, b), rep in zip(batch, batch_out):
                     rep["b"] = b
                     ds_rows.append(rep)
-                np.savez_compressed(ckpt_path, rows=np.array(ds_rows, dtype=object))
+                    new_rows.append(rep)
+                if sink is not None:
+                    sink(new_rows)
+                else:
+                    np.savez_compressed(ckpt_path, rows=np.array(ds_rows, dtype=object))
                 print(f"[{tag} {ds} {progress_label} {len(ds_rows)}/{total}]", file=sys.stderr, flush=True)
 
 
@@ -208,8 +266,11 @@ def run_power(
     out_dir: Path,
     embed_model: str,
     checkpoint_tag: str = "",
+    shard: tuple[int, int] | None = None,
 ) -> dict[str, Any]:
     t0 = time.time()
+    if shard is None:
+        shard = parse_shard(os.environ.get("POWER_SHARD"))
     cache: dict[str, tuple] = {}
     for ds in datasets:
         cache[ds] = prepare_dataset(
@@ -227,6 +288,15 @@ def run_power(
         Zpca, M, y, meta_names = cache[ds]
         ckpt_path = out_dir / f"checkpoint_{tag}_{ds}.npz"
         ds_rows = [r for r in _load_checkpoint(ckpt_path) if r.get("dataset") == ds]
+        sink = None
+        if shard is not None:
+            s_i, s_n = shard
+            jl = shard_path(out_dir, s_i)
+            ds_rows = [
+                r for r in load_shard_rows(jl)
+                if r.get("tag") == tag and r.get("dataset") == ds and "b" in r
+            ]
+            sink = lambda rows, _jl=jl, _tag=tag: _append_shard_rows(_jl, _tag, rows)
         done = {
             _job_key(r["dataset"], r["scenario"], r["feature_set"], int(r["b"]))
             for r in ds_rows
@@ -240,6 +310,7 @@ def run_power(
                 for fs in feature_sets
                 for b in range(B)
                 if _job_key(ds, scenario, fs, b) not in done
+                and (shard is None or shard_of(_job_key(ds, scenario, fs, b), shard[1]) == shard[0])
             ]
             _run_job_batches(
                 jobs,
@@ -259,7 +330,10 @@ def run_power(
                 ds=ds,
                 progress_label=f"{scenario}",
                 total=total,
+                sink=sink,
             )
+            if shard is not None:
+                continue
             for r in jobs:
                 done.add(_job_key(ds, r[1], r[2], r[3]))
             scen_rows = [r for r in ds_rows if r.get("scenario") == scenario]
@@ -269,6 +343,9 @@ def run_power(
                 )
 
         rows.extend(ds_rows)
+        if shard is not None:
+            print(f"[shard {shard[0]}/{shard[1]} done dataset {tag} {ds}]", file=sys.stderr, flush=True)
+            continue
         _write_dataset_artifact(out_dir, tag, ds, B=B, n_perm=n_perm, ds_rows=ds_rows)
         partial_summary = summarize(
             [r for r in rows if r["dataset"] in datasets[: datasets.index(ds) + 1]], C.METHODS
