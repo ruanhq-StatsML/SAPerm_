@@ -81,7 +81,7 @@ def amazon_table(payload: dict) -> tuple[str, str]:
                 v = bys[e].get(("null_shift", fs), {}).get(t)
                 if v is not None:
                     nulls.setdefault(tl, []).append(v)
-    null_line = "; ".join(f"{tl} ${min(v):.2f}$--${max(v):.2f}$" for tl, v in nulls.items()) or "pending"
+    null_line = "; ".join(f"{tl} ${min(v):.2f}$--${max(v):.2f}$" for tl, v in nulls.items())
     head = " & ".join(f"\\multicolumn{{4}}{{c}}{{{lab}}}" for _, lab in ENCODERS)
     cmid = "\\cmidrule(lr){3-6}\\cmidrule(lr){7-10}"
     sub = " & ".join(["w/o & with & $\\Delta$ & meta"] * len(ENCODERS))
@@ -143,6 +143,45 @@ def shift_table() -> str:
 Shift & $\\bar y$ (a/b) & KS sig. & $\\overline{{|\\mathrm{{SMD}}|}}$ & char\\_len median & VADER median & AUC$_M$ & AUC$_{{\\mathrm{{MiniLM}}}}$ & AUC$_{{\\mathrm{{Qwen}}}}$ \\\\
 \\midrule
 {chr(10).join(rows)}
+\\bottomrule
+\\end{{tabular}}"""
+
+
+def absorption_table() -> str:
+    path = OUT_DIR / "absorption_evidence_amazon.json"
+    if not path.is_file():
+        return "% absorption evidence not computed"
+    ev = json.loads(path.read_text(encoding="utf-8"))
+    rows = []
+    for scen, label in SCEN_LABEL.items():
+        w = ev["windows"].get(scen)
+        if not w:
+            continue
+        cells = []
+        for s in ("Z", "M", "S"):
+            cells += [f"${w[s]['W_auc']:.2f}$", f"${w[s]['W_r2']:.2f}$", f"${w[s]['e_extreme_share']:.2f}$"]
+        cells += [f"${w['Z+M']['var_resid_ratio_vs_Z']:.2f}$", f"${w['Z+S']['var_resid_ratio_vs_Z']:.2f}$"]
+        rows.append(f"{label} & " + " & ".join(cells) + " \\\\")
+    yrows = []
+    for spec, label in (("gift", "Gift (time / sentiment / syntax)"), ("cross", "Gift $\\cup$ Magazine (domain)")):
+        a = ev["y"][spec]["y_auc"]
+        yrows.append(f"{label} & " + " & ".join(f"${a[s]:.2f}$" for s in ("Z", "M", "S", "Z+M", "Z+S")) + " \\\\")
+    return f"""\\begin{{tabular}}{{lccccccccccc}}
+\\toprule
+ & \\multicolumn{{3}}{{c}}{{$Z_{{\\mathrm{{pca}}}}$}} & \\multicolumn{{3}}{{c}}{{$M$ (VADER+spaCy)}} & \\multicolumn{{3}}{{c}}{{$S$ (spaCy only)}} & \\multicolumn{{2}}{{c}}{{$\\mathrm{{Var}}(W-\\hat e)$ ratio}} \\\\
+\\cmidrule(lr){{2-4}}\\cmidrule(lr){{5-7}}\\cmidrule(lr){{8-10}}\\cmidrule(lr){{11-12}}
+Shift & AUC$_W$ & $R^2_W$ & ext. & AUC$_W$ & $R^2_W$ & ext. & AUC$_W$ & $R^2_W$ & ext. & $[Z,M]/Z$ & $[Z,S]/Z$ \\\\
+\\midrule
+{chr(10).join(rows)}
+\\bottomrule
+\\end{{tabular}}
+
+\\vspace{{0.6em}}
+\\begin{{tabular}}{{lccccc}}
+\\toprule
+$y$ CV AUC & $Z_{{\\mathrm{{pca}}}}$ & $M$ & $S$ & $[Z,M]$ & $[Z,S]$ \\\\
+\\midrule
+{chr(10).join(yrows)}
 \\bottomrule
 \\end{{tabular}}"""
 
@@ -221,8 +260,8 @@ Every artifact is keyed by row id and text SHA-1; alignment passed on both frame
 \\caption{{Amazon power by arm ($B{{=}}{B}$). $\\Delta=$ with $-$ w/o.
 Sentiment / syntax windows select the tails of a meta coordinate (VADER compound,
 verb/noun ratio); time compares early vs late Gift Cards reviews; domain compares
-Gift Cards with Magazine Subscriptions.
-Random split (Type-I) rejection rates over arms and encoders: {null_line}.}}
+Gift Cards with Magazine Subscriptions.{(' Random split (Type-I) rejection rates over arms and encoders: ' + null_line + '.') if null_line else ''}
+``--'' $=$ not run.}}
 \\label{{tab:amazon_power}}
 \\resizebox{{\\textwidth}}{{!}}{{%
 {t1}%
@@ -238,6 +277,22 @@ left in the outcome residual.}}
 \\label{{tab:amazon_dr_absorb}}
 {dr_absorb_table()}
 \\end{{table}}
+
+\\begin{{table*}}[ht]
+\\centering
+\\caption{{Absorption evidence (MiniLM-L6; same windows and cross-fitted RF propensity as DRPerm,
+10 windows per shift, $n_{{\\mathrm{{doc}}}}{{=}}120$ per side).
+AUC$_W$ / $R^2_W=1-\\mathrm{{Brier}}/\\mathrm{{Var}}(W)$: how well the feature set predicts the window label $W$;
+ext.\\ $=$ share of raw $\\hat e(X)<0.02$ or $>0.98$ (positivity); ratio $=$ variance of the DR residual
+$W-\\hat e$ (clipped at $0.05$) relative to $Z_{{\\mathrm{{pca}}}}$ alone.
+Bottom: 5-fold CV AUC for $y$ on the full frame.}}
+\\label{{tab:amazon_absorption}}
+\\resizebox{{\\textwidth}}{{!}}{{%
+\\begin{{minipage}}{{1.25\\textwidth}}\\centering
+{absorption_table()}
+\\end{{minipage}}%
+}}
+\\end{{table*}}
 
 \\begin{{table*}}[ht]
 \\centering
