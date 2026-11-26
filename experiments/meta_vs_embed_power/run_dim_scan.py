@@ -169,12 +169,13 @@ def main() -> None:
     p.add_argument("--b0", type=int, default=0)
     p.add_argument("--b1", type=int, default=50)
     p.add_argument("--n-jobs", type=int, default=4)
+    p.add_argument("--log", type=Path, default=LOG, help="jsonl to append to (one file per machine)")
     a = p.parse_args()
 
     load_data(a.emb)
     done = set()
-    if LOG.is_file():
-        done = {json.loads(line)["key"] for line in LOG.open() if line.strip()}
+    if a.log.is_file():
+        done = {json.loads(line)["key"] for line in a.log.open() if line.strip()}
     jobs = [
         (kind, k, a.mtry, sc, b, a.tests, a.emb)
         for b in range(a.b0, a.b1)
@@ -186,7 +187,7 @@ def main() -> None:
     print(f"[dim_scan] {a.emb} {a.tests} ks={a.ks} kinds={a.kinds} mtry={a.mtry}: "
           f"{len(jobs)} jobs ({len(done)} rows on disk)", flush=True)
     t0 = time.time()
-    with LOG.open("a") as fh:
+    with a.log.open("a") as fh:
         for i, row in enumerate(
             Parallel(n_jobs=a.n_jobs, backend="loky", return_as="generator_unordered")(
                 delayed(run_job)(*j) for j in jobs

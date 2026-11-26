@@ -20,12 +20,14 @@ TESTS = {"rf": ("RF_random", "RF_ordered"), "drc": ("DR", "RR", "CF")}
 LABEL = {"without": "without_meta", "with": "with_meta", "spacy": "with_spacy", "with_decorr": "with_meta_decorr"}
 
 
-def load(path: Path = OUT / "dim_scan_gender.jsonl") -> list[dict]:
+def load() -> list[dict]:
+    """Merge every ``dim_scan_gender*.jsonl`` (one per machine); rows are deduplicated by ``key``."""
     rows = {}
-    for line in path.open():
-        if line.strip():
-            r = json.loads(line)
-            rows[r["key"]] = r
+    for path in sorted(OUT.glob("dim_scan_gender*.jsonl")):
+        for line in path.open():
+            if line.strip():
+                r = json.loads(line)
+                rows[r["key"]] = r
     return list(rows.values())
 
 
