@@ -16,14 +16,16 @@ B = 50
 N_PERM = 150
 DATASET = "gender"
 SCENARIO_ORDER = ["sentiment_meta", "syntax_meta", "train_vs_heldout", "null_shift"]
-ARMS = list(C.FEATURE_SETS)
+ARMS = os.environ.get("POWER_ARMS", ",".join(C.FEATURE_SETS)).split(",")
+ALL_ARMS = list(C.FEATURE_SETS)
 METHODS = ("RFPerm", "DRPerm", "RRPerm", "CFPerm")
-OUT_JSON = OUT / "power_gender_B50.json"
+OUT_JSON = OUT / os.environ.get("POWER_OUT", "power_gender_B50.json")
+CKPT_PREFIX = os.environ.get("POWER_CKPT", "gender_b50")
 
 
 def _table(summary: dict) -> str:
     lines = ["| scenario | arm | B | RF | DR | RR | CF |", "|---|---|---|---|---|---|---|"]
-    for t in sorted(summary["table"], key=lambda x: (SCENARIO_ORDER.index(x["scenario"]), ARMS.index(x["feature_set"]))):
+    for t in sorted(summary["table"], key=lambda x: (SCENARIO_ORDER.index(x["scenario"]), ALL_ARMS.index(x["feature_set"]))):
         p = t["power"]
         lines.append(
             f"| {t['scenario']} | {t['feature_set']} | {t['B']} | "
@@ -47,7 +49,7 @@ def main() -> int:
             B=B, n_perm=N_PERM, n_doc=C.N_DOC, pca_k=C.PCA_K, n_estimators=C.RF_N_ESTIMATORS,
             n_max=C.ROW_CAP, seed=2026, datasets=[DATASET], scenarios=[sc],
             feature_sets=ARMS, n_jobs=n_jobs, out_dir=OUT, embed_model="MiniLM_L6",
-            checkpoint_tag=f"gender_b50_{sc}",
+            checkpoint_tag=f"{CKPT_PREFIX}_{sc}",
         )
         done_rows[sc] = res["summary"]["table"]
         merged = {"table": [e for s in done_rows.values() for e in s]}
