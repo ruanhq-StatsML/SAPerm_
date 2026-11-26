@@ -26,6 +26,8 @@ def _load(tag: str) -> dict[str, dict]:
     out: dict[str, dict] = {}
     for ck in sorted(OUT_DIR.glob(f"checkpoint_{tag}_*.npz")):
         ds = ck.stem[len(f"checkpoint_{tag}_"):]
+        if not ds.startswith(("amazon_", "amazon-cross_")):
+            continue
         bucket = defaultdict(list)
         for r in np.load(ck, allow_pickle=True)["rows"]:
             rf = r["RFPerm"]
