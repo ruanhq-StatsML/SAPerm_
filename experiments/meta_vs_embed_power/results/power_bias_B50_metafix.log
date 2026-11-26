@@ -94,3 +94,76 @@ Wrote /agent/repos/SAPerm/experiments/meta_vs_embed_power/results/power_meta_emb
 [METAFIX SCENARIO DONE syntax_meta 2026-11-26T05:40:22+00:00]
 [bias_B50_mfix bias 104/50]
 [bias_B50_mfix bias 108/50]
+[bias_B50_mfix bias 112/50]
+[bias_B50_mfix bias 116/50]
+[bias_B50_mfix bias 120/50]
+[bias_B50_mfix bias 124/50]
+[bias_B50_mfix bias 128/50]
+[bias_B50_mfix bias 132/50]
+[bias_B50_mfix bias 136/50]
+[bias_B50_mfix bias 140/50]
+[bias_B50_mfix bias 144/50]
+[bias_B50_mfix bias 148/50]
+[bias_B50_mfix bias 150/50]
+[done dataset bias_B50_mfix bias]
+{
+  "table": [
+    {
+      "dataset": "bias",
+      "scenario": "sentiment_meta",
+      "feature_set": "meta_only",
+      "B": 50,
+      "power": {
+        "RFPerm": 0.0,
+        "DRPerm": 0.06,
+        "CFPerm": 0.14,
+        "RRPerm": 0.14
+      },
+      "mean_p": {
+        "RFPerm": 0.7203973509933774,
+        "DRPerm": 0.36913907284768216,
+        "CFPerm": 0.40887417218543043,
+        "RRPerm": 0.5295364238410596
+      }
+    },
+    {
+      "dataset": "bias",
+      "scenario": "syntax_meta",
+      "feature_set": "meta_only",
+      "B": 50,
+      "power": {
+        "RFPerm": 0.14,
+        "DRPerm": 0.04,
+        "CFPerm": 0.0,
+        "RRPerm": 0.04
+      },
+      "mean_p": {
+        "RFPerm": 0.3153642384105961,
+        "DRPerm": 0.37589403973509933,
+        "CFPerm": 0.6225165562913908,
+        "RRPerm": 0.6753642384105959
+      }
+    },
+    {
+      "dataset": "bias",
+      "scenario": "train_vs_heldout",
+      "feature_set": "meta_only",
+      "B": 50,
+      "power": {
+        "RFPerm": 0.16,
+        "DRPerm": 0.0,
+        "CFPerm": 0.02,
+        "RRPerm": 0.02
+      },
+      "mean_p": {
+        "RFPerm": 0.36887417218543045,
+        "DRPerm": 0.626887417218543,
+        "CFPerm": 0.5581456953642384,
+        "RRPerm": 0.5749668874172186
+      }
+    }
+  ]
+}
+Wrote /agent/repos/SAPerm/experiments/meta_vs_embed_power/results/power_meta_embed_full_bias_B50_mfix.json
+[METAFIX SCENARIO DONE train_vs_heldout 2026-11-26T06:36:05+00:00]
+[METAFIX ALL DONE 2026-11-26T06:36:05+00:00]

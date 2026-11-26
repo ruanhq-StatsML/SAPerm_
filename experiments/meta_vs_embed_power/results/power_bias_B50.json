@@ -3,6 +3,7 @@
   "B_target": 50,
   "n_perm": 150,
   "outcome_model": "RandomForest",
+  "note": "DR column = residual-null rerun (power_bias_B50_dr_residual.json); old refit-null DR void. meta_only CFPerm = LOCO per meta sub-block, Bonferroni min-p (commit d2f3e00); old numbers in prefix_fix/",
   "rows_count": 450,
   "summary": {
     "table": [
@@ -12,16 +13,16 @@
         "feature_set": "meta_only",
         "B": 50,
         "power": {
-          "RFPerm": 0.02,
-          "DRPerm": 0.0,
-          "RRPerm": 0.16,
-          "CFPerm": 0.0
+          "RFPerm": 0.0,
+          "DRPerm": 0.08,
+          "RRPerm": 0.14,
+          "CFPerm": 0.14
         },
         "mean_p": {
-          "RFPerm": 0.6572185430463577,
-          "DRPerm": 1.0,
-          "RRPerm": 0.4663576158940398,
-          "CFPerm": 1.0
+          "RFPerm": 0.7203973509933774,
+          "DRPerm": 0.40675496688741725,
+          "RRPerm": 0.5295364238410596,
+          "CFPerm": 0.40887417218543043
         }
       },
       {
@@ -31,13 +32,13 @@
         "B": 50,
         "power": {
           "RFPerm": 0.0,
-          "DRPerm": 0.0,
+          "DRPerm": 0.12,
           "RRPerm": 0.16,
           "CFPerm": 0.36
         },
         "mean_p": {
           "RFPerm": 0.7486092715231788,
-          "DRPerm": 1.0,
+          "DRPerm": 0.42013245033112573,
           "RRPerm": 0.6199999999999999,
           "CFPerm": 0.2170860927152318
         }
@@ -49,13 +50,13 @@
         "B": 50,
         "power": {
           "RFPerm": 0.0,
-          "DRPerm": 0.0,
+          "DRPerm": 0.02,
           "RRPerm": 0.3,
           "CFPerm": 0.24
         },
         "mean_p": {
           "RFPerm": 0.8415894039735099,
-          "DRPerm": 0.703046357615894,
+          "DRPerm": 0.6116556291390728,
           "RRPerm": 0.22662251655629137,
           "CFPerm": 0.45284768211920523
         }
@@ -66,16 +67,16 @@
         "feature_set": "meta_only",
         "B": 50,
         "power": {
-          "RFPerm": 0.02,
-          "DRPerm": 0.0,
-          "RRPerm": 0.02,
+          "RFPerm": 0.14,
+          "DRPerm": 0.02,
+          "RRPerm": 0.04,
           "CFPerm": 0.0
         },
         "mean_p": {
-          "RFPerm": 0.4233112582781457,
-          "DRPerm": 1.0,
-          "RRPerm": 0.6950993377483443,
-          "CFPerm": 1.0
+          "RFPerm": 0.3153642384105961,
+          "DRPerm": 0.3862251655629139,
+          "RRPerm": 0.6753642384105959,
+          "CFPerm": 0.6225165562913908
         }
       },
       {
@@ -85,13 +86,13 @@
         "B": 50,
         "power": {
           "RFPerm": 0.22,
-          "DRPerm": 0.0,
+          "DRPerm": 0.04,
           "RRPerm": 0.06,
           "CFPerm": 0.14
         },
         "mean_p": {
           "RFPerm": 0.3278145695364239,
-          "DRPerm": 1.0,
+          "DRPerm": 0.3283443708609271,
           "RRPerm": 0.6059602649006622,
           "CFPerm": 0.3994701986754967
         }
@@ -103,13 +104,13 @@
         "B": 50,
         "power": {
           "RFPerm": 0.18,
-          "DRPerm": 0.0,
+          "DRPerm": 0.12,
           "RRPerm": 0.12,
           "CFPerm": 0.02
         },
         "mean_p": {
           "RFPerm": 0.2992052980132451,
-          "DRPerm": 0.5090066225165563,
+          "DRPerm": 0.5131125827814569,
           "RRPerm": 0.403046357615894,
           "CFPerm": 0.5415894039735099
         }
@@ -120,16 +121,16 @@
         "feature_set": "meta_only",
         "B": 50,
         "power": {
-          "RFPerm": 0.14,
-          "DRPerm": 0.06,
+          "RFPerm": 0.16,
+          "DRPerm": 0.0,
           "RRPerm": 0.02,
-          "CFPerm": 0.0
+          "CFPerm": 0.02
         },
         "mean_p": {
-          "RFPerm": 0.3402649006622516,
-          "DRPerm": 0.45695364238410596,
-          "RRPerm": 0.7129801324503311,
-          "CFPerm": 1.0
+          "RFPerm": 0.36887417218543045,
+          "DRPerm": 0.5405298013245032,
+          "RRPerm": 0.5749668874172186,
+          "CFPerm": 0.5581456953642384
         }
       },
       {
@@ -145,7 +146,7 @@
         },
         "mean_p": {
           "RFPerm": 0.38609271523178806,
-          "DRPerm": 0.4667549668874173,
+          "DRPerm": 0.5658278145695363,
           "RRPerm": 0.5701986754966888,
           "CFPerm": 0.52
         }
@@ -157,13 +158,13 @@
         "B": 50,
         "power": {
           "RFPerm": 0.1,
-          "DRPerm": 0.04,
+          "DRPerm": 0.06,
           "RRPerm": 0.04,
           "CFPerm": 0.0
         },
         "mean_p": {
           "RFPerm": 0.4458278145695364,
-          "DRPerm": 0.491523178807947,
+          "DRPerm": 0.5462251655629139,
           "RRPerm": 0.4797350993377483,
           "CFPerm": 0.46940397350993385
         }

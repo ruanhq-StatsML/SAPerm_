@@ -8,3 +8,4 @@
 | syntax_meta | meta_only | 50 | 0.14 | 0.02 | 0.04 | 0.00 |
 | train_vs_heldout | without_meta | 50 | 0.10 | 0.06 | 0.04 | 0.00 |
 | train_vs_heldout | with_meta | 50 | 0.10 | 0.06 | 0.06 | 0.04 |
+| train_vs_heldout | meta_only | 50 | 0.16 | 0.00 | 0.02 | 0.02 |

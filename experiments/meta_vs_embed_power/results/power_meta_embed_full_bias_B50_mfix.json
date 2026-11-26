@@ -1,0 +1,101 @@
+{
+  "config": {
+    "B": 50,
+    "n_perm": 150,
+    "n_doc": 120,
+    "pca_k": 24,
+    "n_estimators": 150,
+    "n_max": 1000,
+    "row_cap": 1000,
+    "embed_batch_size": 32,
+    "seed": 2026,
+    "datasets": [
+      "bias"
+    ],
+    "scenarios": [
+      "train_vs_heldout"
+    ],
+    "outcome_model": "RandomForest",
+    "meta_source": "utils.text_meta",
+    "contrast": "without_meta=PCA(Z); with_meta=hstack(Z,M); meta_only=M",
+    "feature_sets": [
+      "meta_only"
+    ],
+    "methods": [
+      "RFPerm",
+      "DRPerm",
+      "CFPerm",
+      "RRPerm"
+    ],
+    "elapsed_sec": 3339.8832931518555
+  },
+  "summary": {
+    "table": [
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.06,
+          "CFPerm": 0.14,
+          "RRPerm": 0.14
+        },
+        "mean_p": {
+          "RFPerm": 0.7203973509933774,
+          "DRPerm": 0.36913907284768216,
+          "CFPerm": 0.40887417218543043,
+          "RRPerm": 0.5295364238410596
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "syntax_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.14,
+          "DRPerm": 0.04,
+          "CFPerm": 0.0,
+          "RRPerm": 0.04
+        },
+        "mean_p": {
+          "RFPerm": 0.3153642384105961,
+          "DRPerm": 0.37589403973509933,
+          "CFPerm": 0.6225165562913908,
+          "RRPerm": 0.6753642384105959
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "train_vs_heldout",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.16,
+          "DRPerm": 0.0,
+          "CFPerm": 0.02,
+          "RRPerm": 0.02
+        },
+        "mean_p": {
+          "RFPerm": 0.36887417218543045,
+          "DRPerm": 0.626887417218543,
+          "CFPerm": 0.5581456953642384,
+          "RRPerm": 0.5749668874172186
+        }
+      }
+    ]
+  },
+  "rows_count": 150,
+  "anisotropy_headline": {
+    "train_bias_finder_bert": {
+      "anisotropy_at_max_pc": 0.1544442896718856,
+      "effective_rank_at_max_pc": 81.06955204247613
+    },
+    "train_bias_finder_MiniLM_L6": {
+      "anisotropy_at_max_pc": 0.06762558411314681,
+      "effective_rank_at_max_pc": 116.08586181024154
+    }
+  }
+}

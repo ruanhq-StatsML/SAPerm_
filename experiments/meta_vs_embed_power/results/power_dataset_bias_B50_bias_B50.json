@@ -1,0 +1,172 @@
+{
+  "dataset": "bias",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "bias_B50",
+  "summary": {
+    "table": [
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.02,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.16
+        },
+        "mean_p": {
+          "RFPerm": 0.6572185430463577,
+          "DRPerm": 1.0,
+          "CFPerm": 1.0,
+          "RRPerm": 0.4663576158940398
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.36,
+          "RRPerm": 0.16
+        },
+        "mean_p": {
+          "RFPerm": 0.7486092715231788,
+          "DRPerm": 1.0,
+          "CFPerm": 0.2170860927152318,
+          "RRPerm": 0.6199999999999999
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.24,
+          "RRPerm": 0.3
+        },
+        "mean_p": {
+          "RFPerm": 0.8415894039735099,
+          "DRPerm": 0.703046357615894,
+          "CFPerm": 0.45284768211920523,
+          "RRPerm": 0.22662251655629137
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "syntax_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.02,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.02
+        },
+        "mean_p": {
+          "RFPerm": 0.4233112582781457,
+          "DRPerm": 1.0,
+          "CFPerm": 1.0,
+          "RRPerm": 0.6950993377483443
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.22,
+          "DRPerm": 0.0,
+          "CFPerm": 0.14,
+          "RRPerm": 0.06
+        },
+        "mean_p": {
+          "RFPerm": 0.3278145695364239,
+          "DRPerm": 1.0,
+          "CFPerm": 0.3994701986754967,
+          "RRPerm": 0.6059602649006622
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "syntax_meta",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.18,
+          "DRPerm": 0.0,
+          "CFPerm": 0.02,
+          "RRPerm": 0.12
+        },
+        "mean_p": {
+          "RFPerm": 0.2992052980132451,
+          "DRPerm": 0.5090066225165563,
+          "CFPerm": 0.5415894039735099,
+          "RRPerm": 0.403046357615894
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "train_vs_heldout",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.14,
+          "DRPerm": 0.06,
+          "CFPerm": 0.0,
+          "RRPerm": 0.02
+        },
+        "mean_p": {
+          "RFPerm": 0.3402649006622516,
+          "DRPerm": 0.45695364238410596,
+          "CFPerm": 1.0,
+          "RRPerm": 0.7129801324503311
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.1,
+          "DRPerm": 0.06,
+          "CFPerm": 0.04,
+          "RRPerm": 0.06
+        },
+        "mean_p": {
+          "RFPerm": 0.38609271523178806,
+          "DRPerm": 0.4667549668874173,
+          "CFPerm": 0.52,
+          "RRPerm": 0.5701986754966888
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "train_vs_heldout",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.1,
+          "DRPerm": 0.04,
+          "CFPerm": 0.0,
+          "RRPerm": 0.04
+        },
+        "mean_p": {
+          "RFPerm": 0.4458278145695364,
+          "DRPerm": 0.491523178807947,
+          "CFPerm": 0.46940397350993385,
+          "RRPerm": 0.4797350993377483
+        }
+      }
+    ]
+  }
+}
