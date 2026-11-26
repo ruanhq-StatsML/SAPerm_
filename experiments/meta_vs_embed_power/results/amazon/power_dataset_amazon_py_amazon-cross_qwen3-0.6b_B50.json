@@ -26,6 +26,24 @@
       {
         "dataset": "amazon-cross_qwen3-0.6b",
         "scenario": "domain_shift",
+        "feature_set": "with_spacy",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.9,
+          "CFPerm": 0.16,
+          "RRPerm": 0.1
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.026887417218543052,
+          "CFPerm": 0.3119205298013245,
+          "RRPerm": 0.32887417218543047
+        }
+      },
+      {
+        "dataset": "amazon-cross_qwen3-0.6b",
+        "scenario": "domain_shift",
         "feature_set": "without_meta",
         "B": 50,
         "power": {

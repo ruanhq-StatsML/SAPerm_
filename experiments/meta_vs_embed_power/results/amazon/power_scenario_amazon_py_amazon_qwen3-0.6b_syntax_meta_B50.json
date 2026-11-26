@@ -27,6 +27,24 @@
       {
         "dataset": "amazon_qwen3-0.6b",
         "scenario": "syntax_meta",
+        "feature_set": "with_spacy",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.28,
+          "CFPerm": 0.88,
+          "RRPerm": 0.6
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.21019867549668877,
+          "CFPerm": 0.023841059602649005,
+          "RRPerm": 0.12066225165562913
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "syntax_meta",
         "feature_set": "without_meta",
         "B": 50,
         "power": {
