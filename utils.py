@@ -3,6 +3,7 @@
 import wave
 from collections import Counter
 from pathlib import Path
+from typing import Sequence
 
 import numpy as np
 import pandas as pd
@@ -187,7 +188,7 @@ def extract_text_embeddings(texts,
 
 def extract_video_embeddings(
     video_paths: Sequence[str],
-    model_name = 'google/vivit-b-16x2-kinetics400'
+    model_name='google/vivit-b-16x2-kinetics400',
     num_frames: int = 32,
 ) -> np.ndarray:
     """ViViT CLS/mean embedding for each video path (decord + transformers)."""
@@ -274,8 +275,10 @@ def modasense_data_digestion(path, feature_extractor, Y_col, n_max = 1000):
 
 
 
-def get_embedding(texts, model_name = 'harrier-0.6b', MODEL_CONFIGS = MODEL_CONFIGS):
-    config = MODEL_CONFIGS[model_name]
+def get_embedding(texts, model_name="harrier-0.6b", model_configs=None):
+    if model_configs is None:
+        raise ValueError("Pass model_configs=MODEL_CONFIGS from model_registry / model_configs module")
+    config = model_configs[model_name]
     n_dim = config.dim
     max_length = config.max_length
     batch_size = config.batch_size
@@ -332,14 +335,18 @@ def get_embedding(texts, model_name = 'harrier-0.6b', MODEL_CONFIGS = MODEL_CONF
         all_embeddings.append(batch_embeds.to(torch.float32).cpu().numpy())
     return np.concatenate(all_embeddings)
 
-def get_embedding_wrapper(df_csv, text_col, MODEL_CONFIGS = MODEL_CONFIGS, delimiter = None, header = None):
+def get_embedding_wrapper(df_csv, text_col, model_configs=None, delimiter=None, header=None):
     if delimiter is None:
         df = pd.read_csv(df_csv)
     else:
         df = pd.read_csv(df_csv, delimiter = delimiter, on_bad_lines = 'skip', header = header)
     dataset_name = str(str(df_csv).split('.')[0])
-    for i, model_name in enumerate(list(MODEL_CONFIGS.keys())):
-        embedding0 = get_embedding(df[text_col].astype(str).tolist(), model_name = model_name)
+    if model_configs is None:
+        raise ValueError("Pass model_configs=MODEL_CONFIGS")
+    for _i, model_name in enumerate(list(model_configs.keys())):
+        embedding0 = get_embedding(
+            df[text_col].astype(str).tolist(), model_name=model_name, model_configs=model_configs
+        )
         np.save(f"{dataset_name}_{model_name}_embedding.npy", embedding0)
 
 def anistropy(X_embedding):
