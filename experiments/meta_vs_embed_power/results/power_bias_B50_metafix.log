@@ -1,0 +1,45 @@
+[bias_B50_mfix bias 4/50]
+[bias_B50_mfix bias 8/50]
+[bias_B50_mfix bias 12/50]
+[bias_B50_mfix bias 16/50]
+[bias_B50_mfix bias 20/50]
+[bias_B50_mfix bias 24/50]
+[bias_B50_mfix bias 28/50]
+[bias_B50_mfix bias 32/50]
+[bias_B50_mfix bias 36/50]
+[bias_B50_mfix bias 40/50]
+[bias_B50_mfix bias 44/50]
+[bias_B50_mfix bias 48/50]
+[bias_B50_mfix bias 50/50]
+[done dataset bias_B50_mfix bias]
+{
+  "table": [
+    {
+      "dataset": "bias",
+      "scenario": "sentiment_meta",
+      "feature_set": "meta_only",
+      "B": 50,
+      "power": {
+        "RFPerm": 0.0,
+        "DRPerm": 0.06,
+        "CFPerm": 0.14,
+        "RRPerm": 0.14
+      },
+      "mean_p": {
+        "RFPerm": 0.7203973509933774,
+        "DRPerm": 0.36913907284768216,
+        "CFPerm": 0.40887417218543043,
+        "RRPerm": 0.5295364238410596
+      }
+    }
+  ]
+}
+Wrote /agent/repos/SAPerm/experiments/meta_vs_embed_power/results/power_meta_embed_full_bias_B50_mfix.json
+[METAFIX SCENARIO DONE sentiment_meta 2026-11-26T05:00:52+00:00]
+[bias_B50_mfix bias 54/50]
+[bias_B50_mfix bias 58/50]
+[bias_B50_mfix bias 62/50]
+[bias_B50_mfix bias 66/50]
+[bias_B50_mfix bias 70/50]
+[bias_B50_mfix bias 74/50]
+[bias_B50_mfix bias 78/50]
