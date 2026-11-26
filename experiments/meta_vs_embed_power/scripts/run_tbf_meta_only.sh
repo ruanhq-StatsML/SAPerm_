@@ -15,7 +15,7 @@ for sc in "${SCENARIOS[@]}"; do
     --B "$B" --n-perm 150 --n-estimators 150 --n-jobs "$NJ" \
     --datasets train_bias_finder --scenarios "$sc" \
     --feature-sets meta_only --out-suffix "tbfmeta_$sc" --skip-anisotropy \
-    2>&1 | grep -v -E 'UserWarning|warnings.warn' | tee -a "$R/tbf_meta_only.log"
+    2>&1 | grep --line-buffered -v -E 'UserWarning|warnings.warn' | tee -a "$R/tbf_meta_only.log"
   python3 "$ROOT/experiments/meta_vs_embed_power/scripts/merge_tbf_meta.py" "$B"
 done
 echo "[tbf-meta] all done $(date -Is)" | tee -a "$R/tbf_meta_only.log"
