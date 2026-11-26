@@ -86,8 +86,12 @@ def rfperm_permval_single(
     test_size: float = 0.3,
     alpha: float = 0.05,
     split: str | None = None,
+    max_features: int | None = None,
 ) -> dict:
-    """One replicate of ``PermValTest`` (Generalized.py) with RandomForest."""
+    """One replicate of ``PermValTest`` (Generalized.py) with RandomForest.
+
+    ``max_features`` overrides the classifier mtry (default ``round(sqrt(p))``).
+    """
     X_exist = np.asarray(X_exist, dtype=float)
     X_new = np.asarray(X_new, dtype=float)
     Y_exist = np.asarray(Y_exist).reshape(-1)
@@ -124,7 +128,7 @@ def rfperm_permval_single(
     else:
         model = RandomForestClassifier(
             min_samples_leaf=msl,
-            max_features=max(1, int(round(np.sqrt(p)))),
+            max_features=int(max_features) if max_features else max(1, int(round(np.sqrt(p)))),
             n_estimators=n_estimators,
             random_state=seed + 1,
             n_jobs=1,
