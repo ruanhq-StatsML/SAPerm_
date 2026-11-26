@@ -67,6 +67,10 @@ def emb_path(encoder: str, spec: str = "gift") -> Path:
     return OUT_DIR / f"emb_cross_{encoder}_n{2 * N_ROWS}.npz"
 
 
+def spacy_path(spec: str = "gift") -> Path:
+    return OUT_DIR / f"spacy_{_stem(spec)}.npz"
+
+
 def report_path(spec: str = "gift") -> Path:
     return OUT_DIR / ("alignment_report.json" if spec == "gift" else "alignment_report_cross.json")
 
@@ -160,10 +164,55 @@ def extract_embedding(df: pd.DataFrame, encoder: str, spec: str = "gift") -> Non
     np.savez_compressed(emb_path(encoder, spec), Z=Z, encoder=encoder, **_keys(df))
 
 
+def extract_spacy(df: pd.DataFrame, spec: str = "gift") -> None:
+    from experiments.meta_vs_embed_power.spacy_features import spacy_matrix
+
+    S, names = spacy_matrix(df["text"].tolist())
+    np.savez_compressed(spacy_path(spec), S=S, spacy_names=np.array(names, dtype=object), **_keys(df))
+
+
+FORBIDDEN_SPACY = ("vader", "sentiment", "polar", "noun", "verb", "hedge", "contrast")
+
+
+def check_spacy_alignment(df: pd.DataFrame, spec: str = "gift") -> dict:
+    from experiments.meta_vs_embed_power.spacy_features import spacy_matrix
+
+    fh = frame_hash(df["row_id"].to_numpy(), df["text_sha1"].to_numpy())
+    z = np.load(spacy_path(spec), allow_pickle=True)
+    S, names = z["S"], list(z["spacy_names"])
+    rep: dict = {"spec": spec, "n_rows": len(df), "frame_hash": fh, "n_features": len(names),
+                 "features": names, "errors": _check_keys(z, df, fh, "spacy")}
+    bad = [n for n in names if any(f in n for f in FORBIDDEN_SPACY)]
+    rep["forbidden_features"] = bad
+    if bad:
+        rep["errors"].append(f"spacy: forbidden features {bad}")
+    char_ok = np.array_equal(S[:, names.index("char_len")].astype(int), df["text"].str.len().to_numpy())
+    rep["char_len_all_rows_equal"] = bool(char_ok)
+    if not char_ok:
+        rep["errors"].append("spacy: char_len does not match frame text")
+    idx = _spot_rows(len(df), spec)
+    S_spot, _ = spacy_matrix([df["text"].iloc[i] for i in idx])
+    rep["spot_rows"] = idx.tolist()
+    rep["spot_max_abs_diff"] = float(np.max(np.abs(S_spot - S[idx])))
+    if not np.allclose(S_spot, S[idx], atol=1e-9):
+        rep["errors"].append("spacy: spot re-derivation differs")
+    rep["passed"] = not rep["errors"]
+    return rep
+
+
+def run_spacy(spec: str, force: bool = False) -> dict:
+    df = load_frame(spec)
+    if force or not spacy_path(spec).exists():
+        extract_spacy(df, spec)
+    rep = check_spacy_alignment(df, spec)
+    (OUT_DIR / f"alignment_report_spacy_{spec}.json").write_text(json.dumps(rep, indent=2), encoding="utf-8")
+    return rep
+
+
 def _check_keys(npz, df: pd.DataFrame, fh: str, label: str) -> list[str]:
     errs = []
     n = len(df)
-    arr = npz["Z"] if "Z" in npz.files else npz["M"]
+    arr = npz["Z"] if "Z" in npz.files else (npz["M"] if "M" in npz.files else npz["S"])
     if arr.shape[0] != n:
         errs.append(f"{label}: {arr.shape[0]} rows vs frame {n}")
     if not np.array_equal(npz["row_id"], df["row_id"].to_numpy()):
@@ -343,10 +392,19 @@ def _verified(encoder: str, spec: str):
     names = list(meta["meta_names"])
     if not np.array_equal(meta["M"][:, names.index("char_len")].astype(int), df["text"].str.len().to_numpy()):
         errs.append("meta char_len != len(frame text)")
+    if not spacy_path(spec).exists():
+        errs.append(f"spacy cache missing: {spacy_path(spec).name}")
+        spacy = None
+    else:
+        spacy = np.load(spacy_path(spec), allow_pickle=True)
+        errs += _check_keys(spacy, df, fh, "spacy")
+        sn = list(spacy["spacy_names"])
+        if not np.array_equal(spacy["S"][:, sn.index("char_len")].astype(int), df["text"].str.len().to_numpy()):
+            errs.append("spacy char_len != len(frame text)")
     if errs:
         raise AssertionError(f"Amazon {spec} artifacts misaligned: {errs}")
-    print(f"[aligned] {spec}/{encoder} n={len(df)} frame_hash={fh[:10]} meta+emb keys OK", file=sys.stderr)
-    return df, meta, emb
+    print(f"[aligned] {spec}/{encoder} n={len(df)} frame_hash={fh[:10]} meta+spacy+emb keys OK", file=sys.stderr)
+    return df, meta, emb, spacy
 
 
 def load_cache_embedding(encoder: str, spec: str = "gift") -> np.ndarray:
@@ -356,9 +414,14 @@ def load_cache_embedding(encoder: str, spec: str = "gift") -> np.ndarray:
 def load_aligned(
     encoder: str, pca_k: int, seed: int = SEED, spec: str = "gift"
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, list[str]]:
-    """Return (Zpca, M, y, meta_names) after re-verifying keys against the frame."""
-    df, meta, emb = _verified(encoder, spec)
-    return pca_embed(emb["Z"], pca_k, seed=seed), meta["M"], df["y"].to_numpy(dtype=float), list(meta["meta_names"])
+    """Return (Zpca, [M | S], y, names) after re-verifying keys against the frame.
+
+    spaCy columns carry a ``spacy:`` prefix; ``power.run_one_rep`` splits them off.
+    """
+    df, meta, emb, spacy = _verified(encoder, spec)
+    M = np.hstack([meta["M"], spacy["S"]])
+    names = list(meta["meta_names"]) + [f"spacy:{n}" for n in spacy["spacy_names"]]
+    return pca_embed(emb["Z"], pca_k, seed=seed), M, df["y"].to_numpy(dtype=float), names
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -366,7 +429,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--spec", choices=SPECS, default="gift")
     p.add_argument("--encoders", nargs="*", default=list(ENCODERS))
     p.add_argument("--force", action="store_true")
+    p.add_argument("--spacy", action="store_true", help="extract + check spaCy features only")
     args = p.parse_args(argv)
+    if args.spacy:
+        report = run_spacy(args.spec, force=args.force)
+        print(json.dumps({k: v for k, v in report.items() if k not in ("features", "spot_rows")}, indent=2))
+        return 0 if report["passed"] else 1
     report = run(args.encoders, spec=args.spec, force=args.force)
     print(json.dumps(report, indent=2))
     return 0 if report["passed"] else 1

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Amazon B=50: with_meta vs without_meta first (MiniLM, then Qwen), meta_only last.
+# Amazon B=50, paired windows: without/with_meta, then with_spacy (MiniLM, then Qwen); meta_only last.
 # Shift scenarios only (gift: sentiment/syntax/time; cross: domain). Resumes from checkpoints;
 # refuses to start unless both alignment reports passed.
 set -euo pipefail
@@ -14,7 +14,7 @@ TAG="${TAG:-py}"
 R="python3 -m experiments.meta_vs_embed_power.run_amazon_b50 --tests $TESTS --tag $TAG"
 A=experiments/meta_vs_embed_power/results/amazon
 
-for f in alignment_report.json alignment_report_cross.json; do
+for f in alignment_report.json alignment_report_cross.json alignment_report_spacy_gift.json alignment_report_spacy_cross.json; do
   python3 -c "import json,sys; sys.exit(0 if json.load(open('$A/$f'))['passed'] else 1)"
 done
 
@@ -27,7 +27,9 @@ run_enc() {  # $1 encoder, rest = arms
 }
 
 run_enc MiniLM_L6 without_meta with_meta
+run_enc MiniLM_L6 with_spacy
 run_enc qwen3-0.6b without_meta with_meta
+run_enc qwen3-0.6b with_spacy
 run_enc MiniLM_L6 meta_only
 run_enc qwen3-0.6b meta_only
 echo "[chain done $TAG]"

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import zlib
 from typing import Any
 
 import numpy as np
@@ -25,7 +26,9 @@ def run_job(
     n_estimators: int,
     pca_k: int,
 ) -> dict[str, Any]:
-    rep_seed = seed + 1000 * hash((dataset, feature_set)) % 997 + 17 * b + abs(hash(scenario)) % 89
+    # Depends only on (scenario, b): every arm and encoder sees the same windows (paired), and
+    # str hash() is salted per process, so it must not be used here.
+    rep_seed = seed + 10_007 * (zlib.crc32(scenario.encode()) % 997) + 17 * b
     rep = run_one_rep(
         scenario,
         feature_set,

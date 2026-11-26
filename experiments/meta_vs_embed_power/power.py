@@ -132,18 +132,30 @@ def run_one_rep(
     pca_k: int,
 ) -> dict[str, Any]:
     rng = np.random.default_rng(seed)
-    Xe_e, ye, Xn_e, yn, Xe_b, Xn_b, Me, Mn = make_windows(
+    # Windows are drawn on the full matrix (names select the window coordinate); spaCy
+    # columns ("spacy:" prefix) are then split off so with_meta / meta_only keep M only.
+    Xe_e, ye, Xn_e, yn, _, _, Mfe, Mfn = make_windows(
         scenario, Zpca, M, y, meta_names, n_doc, rng
     )
+    sp = np.array([i for i, n in enumerate(meta_names) if n.startswith("spacy:")], dtype=int)
+    keep = np.array([i for i, n in enumerate(meta_names) if not n.startswith("spacy:")], dtype=int)
+    Me, Mn = Mfe[:, keep], Mfn[:, keep]
+    meta_names = [meta_names[i] for i in keep]
+    n_meta = len(keep)
     if feature_set == "without_meta":
         Xe, Xn = Xe_e, Xn_e
-        test_idx = np.arange(max(0, Xe.shape[1] - min(8, M.shape[1])), Xe.shape[1])
+        test_idx = np.arange(max(0, Xe.shape[1] - min(8, n_meta)), Xe.shape[1])
     elif feature_set == "with_meta":
-        Xe, Xn = Xe_b, Xn_b
-        test_idx = np.arange(pca_k, pca_k + M.shape[1])
+        Xe, Xn = np.hstack([Xe_e, Me]), np.hstack([Xn_e, Mn])
+        test_idx = np.arange(pca_k, pca_k + n_meta)
+    elif feature_set == "with_spacy":
+        if sp.size == 0:
+            raise ValueError("with_spacy requested but no spacy: columns were loaded")
+        Xe, Xn = np.hstack([Xe_e, Mfe[:, sp]]), np.hstack([Xn_e, Mfn[:, sp]])
+        test_idx = np.arange(pca_k, pca_k + sp.size)
     elif feature_set == "meta_only":
         Xe, Xn = Me, Mn
-        test_idx = np.arange(M.shape[1])
+        test_idx = np.arange(n_meta)
     else:
         raise ValueError(feature_set)
 

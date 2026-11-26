@@ -47,6 +47,7 @@ SCENARIOS = {
     "cross": ["null_shift", "domain_shift"],
 }
 PREFIX = {"gift": "amazon", "cross": "amazon-cross"}
+ARMS = ("without_meta", "with_meta", "with_spacy", "meta_only")
 SCENARIO_ORDER = ["null_shift", "sentiment_meta", "syntax_meta", "train_vs_heldout", "domain_shift"]
 KEY_FEATURES = ("char_len", "word_count", "vader_compound", "vader_pos", "vader_neg", "verb_noun_ratio")
 
@@ -97,7 +98,7 @@ def run_tests(
 def merge(encoders: list[str]) -> dict:
     tables: dict[str, list[dict]] = {}
     order = {s: i for i, s in enumerate(SCENARIO_ORDER)}
-    fs_order = {f: i for i, f in enumerate(C.FEATURE_SETS)}
+    fs_order = {f: i for i, f in enumerate(ARMS)}
     for _, ds in _datasets("all", encoders):
         merged: dict[tuple, dict] = {}
         for path in sorted(OUT_DIR.glob(f"power_dataset_amazon_*_{ds}_B{B}.json")):
@@ -203,38 +204,28 @@ def _dfmt(a, b) -> str:
 
 
 def power_table(encoders: list[str]) -> str:
-    """Markdown: arms × test × shift scenario with Δ columns; null size collapsed to one line."""
+    """Markdown: arm × test × shift scenario, with Δ vs without_meta (paired windows)."""
     payload = merge(encoders)
     tests = ("RFPerm", "CFPerm", "RRPerm", "DRPerm")
     lines = [
-        "| 编码器 | 场景 | 检验 | without_meta | with_meta | meta_only | Δ(with−without) | Δ(meta_only−without) |",
-        "|---|---|---|---|---|---|---|---|",
+        "| 编码器 | 场景 | 检验 | without_meta | with_meta | Δ(with−without) | with_spacy | Δ(spacy−without) | meta_only |",
+        "|---|---|---|--:|--:|--:|--:|--:|--:|",
     ]
-    null_rates: dict[str, list[float]] = {}
     for ds, rows in payload["tables"].items():
         enc = ds.split("_", 1)[1]
         by = {(r["scenario"], r["feature_set"]): r["power"] for r in rows}
-        for scen in [s for s in SCENARIO_ORDER if s != "null_shift"]:
-            if not any((scen, fs) in by for fs in C.FEATURE_SETS):
+        for scen in SCENARIO_ORDER:
+            if not any((scen, fs) in by for fs in ARMS):
                 continue
             for t in tests:
-                p = {fs: by.get((scen, fs), {}).get(t) for fs in C.FEATURE_SETS}
+                p = {fs: by.get((scen, fs), {}).get(t) for fs in ARMS}
                 if all(v is None for v in p.values()):
                     continue
                 lines.append(
                     f"| {enc} | {scen} | {t} | {_fmt(p['without_meta'])} | {_fmt(p['with_meta'])} | "
-                    f"{_fmt(p['meta_only'])} | {_dfmt(p['with_meta'], p['without_meta'])} | "
-                    f"{_dfmt(p['meta_only'], p['without_meta'])} |"
+                    f"{_dfmt(p['with_meta'], p['without_meta'])} | {_fmt(p['with_spacy'])} | "
+                    f"{_dfmt(p['with_spacy'], p['without_meta'])} | {_fmt(p['meta_only'])} |"
                 )
-        for fs in C.FEATURE_SETS:
-            for t in tests:
-                v = by.get(("null_shift", fs), {}).get(t)
-                if v is not None:
-                    null_rates.setdefault(t, []).append(v)
-    if null_rates:
-        parts = [f"{t} {min(v):.2f}–{max(v):.2f}" for t, v in null_rates.items()]
-        lines.append("")
-        lines.append(f"null_shift 拒绝率（size，α=0.05，所有编码器×臂）：{'；'.join(parts)}。")
     md = "\n".join(lines)
     (OUT_DIR / f"power_table_amazon_B{B}.md").write_text(md + "\n", encoding="utf-8")
     return md
