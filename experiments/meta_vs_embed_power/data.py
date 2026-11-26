@@ -41,7 +41,8 @@ def stratified_cap(y: np.ndarray, n_max: int | None, seed: int) -> np.ndarray:
 def load_biasfinder(n_max: int | None = 1000, seed: int = 0) -> tuple[np.ndarray, np.ndarray, list[str]]:
     emb_path = REPO / "datasets" / "train_biasfinder_bert_embedding.csv"
     zip_path = REPO / "datasets" / "dataset.zip"
-    cap = n_max if n_max is not None else 10**9
+    # File is class-sorted: truncating to the first n_max rows yields a single class.
+    cap = 10**9
     texts, classes_txt = [], []
     with zipfile.ZipFile(zip_path) as zf:
         with zf.open("GEN-sarc-notsarc.csv") as raw:
