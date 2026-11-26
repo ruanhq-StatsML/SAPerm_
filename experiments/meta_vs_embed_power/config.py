@@ -27,5 +27,5 @@ FEATURE_SETS = ("without_meta", "with_meta", "meta_only")  # PCA(Z) | hstack(Z,M
 
 METHODS = ("RFPerm", "DRPerm", "CFPerm", "RRPerm")
 
-# RFPerm: "rfperm_r" (official R RFPerm package) | "python" (sklearn PermValTest port)
-RF_PERM_BACKEND = os.environ.get("RF_PERM_BACKEND", "rfperm_r")
+# RFPerm: "python" (RFPerm_Generalized PermValTest port) | "rfperm_r" (optional R package)
+RF_PERM_BACKEND = os.environ.get("RF_PERM_BACKEND", "python")

@@ -13,12 +13,11 @@ from experiments.meta_vs_embed_power import config as C
 
 
 def _rfperm_pvalue():
-    if C.RF_PERM_BACKEND != "rfperm_r":
-        raise RuntimeError(
-            "RFPerm must use R package backend; set RF_PERM_BACKEND=rfperm_r"
-        )
-    from experiments.meta_vs_embed_power.rfperm_r import rfperm_r_single_pvalue
-    return rfperm_r_single_pvalue
+    if C.RF_PERM_BACKEND == "rfperm_r":
+        from experiments.meta_vs_embed_power.rfperm_r import rfperm_r_single_pvalue
+        return rfperm_r_single_pvalue
+    from experiments.meta_vs_embed_power.rfperm_official import rfperm_single_pvalue
+    return rfperm_single_pvalue
 
 
 def _col_index(meta_names: list[str], *candidates: str) -> int:
