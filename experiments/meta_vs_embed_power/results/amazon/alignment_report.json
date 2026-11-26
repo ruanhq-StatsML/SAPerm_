@@ -1,4 +1,5 @@
 {
+  "spec": "gift",
   "n_rows": 1000,
   "frame_hash": "e837d99a0dd61ac994c31994310a26400329d7f1",
   "errors": [],
@@ -39,18 +40,22 @@
         1000,
         384
       ],
-      "spot_cos_self_min": 0.9999999403953552,
-      "spot_cos_neighbor_max": 0.8926312327384949,
-      "spot_self_is_argmax": true
+      "spot_inbatch_cos_self_min": 0.9999998211860657,
+      "spot_inbatch_self_is_argmax": true,
+      "spot_single_cos_self_min": 0.9999999403953552,
+      "spot_single_cos_neighbor_max": 0.8926312327384949,
+      "spot_single_self_is_argmax": true
     },
     "qwen3-0.6b": {
       "shape": [
         1000,
         1024
       ],
-      "spot_cos_self_min": 0.9993312358856201,
-      "spot_cos_neighbor_max": 0.9405180811882019,
-      "spot_self_is_argmax": true
+      "spot_inbatch_cos_self_min": 1.0,
+      "spot_inbatch_self_is_argmax": true,
+      "spot_single_cos_self_min": 0.9999999403953552,
+      "spot_single_cos_neighbor_max": 0.9410656094551086,
+      "spot_single_self_is_argmax": true
     }
   },
   "passed": true,

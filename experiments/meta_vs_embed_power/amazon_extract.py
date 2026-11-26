@@ -126,11 +126,15 @@ def load_frame(spec: str = "gift") -> pd.DataFrame:
     recomputed = np.array([sha1(t) for t in df["text"]])
     if not np.array_equal(recomputed, df["text_sha1"].to_numpy()):
         raise AssertionError(f"{spec} frame text_sha1 does not match stored text")
-    if spec == "cross":
-        n = len(df)
-        expect = (np.arange(n) >= n // 2).astype(int)
-        if not np.array_equal(df["shift_domain"].to_numpy(), expect):
-            raise AssertionError("cross frame: domain is not the half split of row order")
+    n = len(df)
+    half = (np.arange(n) >= n // 2).astype(int)
+    shift_col = "shift_domain" if spec == "cross" else "shift_time"
+    if not np.array_equal(df[shift_col].to_numpy(), half):
+        raise AssertionError(f"{spec} frame: {shift_col} is not the half split of row order")
+    if not np.array_equal(df["row_id"].to_numpy(), np.arange(n)):
+        raise AssertionError(f"{spec} frame: row_id is not 0..n-1 in file order")
+    if not np.array_equal(df["y"].to_numpy(), (df["rating"] >= 4).astype(int).to_numpy()):
+        raise AssertionError(f"{spec} frame: y != rating >= 4")
     return df
 
 
@@ -334,8 +338,14 @@ def _verified(encoder: str, spec: str):
     meta = np.load(meta_path(spec), allow_pickle=True)
     emb = np.load(emb_path(encoder, spec), allow_pickle=True)
     errs = _check_keys(meta, df, fh, "meta") + _check_keys(emb, df, fh, f"emb[{encoder}]")
+    if str(emb["encoder"]) != encoder:
+        errs.append(f"emb file encoder {emb['encoder']} != {encoder}")
+    names = list(meta["meta_names"])
+    if not np.array_equal(meta["M"][:, names.index("char_len")].astype(int), df["text"].str.len().to_numpy()):
+        errs.append("meta char_len != len(frame text)")
     if errs:
         raise AssertionError(f"Amazon {spec} artifacts misaligned: {errs}")
+    print(f"[aligned] {spec}/{encoder} n={len(df)} frame_hash={fh[:10]} meta+emb keys OK", file=sys.stderr)
     return df, meta, emb
 
 
