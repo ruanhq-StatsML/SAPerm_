@@ -139,9 +139,13 @@ def run_one_rep(
         "RFPerm": rfperm_single_pvalue(
             Xe, ye, Xn, yn, n_perm=n_perm, seed=seed, n_estimators=max(n_estimators, 150)
         ),
-        "DRPerm": drperm_pvalue(
-            X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators,
-            null_scheme=os.environ.get("POWER_DR_NULL", "residual"),
+        "DRPerm": (
+            {"method": "DRPerm", "p_value": float("nan"), "reject": False, "skipped": True}
+            if os.environ.get("POWER_SKIP_DR") == "1"
+            else drperm_pvalue(
+                X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators,
+                null_scheme=os.environ.get("POWER_DR_NULL", "residual"),
+            )
         ),
         "RRPerm": rrperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 11, n_estimators=n_estimators),
     }
