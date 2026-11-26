@@ -21,16 +21,46 @@ from experiments.meta_vs_embed_power import run_dim_scan as D
 from experiments.meta_vs_embed_power.stats_utils import make_folds, rf_classifier
 
 KS = ("24", "64", "128", "full")
-KINDS = ("without", "with", "spacy", "with_decorr")
+KINDS = ("without", "with", "spacy", "with_decorr", *D.VADER_KINDS)
 N_WIN = 10
 PATH = D.OUT / "dim_scan_gender_diag.json"
+
+
+def block(kind: str, d: dict) -> np.ndarray | None:
+    if kind in D.VADER_KINDS:
+        cols, with_s = D.VADER_KINDS[kind]
+        B = d["M"][:, [d["names"].index(c) for c in cols]]
+        return np.hstack([B, d["S"]]) if with_s else B
+    return {"without": None, "with": d["M"], "spacy": d["S"], "with_decorr": d["M"][:, d["M_keep"]]}[kind]
 
 
 def frame(kind: str, k: str, emb: str) -> np.ndarray:
     d = D.load_data(emb)
     Zk = D.z_k(k, emb)
-    blk = {"without": None, "with": d["M"], "spacy": d["S"], "with_decorr": d["M"][:, d["M_keep"]]}[kind]
+    blk = block(kind, d)
     return Zk if blk is None else np.hstack([Zk, blk])
+
+
+def block_only_auc(kind: str) -> float:
+    """y 5-fold AUC of the meta block alone (no Z)."""
+    d = D.load_data()
+    X = block(kind, d)
+    y = d["y"].astype(int)
+    pred = np.zeros(len(y))
+    for i, (tr, te) in enumerate(StratifiedKFold(5, shuffle=True, random_state=D.SEED).split(X, y)):
+        m = rf_classifier(D.SEED + i, n_estimators=150).fit(X[tr], y[tr])
+        pred[te] = m.predict_proba(X[te])[:, 1]
+    return float(roc_auc_score(y, pred))
+
+
+def spearman_y() -> dict:
+    from scipy.stats import spearmanr
+
+    d = D.load_data()
+    y = d["y"]
+    cols = {n: d["M"][:, j] for j, n in enumerate(d["names"])}
+    cols.update({f"spacy:{n}": d["S"][:, j] for j, n in enumerate(d["s_names"])})
+    return {n: (0.0 if c.std() == 0 else float(spearmanr(c, y).correlation)) for n, c in cols.items()}
 
 
 def y_auc(kind: str, k: str, emb: str) -> float:
@@ -59,6 +89,11 @@ def w_diag(kind: str, k: str, sc: str, b: int, emb: str) -> dict:
 def main() -> None:
     embs = sys.argv[1:] or [D.BASE_EMB]
     out = json.loads(PATH.read_text()) if PATH.is_file() else {}
+    D.load_data()
+    blk_kinds = [kd for kd in KINDS if kd != "without"]
+    out["block_only_y_auc"] = dict(zip(blk_kinds, Parallel(n_jobs=4)(delayed(block_only_auc)(kd) for kd in blk_kinds)))
+    out["spearman_y"] = spearman_y()
+    PATH.write_text(json.dumps(out, indent=1, sort_keys=True))
     for emb in embs:
         D.load_data(emb)
         grid = [(kd, k) for k in KS for kd in KINDS]

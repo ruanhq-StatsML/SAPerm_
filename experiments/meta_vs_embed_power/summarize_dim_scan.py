@@ -16,8 +16,12 @@ SCEN = ("null_shift", "sentiment_meta", "syntax_meta", "train_vs_heldout")
 K_ORDER = ("24", "64", "128", "full")
 EMBS = ("MiniLM_L6", "qwen3-0.6b")
 KINDS = ("without", "with", "spacy", "with_decorr")
+VADER_COLS = ("without", "with", "vader", "v_compound", "v_neg", "v_pos", "v_polar_gap", "with_decorr",
+              "spacy", "vader_spacy")
 TESTS = {"rf": ("RF_random", "RF_ordered"), "drc": ("DR", "RR", "CF")}
-LABEL = {"without": "without_meta", "with": "with_meta", "spacy": "with_spacy", "with_decorr": "with_meta_decorr"}
+LABEL = {"without": "without_meta", "with": "with_meta", "spacy": "with_spacy", "with_decorr": "with_meta_decorr",
+         "vader": "Z+VADER4", "v_compound": "Z+compound", "v_neg": "Z+neg", "v_pos": "Z+pos",
+         "v_polar_gap": "Z+polar_gap", "vader_spacy": "Z+VADER4+S"}
 
 
 def load() -> list[dict]:
@@ -73,6 +77,30 @@ def power_table(c: dict, test: str, emb: str, mtry=None, ks=K_ORDER) -> str:
     return "\n".join(lines)
 
 
+def vader_table(c: dict, test: str, emb: str, ks=("24", "128", "full")) -> str:
+    """Power of VADER sub-arms; additivity = Δ(VADER4+S) − [Δ(VADER4) + Δ(S)], Δ relative to without_meta."""
+    cols = VADER_COLS
+    head = ("| 场景 | k | " + " | ".join(LABEL[kd] for kd in cols)
+            + " | Δ VADER4 | Δ M | Δ VADER4+S | 可加性残差 | B |")
+    lines = [head, "|---|---|" + "--:|" * (len(cols) + 5)]
+    for sc in SCEN:
+        for k in ks:
+            e = {kd: c.get(f"{test}|{emb}|{kd}|{k}|None|{sc}") for kd in cols}
+            if not e.get("vader"):
+                continue
+            pw = lambda kd: e[kd]["power"] if e.get(kd) else None
+            dlt = lambda kd: (pw(kd) - pw("without")) if pw(kd) is not None and pw("without") is not None else None
+            f = lambda v: "—" if v is None else f"{v:+.3f}"
+            add = None
+            if None not in (dlt("vader_spacy"), dlt("vader"), dlt("spacy")):
+                add = dlt("vader_spacy") - dlt("vader") - dlt("spacy")
+            bs = sorted({x["B"] for x in e.values() if x})
+            lines.append(f"| {sc} | {k} | " + " | ".join("—" if pw(kd) is None else f"{pw(kd):.3f}" for kd in cols)
+                         + f" | {f(dlt('vader'))} | {f(dlt('with'))} | {f(dlt('vader_spacy'))} | {f(add)} | "
+                         + "/".join(map(str, bs)) + " |")
+    return "\n".join(lines)
+
+
 def null_table(c: dict, emb: str) -> str:
     """DR/RR null behaviour per k: size, mean p and mean z of the observed statistic vs its null."""
     lines = ["| k | 臂 | DR size | DR 平均 p | DR z | RR size | RR 平均 p | RR z | Var(W−ê) (DR) | B |",
@@ -119,6 +147,9 @@ def main() -> None:
             tab = power_table(c, t, emb)
             if tab:
                 parts.append(f"#### {emb} · {t} 功效 (平均 p)\n\n{tab}")
+        for t in ("RF_random", "RF_ordered", "DR", "RR", "CF"):
+            if any(key.startswith(f"{t}|{emb}|vader|") for key in c):
+                parts.append(f"#### {emb} · {t} · VADER 聚焦（功效）\n\n{vader_table(c, t, emb)}")
         for t in ("RF_random", "RF_ordered"):
             tab = power_table(c, t, emb, mtry=7, ks=("128", "full"))
             if tab:

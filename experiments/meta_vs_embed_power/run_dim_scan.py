@@ -39,7 +39,17 @@ from experiments.meta_vs_embed_power.rfperm_official import rfperm_permval_singl
 OUT = Path(__file__).resolve().parent / "results"
 LOG = OUT / "dim_scan_gender.jsonl"
 SCENARIOS = ("null_shift", "sentiment_meta", "syntax_meta", "train_vs_heldout")
-KINDS = ("without", "with", "spacy", "with_decorr", "spacy_decorr")
+VADER = ("vader_neg", "vader_pos", "vader_compound", "polar_gap")
+# kind -> (M column names or None for all of M / none, include S)
+VADER_KINDS = {
+    "vader": (VADER, False),
+    "v_neg": (("vader_neg",), False),
+    "v_pos": (("vader_pos",), False),
+    "v_compound": (("vader_compound",), False),
+    "v_polar_gap": (("polar_gap",), False),
+    "vader_spacy": (VADER, True),
+}
+KINDS = ("without", "with", "spacy", "with_decorr", "spacy_decorr", *VADER_KINDS)
 SEED, N_DOC, N_EST, N_PERM, TAU = 2026, 120, 150, 150, 0.3
 BASE_EMB = "MiniLM_L6"
 
@@ -98,7 +108,10 @@ def rep_seed(scenario: str, b: int) -> int:
 
 def arm_name(kind: str, k: str, mtry: int | None, emb: str = BASE_EMB) -> str:
     base = {"without": "without_meta", "with": "with_meta", "spacy": "with_spacy",
-            "with_decorr": "with_meta_decorr", "spacy_decorr": "with_spacy_decorr"}[kind]
+            "with_decorr": "with_meta_decorr", "spacy_decorr": "with_spacy_decorr",
+            "vader": "with_vader", "v_neg": "with_vader_neg", "v_pos": "with_vader_pos",
+            "v_compound": "with_vader_compound", "v_polar_gap": "with_polar_gap",
+            "vader_spacy": "with_vader_spacy"}[kind]
     pre = "" if emb == BASE_EMB else f"{emb}:"
     return f"{pre}{base}_k{k}" + (f"_mtry{mtry}" if mtry else "")
 
@@ -117,6 +130,11 @@ def build(kind: str, k: str, scenario: str, b: int, emb: str = BASE_EMB):
         "with_decorr": (MSe[:, d["M_keep"]], MSn[:, d["M_keep"]]),
         "spacy_decorr": (MSe[:, n_meta + d["S_keep"]], MSn[:, n_meta + d["S_keep"]]),
     }
+    for vk, (cols, with_s) in VADER_KINDS.items():
+        idx = np.array([d["names"].index(c) for c in cols], dtype=int)
+        if with_s:
+            idx = np.concatenate([idx, n_meta + np.arange(d["S"].shape[1])])
+        blocks[vk] = (MSe[:, idx], MSn[:, idx])
     dz = Zk.shape[1]
     if kind == "without":
         Xe, Xn = Ze, Zn
