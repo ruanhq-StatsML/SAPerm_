@@ -4,4 +4,6 @@ results/*.log
 results/amazon/*.npz
 results/amazon/*.log
 results/amazon/checkpoint_*
+results/amazon/archive_rf_r/*.npz
+results/amazon/archive_rf_r/*.log
 __pycache__/

@@ -45,10 +45,11 @@ def prepare_dataset(
     out_dir: Path,
     embed_model: str = "MiniLM_L6",
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, list[str]]:
-    if name.startswith("amazon_"):
+    if name.startswith(("amazon_", "amazon-cross_")):
         from experiments.meta_vs_embed_power.amazon_extract import load_aligned
 
-        return load_aligned(name[len("amazon_"):], pca_k, seed=seed)
+        prefix, encoder = name.split("_", 1)
+        return load_aligned(encoder, pca_k, seed=seed, spec="cross" if prefix == "amazon-cross" else "gift")
     if name == "train_bias_finder":
         Z, y, texts = load_biasfinder(n_max=n_max, seed=seed)
     elif name == "gender":

@@ -13,12 +13,18 @@ from experiments.meta_vs_embed_power import config as C
 
 
 def _rfperm_pvalue():
-    if C.RF_PERM_BACKEND != "rfperm_r":
-        raise RuntimeError(
-            "RFPerm must use R package backend; set RF_PERM_BACKEND=rfperm_r"
-        )
-    from experiments.meta_vs_embed_power.rfperm_r import rfperm_r_single_pvalue
-    return rfperm_r_single_pvalue
+    backend = os.environ.get("RF_PERM_BACKEND", C.RF_PERM_BACKEND)
+    if backend == "rfperm_r":
+        from experiments.meta_vs_embed_power.rfperm_r import rfperm_r_single_pvalue as fn
+    elif backend == "python":
+        from experiments.meta_vs_embed_power.rfperm_official import rfperm_single_pvalue as fn
+    else:
+        raise RuntimeError(f"RF_PERM_BACKEND must be 'python' or 'rfperm_r', got {backend!r}")
+
+    def call(*args, **kwargs):
+        return {**fn(*args, **kwargs), "backend": backend}
+
+    return call
 
 
 META_BLOCK_PATTERNS = {
@@ -98,7 +104,7 @@ def make_windows(
         lo, hi = order[: max(n_doc * 3, n_doc)], order[-max(n_doc * 3, n_doc) :]
         a = rng.choice(lo, n_doc, replace=len(lo) < n_doc)
         b = rng.choice(hi, n_doc, replace=len(hi) < n_doc)
-    elif scenario in ("train_vs_heldout", "train_vs_test"):
+    elif scenario in ("train_vs_heldout", "train_vs_test", "domain_shift"):
         half = n // 2
         a = rng.choice(np.arange(half), n_doc, replace=half < n_doc)
         b = rng.choice(np.arange(half, n), n_doc, replace=(n - half) < n_doc)
