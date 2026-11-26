@@ -39,8 +39,8 @@ from experiments.meta_vs_embed_power.amazon_extract import (
 from experiments.meta_vs_embed_power.anisotropy import geometry_metrics, sweep_n_pc, write_anisotropy
 from experiments.meta_vs_embed_power.pipeline import run_power
 
-B = 50
-N_PERM = 150
+B = int(os.environ.get("POWER_B", "50"))
+N_PERM = int(os.environ.get("POWER_N_PERM", "150"))
 SEED = 2026
 SCENARIOS = {
     "gift": ["null_shift", "sentiment_meta", "syntax_meta", "train_vs_heldout"],
@@ -69,7 +69,10 @@ def run_tests(
     arms: list[str] | None = None,
 ) -> None:
     os.environ.setdefault("RF_PERM_BACKEND", "python")
-    os.environ.pop("RF_ONLY_RUN", None)
+    if tests == "RFPerm":
+        os.environ["RF_ONLY_RUN"] = "1"
+    else:
+        os.environ.pop("RF_ONLY_RUN", None)
     os.environ["POWER_TESTS"] = tests
     os.environ.setdefault("POWER_BACKEND", "loky")
     n_jobs = int(os.environ.get("POWER_N_JOBS", "4"))

@@ -110,6 +110,9 @@ def make_windows(
         b = rng.choice(np.arange(half, n), n_doc, replace=(n - half) < n_doc)
     else:
         raise ValueError(scenario)
+    if os.environ.get("RF_SPLIT", "random").lower() == "ordered":
+        # Same rows, frame (temporal) order, so RFPerm's ordered train/val split is chronological.
+        a, b = np.sort(a), np.sort(b)
 
     ye, yn = y[a], y[b]
     Ze, Zn = Zpca[a], Zpca[b]
