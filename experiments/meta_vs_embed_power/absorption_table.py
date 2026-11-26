@@ -31,7 +31,7 @@ from experiments.meta_vs_embed_power.stats_utils import make_folds, rf_classifie
 
 SEED = 2026
 SCENARIOS = {"gift": ["sentiment_meta", "syntax_meta", "train_vs_heldout"], "cross": ["domain_shift"]}
-SETS = ("Z", "M", "S", "Z+M", "Z+S", "Mk", "Sk", "Z+Mk", "Z+Sk", "Mk2", "Sk2", "Z+Mk2", "Z+Sk2")
+SETS = ("Z", "M", "S", "Z+M", "Z+S", "Mk", "Sk", "Z+Mk", "Z+Sk", "Mk2", "Sk2", "Z+Mk2", "Z+Sk2", "Mk2nv", "Z+Mk2nv")
 CLIP = 0.05
 
 
@@ -49,10 +49,16 @@ def _kept(Mfull: np.ndarray, names: list[str], spec: str, suffix: str = ""):
     return Mfull[:, mk], Mfull[:, sk]
 
 
-def _sets(Z, M, S, Mk, Sk, Mk2, Sk2) -> dict[str, np.ndarray]:
+def _sets(Z, M, S, Mk, Sk, Mk2, Sk2, Mk2nv) -> dict[str, np.ndarray]:
     return {"Z": Z, "M": M, "S": S, "Z+M": np.hstack([Z, M]), "Z+S": np.hstack([Z, S]),
             "Mk": Mk, "Sk": Sk, "Z+Mk": np.hstack([Z, Mk]), "Z+Sk": np.hstack([Z, Sk]),
-            "Mk2": Mk2, "Sk2": Sk2, "Z+Mk2": np.hstack([Z, Mk2]), "Z+Sk2": np.hstack([Z, Sk2])}
+            "Mk2": Mk2, "Sk2": Sk2, "Z+Mk2": np.hstack([Z, Mk2]), "Z+Sk2": np.hstack([Z, Sk2]),
+            "Mk2nv": Mk2nv, "Z+Mk2nv": np.hstack([Z, Mk2nv])}
+
+
+def _all_sets(Z, M, S, Mfull, names, spec) -> dict[str, np.ndarray]:
+    return _sets(Z, M, S, *_kept(Mfull, names, spec), *_kept(Mfull, names, spec, "_t02"),
+                 _kept(Mfull, names, spec, "_t02nv")[0])
 
 
 def _crossfit_e(X: np.ndarray, W: np.ndarray, seed: int) -> np.ndarray:
@@ -81,7 +87,7 @@ def window_metrics(R: int, encoder: str) -> dict:
                 Mwin = np.vstack([Mfe, Mfn])
                 Mw, _, Sw, _ = _split(Mwin, names)
                 W = np.r_[np.zeros(len(ye), int), np.ones(len(yn), int)]
-                for s, X in _sets(np.vstack([Ze, Zn]), Mw, Sw, *_kept(Mwin, names, spec), *_kept(Mwin, names, spec, "_t02")).items():
+                for s, X in _all_sets(np.vstack([Ze, Zn]), Mw, Sw, Mwin, names, spec).items():
                     e = _crossfit_e(X, W, rep_seed + 3)
                     ec = np.clip(e, CLIP, 1 - CLIP)
                     acc[s]["auc"].append(roc_auc_score(W, e))
@@ -111,7 +117,7 @@ def y_metrics(encoder: str) -> dict:
         yi = y.astype(int)
         cv = StratifiedKFold(5, shuffle=True, random_state=SEED)
         auc = {}
-        for s, X in _sets(Zpca, M, S, *_kept(Mfull, names, spec), *_kept(Mfull, names, spec, "_t02")).items():
+        for s, X in _all_sets(Zpca, M, S, Mfull, names, spec).items():
             clf = RandomForestClassifier(n_estimators=C.RF_N_ESTIMATORS, random_state=SEED, n_jobs=1)
             p = cross_val_predict(clf, X, yi, cv=cv, method="predict_proba")[:, 1]
             auc[s] = float(roc_auc_score(yi, p))

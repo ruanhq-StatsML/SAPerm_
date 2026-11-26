@@ -225,6 +225,53 @@ Shift & Encoder & w/o & with $M$ & with $S$ & $M$ only & $M$ & $S$ & $M$ & $S$ \
 \\end{{tabular}}""", (min(cross_null), max(cross_null))
 
 
+DECORR_ARMS = (
+    ("without_meta", "w/o", "Z"),
+    ("with_meta", "with $M$", "Z+M"),
+    ("with_meta_decorr", "$M_{0.3}$", "Z+Mk"),
+    ("with_meta_decorr_t02", "$M_{0.2}$", "Z+Mk2"),
+    ("with_meta_decorr_t02nv", "$M_{0.2}\\setminus\\{v,n\\}$", "Z+Mk2nv"),
+    ("with_spacy_decorr", "$S_{0.3}$", "Z+Sk"),
+    ("with_spacy_decorr_t02", "$S_{0.2}$", "Z+Sk2"),
+)
+
+
+def decorr_falsify_table() -> str | None:
+    ds = "amazon_MiniLM_L6"
+    tags = ("py", "decorr", "decorr_cf")
+    hits: dict = {}
+    for tag in tags:
+        ck = OUT_DIR / f"checkpoint_amazon_{tag}_{ds}.npz"
+        if not ck.is_file():
+            continue
+        for r in np.load(ck, allow_pickle=True)["rows"]:
+            for t in ("DRPerm", "RRPerm", "CFPerm"):
+                x = r.get(t)
+                if x and not x.get("skipped") and x.get("p_value") is not None:
+                    hits.setdefault((r["scenario"], r["feature_set"], t), {})[r["b"]] = x["p_value"] < 0.05
+    if not any(k[1].endswith("decorr") for k in hits):
+        return None
+    ab = json.loads((OUT_DIR / "absorption_evidence_amazon.json").read_text(encoding="utf-8"))["windows"]
+    rows = []
+    for scen in ("sentiment_meta", "syntax_meta"):
+        first = True
+        for fs, lab, s in DECORR_ARMS:
+            pw = [(lambda d: float(np.mean(list(d.values()))) if len(d) >= B else None)(hits.get((scen, fs, t), {}))
+                  for t in ("DRPerm", "RRPerm", "CFPerm")]
+            a = ab.get(scen, {}).get(s)
+            diag = [f"${a['W_auc']:.2f}$", f"${a['var_resid_ratio_vs_Z']:.2f}$"] if a else ["--", "--"]
+            rows.append(f"{SCEN_LABEL[scen] if first else ''} & {lab} & " + " & ".join(diag + [_p(v) for v in pw]) + " \\\\")
+            first = False
+        rows.append("\\midrule")
+    return f"""\\begin{{tabular}}{{llccccc}}
+\\toprule
+Shift & Arm & AUC$_W$ & $\\mathrm{{Var}}(W-\\hat e)$ ratio & DR & RR & CF \\\\
+\\midrule
+{chr(10).join(rows[:-1])}
+\\bottomrule
+\\end{{tabular}}"""
+
+
 GENDER_ROWS = (
     # scenario, arm, RF (B=150, upper tail, random split), DR, RR, CF (B=50)
     ("Sentiment", "w/o", .100, .88, 1.00, .92),
@@ -287,6 +334,22 @@ def main() -> int:
         if paired
         else "% Amazon DR / RR / CF paired table (B=50): added when run_amazon_chain.sh finishes.\n"
     )
+    dtab = decorr_falsify_table()
+    decorr_block = (
+        f"""\\begin{{table}}[ht]
+\\centering
+\\caption{{Decorrelated arms (MiniLM-L6, Gift Cards, $B{{=}}{B}$, windows paired with the main $B{{=}}{B}$ chain).
+$M_\\tau$ / $S_\\tau$: $M$ or $S$ without features with full-frame $|\\rho_{{\\mathrm{{Spearman}}}}(f,y)|\\ge\\tau$
+(diagnostic ablation; the filter sees $y$). $M_{{0.2}}\\setminus\\{{v,n\\}}$ also drops \\texttt{{verb\\_ratio}} and
+\\texttt{{noun\\_ratio}}, the components of the syntax selection variable. AUC$_W$ and residual-variance ratio as in
+Table~\\ref{{tab:amazon_absorption}}.}}
+\\label{{tab:amazon_decorr}}
+{dtab}
+\\end{{table}}
+"""
+        if dtab
+        else ""
+    )
     tex = f"""\\documentclass[11pt]{{article}}
 \\usepackage[margin=0.7in]{{geometry}}
 \\usepackage{{booktabs,amsmath,graphicx}}
@@ -339,6 +402,7 @@ Standard error of a cell $\\le 0.04$.}}
 \\end{{table*}}
 
 {b50_block}
+{decorr_block}
 \\begin{{table*}}[ht]
 \\centering
 \\caption{{Absorption evidence (MiniLM-L6; same windows and cross-fitted RF propensity as DRPerm,
