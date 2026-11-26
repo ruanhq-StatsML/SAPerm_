@@ -222,6 +222,11 @@ def main() -> None:
     p.add_argument("--shard", default=None, metavar="i/N",
                    help="run only jobs with crc32(key) %% N == i; log defaults to dim_scan_gender_shard{i}.jsonl; "
                         "keys already in any results/dim_scan_gender*.jsonl are skipped")
+    p.add_argument("--subshard", default=None, metavar="j/M",
+                   help="with --shard i/N: split shard i's jobs further, keeping (crc32(key)//N) %% M == j; "
+                        "disjoint across j, so M machines can share one slow shard without overlap")
+    p.add_argument("--status", action="store_true",
+                   help="print remaining jobs per shard (N from --shard, default 4) and exit")
     a = p.parse_args()
     shard = None
     if a.shard:
@@ -229,8 +234,17 @@ def main() -> None:
         if not 0 <= si < sn:
             p.error("--shard needs 0 <= i < N")
         shard = (si, sn)
+    sub = None
+    if a.subshard:
+        if not shard:
+            p.error("--subshard needs --shard")
+        sj, sm = (int(x) for x in a.subshard.split("/"))
+        if not 0 <= sj < sm:
+            p.error("--subshard needs 0 <= j < M")
+        sub = (sj, sm)
     if a.log is None:
-        a.log = LOG.with_name(f"dim_scan_gender_shard{shard[0]}.jsonl") if shard else LOG
+        tag = f"{shard[0]}" + (f"_{sub[0]}of{sub[1]}" if sub else "") if shard else None
+        a.log = LOG.with_name(f"dim_scan_gender_shard{tag}.jsonl") if shard else LOG
 
     load_data(a.emb)
     kinds = []
@@ -242,7 +256,7 @@ def main() -> None:
             p.error(f"unknown kind {kd!r}")
     a.kinds = kinds
     done = set()
-    sources = sorted(LOG.parent.glob("dim_scan_gender*.jsonl")) if shard else []
+    sources = sorted(LOG.parent.glob("dim_scan_gender*.jsonl")) if (shard or a.status) else []
     if a.log not in sources:
         sources.append(a.log)
     for src in sources:
@@ -260,7 +274,15 @@ def main() -> None:
         for sc in a.scenarios
         if job_key(kind, k, sc, b) not in done
         and (shard is None or zlib.crc32(job_key(kind, k, sc, b).encode()) % shard[1] == shard[0])
+        and (sub is None or (zlib.crc32(job_key(kind, k, sc, b).encode()) // shard[1]) % sub[1] == sub[0])
     ]
+    if a.status:
+        n = shard[1] if shard else 4
+        left = {i: 0 for i in range(n)}
+        for kind, k, _m, sc, b, _t, _e in jobs:
+            left[zlib.crc32(job_key(kind, k, sc, b).encode()) % n] += 1
+        print(f"[dim_scan] remaining per shard (N={n}): {left}; total {sum(left.values())}")
+        return
     shown = a.kinds if len(a.kinds) <= 12 else f"{len(a.kinds)} kinds"
     print(f"[dim_scan] {a.emb} {a.tests} ks={a.ks} kinds={shown} mtry={a.mtry}: "
           f"{len(jobs)} jobs ({len(done)} rows on disk)", flush=True)
