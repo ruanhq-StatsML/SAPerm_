@@ -9,13 +9,13 @@ The interpretive section is read verbatim from ``results/amazon/manuscript_readi
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
 import numpy as np
 
 from experiments.meta_vs_embed_power.amazon_extract import OUT_DIR
-from experiments.meta_vs_embed_power.pipeline import OUT
 from experiments.meta_vs_embed_power.run_amazon_b50 import B, merge
 
 ENCODERS = (("MiniLM_L6", "MiniLM-L6"), ("qwen3-0.6b", "Qwen3-Emb-0.6B"))
@@ -186,51 +186,114 @@ $y$ CV AUC & $Z_{{\\mathrm{{pca}}}}$ & $M$ & $S$ & $[Z,M]$ & $[Z,S]$ \\\\
 \\end{{tabular}}"""
 
 
-def _fork(path: Path) -> dict:
-    d = json.loads(path.read_text(encoding="utf-8"))
-    t = d["summary"]["table"] if "summary" in d else [e for v in d["by_scenario"].values() for e in v]
-    return {(r["scenario"], r["feature_set"]): r["power"] for r in t}
+RF_SCEN = (("null_shift", "Null (random split)"),) + tuple(SCEN_LABEL.items())
 
 
-def appendix_table() -> str:
+def rf_b150_table() -> str:
+    pay = json.loads((OUT_DIR / "power_amazon_rf_b150.json").read_text(encoding="utf-8"))
+    rnd, ordr = pay["splits"]["random"], pay["splits"]["ordered"]
     rows = []
-    for ds, path in (("gender", OUT / "power_gender_B50.json"), ("bias", OUT / "power_bias_B50.json")):
-        if not path.is_file():
-            continue
-        by = _fork(path)
+    for scen, label in RF_SCEN:
         first = True
-        for t, tl in TESTS:
-            p = {fs: by.get(("sentiment_meta", fs), {}).get(t) for fs in FS}
-            mark = "$^\\dagger$" if t == "DRPerm" else ("$^\\ddagger$" if t == "CFPerm" else "")
+        for e, lab in ENCODERS:
+            ds = f"amazon-cross_{e}" if scen == "domain_shift" else f"amazon_{e}"
+            if scen == "null_shift":
+                ds = f"amazon_{e}"
+            g = lambda src, a: (src.get(ds, {}).get(f"{scen}|{a}") or {}).get("power")
+            p = {a: g(rnd, a) for a in ("without_meta", "with_meta", "with_spacy", "meta_only")}
+            o = {a: g(ordr, a) for a in ("without_meta", "with_meta", "with_spacy")}
             rows.append(
-                f"{ds if first else ''} & {tl}{mark} & {_p(p['without_meta'])} & {_p(p['with_meta'])} & "
-                f"{_d(p['with_meta'], p['without_meta'])} & {_p(p['meta_only'])} \\\\"
+                f"{label if first else ''} & {lab} & {_p(p['without_meta'])} & {_p(p['with_meta'])} & "
+                f"{_p(p['with_spacy'])} & {_p(p['meta_only'])} & {_d(p['with_meta'], p['without_meta'])} & "
+                f"{_d(p['with_spacy'], p['without_meta'])} & {_d(o['with_meta'], o['without_meta'])} & "
+                f"{_d(o['with_spacy'], o['without_meta'])} \\\\"
             )
             first = False
         rows.append("\\midrule")
-    return f"""\\begin{{tabular}}{{llcccc}}
+    cross_null = []
+    for e, lab in ENCODERS:
+        c = rnd.get(f"amazon-cross_{e}", {})
+        cross_null += [c[k]["power"] for k in c if k.startswith("null_shift|")]
+    return f"""\\begin{{tabular}}{{llcccccccc}}
 \\toprule
-Dataset & Test & w/o & with & $\\Delta$ & meta \\\\
+ & & \\multicolumn{{4}}{{c}}{{Power (random split)}} & \\multicolumn{{2}}{{c}}{{$\\Delta$ random}} & \\multicolumn{{2}}{{c}}{{$\\Delta$ ordered}} \\\\
+\\cmidrule(lr){{3-6}}\\cmidrule(lr){{7-8}}\\cmidrule(lr){{9-10}}
+Shift & Encoder & w/o & with $M$ & with $S$ & $M$ only & $M$ & $S$ & $M$ & $S$ \\\\
 \\midrule
 {chr(10).join(rows[:-1])}
+\\bottomrule
+\\end{{tabular}}""", (min(cross_null), max(cross_null))
+
+
+GENDER_ROWS = (
+    # scenario, arm, RF (B=150, upper tail, random split), DR, RR, CF (B=50)
+    ("Sentiment", "w/o", .100, .88, 1.00, .92),
+    ("", "with $M$", .033, .08, .90, .98),
+    ("", "$M$ only", .027, .04, .94, 1.00),
+    ("Syntax", "w/o", .267, .60, .74, .60),
+    ("", "with $M$", .360, .12, .32, .68),
+    ("", "$M$ only", .347, .06, .36, .46),
+    ("Train/held-out", "w/o", .047, .02, .00, .02),
+    ("", "with $M$", .033, .02, .00, .04),
+    ("", "$M$ only", .027, .04, .00, .00),
+    ("Null", "w/o", .040, .12, .06, .06),
+    ("", "with $M$", .067, .08, .02, .00),
+    ("", "$M$ only", .060, .04, .06, .06),
+)
+
+
+def gender_table() -> str:
+    rows = []
+    for i, (scen, arm, *vals) in enumerate(GENDER_ROWS):
+        if i and scen:
+            rows.append("\\midrule")
+        rows.append(f"{scen} & {arm} & " + " & ".join(_p(v, bold_at=2) for v in vals) + " \\\\")
+    return f"""\\begin{{tabular}}{{llcccc}}
+\\toprule
+Shift & Arm & RF & DR & RR & CF \\\\
+\\midrule
+{chr(10).join(rows)}
 \\bottomrule
 \\end{{tabular}}"""
 
 
 def main() -> int:
     out = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_OUT
-    payload = merge([e for e, _ in ENCODERS])
-    t1, null_line = amazon_table(payload)
+    paired = os.environ.get("MANUSCRIPT_B50") == "1"
+    if paired:
+        t1, null_line = amazon_table(merge([e for e, _ in ENCODERS]))
+    rf_tab, (cn_lo, cn_hi) = rf_b150_table()
     align = {s: json.loads((OUT_DIR / f).read_text(encoding="utf-8"))
              for s, f in (("gift", "alignment_report.json"), ("cross", "alignment_report_cross.json"))}
     reading = (OUT_DIR / "manuscript_reading.tex").read_text(encoding="utf-8")
+    b50_block = (
+        f"""\\begin{{table*}}[ht]
+\\centering
+\\caption{{Amazon DR / RR / CF power by arm ($B{{=}}{B}$, paired windows). $\\Delta=$ with $-$ w/o.
+{('Null rejection rates: ' + null_line + '.') if null_line else ''}}}
+\\label{{tab:amazon_power_b50}}
+\\resizebox{{\\textwidth}}{{!}}{{%
+{t1}%
+}}
+\\end{{table*}}
+
+\\begin{{table}}[ht]
+\\centering
+\\caption{{DRPerm absorption diagnostic: mean $|W-\\hat e(X)|$ (cross-fitted).}}
+\\label{{tab:amazon_dr_absorb}}
+{dr_absorb_table()}
+\\end{{table}}
+"""
+        if paired
+        else "% Amazon DR / RR / CF paired table (B=50): added when run_amazon_chain.sh finishes.\n"
+    )
     tex = f"""\\documentclass[11pt]{{article}}
 \\usepackage[margin=0.7in]{{geometry}}
 \\usepackage{{booktabs,amsmath,graphicx}}
 \\usepackage[T1]{{fontenc}}
 
-\\title{{Text embedding $\\pm$ meta-features: three-arm shift-detection power\\\\
-{{\\large Amazon Reviews 2023 (Gift Cards, Magazine Subscriptions), $B{{=}}{B}$}}}}
+\\title{{Text embedding $\\pm$ meta-features: shift-detection power\\\\
+{{\\large Amazon Reviews 2023 (Gift Cards, Magazine Subscriptions) and gender}}}}
 \\author{{SAPerm shift-detect}}
 \\date{{}}
 
@@ -239,14 +302,18 @@ def main() -> int:
 
 \\begin{{abstract}}
 \\noindent
-Three feature arms per encoder: \\emph{{w/o}} $=$ PCA$_{{24}}$ of the sentence embedding $Z$;
-\\emph{{with}} $=[\\mathrm{{PCA}}_{{24}}(Z),\\,M]$; \\emph{{meta}} $=M$ only, where $M$ is the
-32-dimensional \\texttt{{utils.text\\_meta}} vector (surface 14, syntax 12, sentiment 6).
-$B{{=}}{B}$ replicates, $N_{{\\mathrm{{perm}}}}{{=}}150$, Random Forest outcome model,
-$n_{{\\mathrm{{doc}}}}{{=}}120$ per window, $\\alpha{{=}}0.05$; entries are empirical rejection rates.
-RF $=$ RFPerm (Python port of \\texttt{{RFPerm\\_Generalized.PermValTest}}, 70/30 train/val split);
-CF $=$ CFPerm LOCO on the meta block (meta arm: per sub-block, Bonferroni over 3 blocks);
-RR $=$ RRPerm; DR $=$ DRPerm with residual-permutation null.
+Four feature arms per encoder: \\emph{{w/o}} $=$ PCA$_{{24}}$ of the sentence embedding $Z$;
+\\emph{{with $M$}} $=[\\mathrm{{PCA}}_{{24}}(Z),\\,M]$, where $M$ is the 32-dimensional
+\\texttt{{utils.text\\_meta}} vector (surface, syntax and VADER sentiment features);
+\\emph{{with $S$}} $=[\\mathrm{{PCA}}_{{24}}(Z),\\,S]$, where $S$ is a 36-dimensional spaCy
+(\\texttt{{en\\_core\\_web\\_sm}}) block with no VADER, sentiment lexicon or verb/noun ratio;
+\\emph{{$M$ only}}. $n_{{\\mathrm{{doc}}}}{{=}}120$ per window, $N_{{\\mathrm{{perm}}}}{{=}}150$,
+Random Forest outcome model, $\\alpha{{=}}0.05$; entries are empirical rejection rates, and all arms
+of a replicate share the same windows.
+RF $=$ RFPerm, the Python \\texttt{{RFPerm\\_Generalized.PermValTest}} port with $B{{=}}150$ and
+the one-sided upper-tail $p$ of the official \\texttt{{RFPerm::permrf}}
+(reject when the new window has higher held-out loss).
+CF $=$ CFPerm LOCO on the meta block; RR $=$ RRPerm; DR $=$ DRPerm with residual-permutation null ($B{{=}}50$).
 Source domain: 1{{,}}000 Gift Cards reviews (rating 3 dropped, 20--1000 characters,
 text-deduplicated, $y=\\mathbb{{1}}[\\text{{rating}}\\ge4]$, 500/500); target domain:
 1{{,}}000 Magazine Subscriptions reviews under the same filters, disjoint texts.
@@ -257,27 +324,21 @@ Every artifact is keyed by row id and text SHA-1; alignment passed on both frame
 
 \\begin{{table*}}[ht]
 \\centering
-\\caption{{Amazon power by arm ($B{{=}}{B}$). $\\Delta=$ with $-$ w/o.
-Sentiment / syntax windows select the tails of a meta coordinate (VADER compound,
-verb/noun ratio); time compares early vs late Gift Cards reviews; domain compares
-Gift Cards with Magazine Subscriptions.{(' Random split (Type-I) rejection rates over arms and encoders: ' + null_line + '.') if null_line else ''}
-``--'' $=$ not run.}}
-\\label{{tab:amazon_power}}
+\\caption{{Amazon RFPerm power, $B{{=}}150$, $N_{{\\mathrm{{perm}}}}{{=}}150$, upper-tail $p$.
+Sentiment / syntax windows select the tails of a coordinate of $M$ (VADER compound,
+verb/noun ratio); time compares early with late Gift Cards reviews; domain compares
+Gift Cards with Magazine Subscriptions. $\\Delta=$ arm $-$ w/o.
+Random: the official random 70/30 train/validation split of the first window;
+ordered: the same rows in frame order, so the split is chronological on Gift Cards.
+Cross-frame null rejection rates: ${cn_lo:.2f}$--${cn_hi:.2f}$.
+Standard error of a cell $\\le 0.04$.}}
+\\label{{tab:amazon_rf_b150}}
 \\resizebox{{\\textwidth}}{{!}}{{%
-{t1}%
+{rf_tab}%
 }}
 \\end{{table*}}
 
-\\begin{{table}}[ht]
-\\centering
-\\caption{{DRPerm absorption diagnostic: mean $|W-\\hat e(X)|$ (cross-fitted).
-$0.5$ means the window label $W$ is unpredictable from $X$; small values mean $X$
-already encodes the window, so the shift is absorbed into $\\hat e$ rather than
-left in the outcome residual.}}
-\\label{{tab:amazon_dr_absorb}}
-{dr_absorb_table()}
-\\end{{table}}
-
+{b50_block}
 \\begin{{table*}}[ht]
 \\centering
 \\caption{{Absorption evidence (MiniLM-L6; same windows and cross-fitted RF propensity as DRPerm,
@@ -307,12 +368,11 @@ AUC $=$ 5-fold logistic classifier separating the two groups.}}
 
 \\begin{{table}}[ht]
 \\centering
-\\caption{{Appendix: gender and bias, sentiment window, MiniLM-L6, $B{{=}}50$ (same RF backend).
-$^\\dagger$DR from the earlier refit null (biased toward $p\\to1$ when $W$ is predictable);
-residual-null rerun pending.
-$^\\ddagger$meta-arm CF is whole-block LOCO (before the per-sub-block Bonferroni).}}
-\\label{{tab:appendix_gender_bias}}
-{appendix_table()}
+\\caption{{Gender, MiniLM-L6, $n{{=}}1000$ (balanced $y$). RF: $B{{=}}150$, upper-tail $p$,
+random split. DR (residual null), RR, CF: $B{{=}}50$; $M$-only CF is per-sub-block LOCO
+with Bonferroni over three blocks.}}
+\\label{{tab:gender_power}}
+{gender_table()}
 \\end{{table}}
 
 {reading}
