@@ -1,0 +1,65 @@
+{
+  "dataset": "bias",
+  "scenario": "sentiment_meta",
+  "B": 150,
+  "n_perm": 150,
+  "checkpoint_tag": "rf_b150_bias_upper_random",
+  "summary": {
+    "table": [
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.12,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.3884326710816777,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.21333333333333335,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.30900662251655625,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.32666666666666666,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.18397350993377481,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      }
+    ]
+  }
+}

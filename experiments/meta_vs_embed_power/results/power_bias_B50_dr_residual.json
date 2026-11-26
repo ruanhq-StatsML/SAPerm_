@@ -49,6 +49,26 @@
       "mean_p_DR": 0.3283443708609271,
       "abs_w_resid_mean": 0.20225315635516897,
       "elapsed_sec": 214.1114342212677
+    },
+    "train_vs_heldout/with_meta": {
+      "scenario": "train_vs_heldout",
+      "feature_set": "with_meta",
+      "B": 50,
+      "n_perm": 150,
+      "power_DR": 0.06,
+      "mean_p_DR": 0.5658278145695363,
+      "abs_w_resid_mean": 0.5020194658741043,
+      "elapsed_sec": 209.5496690273285
+    },
+    "sentiment_meta/meta_only": {
+      "scenario": "sentiment_meta",
+      "feature_set": "meta_only",
+      "B": 50,
+      "n_perm": 150,
+      "power_DR": 0.08,
+      "mean_p_DR": 0.40675496688741725,
+      "abs_w_resid_mean": 0.18076500218750657,
+      "elapsed_sec": 298.40030169487
     }
   },
   "dataset": "bias",

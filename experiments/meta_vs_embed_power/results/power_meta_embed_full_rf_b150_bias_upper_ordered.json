@@ -1,0 +1,213 @@
+{
+  "config": {
+    "B": 150,
+    "n_perm": 150,
+    "n_doc": 120,
+    "pca_k": 24,
+    "n_estimators": 150,
+    "n_max": 1000,
+    "row_cap": 1000,
+    "embed_batch_size": 32,
+    "seed": 2026,
+    "datasets": [
+      "bias"
+    ],
+    "scenarios": [
+      "sentiment_meta",
+      "syntax_meta",
+      "train_vs_heldout"
+    ],
+    "outcome_model": "RandomForest",
+    "meta_source": "utils.text_meta",
+    "contrast": "without_meta=PCA(Z); with_meta=hstack(Z,M); meta_only=M",
+    "feature_sets": [
+      "without_meta",
+      "with_meta",
+      "meta_only"
+    ],
+    "methods": [
+      "RFPerm",
+      "DRPerm",
+      "CFPerm",
+      "RRPerm"
+    ],
+    "elapsed_sec": 86.06950449943542
+  },
+  "summary": {
+    "table": [
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.21333333333333335,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.33417218543046356,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.28,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.27130242825607065,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.3333333333333333,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.1794701986754967,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "syntax_meta",
+        "feature_set": "meta_only",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.02666666666666667,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.5978366445916115,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.013333333333333334,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.6598675496688742,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "syntax_meta",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.7459602649006623,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "train_vs_heldout",
+        "feature_set": "meta_only",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.013333333333333334,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.6422075055187637,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.03333333333333333,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.6374834437086093,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "train_vs_heldout",
+        "feature_set": "without_meta",
+        "B": 150,
+        "power": {
+          "RFPerm": 0.03333333333333333,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.5576158940397351,
+          "DRPerm": NaN,
+          "CFPerm": NaN,
+          "RRPerm": NaN
+        }
+      }
+    ]
+  },
+  "rows_count": 1350,
+  "anisotropy_headline": {
+    "train_bias_finder_bert": {
+      "anisotropy_at_max_pc": 0.15914190591167332,
+      "effective_rank_at_max_pc": 82.57272171207875
+    },
+    "train_bias_finder_MiniLM_L6": {
+      "anisotropy_at_max_pc": 0.0614305131953659,
+      "effective_rank_at_max_pc": 143.33062068244118
+    }
+  }
+}
