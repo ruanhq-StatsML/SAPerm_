@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
+import os
+
 import numpy as np
 
 from experiments.meta_vs_embed_power.perm_lib import cfperm_loco_pvalue, drperm_pvalue, rrperm_pvalue
@@ -137,7 +139,10 @@ def run_one_rep(
         "RFPerm": rfperm_single_pvalue(
             Xe, ye, Xn, yn, n_perm=n_perm, seed=seed, n_estimators=max(n_estimators, 150)
         ),
-        "DRPerm": drperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators),
+        "DRPerm": drperm_pvalue(
+            X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators,
+            null_scheme=os.environ.get("POWER_DR_NULL", "residual"),
+        ),
         "RRPerm": rrperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 11, n_estimators=n_estimators),
     }
     if feature_set == "meta_only":
