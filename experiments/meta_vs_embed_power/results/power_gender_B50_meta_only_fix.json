@@ -16,9 +16,10 @@
   "scenarios_done": [
     "train_vs_heldout",
     "syntax_meta",
-    "sentiment_meta"
+    "sentiment_meta",
+    "null_shift"
   ],
-  "elapsed_sec_last": 1203.1660933494568,
+  "elapsed_sec_last": 2558.68319439888,
   "by_scenario": {
     "train_vs_heldout": [
       {
@@ -79,6 +80,26 @@
           "RRPerm": 0.030331125827814574
         }
       }
+    ],
+    "null_shift": [
+      {
+        "dataset": "gender",
+        "scenario": "null_shift",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.04,
+          "DRPerm": 0.0,
+          "CFPerm": 0.06,
+          "RRPerm": 0.06
+        },
+        "mean_p": {
+          "RFPerm": 0.5242384105960265,
+          "DRPerm": NaN,
+          "CFPerm": 0.6494039735099338,
+          "RRPerm": 0.5337748344370862
+        }
+      }
     ]
   },
   "summary": {
@@ -136,8 +157,26 @@
           "CFPerm": 0.02066225165562914,
           "RRPerm": 0.030331125827814574
         }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "null_shift",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.04,
+          "DRPerm": 0.0,
+          "CFPerm": 0.06,
+          "RRPerm": 0.06
+        },
+        "mean_p": {
+          "RFPerm": 0.5242384105960265,
+          "DRPerm": NaN,
+          "CFPerm": 0.6494039735099338,
+          "RRPerm": 0.5337748344370862
+        }
       }
     ]
   },
-  "markdown": "| scenario | arm | B | RF | DR | RR | CF |\n|---|---|---|---|---|---|---|\n| sentiment_meta | meta_only | 50 | 0.24 | 0.00 | 0.94 | 1.00 |\n| syntax_meta | meta_only | 50 | 0.00 | 0.00 | 0.36 | 0.46 |\n| train_vs_heldout | meta_only | 50 | 0.06 | 0.00 | 0.00 | 0.00 |"
+  "markdown": "| scenario | arm | B | RF | DR | RR | CF |\n|---|---|---|---|---|---|---|\n| sentiment_meta | meta_only | 50 | 0.24 | 0.00 | 0.94 | 1.00 |\n| syntax_meta | meta_only | 50 | 0.00 | 0.00 | 0.36 | 0.46 |\n| train_vs_heldout | meta_only | 50 | 0.06 | 0.00 | 0.00 | 0.00 |\n| null_shift | meta_only | 50 | 0.04 | 0.00 | 0.06 | 0.06 |"
 }
