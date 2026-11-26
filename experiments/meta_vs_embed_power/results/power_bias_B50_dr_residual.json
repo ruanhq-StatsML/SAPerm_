@@ -29,6 +29,26 @@
       "mean_p_DR": 0.5462251655629139,
       "abs_w_resid_mean": 0.5007200873166794,
       "elapsed_sec": 181.12832260131836
+    },
+    "sentiment_meta/with_meta": {
+      "scenario": "sentiment_meta",
+      "feature_set": "with_meta",
+      "B": 50,
+      "n_perm": 150,
+      "power_DR": 0.12,
+      "mean_p_DR": 0.42013245033112573,
+      "abs_w_resid_mean": 0.21911948957069238,
+      "elapsed_sec": 1177.5586423873901
+    },
+    "syntax_meta/with_meta": {
+      "scenario": "syntax_meta",
+      "feature_set": "with_meta",
+      "B": 50,
+      "n_perm": 150,
+      "power_DR": 0.04,
+      "mean_p_DR": 0.3283443708609271,
+      "abs_w_resid_mean": 0.20225315635516897,
+      "elapsed_sec": 214.1114342212677
     }
   },
   "dataset": "bias",
