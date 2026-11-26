@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import zlib
+
 import numpy as np
 
 from experiments.meta_vs_embed_power.power import run_one_rep
@@ -25,7 +27,7 @@ def run_job(
     n_estimators: int,
     pca_k: int,
 ) -> dict[str, Any]:
-    rep_seed = seed + 1000 * hash((dataset, feature_set)) % 997 + 17 * b + abs(hash(scenario)) % 89
+    rep_seed = seed + 10_007 * (zlib.crc32(scenario.encode()) % 997) + 17 * b
     rep = run_one_rep(
         scenario,
         feature_set,

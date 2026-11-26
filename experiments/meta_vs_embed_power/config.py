@@ -19,7 +19,7 @@ RF_N_ESTIMATORS = 150
 OUTCOME_MODEL = "RandomForest"
 
 # Anisotropy / effective rank
-N_PC_GRID = np.linspace(30, 330, 25, dtype=int)
+N_PC_GRID = np.unique(np.linspace(30, 330, 30, dtype=int))
 
 DATASETS = ("train_bias_finder", "gender", "bias")
 SCENARIOS = ("null_shift", "sentiment_meta", "syntax_meta", "train_vs_heldout")

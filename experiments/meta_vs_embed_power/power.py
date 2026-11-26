@@ -53,7 +53,7 @@ def make_windows(
         lo, hi = order[: max(n_doc * 3, n_doc)], order[-max(n_doc * 3, n_doc) :]
         a = rng.choice(lo, n_doc, replace=len(lo) < n_doc)
         b = rng.choice(hi, n_doc, replace=len(hi) < n_doc)
-    elif scenario in ("train_vs_heldout", "train_vs_test"):
+    elif scenario in ("train_vs_heldout", "train_vs_test", "domain_shift"):
         half = n // 2
         a = rng.choice(np.arange(half), n_doc, replace=half < n_doc)
         b = rng.choice(np.arange(half, n), n_doc, replace=(n - half) < n_doc)
@@ -81,18 +81,28 @@ def run_one_rep(
     pca_k: int,
 ) -> dict[str, Any]:
     rng = np.random.default_rng(seed)
-    Xe_e, ye, Xn_e, yn, Xe_b, Xn_b, Me, Mn = make_windows(
+    Xe_e, ye, Xn_e, yn, _, _, Mfe, Mfn = make_windows(
         scenario, Zpca, M, y, meta_names, n_doc, rng
     )
+    sp = np.array([i for i, n in enumerate(meta_names) if n.startswith("spacy:")], dtype=int)
+    keep = np.array([i for i, n in enumerate(meta_names) if not n.startswith("spacy:")], dtype=int)
+    Me, Mn = Mfe[:, keep], Mfn[:, keep]
+    meta_names_eff = [meta_names[i] for i in keep]
+    n_meta = len(keep)
     if feature_set == "without_meta":
         Xe, Xn = Xe_e, Xn_e
-        test_idx = np.arange(max(0, Xe.shape[1] - min(8, M.shape[1])), Xe.shape[1])
+        test_idx = np.arange(max(0, Xe.shape[1] - min(8, n_meta)), Xe.shape[1])
     elif feature_set == "with_meta":
-        Xe, Xn = Xe_b, Xn_b
-        test_idx = np.arange(pca_k, pca_k + M.shape[1])
+        Xe, Xn = np.hstack([Xe_e, Me]), np.hstack([Xn_e, Mn])
+        test_idx = np.arange(pca_k, pca_k + n_meta)
+    elif feature_set == "with_spacy":
+        if sp.size == 0:
+            raise ValueError("with_spacy requested but no spacy: columns in meta_names")
+        Xe, Xn = np.hstack([Xe_e, Mfe[:, sp]]), np.hstack([Xn_e, Mfn[:, sp]])
+        test_idx = np.arange(pca_k, pca_k + sp.size)
     elif feature_set == "meta_only":
         Xe, Xn = Me, Mn
-        test_idx = np.arange(M.shape[1])
+        test_idx = np.arange(n_meta)
     else:
         raise ValueError(feature_set)
 
