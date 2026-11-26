@@ -1,0 +1,104 @@
+{
+  "dataset": "gender",
+  "B": 50,
+  "n_perm": 150,
+  "n_jobs": 2,
+  "outcome_model": "RandomForest",
+  "arms": [
+    "meta_only"
+  ],
+  "methods": [
+    "RFPerm",
+    "DRPerm",
+    "RRPerm",
+    "CFPerm"
+  ],
+  "scenarios_done": [
+    "train_vs_heldout",
+    "syntax_meta"
+  ],
+  "elapsed_sec_last": 2389.686611890793,
+  "by_scenario": {
+    "train_vs_heldout": [
+      {
+        "dataset": "gender",
+        "scenario": "train_vs_heldout",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.06,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.512317880794702,
+          "DRPerm": 0.6543046357615894,
+          "CFPerm": 0.8158940397350993,
+          "RRPerm": 0.6430463576158939
+        }
+      }
+    ],
+    "syntax_meta": [
+      {
+        "dataset": "gender",
+        "scenario": "syntax_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.46,
+          "RRPerm": 0.36
+        },
+        "mean_p": {
+          "RFPerm": 0.7831788079470198,
+          "DRPerm": NaN,
+          "CFPerm": 0.1317880794701987,
+          "RRPerm": 0.2352317880794702
+        }
+      }
+    ]
+  },
+  "summary": {
+    "table": [
+      {
+        "dataset": "gender",
+        "scenario": "train_vs_heldout",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.06,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.512317880794702,
+          "DRPerm": 0.6543046357615894,
+          "CFPerm": 0.8158940397350993,
+          "RRPerm": 0.6430463576158939
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "syntax_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "CFPerm": 0.46,
+          "RRPerm": 0.36
+        },
+        "mean_p": {
+          "RFPerm": 0.7831788079470198,
+          "DRPerm": NaN,
+          "CFPerm": 0.1317880794701987,
+          "RRPerm": 0.2352317880794702
+        }
+      }
+    ]
+  },
+  "markdown": "| scenario | arm | B | RF | DR | RR | CF |\n|---|---|---|---|---|---|---|\n| syntax_meta | meta_only | 50 | 0.00 | 0.00 | 0.36 | 0.46 |\n| train_vs_heldout | meta_only | 50 | 0.06 | 0.00 | 0.00 | 0.00 |"
+}
