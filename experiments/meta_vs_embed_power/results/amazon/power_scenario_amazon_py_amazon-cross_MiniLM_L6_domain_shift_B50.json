@@ -12,13 +12,13 @@
         "feature_set": "with_meta",
         "B": 50,
         "power": {
-          "RFPerm": 0.34,
+          "RFPerm": null,
           "DRPerm": 0.56,
           "CFPerm": 0.02,
           "RRPerm": 0.16
         },
         "mean_p": {
-          "RFPerm": 0.17483443708609273,
+          "RFPerm": null,
           "DRPerm": 0.10556291390728476,
           "CFPerm": 0.6343046357615895,
           "RRPerm": 0.3374834437086093
@@ -27,16 +27,34 @@
       {
         "dataset": "amazon-cross_MiniLM_L6",
         "scenario": "domain_shift",
+        "feature_set": "with_spacy",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.56,
+          "CFPerm": 0.02,
+          "RRPerm": 0.02
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.09536423841059603,
+          "CFPerm": 0.5680794701986754,
+          "RRPerm": 0.49960264900662255
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "domain_shift",
         "feature_set": "without_meta",
         "B": 50,
         "power": {
-          "RFPerm": 0.2,
+          "RFPerm": null,
           "DRPerm": 0.36,
           "CFPerm": 0.02,
           "RRPerm": 0.0
         },
         "mean_p": {
-          "RFPerm": 0.2952317880794702,
+          "RFPerm": null,
           "DRPerm": 0.16701986754966885,
           "CFPerm": 0.576158940397351,
           "RRPerm": 0.5133774834437086

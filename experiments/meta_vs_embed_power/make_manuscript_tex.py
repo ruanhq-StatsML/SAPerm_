@@ -19,7 +19,7 @@ from experiments.meta_vs_embed_power.amazon_extract import OUT_DIR
 from experiments.meta_vs_embed_power.run_amazon_b50 import B, merge
 
 ENCODERS = (("MiniLM_L6", "MiniLM-L6"), ("qwen3-0.6b", "Qwen3-Emb-0.6B"))
-TESTS = (("RFPerm", "RF"), ("CFPerm", "CF"), ("RRPerm", "RR"), ("DRPerm", "DR"))
+TESTS = (("CFPerm", "CF"), ("RRPerm", "RR"), ("DRPerm", "DR"))
 SCEN_LABEL = {
     "sentiment_meta": "Sentiment (VADER tail)",
     "syntax_meta": "Syntax (verb/noun tail)",
@@ -27,6 +27,7 @@ SCEN_LABEL = {
     "domain_shift": "Domain (Gift $\\to$ Magazine)",
 }
 FS = ("without_meta", "with_meta", "meta_only")
+FS4 = ("without_meta", "with_meta", "with_spacy", "meta_only")
 DEFAULT_OUT = Path("/cursor/stores/bc-87419b75-0666-4144-88dc-9832a2b2d6ae/docs/meta-vs-embed-manuscript.tex")
 
 
@@ -68,26 +69,29 @@ def amazon_table(payload: dict) -> tuple[str, str]:
         for t, tl in TESTS:
             cells = []
             for e, _ in ENCODERS:
-                p = {fs: bys[e].get((scen, fs), {}).get(t) for fs in FS}
-                cells += [_p(p["without_meta"]), _p(p["with_meta"]), _d(p["with_meta"], p["without_meta"]), _p(p["meta_only"])]
+                p = {fs: bys[e].get((scen, fs), {}).get(t) for fs in FS4}
+                cells += [
+                    _p(p["without_meta"]), _p(p["with_meta"]), _d(p["with_meta"], p["without_meta"]),
+                    _p(p["with_spacy"]), _d(p["with_spacy"], p["without_meta"]), _p(p["meta_only"]),
+                ]
             rows.append(f"{label if first else ''} & {tl} & " + " & ".join(cells) + " \\\\")
             first = False
         rows.append("\\midrule")
     rows = rows[:-1]
     nulls = {}
     for e, _ in ENCODERS:
-        for fs in FS:
+        for fs in FS4:
             for t, tl in TESTS:
                 v = bys[e].get(("null_shift", fs), {}).get(t)
                 if v is not None:
                     nulls.setdefault(tl, []).append(v)
     null_line = "; ".join(f"{tl} ${min(v):.2f}$--${max(v):.2f}$" for tl, v in nulls.items())
-    head = " & ".join(f"\\multicolumn{{4}}{{c}}{{{lab}}}" for _, lab in ENCODERS)
-    cmid = "\\cmidrule(lr){3-6}\\cmidrule(lr){7-10}"
-    sub = " & ".join(["w/o & with & $\\Delta$ & meta"] * len(ENCODERS))
+    head = " & ".join(f"\\multicolumn{{6}}{{c}}{{{lab}}}" for _, lab in ENCODERS)
+    cmid = "\\cmidrule(lr){3-8}\\cmidrule(lr){9-14}"
+    sub = " & ".join(["w/o & $M$ & $\\Delta_M$ & $S$ & $\\Delta_S$ & $M$ only"] * len(ENCODERS))
     body = "\n".join(rows)
     return (
-        f"""\\begin{{tabular}}{{llcccccccc}}
+        f"""\\begin{{tabular}}{{llcccccccccccc}}
 \\toprule
  & & {head} \\\\
 {cmid}
@@ -316,7 +320,7 @@ def main() -> int:
     b50_block = (
         f"""\\begin{{table*}}[ht]
 \\centering
-\\caption{{Amazon DR / RR / CF power by arm ($B{{=}}{B}$, paired windows). $\\Delta=$ with $-$ w/o.
+\\caption{{Amazon DR / RR / CF power by arm ($B{{=}}{B}$, paired windows). $\\Delta_M$, $\\Delta_S$ $=$ arm $-$ w/o.
 {('Null rejection rates: ' + null_line + '.') if null_line else ''}}}
 \\label{{tab:amazon_power_b50}}
 \\resizebox{{\\textwidth}}{{!}}{{%

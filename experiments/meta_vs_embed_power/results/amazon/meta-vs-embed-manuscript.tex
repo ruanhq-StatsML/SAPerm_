@@ -41,7 +41,7 @@ verb/noun ratio); time compares early with late Gift Cards reviews; domain compa
 Gift Cards with Magazine Subscriptions. $\Delta=$ arm $-$ w/o.
 Random: the official random 70/30 train/validation split of the first window;
 ordered: the same rows in frame order, so the split is chronological on Gift Cards.
-Cross-frame null rejection rates: $0.04$--$0.09$.
+Cross-frame null rejection rates: $0.04$--$0.10$.
 Standard error of a cell $\le 0.04$.}
 \label{tab:amazon_rf_b150}
 \resizebox{\textwidth}{!}{%
@@ -70,7 +70,87 @@ Domain (Gift $\to$ Magazine) & MiniLM-L6 & $.33$ & $.36$ & $.35$ & $.29$ & $+.03
 }
 \end{table*}
 
-% Amazon DR / RR / CF paired table (B=50): added when run_amazon_chain.sh finishes.
+\begin{table*}[ht]
+\centering
+\caption{Amazon DR / RR / CF power by arm ($B{=}50$, paired windows). $\Delta_M$, $\Delta_S$ $=$ arm $-$ w/o.
+}
+\label{tab:amazon_power_b50}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcccccccccccc}
+\toprule
+ & & \multicolumn{6}{c}{MiniLM-L6} & \multicolumn{6}{c}{Qwen3-Emb-0.6B} \\
+\cmidrule(lr){3-8}\cmidrule(lr){9-14}
+Shift & Test & w/o & $M$ & $\Delta_M$ & $S$ & $\Delta_S$ & $M$ only & w/o & $M$ & $\Delta_M$ & $S$ & $\Delta_S$ & $M$ only \\
+\midrule
+Sentiment (VADER tail) & CF & $\mathbf{.94}$ & $\mathbf{1.00}$ & $+.06$ & $\mathbf{1.00}$ & $+.06$ & -- & -- & -- & -- & -- & -- & -- \\
+ & RR & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\pm.00$ & $\mathbf{1.00}$ & $\pm.00$ & -- & -- & -- & -- & -- & -- & -- \\
+ & DR & $\mathbf{1.00}$ & $.18$ & $-.82$ & $\mathbf{1.00}$ & $\pm.00$ & -- & -- & -- & -- & -- & -- & -- \\
+\midrule
+Syntax (verb/noun tail) & CF & $.58$ & $\mathbf{.94}$ & $+.36$ & $\mathbf{.92}$ & $+.34$ & -- & -- & -- & -- & -- & -- & -- \\
+ & RR & $\mathbf{.88}$ & $.34$ & $-.54$ & $.60$ & $-.28$ & -- & -- & -- & -- & -- & -- & -- \\
+ & DR & $.58$ & $.20$ & $-.38$ & $.30$ & $-.28$ & -- & -- & -- & -- & -- & -- & -- \\
+\midrule
+Time (early vs late) & CF & $.46$ & $\mathbf{.80}$ & $+.34$ & $.78$ & $+.32$ & -- & -- & -- & -- & -- & -- & -- \\
+ & RR & $.78$ & $.60$ & $-.18$ & $.74$ & $-.04$ & -- & -- & -- & -- & -- & -- & -- \\
+ & DR & $.36$ & $.28$ & $-.08$ & $.48$ & $+.12$ & -- & -- & -- & -- & -- & -- & -- \\
+\midrule
+Domain (Gift $\to$ Magazine) & CF & $.02$ & $.02$ & $\pm.00$ & $.02$ & $\pm.00$ & -- & -- & -- & -- & -- & -- & -- \\
+ & RR & $.00$ & $.16$ & $+.16$ & $.02$ & $+.02$ & -- & -- & -- & -- & -- & -- & -- \\
+ & DR & $.36$ & $.56$ & $+.20$ & $.56$ & $+.20$ & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\begin{table}[ht]
+\centering
+\caption{DRPerm absorption diagnostic: mean $|W-\hat e(X)|$ (cross-fitted).}
+\label{tab:amazon_dr_absorb}
+\begin{tabular}{lcccccc}
+\toprule
+ & \multicolumn{3}{c}{MiniLM-L6} & \multicolumn{3}{c}{Qwen3-Emb-0.6B} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Shift & w/o & with & meta & w/o & with & meta \\
+\midrule
+Sentiment (VADER tail) & $0.47$ & $0.20$ & -- & $0.46$ & -- & -- \\
+Syntax (verb/noun tail) & $0.47$ & $0.20$ & -- & -- & -- & -- \\
+Time (early vs late) & $0.49$ & $0.49$ & -- & -- & -- & -- \\
+Domain (Gift $\to$ Magazine) & $0.33$ & $0.36$ & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Decorrelated arms (MiniLM-L6, Gift Cards, $B{=}50$; same paired windows as the main chain).
+$M_\tau$ and $S_\tau$ remove features with full-frame $|\rho_{\mathrm{Spearman}}(f,y)|\ge\tau$.
+This is a diagnostic ablation, since the filter uses $y$.
+$M_{0.2}\setminus\{v,n\}$ also removes \texttt{verb\_ratio} and \texttt{noun\_ratio}, the two components of
+the syntax selection variable. AUC$_W$ and the residual-variance ratio are defined as in
+Table~\ref{tab:amazon_absorption}.}
+\label{tab:amazon_decorr}
+\begin{tabular}{llccccc}
+\toprule
+Shift & Arm & AUC$_W$ & $\mathrm{Var}(W-\hat e)$ ratio & DR & RR & CF \\
+\midrule
+Sentiment (VADER tail) & w/o & $0.65$ & $1.00$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{.94}$ \\
+ & with $M$ & $0.99$ & $0.24$ & $.18$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ \\
+ & $M_{0.3}$ & $0.64$ & $1.01$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{.98}$ \\
+ & $M_{0.2}$ & $0.65$ & $1.00$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{.92}$ \\
+ & $M_{0.2}\setminus\{v,n\}$ & $0.64$ & $1.01$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{.98}$ \\
+ & $S_{0.3}$ & $0.64$ & $1.01$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{.98}$ \\
+ & $S_{0.2}$ & $0.64$ & $1.01$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{.96}$ \\
+\midrule
+Syntax (verb/noun tail) & w/o & $0.64$ & $1.00$ & $.58$ & $\mathbf{.88}$ & $.58$ \\
+ & with $M$ & $1.00$ & $0.21$ & $.20$ & $.34$ & $\mathbf{.94}$ \\
+ & $M_{0.3}$ & $1.00$ & $0.17$ & $.34$ & $.68$ & $\mathbf{.92}$ \\
+ & $M_{0.2}$ & $0.99$ & $0.36$ & $.36$ & $\mathbf{.82}$ & $\mathbf{.90}$ \\
+ & $M_{0.2}\setminus\{v,n\}$ & $0.77$ & $0.86$ & $.74$ & $\mathbf{.90}$ & $.70$ \\
+ & $S_{0.3}$ & $0.81$ & $0.80$ & $.48$ & $\mathbf{.82}$ & $\mathbf{.94}$ \\
+ & $S_{0.2}$ & $0.79$ & $0.83$ & $.78$ & $\mathbf{.92}$ & $.68$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{table*}[ht]
 \centering
@@ -190,6 +270,35 @@ cross-fitted $\hat e(X)$ fall below $.02$ or above $.98$.
 Nor is it caused by the $M$--$y$ correlation alone: that correlation is equally strong in the time and
 domain scenarios, where adding $M$ leaves $\mathrm{Var}(W-\hat e)$ unchanged (ratio $.98$, $1.12$).
 
+\paragraph{CFPerm and the cross-domain shift: where $M$ helps the conditional tests.}
+CFPerm (leave-one-covariate-out on the meta block) gains from $M$ exactly where DRPerm and RRPerm lose
+(MiniLM, $B{=}50$): syntax $.58\to.94$ ($+.36$), time $.46\to.80$ ($+.34$), sentiment $.94\to1.00$
+($+.06$, near ceiling); on the domain shift CF is $.02$ for every arm.
+Both effects have one cause.
+When the selection variable is a coordinate of $M$, dropping the $M$ block removes it, which CF detects,
+whereas DR and RR condition on it and see no residual shift.
+On the domain shift, where $M$ does not predict $W$ (AUC$_W\approx.67$), there is no absorption and
+$M$ raises DR ($.36\to.56$, $+.20$) and RR ($.00\to.16$, $+.16$).
+The RR gain is small in absolute terms and a cell has standard error up to $.07$ at $B{=}50$.
+
+\paragraph{Decorrelation as a falsification of the mechanism.}
+To check that the DR drop is absorption and not loss of useful signal, we removed from $M$ and $S$
+every feature with $|\rho_{\mathrm{Spearman}}(f,y)|\ge\tau$ (arms $M_\tau$, $S_\tau$;
+Table~\ref{tab:amazon_decorr}).
+Because the filter uses $y$, this is a diagnostic ablation and not a recommended pipeline.
+On sentiment, removing the VADER-driven features restores DR from $.18$ to $1.00$.
+On syntax, $\tau=.3$ and $\tau=.2$ drop only \texttt{verb\_noun\_ratio}, whose components
+\texttt{verb\_ratio} and \texttt{noun\_ratio} remain, so $W$ stays predictable (AUC$_W\approx.99$) and DR stays
+low ($.34$, $.36$).
+Removing the two components as well lowers AUC$_W$ to $.77$ and the residual-variance ratio rises to $.86$;
+DR then rises to $.74$, above the embedding-only $.58$.
+RR recovers more gradually ($.34\to.68\to.82\to.90$) because it is also sensitive to $y$-correlated features.
+CF moves the other way (syntax $.94\to.70$ once $v$ and $n$ are removed), as expected for a test that needs
+the selection variable inside $M$.
+For $S$ on syntax, AUC$_W\approx.80$ is the same at $\tau=.3$ and $\tau=.2$, but DR rises from $.48$ to $.78$
+once the $y$-correlated POS features are removed, so part of the loss there is absorption by the outcome
+model rather than by the propensity model.
+
 \paragraph{The spaCy arm and its limits.}
 $S$ (36 spaCy features, with no VADER, sentiment lexicon or verb/noun ratio) avoids absorption on the
 sentiment window: it predicts $W$ with AUC $.62$, and the residual-variance ratio is $.98$.
@@ -230,6 +339,10 @@ The smaller Qwen spaCy gains do not survive the ordered split (sentiment $-.02$,
 MiniLM domain changes turn negative ($-.15$ with $M$, $-.07$ with $S$).
 We therefore report the spaCy gains as robust for MiniLM sentiment only.
 Null rejection rates stay at or below $.09$ ($B{=}150$).
+At $B{=}50$ the null rates of the decorrelated arms (MiniLM, gift and cross-frame) are $.04$--$.08$ for
+DR, RR and CF.
+RFPerm is reported only from the $B{=}150$ runs: the first $B{=}50$ RF rows predate the upper-tail $p$ fix
+and were dropped from the paired table.
 The embedding dimension is fixed at $k{=}24$ PCs. A kneedle elbow on the effective-rank curve sits much
 higher ($k\approx174$ gender/bias, $\approx164$ Amazon Gift).
 The elbow describes the variance structure of $Z$ only; it does not guarantee optimal power.

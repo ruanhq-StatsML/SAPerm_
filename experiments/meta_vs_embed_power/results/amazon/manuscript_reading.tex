@@ -32,6 +32,35 @@ cross-fitted $\hat e(X)$ fall below $.02$ or above $.98$.
 Nor is it caused by the $M$--$y$ correlation alone: that correlation is equally strong in the time and
 domain scenarios, where adding $M$ leaves $\mathrm{Var}(W-\hat e)$ unchanged (ratio $.98$, $1.12$).
 
+\paragraph{CFPerm and the cross-domain shift: where $M$ helps the conditional tests.}
+CFPerm (leave-one-covariate-out on the meta block) gains from $M$ exactly where DRPerm and RRPerm lose
+(MiniLM, $B{=}50$): syntax $.58\to.94$ ($+.36$), time $.46\to.80$ ($+.34$), sentiment $.94\to1.00$
+($+.06$, near ceiling); on the domain shift CF is $.02$ for every arm.
+Both effects have one cause.
+When the selection variable is a coordinate of $M$, dropping the $M$ block removes it, which CF detects,
+whereas DR and RR condition on it and see no residual shift.
+On the domain shift, where $M$ does not predict $W$ (AUC$_W\approx.67$), there is no absorption and
+$M$ raises DR ($.36\to.56$, $+.20$) and RR ($.00\to.16$, $+.16$).
+The RR gain is small in absolute terms and a cell has standard error up to $.07$ at $B{=}50$.
+
+\paragraph{Decorrelation as a falsification of the mechanism.}
+To check that the DR drop is absorption and not loss of useful signal, we removed from $M$ and $S$
+every feature with $|\rho_{\mathrm{Spearman}}(f,y)|\ge\tau$ (arms $M_\tau$, $S_\tau$;
+Table~\ref{tab:amazon_decorr}).
+Because the filter uses $y$, this is a diagnostic ablation and not a recommended pipeline.
+On sentiment, removing the VADER-driven features restores DR from $.18$ to $1.00$.
+On syntax, $\tau=.3$ and $\tau=.2$ drop only \texttt{verb\_noun\_ratio}, whose components
+\texttt{verb\_ratio} and \texttt{noun\_ratio} remain, so $W$ stays predictable (AUC$_W\approx.99$) and DR stays
+low ($.34$, $.36$).
+Removing the two components as well lowers AUC$_W$ to $.77$ and the residual-variance ratio rises to $.86$;
+DR then rises to $.74$, above the embedding-only $.58$.
+RR recovers more gradually ($.34\to.68\to.82\to.90$) because it is also sensitive to $y$-correlated features.
+CF moves the other way (syntax $.94\to.70$ once $v$ and $n$ are removed), as expected for a test that needs
+the selection variable inside $M$.
+For $S$ on syntax, AUC$_W\approx.80$ is the same at $\tau=.3$ and $\tau=.2$, but DR rises from $.48$ to $.78$
+once the $y$-correlated POS features are removed, so part of the loss there is absorption by the outcome
+model rather than by the propensity model.
+
 \paragraph{The spaCy arm and its limits.}
 $S$ (36 spaCy features, with no VADER, sentiment lexicon or verb/noun ratio) avoids absorption on the
 sentiment window: it predicts $W$ with AUC $.62$, and the residual-variance ratio is $.98$.
@@ -72,6 +101,10 @@ The smaller Qwen spaCy gains do not survive the ordered split (sentiment $-.02$,
 MiniLM domain changes turn negative ($-.15$ with $M$, $-.07$ with $S$).
 We therefore report the spaCy gains as robust for MiniLM sentiment only.
 Null rejection rates stay at or below $.09$ ($B{=}150$).
+At $B{=}50$ the null rates of the decorrelated arms (MiniLM, gift and cross-frame) are $.04$--$.08$ for
+DR, RR and CF.
+RFPerm is reported only from the $B{=}150$ runs: the first $B{=}50$ RF rows predate the upper-tail $p$ fix
+and were dropped from the paired table.
 The embedding dimension is fixed at $k{=}24$ PCs. A kneedle elbow on the effective-rank curve sits much
 higher ($k\approx174$ gender/bias, $\approx164$ Amazon Gift).
 The elbow describes the variance structure of $Z$ only; it does not guarantee optimal power.

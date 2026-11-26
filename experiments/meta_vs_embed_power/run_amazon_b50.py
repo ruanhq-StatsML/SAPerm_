@@ -42,6 +42,9 @@ from experiments.meta_vs_embed_power.pipeline import run_power
 B = int(os.environ.get("POWER_B", "50"))
 N_PERM = int(os.environ.get("POWER_N_PERM", "150"))
 SEED = 2026
+# RFPerm is reported only from the B=150 runs (tag amazon_rf_b150); early B=50 RF rows were written
+# before the upper-tail p fix and are not comparable.
+B50_TESTS = ("CFPerm", "RRPerm", "DRPerm")
 SCENARIOS = {
     "gift": ["null_shift", "sentiment_meta", "syntax_meta", "train_vs_heldout"],
     "cross": ["null_shift", "domain_shift"],
@@ -114,7 +117,7 @@ def merge(encoders: list[str]) -> dict:
                     {"scenario": key[0], "feature_set": key[1], "n_reps": row.get("n_reps"),
                      "power": {}, "mean_p": {}, "source": {}},
                 )
-                for m in C.METHODS:
+                for m in B50_TESTS:
                     if row["power"].get(m) is not None:
                         dst["power"][m] = row["power"][m]
                         dst["mean_p"][m] = row["mean_p"][m]
@@ -211,7 +214,7 @@ def _dfmt(a, b) -> str:
 def power_table(encoders: list[str]) -> str:
     """Markdown: arm × test × shift scenario, with Δ vs without_meta (paired windows)."""
     payload = merge(encoders)
-    tests = ("RFPerm", "CFPerm", "RRPerm", "DRPerm")
+    tests = B50_TESTS
     lines = [
         "| 编码器 | 场景 | 检验 | without_meta | with_meta | Δ(with−without) | with_spacy | Δ(spacy−without) | meta_only |",
         "|---|---|---|--:|--:|--:|--:|--:|--:|",
@@ -239,7 +242,7 @@ def power_table(encoders: list[str]) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--spec", choices=["gift", "cross", "all"], default="gift")
-    ap.add_argument("--tests", default="RFPerm,CFPerm,RRPerm,DRPerm")
+    ap.add_argument("--tests", default=",".join(B50_TESTS))
     ap.add_argument("--tag", default="main")
     ap.add_argument("--encoders", nargs="*", default=list(ENCODERS))
     ap.add_argument("--scenarios", nargs="*", default=None)
