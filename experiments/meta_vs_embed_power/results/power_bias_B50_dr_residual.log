@@ -1,0 +1,10 @@
+[dr residual bias sentiment_meta/without_meta] power=0.02 mean_p=0.61 |W-e|=0.49 (183s)
+[dr residual bias syntax_meta/without_meta] power=0.12 mean_p=0.51 |W-e|=0.49 (182s)
+[dr residual bias train_vs_heldout/without_meta] power=0.06 mean_p=0.55 |W-e|=0.50 (181s)
+[dr residual bias sentiment_meta/with_meta] power=0.12 mean_p=0.42 |W-e|=0.22 (1178s)
+[dr residual bias syntax_meta/with_meta] power=0.04 mean_p=0.33 |W-e|=0.20 (214s)
+[dr residual bias train_vs_heldout/with_meta] power=0.06 mean_p=0.57 |W-e|=0.50 (210s)
+[dr residual bias sentiment_meta/meta_only] power=0.08 mean_p=0.41 |W-e|=0.18 (298s)
+[dr residual bias syntax_meta/meta_only] power=0.02 mean_p=0.39 |W-e|=0.17 (191s)
+[dr residual bias train_vs_heldout/meta_only] power=0.00 mean_p=0.54 |W-e|=0.50 (189s)
+[DR RESIDUAL DONE 2026-11-26T04:22:59+00:00]
