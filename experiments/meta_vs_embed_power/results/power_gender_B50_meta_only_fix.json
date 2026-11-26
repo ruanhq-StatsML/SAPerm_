@@ -2,7 +2,7 @@
   "dataset": "gender",
   "B": 50,
   "n_perm": 150,
-  "n_jobs": 2,
+  "n_jobs": 4,
   "outcome_model": "RandomForest",
   "arms": [
     "meta_only"
@@ -15,9 +15,10 @@
   ],
   "scenarios_done": [
     "train_vs_heldout",
-    "syntax_meta"
+    "syntax_meta",
+    "sentiment_meta"
   ],
-  "elapsed_sec_last": 2389.686611890793,
+  "elapsed_sec_last": 1203.1660933494568,
   "by_scenario": {
     "train_vs_heldout": [
       {
@@ -56,6 +57,26 @@
           "DRPerm": NaN,
           "CFPerm": 0.1317880794701987,
           "RRPerm": 0.2352317880794702
+        }
+      }
+    ],
+    "sentiment_meta": [
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.24,
+          "DRPerm": 0.0,
+          "CFPerm": 1.0,
+          "RRPerm": 0.94
+        },
+        "mean_p": {
+          "RFPerm": 0.3129801324503311,
+          "DRPerm": NaN,
+          "CFPerm": 0.02066225165562914,
+          "RRPerm": 0.030331125827814574
         }
       }
     ]
@@ -97,8 +118,26 @@
           "CFPerm": 0.1317880794701987,
           "RRPerm": 0.2352317880794702
         }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.24,
+          "DRPerm": 0.0,
+          "CFPerm": 1.0,
+          "RRPerm": 0.94
+        },
+        "mean_p": {
+          "RFPerm": 0.3129801324503311,
+          "DRPerm": NaN,
+          "CFPerm": 0.02066225165562914,
+          "RRPerm": 0.030331125827814574
+        }
       }
     ]
   },
-  "markdown": "| scenario | arm | B | RF | DR | RR | CF |\n|---|---|---|---|---|---|---|\n| syntax_meta | meta_only | 50 | 0.00 | 0.00 | 0.36 | 0.46 |\n| train_vs_heldout | meta_only | 50 | 0.06 | 0.00 | 0.00 | 0.00 |"
+  "markdown": "| scenario | arm | B | RF | DR | RR | CF |\n|---|---|---|---|---|---|---|\n| sentiment_meta | meta_only | 50 | 0.24 | 0.00 | 0.94 | 1.00 |\n| syntax_meta | meta_only | 50 | 0.00 | 0.00 | 0.36 | 0.46 |\n| train_vs_heldout | meta_only | 50 | 0.06 | 0.00 | 0.00 | 0.00 |"
 }
