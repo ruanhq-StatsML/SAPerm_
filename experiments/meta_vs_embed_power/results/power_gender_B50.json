@@ -1,0 +1,139 @@
+{
+  "dataset": "gender",
+  "B": 50,
+  "n_perm": 150,
+  "n_jobs": 4,
+  "outcome_model": "RandomForest",
+  "arms": [
+    "without_meta",
+    "with_meta",
+    "meta_only"
+  ],
+  "methods": [
+    "RFPerm",
+    "DRPerm",
+    "RRPerm",
+    "CFPerm"
+  ],
+  "scenarios_done": [
+    "sentiment_meta"
+  ],
+  "elapsed_sec_last": 2726.721636533737,
+  "by_scenario": {
+    "sentiment_meta": [
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.22,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.84
+        },
+        "mean_p": {
+          "RFPerm": 0.3764238410596027,
+          "DRPerm": 1.0,
+          "CFPerm": 1.0,
+          "RRPerm": 0.024370860927152318
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.08,
+          "DRPerm": 0.0,
+          "CFPerm": 0.98,
+          "RRPerm": 0.9
+        },
+        "mean_p": {
+          "RFPerm": 0.4279470198675497,
+          "DRPerm": 1.0,
+          "CFPerm": 0.00860927152317881,
+          "RRPerm": 0.030728476821192053
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.06,
+          "DRPerm": 0.76,
+          "CFPerm": 0.92,
+          "RRPerm": 1.0
+        },
+        "mean_p": {
+          "RFPerm": 0.5227814569536424,
+          "DRPerm": 0.049801324503311255,
+          "CFPerm": 0.05258278145695366,
+          "RRPerm": 0.007152317880794701
+        }
+      }
+    ]
+  },
+  "summary": {
+    "table": [
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.22,
+          "DRPerm": 0.0,
+          "CFPerm": 0.0,
+          "RRPerm": 0.84
+        },
+        "mean_p": {
+          "RFPerm": 0.3764238410596027,
+          "DRPerm": 1.0,
+          "CFPerm": 1.0,
+          "RRPerm": 0.024370860927152318
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.08,
+          "DRPerm": 0.0,
+          "CFPerm": 0.98,
+          "RRPerm": 0.9
+        },
+        "mean_p": {
+          "RFPerm": 0.4279470198675497,
+          "DRPerm": 1.0,
+          "CFPerm": 0.00860927152317881,
+          "RRPerm": 0.030728476821192053
+        }
+      },
+      {
+        "dataset": "gender",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.06,
+          "DRPerm": 0.76,
+          "CFPerm": 0.92,
+          "RRPerm": 1.0
+        },
+        "mean_p": {
+          "RFPerm": 0.5227814569536424,
+          "DRPerm": 0.049801324503311255,
+          "CFPerm": 0.05258278145695366,
+          "RRPerm": 0.007152317880794701
+        }
+      }
+    ]
+  },
+  "markdown": "| scenario | arm | B | RF | DR | RR | CF |\n|---|---|---|---|---|---|---|\n| sentiment_meta | without_meta | 50 | 0.06 | 0.76 | 1.00 | 0.92 |\n| sentiment_meta | with_meta | 50 | 0.08 | 0.00 | 0.90 | 0.98 |\n| sentiment_meta | meta_only | 50 | 0.22 | 0.00 | 0.84 | 0.00 |"
+}

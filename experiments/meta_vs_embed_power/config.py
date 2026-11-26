@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import numpy as np
 
 # Data
@@ -24,3 +26,6 @@ SCENARIOS = ("null_shift", "sentiment_meta", "syntax_meta", "train_vs_heldout")
 FEATURE_SETS = ("without_meta", "with_meta", "meta_only")  # PCA(Z) | hstack(Z,M) | M only
 
 METHODS = ("RFPerm", "DRPerm", "CFPerm", "RRPerm")
+
+# RFPerm: "rfperm_r" (official R RFPerm package) | "python" (sklearn PermValTest port)
+RF_PERM_BACKEND = os.environ.get("RF_PERM_BACKEND", "rfperm_r")

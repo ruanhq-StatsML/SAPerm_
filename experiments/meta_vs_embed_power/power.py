@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
+import os
 from collections import defaultdict
 from typing import Any
 
 import numpy as np
 
 from experiments.meta_vs_embed_power.perm_lib import cfperm_loco_pvalue, drperm_pvalue, rrperm_pvalue
-from experiments.meta_vs_embed_power.rfperm_official import rfperm_single_pvalue
+from experiments.meta_vs_embed_power import config as C
+
+
+def _rfperm_pvalue():
+    if C.RF_PERM_BACKEND != "rfperm_r":
+        raise RuntimeError(
+            "RFPerm must use R package backend; set RF_PERM_BACKEND=rfperm_r"
+        )
+    from experiments.meta_vs_embed_power.rfperm_r import rfperm_r_single_pvalue
+    return rfperm_r_single_pvalue
 
 
 def _col_index(meta_names: list[str], *candidates: str) -> int:
@@ -94,15 +104,23 @@ def run_one_rep(
     out: dict[str, Any] = {
         "scenario": scenario,
         "feature_set": feature_set,
-        "RFPerm": rfperm_single_pvalue(
+        "RFPerm": _rfperm_pvalue()(
             Xe, ye, Xn, yn, n_perm=n_perm, seed=seed, n_estimators=max(n_estimators, 150)
         ),
-        "DRPerm": drperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators),
-        "RRPerm": rrperm_pvalue(X, Y, W, n_perm=n_perm, seed=seed + 11, n_estimators=n_estimators),
     }
-    out["CFPerm"] = cfperm_loco_pvalue(
-        X, Y, W, test_indices=test_idx, n_perm=n_perm, seed=seed + 5, n_estimators=n_estimators
-    )
+    if os.environ.get("RF_ONLY_RUN") != "1":
+        out["DRPerm"] = drperm_pvalue(
+            X, Y, W, n_perm=n_perm, seed=seed + 3, n_estimators=n_estimators
+        )
+        out["RRPerm"] = rrperm_pvalue(
+            X, Y, W, n_perm=n_perm, seed=seed + 11, n_estimators=n_estimators
+        )
+        out["CFPerm"] = cfperm_loco_pvalue(
+            X, Y, W, test_indices=test_idx, n_perm=n_perm, seed=seed + 5, n_estimators=n_estimators
+        )
+    else:
+        stub = {"p_value": float("nan"), "reject": False, "skipped": True}
+        out["DRPerm"] = out["RRPerm"] = out["CFPerm"] = stub
     return out
 
 
