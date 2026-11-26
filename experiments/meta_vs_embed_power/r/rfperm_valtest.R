@@ -43,8 +43,10 @@ if (n_cls <= 6) {
   )
   prob_val <- predict(model1, df_val[, 1:p, drop = FALSE])$predictions
   prob_te <- predict(model1, df_new[, 1:p, drop = FALSE])$predictions
-  col <- if (ncol(prob_val) >= 2) 2 else 1
-  val_err <- (as.numeric(df_val$Y) - prob_val[, col])^2
+  ynum <- as.numeric(df_val$Y)
+  cn <- colnames(prob_val)
+  col <- if ("1" %in% cn) which(cn == "1") else if (ncol(prob_val) >= 2) 2 else 1
+  val_err <- (ynum - prob_val[, col])^2
   test_err <- (as.numeric(df_new$Y) - prob_te[, col])^2
 } else {
   mtry_fit <- max(1L, round(n_col / 3))
