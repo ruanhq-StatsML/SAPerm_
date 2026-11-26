@@ -43,10 +43,17 @@ def build() -> dict:
     return out
 
 
+SELECTION_COMPONENTS = frozenset({"verb_ratio", "noun_ratio", "verb_noun_ratio"})
+
+
 @lru_cache(maxsize=None)
 def dropped(spec: str, suffix: str) -> frozenset[str]:
-    d = json.loads(PATH.read_text(encoding="utf-8"))[spec]["drop"][f"tau{suffix or '_t03'}"]
-    return frozenset(d["M"]) | frozenset(d["S"])
+    """``suffix`` "" / "_t02" pick tau; a trailing "nv" also drops the syntax-window selection
+    variable and its components (verb/noun ratios), whatever their correlation with y."""
+    nv = suffix.endswith("nv")
+    tau_key = suffix[:-2] if nv else suffix
+    d = json.loads(PATH.read_text(encoding="utf-8"))[spec]["drop"][f"tau{tau_key or '_t03'}"]
+    return frozenset(d["M"]) | frozenset(d["S"]) | (SELECTION_COMPONENTS if nv else frozenset())
 
 
 def main() -> int:
