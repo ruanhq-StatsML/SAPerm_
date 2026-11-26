@@ -1,0 +1,118 @@
+{
+  "dataset": "amazon_MiniLM_L6",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "amazon_py",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.18,
+          "CFPerm": 1.0,
+          "RRPerm": 1.0
+        },
+        "mean_p": {
+          "RFPerm": 0.9182781456953643,
+          "DRPerm": 0.3556291390728476,
+          "CFPerm": 0.00662251655629139,
+          "RRPerm": 0.00662251655629139
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 1.0,
+          "CFPerm": 0.94,
+          "RRPerm": 1.0
+        },
+        "mean_p": {
+          "RFPerm": 0.963841059602649,
+          "DRPerm": 0.00662251655629139,
+          "CFPerm": 0.06649006622516555,
+          "RRPerm": 0.00662251655629139
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.2,
+          "CFPerm": 0.94,
+          "RRPerm": 0.34
+        },
+        "mean_p": {
+          "RFPerm": 0.7410596026490066,
+          "DRPerm": 0.25920529801324504,
+          "CFPerm": 0.017748344370860928,
+          "RRPerm": 0.25788079470198677
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "syntax_meta",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.58,
+          "CFPerm": 0.58,
+          "RRPerm": 0.88
+        },
+        "mean_p": {
+          "RFPerm": 0.8341721854304636,
+          "DRPerm": 0.07165562913907285,
+          "CFPerm": 0.32874172185430467,
+          "RRPerm": 0.033245033112582784
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.28,
+          "CFPerm": 0.8,
+          "RRPerm": 0.6
+        },
+        "mean_p": {
+          "RFPerm": 0.6790728476821191,
+          "DRPerm": 0.2525827814569536,
+          "CFPerm": 0.07788079470198676,
+          "RRPerm": 0.16185430463576156
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "train_vs_heldout",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.02,
+          "DRPerm": 0.36,
+          "CFPerm": 0.46,
+          "RRPerm": 0.78
+        },
+        "mean_p": {
+          "RFPerm": 0.6976158940397351,
+          "DRPerm": 0.21456953642384102,
+          "CFPerm": 0.3262251655629139,
+          "RRPerm": 0.07456953642384107
+        }
+      }
+    ]
+  }
+}

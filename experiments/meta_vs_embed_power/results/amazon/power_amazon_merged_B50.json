@@ -1,0 +1,196 @@
+{
+  "B": 50,
+  "n_perm": 150,
+  "rf_backend": "rfperm_r",
+  "alpha": 0.05,
+  "tables": {
+    "amazon_MiniLM_L6": [
+      {
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 1.0,
+          "CFPerm": 0.94,
+          "RRPerm": 1.0
+        },
+        "mean_p": {
+          "RFPerm": 0.963841059602649,
+          "DRPerm": 0.00662251655629139,
+          "CFPerm": 0.06649006622516555,
+          "RRPerm": 0.00662251655629139
+        },
+        "source": {
+          "RFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "n_reps": null,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.18,
+          "CFPerm": 1.0,
+          "RRPerm": 1.0
+        },
+        "mean_p": {
+          "RFPerm": 0.9182781456953643,
+          "DRPerm": 0.3556291390728476,
+          "CFPerm": 0.00662251655629139,
+          "RRPerm": 0.00662251655629139
+        },
+        "source": {
+          "RFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "syntax_meta",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.58,
+          "CFPerm": 0.58,
+          "RRPerm": 0.88
+        },
+        "mean_p": {
+          "RFPerm": 0.8341721854304636,
+          "DRPerm": 0.07165562913907285,
+          "CFPerm": 0.32874172185430467,
+          "RRPerm": 0.033245033112582784
+        },
+        "source": {
+          "RFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta",
+        "n_reps": null,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.2,
+          "CFPerm": 0.94,
+          "RRPerm": 0.34
+        },
+        "mean_p": {
+          "RFPerm": 0.7410596026490066,
+          "DRPerm": 0.25920529801324504,
+          "CFPerm": 0.017748344370860928,
+          "RRPerm": 0.25788079470198677
+        },
+        "source": {
+          "RFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "RFPerm": 0.02,
+          "DRPerm": 0.36,
+          "CFPerm": 0.46,
+          "RRPerm": 0.78
+        },
+        "mean_p": {
+          "RFPerm": 0.6976158940397351,
+          "DRPerm": 0.21456953642384102,
+          "CFPerm": 0.3262251655629139,
+          "RRPerm": 0.07456953642384107
+        },
+        "source": {
+          "RFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta",
+        "n_reps": null,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.28,
+          "CFPerm": 0.8,
+          "RRPerm": 0.6
+        },
+        "mean_p": {
+          "RFPerm": 0.6790728476821191,
+          "DRPerm": 0.2525827814569536,
+          "CFPerm": 0.07788079470198676,
+          "RRPerm": 0.16185430463576156
+        },
+        "source": {
+          "RFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      }
+    ],
+    "amazon-cross_MiniLM_L6": [
+      {
+        "scenario": "domain_shift",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "RFPerm": 0.2,
+          "DRPerm": 0.36,
+          "CFPerm": 0.02,
+          "RRPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.2952317880794702,
+          "DRPerm": 0.16701986754966885,
+          "CFPerm": 0.576158940397351,
+          "RRPerm": 0.5133774834437086
+        },
+        "source": {
+          "RFPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "CFPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "domain_shift",
+        "feature_set": "with_meta",
+        "n_reps": null,
+        "power": {
+          "RFPerm": 0.34,
+          "DRPerm": 0.56,
+          "CFPerm": 0.02,
+          "RRPerm": 0.16
+        },
+        "mean_p": {
+          "RFPerm": 0.17483443708609273,
+          "DRPerm": 0.10556291390728476,
+          "CFPerm": 0.6343046357615895,
+          "RRPerm": 0.3374834437086093
+        },
+        "source": {
+          "RFPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "CFPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json"
+        }
+      }
+    ]
+  }
+}

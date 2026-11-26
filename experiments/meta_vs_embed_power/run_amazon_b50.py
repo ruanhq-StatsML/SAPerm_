@@ -107,6 +107,8 @@ def merge(encoders: list[str]) -> dict:
         for path in sorted(OUT_DIR.glob(f"power_dataset_amazon_*_{ds}_B{B}.json")):
             for row in json.loads(path.read_text(encoding="utf-8"))["summary"]["table"]:
                 key = (row["scenario"], row["feature_set"])
+                if key[1] not in fs_order:
+                    continue
                 dst = merged.setdefault(
                     key,
                     {"scenario": key[0], "feature_set": key[1], "n_reps": row.get("n_reps"),

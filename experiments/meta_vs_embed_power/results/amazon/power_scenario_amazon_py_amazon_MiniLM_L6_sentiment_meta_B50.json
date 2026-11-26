@@ -1,0 +1,47 @@
+{
+  "dataset": "amazon_MiniLM_L6",
+  "scenario": "sentiment_meta",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "amazon_py",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.18,
+          "CFPerm": 1.0,
+          "RRPerm": 1.0
+        },
+        "mean_p": {
+          "RFPerm": 0.9182781456953643,
+          "DRPerm": 0.3556291390728476,
+          "CFPerm": 0.00662251655629139,
+          "RRPerm": 0.00662251655629139
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 1.0,
+          "CFPerm": 0.94,
+          "RRPerm": 1.0
+        },
+        "mean_p": {
+          "RFPerm": 0.963841059602649,
+          "DRPerm": 0.00662251655629139,
+          "CFPerm": 0.06649006622516555,
+          "RRPerm": 0.00662251655629139
+        }
+      }
+    ]
+  }
+}
