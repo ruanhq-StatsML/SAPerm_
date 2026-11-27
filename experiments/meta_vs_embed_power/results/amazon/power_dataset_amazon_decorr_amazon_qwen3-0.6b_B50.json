@@ -1,0 +1,172 @@
+{
+  "dataset": "amazon_qwen3-0.6b",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "amazon_decorr",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "null_shift",
+        "feature_set": "with_meta_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.04,
+          "CFPerm": null,
+          "RRPerm": 0.08
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.5565562913907285,
+          "CFPerm": null,
+          "RRPerm": 0.5113907284768211
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "null_shift",
+        "feature_set": "with_spacy_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.08,
+          "CFPerm": null,
+          "RRPerm": 0.08
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.5490066225165563,
+          "CFPerm": null,
+          "RRPerm": 0.5105960264900662
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "null_shift",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.08,
+          "CFPerm": null,
+          "RRPerm": 0.04
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.5483443708609271,
+          "CFPerm": null,
+          "RRPerm": 0.4912582781456954
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 1.0,
+          "CFPerm": null,
+          "RRPerm": 1.0
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.00662251655629139,
+          "CFPerm": null,
+          "RRPerm": 0.00662251655629139
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_spacy_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 1.0,
+          "CFPerm": null,
+          "RRPerm": 1.0
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.00662251655629139,
+          "CFPerm": null,
+          "RRPerm": 0.00662251655629139
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.3,
+          "CFPerm": null,
+          "RRPerm": 0.66
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.16913907284768212,
+          "CFPerm": null,
+          "RRPerm": 0.12013245033112582
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "syntax_meta",
+        "feature_set": "with_spacy_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.4,
+          "CFPerm": null,
+          "RRPerm": 0.76
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.15192052980132453,
+          "CFPerm": null,
+          "RRPerm": 0.08026490066225164
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.5,
+          "CFPerm": null,
+          "RRPerm": 0.72
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.10225165562913908,
+          "CFPerm": null,
+          "RRPerm": 0.08728476821192052
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_spacy_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.56,
+          "CFPerm": null,
+          "RRPerm": 0.74
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.13192052980132452,
+          "CFPerm": null,
+          "RRPerm": 0.10768211920529801
+        }
+      }
+    ]
+  }
+}
