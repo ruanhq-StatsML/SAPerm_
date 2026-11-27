@@ -1,0 +1,114 @@
+\section*{Reading}
+
+\paragraph{Claim 1: adding meta-features raises power --- where it holds.}
+The claim holds for CFPerm on gender, where concatenating $M$ raises power by $+.06$ (sentiment, $.92\to.98$)
+and $+.08$ (syntax, $.60\to.68$; Table~\ref{tab:gender_power}), and for RFPerm on gender syntax
+($.27\to.36$, $+.09$, $B{=}150$).
+On Amazon, the RFPerm gains come from the spaCy arm $S$, which does not encode the window-selection
+variables: sentiment $+.12$ (MiniLM, $.82\to.94$) and $+.05$ (Qwen, $.89\to.93$); time $+.08$
+($.16\to.24$) and $+.04$ ($.23\to.27$) (Table~\ref{tab:amazon_rf_b150}).
+Only the MiniLM sentiment gain clearly exceeds the cell standard error ($\le .04$) and survives the
+ordered split.
+The claim does not hold for every test or arm, and we do not state it as such.
+
+\paragraph{Why $M$ lowers RFPerm, DRPerm and RRPerm on meta-selected windows: absorption.}
+The sentiment and syntax windows are drawn from the tails of two coordinates of $M$
+(VADER compound, verb/noun ratio).
+On Amazon, concatenating $M$ lowers RFPerm power there, by $-.18$/$-.23$ (sentiment, MiniLM/Qwen)
+and $-.17$/$-.12$ (syntax).
+All three tests ask whether $Y\mid X$ changes between windows.
+Once the selection variable is in $X$, the window label is nearly a function of $X$:
+$M$ predicts $W$ with CV AUC $.99$ (sentiment) and $1.00$ (syntax), and $R^2_W=.82$/$.86$.
+The DR residual variance $\mathrm{Var}(W-\hat e)$ drops to $.24$/$.21$ of its embedding-only value
+(Table~\ref{tab:amazon_absorption}).
+The shift is then explained by the covariates, the conditional null is close to true, and the tests
+correctly lose power.
+The same mechanism produces the gender DRPerm drops ($.88\to.08$, $.60\to.12$) and RRPerm drops
+($1.00\to.90$, $.74\to.32$).
+This is absorption, not evidence that $M$ is uninformative:
+$M$ is the most $y$-predictive block ($y$ CV AUC $.92$ vs.\ $.87$ for $Z$).
+Absorption is also not a positivity failure in the strict sense: at most $1.8\%$ of the
+cross-fitted $\hat e(X)$ fall below $.02$ or above $.98$.
+Nor is it caused by the $M$--$y$ correlation alone: that correlation is equally strong in the time and
+domain scenarios, where adding $M$ leaves $\mathrm{Var}(W-\hat e)$ unchanged (ratio $.98$, $1.12$).
+
+\paragraph{CFPerm and the cross-domain shift: where $M$ helps the conditional tests.}
+CFPerm (leave-one-covariate-out on the meta block) gains from $M$ exactly where DRPerm and RRPerm lose
+(MiniLM, $B{=}50$): syntax $.58\to.94$ ($+.36$), time $.46\to.80$ ($+.34$), sentiment $.94\to1.00$
+($+.06$, near ceiling); on the domain shift CF is $.02$ for every arm.
+Both effects have one cause.
+When the selection variable is a coordinate of $M$, dropping the $M$ block removes it, which CF detects,
+whereas DR and RR condition on it and see no residual shift.
+On the domain shift, where $M$ does not predict $W$ (AUC$_W\approx.67$), there is no absorption and
+$M$ raises DR ($.36\to.56$, $+.20$) and RR ($.00\to.16$, $+.16$).
+The RR gain is small in absolute terms and a cell has standard error up to $.07$ at $B{=}50$.
+
+\paragraph{Decorrelation as a falsification of the mechanism.}
+To check that the DR drop is absorption and not loss of useful signal, we removed from $M$ and $S$
+every feature with $|\rho_{\mathrm{Spearman}}(f,y)|\ge\tau$ (arms $M_\tau$, $S_\tau$;
+Table~\ref{tab:amazon_decorr}).
+Because the filter uses $y$, this is a diagnostic ablation and not a recommended pipeline.
+On sentiment, removing the VADER-driven features restores DR from $.18$ to $1.00$.
+On syntax, $\tau=.3$ and $\tau=.2$ drop only \texttt{verb\_noun\_ratio}, whose components
+\texttt{verb\_ratio} and \texttt{noun\_ratio} remain, so $W$ stays predictable (AUC$_W\approx.99$) and DR stays
+low ($.34$, $.36$).
+Removing the two components as well lowers AUC$_W$ to $.77$ and the residual-variance ratio rises to $.86$;
+DR then rises to $.74$, above the embedding-only $.58$.
+RR recovers more gradually ($.34\to.68\to.82\to.90$) because it is also sensitive to $y$-correlated features.
+CF moves the other way (syntax $.94\to.70$ once $v$ and $n$ are removed), as expected for a test that needs
+the selection variable inside $M$.
+For $S$ on syntax, AUC$_W\approx.80$ is the same at $\tau=.3$ and $\tau=.2$, but DR rises from $.48$ to $.78$
+once the $y$-correlated POS features are removed, so part of the loss there is absorption by the outcome
+model rather than by the propensity model.
+
+\paragraph{The spaCy arm and its limits.}
+$S$ (36 spaCy features, with no VADER, sentiment lexicon or verb/noun ratio) avoids absorption on the
+sentiment window: it predicts $W$ with AUC $.62$, and the residual-variance ratio is $.98$.
+That is why RFPerm gains there.
+On the syntax window, RFPerm still drops ($-.15$ MiniLM, $-.09$ Qwen), because the POS ratios in $S$
+are correlated with the verb/noun selection variable (AUC$_W=.83$, ratio $.80$): absorption is partial.
+On the cross-domain shift with Qwen, both concatenations lower power
+($.69\to.37$ with $M$, $\to.43$ with $S$), while with MiniLM both change it by only $+.03$.
+Qwen's 24 PCs already separate the domains, and $M$ or $S$ alone barely does (AUC$_W\approx.67$).
+The most likely explanation is dilution: with $m_{\mathrm{try}}=\sqrt p$, adding 32--36 weakly
+informative columns lowers the share of splits drawn on the embedding coordinates.
+We do not claim that $S$ is more informative than $M$: $S$ predicts $y$ less well
+(CV AUC $.84$ vs.\ $.92$).
+Its value is that it complements the embedding without directly encoding the window-selection variable.
+
+\paragraph{Meta only.}
+$M$ alone has the lowest RFPerm power in every Amazon shift ($.11$--$.49$).
+This is expected: the shifts live mostly in the embedding, and $M$ is a 32-dimensional summary that
+cannot replace the backbone.
+
+\paragraph{Claim 2: higher-order interactions.}
+The claim that higher-order interactions matter only when each modality is extracted separately
+is not covered by this experiment.
+Amazon is text-only, so there is a single modality and no cross-modal interaction to test.
+Any support for claim~2 has to come from the existing multimodal results.
+
+\paragraph{Test details and caveats.}
+RFPerm uses the official \texttt{RFPerm::permrf} direction: one-sided upper-tail
+$p=(1+\#\{d_b\ge d_0\})/(B+1)$ with $d_0=\overline{\mathrm{loss}}_{\mathrm{new}}-\overline{\mathrm{loss}}_{\mathrm{val}}$,
+so the test rejects when the new window is harder to predict.
+The two-sided $p$ gives the same sign for every difference of at least $.05$.
+The Python permutation step was checked against \texttt{RFPerm:::permTest\_} (identical $d_0$; upper-tail
+$p$ within $1/(B+1)$). The end-to-end R backend was not rerun at $B{=}150$.
+With a chronological (ordered) train/validation split, the drop from $M$ on meta-selected windows is
+stable ($-.05$ to $-.35$), and the MiniLM spaCy gains shrink but stay positive
+(sentiment $+.07$, time $+.03$).
+The smaller Qwen spaCy gains do not survive the ordered split (sentiment $-.02$, time $-.01$), and the
+MiniLM domain changes turn negative ($-.15$ with $M$, $-.07$ with $S$).
+We therefore report the spaCy gains as robust for MiniLM sentiment only.
+Null rejection rates stay at or below $.09$ ($B{=}150$).
+At $B{=}50$ the null rates of the decorrelated arms (MiniLM, gift and cross-frame) are $.04$--$.08$ for
+DR, RR and CF.
+RFPerm is reported only from the $B{=}150$ runs: the first $B{=}50$ RF rows predate the upper-tail $p$ fix
+and were dropped from the paired table.
+The embedding dimension is fixed at $k{=}24$ PCs. A kneedle elbow on the effective-rank curve sits much
+higher ($k\approx174$ gender/bias, $\approx164$ Amazon Gift).
+The elbow describes the variance structure of $Z$ only; it does not guarantee optimal power.
+More PCs carry more signal but also more noise coordinates for the RF, so the choice of $k$ is an
+information/noise trade-off that we did not tune for power.
+All Amazon artifacts are keyed by row id and text SHA-1 of a single frame per spec, and alignment
+is re-asserted at load time.

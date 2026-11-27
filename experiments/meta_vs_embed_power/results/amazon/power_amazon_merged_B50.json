@@ -1,0 +1,656 @@
+{
+  "B": 50,
+  "n_perm": 150,
+  "rf_backend": "rfperm_r",
+  "alpha": 0.05,
+  "tables": {
+    "amazon_MiniLM_L6": [
+      {
+        "scenario": "null_shift",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "RRPerm": 0.06,
+          "DRPerm": 0.02,
+          "CFPerm": 0.02
+        },
+        "mean_p": {
+          "RRPerm": 0.5741721854304636,
+          "DRPerm": 0.5633112582781457,
+          "CFPerm": 0.5649006622516556
+        },
+        "source": {
+          "RRPerm": "power_dataset_amazon_decorr_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_decorr_amazon_MiniLM_L6_B50.json",
+          "CFPerm": "power_dataset_amazon_decorr_cf_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.94,
+          "RRPerm": 1.0,
+          "DRPerm": 1.0
+        },
+        "mean_p": {
+          "CFPerm": 0.06649006622516555,
+          "RRPerm": 0.00662251655629139,
+          "DRPerm": 0.00662251655629139
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 1.0,
+          "RRPerm": 1.0,
+          "DRPerm": 0.18
+        },
+        "mean_p": {
+          "CFPerm": 0.00662251655629139,
+          "RRPerm": 0.00662251655629139,
+          "DRPerm": 0.3556291390728476
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "sentiment_meta",
+        "feature_set": "with_spacy",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 1.0,
+          "RRPerm": 1.0,
+          "DRPerm": 1.0
+        },
+        "mean_p": {
+          "CFPerm": 0.00662251655629139,
+          "RRPerm": 0.00662251655629139,
+          "DRPerm": 0.00662251655629139
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 1.0,
+          "RRPerm": 1.0,
+          "DRPerm": 0.08
+        },
+        "mean_p": {
+          "CFPerm": 0.019867549668874173,
+          "RRPerm": 0.007284768211920529,
+          "DRPerm": 0.39774834437086093
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "syntax_meta",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.58,
+          "RRPerm": 0.88,
+          "DRPerm": 0.58
+        },
+        "mean_p": {
+          "CFPerm": 0.32874172185430467,
+          "RRPerm": 0.033245033112582784,
+          "DRPerm": 0.07165562913907285
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.94,
+          "RRPerm": 0.34,
+          "DRPerm": 0.2
+        },
+        "mean_p": {
+          "CFPerm": 0.017748344370860928,
+          "RRPerm": 0.25788079470198677,
+          "DRPerm": 0.25920529801324504
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "syntax_meta",
+        "feature_set": "with_spacy",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.92,
+          "RRPerm": 0.6,
+          "DRPerm": 0.3
+        },
+        "mean_p": {
+          "CFPerm": 0.022781456953642386,
+          "RRPerm": 0.12927152317880794,
+          "DRPerm": 0.17152317880794704
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "syntax_meta",
+        "feature_set": "meta_only",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.22,
+          "RRPerm": 0.12,
+          "DRPerm": 0.04
+        },
+        "mean_p": {
+          "CFPerm": 0.29668874172185433,
+          "RRPerm": 0.3582781456953642,
+          "DRPerm": 0.43801324503311256
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.46,
+          "RRPerm": 0.78,
+          "DRPerm": 0.36
+        },
+        "mean_p": {
+          "CFPerm": 0.3262251655629139,
+          "RRPerm": 0.07456953642384107,
+          "DRPerm": 0.21456953642384102
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.8,
+          "RRPerm": 0.6,
+          "DRPerm": 0.28
+        },
+        "mean_p": {
+          "CFPerm": 0.07788079470198676,
+          "RRPerm": 0.16185430463576156,
+          "DRPerm": 0.2525827814569536
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_spacy",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.78,
+          "RRPerm": 0.74,
+          "DRPerm": 0.48
+        },
+        "mean_p": {
+          "CFPerm": 0.10158940397350995,
+          "RRPerm": 0.09231788079470199,
+          "DRPerm": 0.17496688741721855
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "feature_set": "meta_only",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.6,
+          "RRPerm": 0.56,
+          "DRPerm": 0.16
+        },
+        "mean_p": {
+          "CFPerm": 0.15523178807947022,
+          "RRPerm": 0.17311258278145697,
+          "DRPerm": 0.27099337748344376
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_MiniLM_L6_B50.json"
+        }
+      }
+    ],
+    "amazon_qwen3-0.6b": [
+      {
+        "scenario": "null_shift",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "RRPerm": 0.04,
+          "DRPerm": 0.08,
+          "CFPerm": 0.08
+        },
+        "mean_p": {
+          "RRPerm": 0.4912582781456954,
+          "DRPerm": 0.5483443708609271,
+          "CFPerm": 0.4633112582781456
+        },
+        "source": {
+          "RRPerm": "power_dataset_amazon_decorr_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_decorr_amazon_qwen3-0.6b_B50.json",
+          "CFPerm": "power_dataset_amazon_decorr_cf_amazon_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.76,
+          "RRPerm": 1.0,
+          "DRPerm": 1.0
+        },
+        "mean_p": {
+          "CFPerm": 0.23907284768211917,
+          "RRPerm": 0.00662251655629139,
+          "DRPerm": 0.007152317880794701
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 1.0,
+          "RRPerm": 1.0,
+          "DRPerm": 0.14
+        },
+        "mean_p": {
+          "CFPerm": 0.00662251655629139,
+          "RRPerm": 0.006754966887417217,
+          "DRPerm": 0.2964238410596026
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "sentiment_meta",
+        "feature_set": "with_spacy",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.98,
+          "RRPerm": 1.0,
+          "DRPerm": 1.0
+        },
+        "mean_p": {
+          "CFPerm": 0.008344370860927153,
+          "RRPerm": 0.00662251655629139,
+          "DRPerm": 0.00662251655629139
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "syntax_meta",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.4,
+          "RRPerm": 0.84,
+          "DRPerm": 0.46
+        },
+        "mean_p": {
+          "CFPerm": 0.5164238410596027,
+          "RRPerm": 0.03867549668874173,
+          "DRPerm": 0.14450331125827814
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.9,
+          "RRPerm": 0.32,
+          "DRPerm": 0.16
+        },
+        "mean_p": {
+          "CFPerm": 0.02172185430463576,
+          "RRPerm": 0.3373509933774834,
+          "DRPerm": 0.27774834437086093
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "syntax_meta",
+        "feature_set": "with_spacy",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.88,
+          "RRPerm": 0.6,
+          "DRPerm": 0.28
+        },
+        "mean_p": {
+          "CFPerm": 0.023841059602649005,
+          "RRPerm": 0.12066225165562913,
+          "DRPerm": 0.21019867549668877
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.5,
+          "RRPerm": 0.82,
+          "DRPerm": 0.44
+        },
+        "mean_p": {
+          "CFPerm": 0.2732450331125828,
+          "RRPerm": 0.08450331125827815,
+          "DRPerm": 0.1233112582781457
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.76,
+          "RRPerm": 0.52,
+          "DRPerm": 0.2
+        },
+        "mean_p": {
+          "CFPerm": 0.08450331125827815,
+          "RRPerm": 0.20039735099337747,
+          "DRPerm": 0.2096688741721854
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_spacy",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.56,
+          "RRPerm": 0.7,
+          "DRPerm": 0.46
+        },
+        "mean_p": {
+          "CFPerm": 0.2288741721854305,
+          "RRPerm": 0.087682119205298,
+          "DRPerm": 0.123841059602649
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json"
+        }
+      }
+    ],
+    "amazon-cross_MiniLM_L6": [
+      {
+        "scenario": "null_shift",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "RRPerm": 0.02,
+          "DRPerm": 0.04,
+          "CFPerm": 0.04
+        },
+        "mean_p": {
+          "RRPerm": 0.5087417218543046,
+          "DRPerm": 0.4603973509933775,
+          "CFPerm": 0.48397350993377486
+        },
+        "source": {
+          "RRPerm": "power_dataset_amazon_decorr_amazon-cross_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_decorr_amazon-cross_MiniLM_L6_B50.json",
+          "CFPerm": "power_dataset_amazon_decorr_cf_amazon-cross_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "domain_shift",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.02,
+          "RRPerm": 0.0,
+          "DRPerm": 0.36
+        },
+        "mean_p": {
+          "CFPerm": 0.576158940397351,
+          "RRPerm": 0.5133774834437086,
+          "DRPerm": 0.16701986754966885
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "domain_shift",
+        "feature_set": "with_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.02,
+          "RRPerm": 0.16,
+          "DRPerm": 0.56
+        },
+        "mean_p": {
+          "CFPerm": 0.6343046357615895,
+          "RRPerm": 0.3374834437086093,
+          "DRPerm": 0.10556291390728476
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "domain_shift",
+        "feature_set": "with_spacy",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.02,
+          "RRPerm": 0.02,
+          "DRPerm": 0.56
+        },
+        "mean_p": {
+          "CFPerm": 0.5680794701986754,
+          "RRPerm": 0.49960264900662255,
+          "DRPerm": 0.09536423841059603
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json"
+        }
+      },
+      {
+        "scenario": "domain_shift",
+        "feature_set": "meta_only",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.18,
+          "RRPerm": 0.2,
+          "DRPerm": 0.48
+        },
+        "mean_p": {
+          "CFPerm": 0.39788079470198684,
+          "RRPerm": 0.28688741721854305,
+          "DRPerm": 0.18304635761589405
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon-cross_MiniLM_L6_B50.json"
+        }
+      }
+    ],
+    "amazon-cross_qwen3-0.6b": [
+      {
+        "scenario": "null_shift",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "RRPerm": 0.02,
+          "DRPerm": 0.08,
+          "CFPerm": 0.08
+        },
+        "mean_p": {
+          "RRPerm": 0.5294039735099337,
+          "DRPerm": 0.4842384105960265,
+          "CFPerm": 0.4818543046357616
+        },
+        "source": {
+          "RRPerm": "power_dataset_amazon_decorr_amazon-cross_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_decorr_amazon-cross_qwen3-0.6b_B50.json",
+          "CFPerm": "power_dataset_amazon_decorr_cf_amazon-cross_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "domain_shift",
+        "feature_set": "without_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.12,
+          "RRPerm": 0.2,
+          "DRPerm": 0.9
+        },
+        "mean_p": {
+          "CFPerm": 0.41324503311258276,
+          "RRPerm": 0.21125827814569537,
+          "DRPerm": 0.018675496688741723
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "domain_shift",
+        "feature_set": "with_meta",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.1,
+          "RRPerm": 0.16,
+          "DRPerm": 0.68
+        },
+        "mean_p": {
+          "CFPerm": 0.3996026490066225,
+          "RRPerm": 0.31337748344370864,
+          "DRPerm": 0.05894039735099337
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "domain_shift",
+        "feature_set": "with_spacy",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.16,
+          "RRPerm": 0.1,
+          "DRPerm": 0.9
+        },
+        "mean_p": {
+          "CFPerm": 0.3119205298013245,
+          "RRPerm": 0.32887417218543047,
+          "DRPerm": 0.026887417218543052
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json"
+        }
+      }
+    ]
+  }
+}

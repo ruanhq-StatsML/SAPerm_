@@ -1,0 +1,47 @@
+{
+  "dataset": "amazon_qwen3-0.6b",
+  "scenario": "train_vs_heldout",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "amazon_decorr",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.5,
+          "CFPerm": null,
+          "RRPerm": 0.72
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.10225165562913908,
+          "CFPerm": null,
+          "RRPerm": 0.08728476821192052
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_spacy_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.56,
+          "CFPerm": null,
+          "RRPerm": 0.74
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.13192052980132452,
+          "CFPerm": null,
+          "RRPerm": 0.10768211920529801
+        }
+      }
+    ]
+  }
+}

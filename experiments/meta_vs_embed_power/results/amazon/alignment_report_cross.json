@@ -1,0 +1,95 @@
+{
+  "spec": "cross",
+  "n_rows": 2000,
+  "frame_hash": "7c67ff8ff1bd15593196c04b9867f9d51a8e45c6",
+  "errors": [],
+  "meta_char_len_all_rows_equal": true,
+  "meta_word_count_all_rows_equal": true,
+  "corr_vader_compound_y": 0.5718808094466405,
+  "y_balance": {
+    "0": 1000,
+    "1": 1000
+  },
+  "y_equals_rating_ge_4": true,
+  "source_rows_identical_to_gift_frame": true,
+  "domain_text_overlap": 0,
+  "y_balance_by_domain": {
+    "Gift_Cards": {
+      "0": 500,
+      "1": 500
+    },
+    "Magazine_Subscriptions": {
+      "1": 500,
+      "0": 500
+    }
+  },
+  "corr_vader_compound_y_by_domain": {
+    "Gift_Cards": 0.5309342315621566,
+    "Magazine_Subscriptions": 0.6111885906348773
+  },
+  "spot_rows": [
+    85,
+    92,
+    136,
+    210,
+    576,
+    609,
+    630,
+    674,
+    895,
+    919,
+    1005,
+    1097,
+    1164,
+    1177,
+    1357,
+    1363,
+    1380,
+    1483,
+    1626,
+    1945
+  ],
+  "meta_spot_max_abs_diff": 0.0,
+  "embeddings": {
+    "MiniLM_L6": {
+      "shape": [
+        2000,
+        384
+      ],
+      "spot_inbatch_cos_self_min": 0.9999998807907104,
+      "spot_inbatch_self_is_argmax": true,
+      "spot_single_cos_self_min": 0.9999998807907104,
+      "spot_single_cos_neighbor_max": 0.9090770483016968,
+      "spot_single_self_is_argmax": true
+    },
+    "qwen3-0.6b": {
+      "shape": [
+        2000,
+        1024
+      ],
+      "spot_inbatch_cos_self_min": 1.0,
+      "spot_inbatch_self_is_argmax": true,
+      "spot_single_cos_self_min": 0.9999999403953552,
+      "spot_single_cos_neighbor_max": 0.8940860033035278,
+      "spot_single_self_is_argmax": true
+    }
+  },
+  "passed": true,
+  "attempt": 1,
+  "encoders": [
+    "MiniLM_L6",
+    "qwen3-0.6b"
+  ],
+  "source": "datasets/Gift_Cards.jsonl",
+  "target": "datasets/magazineSubscription_df.csv",
+  "filters": {
+    "rating_dropped": 3,
+    "chars": [
+      20,
+      1000
+    ],
+    "dedupe": "text, within domain and across domains",
+    "y": "rating >= 4",
+    "order": "domain (source then target), timestamp within domain"
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "spec": "gift",
+  "n_rows": 1000,
+  "frame_hash": "e837d99a0dd61ac994c31994310a26400329d7f1",
+  "errors": [],
+  "meta_char_len_all_rows_equal": true,
+  "meta_word_count_all_rows_equal": true,
+  "corr_vader_compound_y": 0.5309342315621566,
+  "y_balance": {
+    "0": 500,
+    "1": 500
+  },
+  "y_equals_rating_ge_4": true,
+  "spot_rows": [
+    81,
+    84,
+    91,
+    135,
+    179,
+    208,
+    219,
+    235,
+    295,
+    396,
+    531,
+    570,
+    603,
+    624,
+    668,
+    886,
+    910,
+    916,
+    948,
+    980
+  ],
+  "meta_spot_max_abs_diff": 0.0,
+  "embeddings": {
+    "MiniLM_L6": {
+      "shape": [
+        1000,
+        384
+      ],
+      "spot_inbatch_cos_self_min": 0.9999998211860657,
+      "spot_inbatch_self_is_argmax": true,
+      "spot_single_cos_self_min": 0.9999999403953552,
+      "spot_single_cos_neighbor_max": 0.8926312327384949,
+      "spot_single_self_is_argmax": true
+    },
+    "qwen3-0.6b": {
+      "shape": [
+        1000,
+        1024
+      ],
+      "spot_inbatch_cos_self_min": 1.0,
+      "spot_inbatch_self_is_argmax": true,
+      "spot_single_cos_self_min": 0.9999999403953552,
+      "spot_single_cos_neighbor_max": 0.9410656094551086,
+      "spot_single_self_is_argmax": true
+    }
+  },
+  "passed": true,
+  "attempt": 1,
+  "encoders": [
+    "MiniLM_L6",
+    "qwen3-0.6b"
+  ],
+  "source": "datasets/Gift_Cards.jsonl",
+  "filters": {
+    "rating_dropped": 3,
+    "chars": [
+      20,
+      1000
+    ],
+    "dedupe": "text",
+    "y": "rating >= 4",
+    "order": "timestamp"
+  }
+}

@@ -13,3 +13,4 @@ experiments/primary_driver_10site/latex/*.blg
 data/
 *.egg-info/
 .venv/
+colab_work/

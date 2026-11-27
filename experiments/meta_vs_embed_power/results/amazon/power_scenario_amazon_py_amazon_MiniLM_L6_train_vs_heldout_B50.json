@@ -1,0 +1,83 @@
+{
+  "dataset": "amazon_MiniLM_L6",
+  "scenario": "train_vs_heldout",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "amazon_py",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "train_vs_heldout",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.16,
+          "CFPerm": 0.6,
+          "RRPerm": 0.56
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.27099337748344376,
+          "CFPerm": 0.15523178807947022,
+          "RRPerm": 0.17311258278145697
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.28,
+          "CFPerm": 0.8,
+          "RRPerm": 0.6
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.2525827814569536,
+          "CFPerm": 0.07788079470198676,
+          "RRPerm": 0.16185430463576156
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_spacy",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.48,
+          "CFPerm": 0.78,
+          "RRPerm": 0.74
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.17496688741721855,
+          "CFPerm": 0.10158940397350995,
+          "RRPerm": 0.09231788079470199
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "train_vs_heldout",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.36,
+          "CFPerm": 0.46,
+          "RRPerm": 0.78
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.21456953642384102,
+          "CFPerm": 0.3262251655629139,
+          "RRPerm": 0.07456953642384107
+        }
+      }
+    ]
+  }
+}

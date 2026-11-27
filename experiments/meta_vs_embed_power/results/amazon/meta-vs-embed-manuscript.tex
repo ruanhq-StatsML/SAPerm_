@@ -1,0 +1,354 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.7in]{geometry}
+\usepackage{booktabs,amsmath,graphicx}
+\usepackage[T1]{fontenc}
+
+\title{Text embedding $\pm$ meta-features: shift-detection power\\
+{\large Amazon Reviews 2023 (Gift Cards, Magazine Subscriptions) and gender}}
+\author{SAPerm shift-detect}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Four feature arms per encoder: \emph{w/o} $=$ PCA$_{24}$ of the sentence embedding $Z$;
+\emph{with $M$} $=[\mathrm{PCA}_{24}(Z),\,M]$, where $M$ is the 32-dimensional
+\texttt{utils.text\_meta} vector (surface, syntax and VADER sentiment features);
+\emph{with $S$} $=[\mathrm{PCA}_{24}(Z),\,S]$, where $S$ is a 36-dimensional spaCy
+(\texttt{en\_core\_web\_sm}) block with no VADER, sentiment lexicon or verb/noun ratio;
+\emph{$M$ only}. $n_{\mathrm{doc}}{=}120$ per window, $N_{\mathrm{perm}}{=}150$,
+Random Forest outcome model, $\alpha{=}0.05$; entries are empirical rejection rates, and all arms
+of a replicate share the same windows.
+RF $=$ RFPerm, the Python \texttt{RFPerm\_Generalized.PermValTest} port with $B{=}150$ and
+the one-sided upper-tail $p$ of the official \texttt{RFPerm::permrf}
+(reject when the new window has higher held-out loss).
+CF $=$ CFPerm LOCO on the meta block; RR $=$ RRPerm; DR $=$ DRPerm with residual-permutation null ($B{=}50$).
+Source domain: 1{,}000 Gift Cards reviews (rating 3 dropped, 20--1000 characters,
+text-deduplicated, $y=\mathbb{1}[\text{rating}\ge4]$, 500/500); target domain:
+1{,}000 Magazine Subscriptions reviews under the same filters, disjoint texts.
+Encoders: all-MiniLM-L6-v2 (384-d) and Qwen3-Embedding-0.6B (1024-d, fp32).
+Every artifact is keyed by row id and text SHA-1; alignment passed on both frames
+(frame hashes \texttt{e837d99a}, \texttt{7c67ff8f}).
+\end{abstract}
+
+\begin{table*}[ht]
+\centering
+\caption{Amazon RFPerm power, $B{=}150$, $N_{\mathrm{perm}}{=}150$, upper-tail $p$.
+Sentiment / syntax windows select the tails of a coordinate of $M$ (VADER compound,
+verb/noun ratio); time compares early with late Gift Cards reviews; domain compares
+Gift Cards with Magazine Subscriptions. $\Delta=$ arm $-$ w/o.
+Random: the official random 70/30 train/validation split of the first window;
+ordered: the same rows in frame order, so the split is chronological on Gift Cards.
+Cross-frame null rejection rates: $0.04$--$0.10$.
+Standard error of a cell $\le 0.04$.}
+\label{tab:amazon_rf_b150}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcccccccc}
+\toprule
+ & & \multicolumn{4}{c}{Power (random split)} & \multicolumn{2}{c}{$\Delta$ random} & \multicolumn{2}{c}{$\Delta$ ordered} \\
+\cmidrule(lr){3-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}
+Shift & Encoder & w/o & with $M$ & with $S$ & $M$ only & $M$ & $S$ & $M$ & $S$ \\
+\midrule
+Null (random split) & MiniLM-L6 & $.03$ & $.07$ & $.03$ & $.07$ & $+.03$ & $\pm.00$ & $-.03$ & $+.01$ \\
+ & Qwen3-Emb-0.6B & $.07$ & $.06$ & $.03$ & $.07$ & $-.01$ & $-.04$ & $-.01$ & $+.01$ \\
+\midrule
+Sentiment (VADER tail) & MiniLM-L6 & $\mathbf{.82}$ & $.64$ & $\mathbf{.94}$ & $.47$ & $-.18$ & $+.12$ & $-.29$ & $+.07$ \\
+ & Qwen3-Emb-0.6B & $\mathbf{.89}$ & $.66$ & $\mathbf{.93}$ & $.47$ & $-.23$ & $+.05$ & $-.35$ & $-.02$ \\
+\midrule
+Syntax (verb/noun tail) & MiniLM-L6 & $.36$ & $.19$ & $.21$ & $.12$ & $-.17$ & $-.15$ & $-.13$ & $-.12$ \\
+ & Qwen3-Emb-0.6B & $.29$ & $.17$ & $.20$ & $.12$ & $-.12$ & $-.09$ & $-.05$ & $-.05$ \\
+\midrule
+Time (early vs late) & MiniLM-L6 & $.16$ & $.17$ & $.24$ & $.11$ & $+.01$ & $+.08$ & $-.03$ & $+.03$ \\
+ & Qwen3-Emb-0.6B & $.23$ & $.17$ & $.27$ & $.11$ & $-.06$ & $+.04$ & $-.07$ & $-.01$ \\
+\midrule
+Domain (Gift $\to$ Magazine) & MiniLM-L6 & $.33$ & $.36$ & $.35$ & $.29$ & $+.03$ & $+.03$ & $-.15$ & $-.07$ \\
+ & Qwen3-Emb-0.6B & $.69$ & $.37$ & $.43$ & $.29$ & $-.33$ & $-.26$ & $-.27$ & $-.15$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\begin{table*}[ht]
+\centering
+\caption{Amazon DR / RR / CF power by arm ($B{=}50$, paired windows). $\Delta_M$, $\Delta_S$ $=$ arm $-$ w/o.
+}
+\label{tab:amazon_power_b50}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcccccccccccc}
+\toprule
+ & & \multicolumn{6}{c}{MiniLM-L6} & \multicolumn{6}{c}{Qwen3-Emb-0.6B} \\
+\cmidrule(lr){3-8}\cmidrule(lr){9-14}
+Shift & Test & w/o & $M$ & $\Delta_M$ & $S$ & $\Delta_S$ & $M$ only & w/o & $M$ & $\Delta_M$ & $S$ & $\Delta_S$ & $M$ only \\
+\midrule
+Sentiment (VADER tail) & CF & $\mathbf{.94}$ & $\mathbf{1.00}$ & $+.06$ & $\mathbf{1.00}$ & $+.06$ & -- & -- & -- & -- & -- & -- & -- \\
+ & RR & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\pm.00$ & $\mathbf{1.00}$ & $\pm.00$ & -- & -- & -- & -- & -- & -- & -- \\
+ & DR & $\mathbf{1.00}$ & $.18$ & $-.82$ & $\mathbf{1.00}$ & $\pm.00$ & -- & -- & -- & -- & -- & -- & -- \\
+\midrule
+Syntax (verb/noun tail) & CF & $.58$ & $\mathbf{.94}$ & $+.36$ & $\mathbf{.92}$ & $+.34$ & -- & -- & -- & -- & -- & -- & -- \\
+ & RR & $\mathbf{.88}$ & $.34$ & $-.54$ & $.60$ & $-.28$ & -- & -- & -- & -- & -- & -- & -- \\
+ & DR & $.58$ & $.20$ & $-.38$ & $.30$ & $-.28$ & -- & -- & -- & -- & -- & -- & -- \\
+\midrule
+Time (early vs late) & CF & $.46$ & $\mathbf{.80}$ & $+.34$ & $.78$ & $+.32$ & -- & -- & -- & -- & -- & -- & -- \\
+ & RR & $.78$ & $.60$ & $-.18$ & $.74$ & $-.04$ & -- & -- & -- & -- & -- & -- & -- \\
+ & DR & $.36$ & $.28$ & $-.08$ & $.48$ & $+.12$ & -- & -- & -- & -- & -- & -- & -- \\
+\midrule
+Domain (Gift $\to$ Magazine) & CF & $.02$ & $.02$ & $\pm.00$ & $.02$ & $\pm.00$ & -- & -- & -- & -- & -- & -- & -- \\
+ & RR & $.00$ & $.16$ & $+.16$ & $.02$ & $+.02$ & -- & -- & -- & -- & -- & -- & -- \\
+ & DR & $.36$ & $.56$ & $+.20$ & $.56$ & $+.20$ & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\begin{table}[ht]
+\centering
+\caption{DRPerm absorption diagnostic: mean $|W-\hat e(X)|$ (cross-fitted).}
+\label{tab:amazon_dr_absorb}
+\begin{tabular}{lcccccc}
+\toprule
+ & \multicolumn{3}{c}{MiniLM-L6} & \multicolumn{3}{c}{Qwen3-Emb-0.6B} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Shift & w/o & with & meta & w/o & with & meta \\
+\midrule
+Sentiment (VADER tail) & $0.47$ & $0.20$ & -- & $0.46$ & -- & -- \\
+Syntax (verb/noun tail) & $0.47$ & $0.20$ & -- & -- & -- & -- \\
+Time (early vs late) & $0.49$ & $0.49$ & -- & -- & -- & -- \\
+Domain (Gift $\to$ Magazine) & $0.33$ & $0.36$ & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Decorrelated arms (MiniLM-L6, Gift Cards, $B{=}50$; same paired windows as the main chain).
+$M_\tau$ and $S_\tau$ remove features with full-frame $|\rho_{\mathrm{Spearman}}(f,y)|\ge\tau$.
+This is a diagnostic ablation, since the filter uses $y$.
+$M_{0.2}\setminus\{v,n\}$ also removes \texttt{verb\_ratio} and \texttt{noun\_ratio}, the two components of
+the syntax selection variable. AUC$_W$ and the residual-variance ratio are defined as in
+Table~\ref{tab:amazon_absorption}.}
+\label{tab:amazon_decorr}
+\begin{tabular}{llccccc}
+\toprule
+Shift & Arm & AUC$_W$ & $\mathrm{Var}(W-\hat e)$ ratio & DR & RR & CF \\
+\midrule
+Sentiment (VADER tail) & w/o & $0.65$ & $1.00$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{.94}$ \\
+ & with $M$ & $0.99$ & $0.24$ & $.18$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ \\
+ & $M_{0.3}$ & $0.64$ & $1.01$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{.98}$ \\
+ & $M_{0.2}$ & $0.65$ & $1.00$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{.92}$ \\
+ & $M_{0.2}\setminus\{v,n\}$ & $0.64$ & $1.01$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{.98}$ \\
+ & $S_{0.3}$ & $0.64$ & $1.01$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{.98}$ \\
+ & $S_{0.2}$ & $0.64$ & $1.01$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{.96}$ \\
+\midrule
+Syntax (verb/noun tail) & w/o & $0.64$ & $1.00$ & $.58$ & $\mathbf{.88}$ & $.58$ \\
+ & with $M$ & $1.00$ & $0.21$ & $.20$ & $.34$ & $\mathbf{.94}$ \\
+ & $M_{0.3}$ & $1.00$ & $0.17$ & $.34$ & $.68$ & $\mathbf{.92}$ \\
+ & $M_{0.2}$ & $0.99$ & $0.36$ & $.36$ & $\mathbf{.82}$ & $\mathbf{.90}$ \\
+ & $M_{0.2}\setminus\{v,n\}$ & $0.77$ & $0.86$ & $.74$ & $\mathbf{.90}$ & $.70$ \\
+ & $S_{0.3}$ & $0.81$ & $0.80$ & $.48$ & $\mathbf{.82}$ & $\mathbf{.94}$ \\
+ & $S_{0.2}$ & $0.79$ & $0.83$ & $.78$ & $\mathbf{.92}$ & $.68$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table*}[ht]
+\centering
+\caption{Absorption evidence (MiniLM-L6; same windows and cross-fitted RF propensity as DRPerm,
+10 windows per shift, $n_{\mathrm{doc}}{=}120$ per side).
+AUC$_W$ / $R^2_W=1-\mathrm{Brier}/\mathrm{Var}(W)$: how well the feature set predicts the window label $W$;
+ext.\ $=$ share of raw $\hat e(X)<0.02$ or $>0.98$ (positivity); ratio $=$ variance of the DR residual
+$W-\hat e$ (clipped at $0.05$) relative to $Z_{\mathrm{pca}}$ alone.
+Bottom: 5-fold CV AUC for $y$ on the full frame.}
+\label{tab:amazon_absorption}
+\resizebox{\textwidth}{!}{%
+\begin{minipage}{1.25\textwidth}\centering
+\begin{tabular}{lccccccccccc}
+\toprule
+ & \multicolumn{3}{c}{$Z_{\mathrm{pca}}$} & \multicolumn{3}{c}{$M$ (VADER+spaCy)} & \multicolumn{3}{c}{$S$ (spaCy only)} & \multicolumn{2}{c}{$\mathrm{Var}(W-\hat e)$ ratio} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}\cmidrule(lr){11-12}
+Shift & AUC$_W$ & $R^2_W$ & ext. & AUC$_W$ & $R^2_W$ & ext. & AUC$_W$ & $R^2_W$ & ext. & $[Z,M]/Z$ & $[Z,S]/Z$ \\
+\midrule
+Sentiment (VADER tail) & $0.65$ & $0.07$ & $0.00$ & $0.99$ & $0.82$ & $0.02$ & $0.62$ & $0.04$ & $0.00$ & $0.24$ & $0.98$ \\
+Syntax (verb/noun tail) & $0.64$ & $0.06$ & $0.00$ & $1.00$ & $0.86$ & $0.01$ & $0.83$ & $0.29$ & $0.00$ & $0.21$ & $0.80$ \\
+Time (early vs late) & $0.54$ & $-0.02$ & $0.00$ & $0.56$ & $-0.02$ & $0.00$ & $0.51$ & $-0.04$ & $0.00$ & $0.98$ & $1.00$ \\
+Domain (Gift $\to$ Magazine) & $0.93$ & $0.48$ & $0.00$ & $0.67$ & $0.09$ & $0.00$ & $0.66$ & $0.08$ & $0.00$ & $1.12$ & $1.12$ \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.6em}
+\begin{tabular}{lccccc}
+\toprule
+$y$ CV AUC & $Z_{\mathrm{pca}}$ & $M$ & $S$ & $[Z,M]$ & $[Z,S]$ \\
+\midrule
+Gift (time / sentiment / syntax) & $0.87$ & $0.92$ & $0.84$ & $0.93$ & $0.89$ \\
+Gift $\cup$ Magazine (domain) & $0.86$ & $0.92$ & $0.82$ & $0.93$ & $0.88$ \\
+\bottomrule
+\end{tabular}
+\end{minipage}%
+}
+\end{table*}
+
+\begin{table*}[ht]
+\centering
+\caption{Shift diagnostics on $M$ and embeddings. KS sig.\ $=$ meta features with
+Bonferroni-significant two-sample KS; SMD $=$ standardized mean difference (b $-$ a);
+AUC $=$ 5-fold logistic classifier separating the two groups.}
+\label{tab:amazon_shift_diag}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccc}
+\toprule
+Shift & $\bar y$ (a/b) & KS sig. & $\overline{|\mathrm{SMD}|}$ & char\_len median & VADER median & AUC$_M$ & AUC$_{\mathrm{MiniLM}}$ & AUC$_{\mathrm{Qwen}}$ \\
+\midrule
+Time (Gift, early vs late) & $0.60/0.40$ & $7/32$ & $0.14$ & $83\to94$ ($+0.15$) & $0.60\to0.44$ ($-0.24$) & $0.59$ & $0.63$ & $0.62$ \\
+Domain (Gift vs Magazine) & $0.50/0.50$ & $19/32$ & $0.19$ & $90\to138$ ($+0.42$) & $0.51\to0.48$ ($-0.04$) & $0.76$ & $0.98$ & $0.99$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\begin{table}[ht]
+\centering
+\caption{Gender, MiniLM-L6, $n{=}1000$ (balanced $y$). RF: $B{=}150$, upper-tail $p$,
+random split. DR (residual null), RR, CF: $B{=}50$; $M$-only CF is per-sub-block LOCO
+with Bonferroni over three blocks.}
+\label{tab:gender_power}
+\begin{tabular}{llcccc}
+\toprule
+Shift & Arm & RF & DR & RR & CF \\
+\midrule
+Sentiment & w/o & $.10$ & $.88$ & $1.00$ & $.92$ \\
+ & with $M$ & $.03$ & $.08$ & $.90$ & $.98$ \\
+ & $M$ only & $.03$ & $.04$ & $.94$ & $1.00$ \\
+\midrule
+Syntax & w/o & $.27$ & $.60$ & $.74$ & $.60$ \\
+ & with $M$ & $.36$ & $.12$ & $.32$ & $.68$ \\
+ & $M$ only & $.35$ & $.06$ & $.36$ & $.46$ \\
+\midrule
+Train/held-out & w/o & $.05$ & $.02$ & $.00$ & $.02$ \\
+ & with $M$ & $.03$ & $.02$ & $.00$ & $.04$ \\
+ & $M$ only & $.03$ & $.04$ & $.00$ & $.00$ \\
+\midrule
+Null & w/o & $.04$ & $.12$ & $.06$ & $.06$ \\
+ & with $M$ & $.07$ & $.08$ & $.02$ & $.00$ \\
+ & $M$ only & $.06$ & $.04$ & $.06$ & $.06$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Reading}
+
+\paragraph{Claim 1: adding meta-features raises power --- where it holds.}
+The claim holds for CFPerm on gender, where concatenating $M$ raises power by $+.06$ (sentiment, $.92\to.98$)
+and $+.08$ (syntax, $.60\to.68$; Table~\ref{tab:gender_power}), and for RFPerm on gender syntax
+($.27\to.36$, $+.09$, $B{=}150$).
+On Amazon, the RFPerm gains come from the spaCy arm $S$, which does not encode the window-selection
+variables: sentiment $+.12$ (MiniLM, $.82\to.94$) and $+.05$ (Qwen, $.89\to.93$); time $+.08$
+($.16\to.24$) and $+.04$ ($.23\to.27$) (Table~\ref{tab:amazon_rf_b150}).
+Only the MiniLM sentiment gain clearly exceeds the cell standard error ($\le .04$) and survives the
+ordered split.
+The claim does not hold for every test or arm, and we do not state it as such.
+
+\paragraph{Why $M$ lowers RFPerm, DRPerm and RRPerm on meta-selected windows: absorption.}
+The sentiment and syntax windows are drawn from the tails of two coordinates of $M$
+(VADER compound, verb/noun ratio).
+On Amazon, concatenating $M$ lowers RFPerm power there, by $-.18$/$-.23$ (sentiment, MiniLM/Qwen)
+and $-.17$/$-.12$ (syntax).
+All three tests ask whether $Y\mid X$ changes between windows.
+Once the selection variable is in $X$, the window label is nearly a function of $X$:
+$M$ predicts $W$ with CV AUC $.99$ (sentiment) and $1.00$ (syntax), and $R^2_W=.82$/$.86$.
+The DR residual variance $\mathrm{Var}(W-\hat e)$ drops to $.24$/$.21$ of its embedding-only value
+(Table~\ref{tab:amazon_absorption}).
+The shift is then explained by the covariates, the conditional null is close to true, and the tests
+correctly lose power.
+The same mechanism produces the gender DRPerm drops ($.88\to.08$, $.60\to.12$) and RRPerm drops
+($1.00\to.90$, $.74\to.32$).
+This is absorption, not evidence that $M$ is uninformative:
+$M$ is the most $y$-predictive block ($y$ CV AUC $.92$ vs.\ $.87$ for $Z$).
+Absorption is also not a positivity failure in the strict sense: at most $1.8\%$ of the
+cross-fitted $\hat e(X)$ fall below $.02$ or above $.98$.
+Nor is it caused by the $M$--$y$ correlation alone: that correlation is equally strong in the time and
+domain scenarios, where adding $M$ leaves $\mathrm{Var}(W-\hat e)$ unchanged (ratio $.98$, $1.12$).
+
+\paragraph{CFPerm and the cross-domain shift: where $M$ helps the conditional tests.}
+CFPerm (leave-one-covariate-out on the meta block) gains from $M$ exactly where DRPerm and RRPerm lose
+(MiniLM, $B{=}50$): syntax $.58\to.94$ ($+.36$), time $.46\to.80$ ($+.34$), sentiment $.94\to1.00$
+($+.06$, near ceiling); on the domain shift CF is $.02$ for every arm.
+Both effects have one cause.
+When the selection variable is a coordinate of $M$, dropping the $M$ block removes it, which CF detects,
+whereas DR and RR condition on it and see no residual shift.
+On the domain shift, where $M$ does not predict $W$ (AUC$_W\approx.67$), there is no absorption and
+$M$ raises DR ($.36\to.56$, $+.20$) and RR ($.00\to.16$, $+.16$).
+The RR gain is small in absolute terms and a cell has standard error up to $.07$ at $B{=}50$.
+
+\paragraph{Decorrelation as a falsification of the mechanism.}
+To check that the DR drop is absorption and not loss of useful signal, we removed from $M$ and $S$
+every feature with $|\rho_{\mathrm{Spearman}}(f,y)|\ge\tau$ (arms $M_\tau$, $S_\tau$;
+Table~\ref{tab:amazon_decorr}).
+Because the filter uses $y$, this is a diagnostic ablation and not a recommended pipeline.
+On sentiment, removing the VADER-driven features restores DR from $.18$ to $1.00$.
+On syntax, $\tau=.3$ and $\tau=.2$ drop only \texttt{verb\_noun\_ratio}, whose components
+\texttt{verb\_ratio} and \texttt{noun\_ratio} remain, so $W$ stays predictable (AUC$_W\approx.99$) and DR stays
+low ($.34$, $.36$).
+Removing the two components as well lowers AUC$_W$ to $.77$ and the residual-variance ratio rises to $.86$;
+DR then rises to $.74$, above the embedding-only $.58$.
+RR recovers more gradually ($.34\to.68\to.82\to.90$) because it is also sensitive to $y$-correlated features.
+CF moves the other way (syntax $.94\to.70$ once $v$ and $n$ are removed), as expected for a test that needs
+the selection variable inside $M$.
+For $S$ on syntax, AUC$_W\approx.80$ is the same at $\tau=.3$ and $\tau=.2$, but DR rises from $.48$ to $.78$
+once the $y$-correlated POS features are removed, so part of the loss there is absorption by the outcome
+model rather than by the propensity model.
+
+\paragraph{The spaCy arm and its limits.}
+$S$ (36 spaCy features, with no VADER, sentiment lexicon or verb/noun ratio) avoids absorption on the
+sentiment window: it predicts $W$ with AUC $.62$, and the residual-variance ratio is $.98$.
+That is why RFPerm gains there.
+On the syntax window, RFPerm still drops ($-.15$ MiniLM, $-.09$ Qwen), because the POS ratios in $S$
+are correlated with the verb/noun selection variable (AUC$_W=.83$, ratio $.80$): absorption is partial.
+On the cross-domain shift with Qwen, both concatenations lower power
+($.69\to.37$ with $M$, $\to.43$ with $S$), while with MiniLM both change it by only $+.03$.
+Qwen's 24 PCs already separate the domains, and $M$ or $S$ alone barely does (AUC$_W\approx.67$).
+The most likely explanation is dilution: with $m_{\mathrm{try}}=\sqrt p$, adding 32--36 weakly
+informative columns lowers the share of splits drawn on the embedding coordinates.
+We do not claim that $S$ is more informative than $M$: $S$ predicts $y$ less well
+(CV AUC $.84$ vs.\ $.92$).
+Its value is that it complements the embedding without directly encoding the window-selection variable.
+
+\paragraph{Meta only.}
+$M$ alone has the lowest RFPerm power in every Amazon shift ($.11$--$.49$).
+This is expected: the shifts live mostly in the embedding, and $M$ is a 32-dimensional summary that
+cannot replace the backbone.
+
+\paragraph{Claim 2: higher-order interactions.}
+The claim that higher-order interactions matter only when each modality is extracted separately
+is not covered by this experiment.
+Amazon is text-only, so there is a single modality and no cross-modal interaction to test.
+Any support for claim~2 has to come from the existing multimodal results.
+
+\paragraph{Test details and caveats.}
+RFPerm uses the official \texttt{RFPerm::permrf} direction: one-sided upper-tail
+$p=(1+\#\{d_b\ge d_0\})/(B+1)$ with $d_0=\overline{\mathrm{loss}}_{\mathrm{new}}-\overline{\mathrm{loss}}_{\mathrm{val}}$,
+so the test rejects when the new window is harder to predict.
+The two-sided $p$ gives the same sign for every difference of at least $.05$.
+The Python permutation step was checked against \texttt{RFPerm:::permTest\_} (identical $d_0$; upper-tail
+$p$ within $1/(B+1)$). The end-to-end R backend was not rerun at $B{=}150$.
+With a chronological (ordered) train/validation split, the drop from $M$ on meta-selected windows is
+stable ($-.05$ to $-.35$), and the MiniLM spaCy gains shrink but stay positive
+(sentiment $+.07$, time $+.03$).
+The smaller Qwen spaCy gains do not survive the ordered split (sentiment $-.02$, time $-.01$), and the
+MiniLM domain changes turn negative ($-.15$ with $M$, $-.07$ with $S$).
+We therefore report the spaCy gains as robust for MiniLM sentiment only.
+Null rejection rates stay at or below $.09$ ($B{=}150$).
+At $B{=}50$ the null rates of the decorrelated arms (MiniLM, gift and cross-frame) are $.04$--$.08$ for
+DR, RR and CF.
+RFPerm is reported only from the $B{=}150$ runs: the first $B{=}50$ RF rows predate the upper-tail $p$ fix
+and were dropped from the paired table.
+The embedding dimension is fixed at $k{=}24$ PCs. A kneedle elbow on the effective-rank curve sits much
+higher ($k\approx174$ gender/bias, $\approx164$ Amazon Gift).
+The elbow describes the variance structure of $Z$ only; it does not guarantee optimal power.
+More PCs carry more signal but also more noise coordinates for the RF, so the choice of $k$ is an
+information/noise trade-off that we did not tune for power.
+All Amazon artifacts are keyed by row id and text SHA-1 of a single frame per spec, and alignment
+is re-asserted at load time.
+
+\end{document}
