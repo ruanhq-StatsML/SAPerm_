@@ -1,0 +1,83 @@
+{
+  "dataset": "amazon_qwen3-0.6b",
+  "scenario": "syntax_meta",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "amazon_py",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "syntax_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.04,
+          "CFPerm": 0.22,
+          "RRPerm": 0.12
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.43801324503311256,
+          "CFPerm": 0.29668874172185433,
+          "RRPerm": 0.3582781456953642
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.16,
+          "CFPerm": 0.9,
+          "RRPerm": 0.32
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.27774834437086093,
+          "CFPerm": 0.02172185430463576,
+          "RRPerm": 0.3373509933774834
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "syntax_meta",
+        "feature_set": "with_spacy",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.28,
+          "CFPerm": 0.88,
+          "RRPerm": 0.6
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.21019867549668877,
+          "CFPerm": 0.023841059602649005,
+          "RRPerm": 0.12066225165562913
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "syntax_meta",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.46,
+          "CFPerm": 0.4,
+          "RRPerm": 0.84
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.14450331125827814,
+          "CFPerm": 0.5164238410596027,
+          "RRPerm": 0.03867549668874173
+        }
+      }
+    ]
+  }
+}

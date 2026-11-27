@@ -1,0 +1,65 @@
+{
+  "dataset": "bias",
+  "B_target": 50,
+  "n_perm": 150,
+  "outcome_model": "RandomForest",
+  "rows_count": 150,
+  "summary": {
+    "table": [
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.02,
+          "DRPerm": 0.0,
+          "RRPerm": 0.16,
+          "CFPerm": 0.0
+        },
+        "mean_p": {
+          "RFPerm": 0.6572185430463577,
+          "DRPerm": 1.0,
+          "RRPerm": 0.4663576158940398,
+          "CFPerm": 1.0
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "RRPerm": 0.16,
+          "CFPerm": 0.36
+        },
+        "mean_p": {
+          "RFPerm": 0.7486092715231788,
+          "DRPerm": 1.0,
+          "RRPerm": 0.6199999999999999,
+          "CFPerm": 0.2170860927152318
+        }
+      },
+      {
+        "dataset": "bias",
+        "scenario": "sentiment_meta",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": 0.0,
+          "DRPerm": 0.0,
+          "RRPerm": 0.3,
+          "CFPerm": 0.24
+        },
+        "mean_p": {
+          "RFPerm": 0.8415894039735099,
+          "DRPerm": 0.703046357615894,
+          "RRPerm": 0.22662251655629137,
+          "CFPerm": 0.45284768211920523
+        }
+      }
+    ]
+  }
+}

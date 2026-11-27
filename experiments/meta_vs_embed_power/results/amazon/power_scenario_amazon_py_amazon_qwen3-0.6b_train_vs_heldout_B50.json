@@ -1,0 +1,83 @@
+{
+  "dataset": "amazon_qwen3-0.6b",
+  "scenario": "train_vs_heldout",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "amazon_py",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "train_vs_heldout",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.16,
+          "CFPerm": 0.6,
+          "RRPerm": 0.56
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.27099337748344376,
+          "CFPerm": 0.15523178807947022,
+          "RRPerm": 0.17311258278145697
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.2,
+          "CFPerm": 0.76,
+          "RRPerm": 0.52
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.2096688741721854,
+          "CFPerm": 0.08450331125827815,
+          "RRPerm": 0.20039735099337747
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_spacy",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.46,
+          "CFPerm": 0.56,
+          "RRPerm": 0.7
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.123841059602649,
+          "CFPerm": 0.2288741721854305,
+          "RRPerm": 0.087682119205298
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "train_vs_heldout",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.44,
+          "CFPerm": 0.5,
+          "RRPerm": 0.82
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.1233112582781457,
+          "CFPerm": 0.2732450331125828,
+          "RRPerm": 0.08450331125827815
+        }
+      }
+    ]
+  }
+}

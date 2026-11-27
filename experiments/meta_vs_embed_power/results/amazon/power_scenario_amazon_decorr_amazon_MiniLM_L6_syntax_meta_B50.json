@@ -1,0 +1,101 @@
+{
+  "dataset": "amazon_MiniLM_L6",
+  "scenario": "syntax_meta",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "amazon_decorr",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.34,
+          "CFPerm": null,
+          "RRPerm": 0.68
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.16026490066225166,
+          "CFPerm": null,
+          "RRPerm": 0.07443708609271522
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta_decorr_t02",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.36,
+          "CFPerm": null,
+          "RRPerm": 0.82
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.17139072847682119,
+          "CFPerm": null,
+          "RRPerm": 0.046887417218543045
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "syntax_meta",
+        "feature_set": "with_meta_decorr_t02nv",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.74,
+          "CFPerm": null,
+          "RRPerm": 0.9
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.056158940397351,
+          "CFPerm": null,
+          "RRPerm": 0.030198675496688743
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "syntax_meta",
+        "feature_set": "with_spacy_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.48,
+          "CFPerm": null,
+          "RRPerm": 0.82
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.1148344370860927,
+          "CFPerm": null,
+          "RRPerm": 0.04158940397350992
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "syntax_meta",
+        "feature_set": "with_spacy_decorr_t02",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.78,
+          "CFPerm": null,
+          "RRPerm": 0.92
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.060927152317880796,
+          "CFPerm": null,
+          "RRPerm": 0.03483443708609272
+        }
+      }
+    ]
+  }
+}

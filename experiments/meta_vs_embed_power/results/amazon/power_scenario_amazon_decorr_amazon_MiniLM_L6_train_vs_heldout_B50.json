@@ -1,0 +1,47 @@
+{
+  "dataset": "amazon_MiniLM_L6",
+  "scenario": "train_vs_heldout",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "amazon_decorr",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_meta_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.44,
+          "CFPerm": null,
+          "RRPerm": 0.68
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.20013245033112578,
+          "CFPerm": null,
+          "RRPerm": 0.0614569536423841
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "train_vs_heldout",
+        "feature_set": "with_spacy_decorr",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.46,
+          "CFPerm": null,
+          "RRPerm": 0.72
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.17801324503311255,
+          "CFPerm": null,
+          "RRPerm": 0.07788079470198675
+        }
+      }
+    ]
+  }
+}

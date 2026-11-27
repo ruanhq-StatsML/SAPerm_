@@ -1,0 +1,82 @@
+{
+  "dataset": "amazon-cross_qwen3-0.6b",
+  "B": 50,
+  "n_perm": 150,
+  "checkpoint_tag": "amazon_py",
+  "summary": {
+    "table": [
+      {
+        "dataset": "amazon-cross_qwen3-0.6b",
+        "scenario": "domain_shift",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.48,
+          "CFPerm": 0.18,
+          "RRPerm": 0.2
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.18304635761589405,
+          "CFPerm": 0.39788079470198684,
+          "RRPerm": 0.28688741721854305
+        }
+      },
+      {
+        "dataset": "amazon-cross_qwen3-0.6b",
+        "scenario": "domain_shift",
+        "feature_set": "with_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.68,
+          "CFPerm": 0.1,
+          "RRPerm": 0.16
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.05894039735099337,
+          "CFPerm": 0.3996026490066225,
+          "RRPerm": 0.31337748344370864
+        }
+      },
+      {
+        "dataset": "amazon-cross_qwen3-0.6b",
+        "scenario": "domain_shift",
+        "feature_set": "with_spacy",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.9,
+          "CFPerm": 0.16,
+          "RRPerm": 0.1
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.026887417218543052,
+          "CFPerm": 0.3119205298013245,
+          "RRPerm": 0.32887417218543047
+        }
+      },
+      {
+        "dataset": "amazon-cross_qwen3-0.6b",
+        "scenario": "domain_shift",
+        "feature_set": "without_meta",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.9,
+          "CFPerm": 0.12,
+          "RRPerm": 0.2
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.018675496688741723,
+          "CFPerm": 0.41324503311258276,
+          "RRPerm": 0.21125827814569537
+        }
+      }
+    ]
+  }
+}
