@@ -348,6 +348,26 @@
         }
       },
       {
+        "scenario": "sentiment_meta",
+        "feature_set": "meta_only",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 1.0,
+          "RRPerm": 1.0,
+          "DRPerm": 0.08
+        },
+        "mean_p": {
+          "CFPerm": 0.019867549668874173,
+          "RRPerm": 0.007284768211920529,
+          "DRPerm": 0.39774834437086093
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json"
+        }
+      },
+      {
         "scenario": "syntax_meta",
         "feature_set": "without_meta",
         "n_reps": null,
@@ -408,6 +428,26 @@
         }
       },
       {
+        "scenario": "syntax_meta",
+        "feature_set": "meta_only",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.22,
+          "RRPerm": 0.12,
+          "DRPerm": 0.04
+        },
+        "mean_p": {
+          "CFPerm": 0.29668874172185433,
+          "RRPerm": 0.3582781456953642,
+          "DRPerm": 0.43801324503311256
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json"
+        }
+      },
+      {
         "scenario": "train_vs_heldout",
         "feature_set": "without_meta",
         "n_reps": null,
@@ -460,6 +500,26 @@
           "CFPerm": 0.2288741721854305,
           "RRPerm": 0.087682119205298,
           "DRPerm": 0.123841059602649
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "train_vs_heldout",
+        "feature_set": "meta_only",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.6,
+          "RRPerm": 0.56,
+          "DRPerm": 0.16
+        },
+        "mean_p": {
+          "CFPerm": 0.15523178807947022,
+          "RRPerm": 0.17311258278145697,
+          "DRPerm": 0.27099337748344376
         },
         "source": {
           "CFPerm": "power_dataset_amazon_py_amazon_qwen3-0.6b_B50.json",
@@ -644,6 +704,26 @@
           "CFPerm": 0.3119205298013245,
           "RRPerm": 0.32887417218543047,
           "DRPerm": 0.026887417218543052
+        },
+        "source": {
+          "CFPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json",
+          "RRPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json",
+          "DRPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json"
+        }
+      },
+      {
+        "scenario": "domain_shift",
+        "feature_set": "meta_only",
+        "n_reps": null,
+        "power": {
+          "CFPerm": 0.18,
+          "RRPerm": 0.2,
+          "DRPerm": 0.48
+        },
+        "mean_p": {
+          "CFPerm": 0.39788079470198684,
+          "RRPerm": 0.28688741721854305,
+          "DRPerm": 0.18304635761589405
         },
         "source": {
           "CFPerm": "power_dataset_amazon_py_amazon-cross_qwen3-0.6b_B50.json",

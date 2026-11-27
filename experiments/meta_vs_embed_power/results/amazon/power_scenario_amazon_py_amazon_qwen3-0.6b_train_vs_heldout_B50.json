@@ -9,6 +9,24 @@
       {
         "dataset": "amazon_qwen3-0.6b",
         "scenario": "train_vs_heldout",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.16,
+          "CFPerm": 0.6,
+          "RRPerm": 0.56
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.27099337748344376,
+          "CFPerm": 0.15523178807947022,
+          "RRPerm": 0.17311258278145697
+        }
+      },
+      {
+        "dataset": "amazon_qwen3-0.6b",
+        "scenario": "train_vs_heldout",
         "feature_set": "with_meta",
         "B": 50,
         "power": {
