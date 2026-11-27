@@ -40,9 +40,8 @@ N_PERM = int(os.environ.get("POWER_N_PERM", "150"))
 
 K_VALUES = ("24", "64", "128", "full")
 BASE_ARMS = ("without_meta", "with_meta", "with_spacy")
-DECORR_ARMS = ("with_meta_decorr", "with_spacy_decorr")
-FULL_B50_ARMS = ("without_meta", "with_meta", "with_spacy", "with_vader4", "with_meta_decorr")
-ALL_ARMS = BASE_ARMS + ("with_vader4",) + DECORR_ARMS
+CORE_ARMS = ("without_meta", "with_meta", "with_spacy", "with_vader4", "with_meta_decorr")
+ALL_ARMS = BASE_ARMS + ("with_vader4", "with_meta_decorr", "with_spacy_decorr")
 
 SCENARIOS = {
     "gift": ["null_shift", "sentiment_meta", "syntax_meta", "train_vs_heldout"],
@@ -51,6 +50,7 @@ SCENARIOS = {
 SCENARIO_ORDER = ["null_shift", "sentiment_meta", "syntax_meta", "train_vs_heldout", "domain_shift"]
 PREFIX = {"gift": "amazon", "cross": "amazon-cross"}
 CLIP = 0.05
+DS_PREFIXES = ("amazon_", "amazon-cross_")
 
 
 def k_to_pca_k(k_label: str) -> int:
@@ -222,10 +222,9 @@ def _rows_by_tag_ds(tag: str) -> dict[str, list[dict]]:
     out: dict[str, dict[tuple, dict]] = defaultdict(dict)
     for ck in sorted(FULLGRID_DIR.glob(f"checkpoint_{tag}_*.npz")):
         ds = ck.stem[len(f"checkpoint_{tag}_"):]
-        if not ds.startswith(("amazon_", "amazon-cross_")):
-            continue
-        for r in np.load(ck, allow_pickle=True)["rows"]:
-            out[ds].setdefault((r["scenario"], r["feature_set"], int(r["b"])), r)
+        if ds.startswith(DS_PREFIXES):
+            for r in np.load(ck, allow_pickle=True)["rows"]:
+                out[ds].setdefault((r["scenario"], r["feature_set"], int(r["b"])), r)
     for jl in sorted(FULLGRID_DIR.glob("fullgrid_shard*.jsonl")):
         for r in load_shard_rows(jl):
             if r.get("tag") == tag and "b" in r:
@@ -233,95 +232,96 @@ def _rows_by_tag_ds(tag: str) -> dict[str, list[dict]]:
     return {ds: list(v.values()) for ds, v in out.items()}
 
 
-def _extract_rf_from_ckpt(ckpt_path: Path, alpha: float = 0.05) -> dict[tuple[str, str, str], dict]:
-    out: dict[tuple[str, str, str], dict] = {}
-    if not ckpt_path.is_file():
-        return out
-    rows = np.load(ckpt_path, allow_pickle=True)["rows"]
-    return _extract_rf_from_rows(rows, alpha)
-
-
-def _extract_rf_from_rows(rows: Any, alpha: float = 0.05) -> dict[tuple[str, str, str], dict]:
-    out: dict[tuple[str, str, str], dict] = {}
-    bucket = defaultdict(list)
+def _group(rows: Any, tests: tuple[str, ...]) -> dict[tuple, list[dict]]:
+    bucket: dict[tuple, list[dict]] = defaultdict(list)
     for r in rows:
-        rf = r["RFPerm"]
-        if not rf.get("skipped"):
-            bucket[(r["dataset"], r["scenario"], r["feature_set"])].append(rf)
-    for (ds, scen, arm), vals in bucket.items():
-        if arm not in ALL_ARMS:
-            continue
-        out[(ds, scen, arm)] = {
-            "n_reps": len(vals),
-            "power": float(np.mean([x["p_value"] < alpha for x in vals])),
-            "power_abs": float(np.mean([x["p_value_abs"] < alpha for x in vals])),
-            "mean_stat": float(np.mean([x["statistic"] for x in vals])),
-        }
-    return out
-
-
-def _extract_tests_from_rows(rows: Any, alpha: float = 0.05) -> dict[tuple[str, str, str, str], dict]:
-    out: dict[tuple[str, str, str, str], dict] = {}
-    bucket = defaultdict(list)
-    for r in rows:
-        for t in ("RFPerm", "DRPerm", "RRPerm", "CFPerm"):
+        for t in tests:
             res = r.get(t)
             if res and not res.get("skipped"):
                 bucket[(r["dataset"], r["scenario"], r["feature_set"], t)].append(res)
-    for key, vals in bucket.items():
-        out[key] = {
-            "n_reps": len(vals),
-            "power": float(np.mean([bool(x["reject"]) for x in vals])),
-            "mean_p": float(np.mean([float(x["p_value"]) for x in vals])),
+    return bucket
+
+
+def _rf_stats(rows: Any, alpha: float = 0.05, arms: tuple[str, ...] | None = None) -> dict[tuple[str, str, str], dict]:
+    return {
+        (ds, scen, arm): {
+            "n_reps": len(v),
+            "power": float(np.mean([x["p_value"] < alpha for x in v])),
+            "power_abs": float(np.mean([x["p_value_abs"] < alpha for x in v])),
+            "mean_stat": float(np.mean([x["statistic"] for x in v])),
         }
+        for (ds, scen, arm, _), v in _group(rows, ("RFPerm",)).items()
+        if arms is None or arm in arms
+    }
+
+
+def _test_stats(rows: Any, alpha: float = 0.05) -> dict[tuple[str, str, str, str], dict]:
+    return {
+        key: {
+            "n_reps": len(v),
+            "power": float(np.mean([bool(x["reject"]) for x in v])),
+            "mean_p": float(np.mean([float(x["p_value"]) for x in v])),
+        }
+        for key, v in _group(rows, ("RFPerm", "DRPerm", "RRPerm", "CFPerm")).items()
+    }
+
+
+def load_rf_map() -> dict[str, dict[str, dict]]:
+    """RFPerm B=150 power per ``"{dataset}|{k}|{scenario}|{arm}"`` for random and ordered splits:
+    k=24 read-only from the parent ``results/amazon`` checkpoints, k=64/128/full (and VADER arms)
+    from ``fg_rf_k*`` / ``fg_vader_k*`` checkpoints in the fullgrid directory."""
+    rf: dict[str, dict[str, dict]] = {"random": {}, "ordered": {}}
+    for split, tag in (("random", "amazon_rf_b150"), ("ordered", "amazon_rf_b150_ordered")):
+        for ck in sorted(OUT_DIR.glob(f"checkpoint_{tag}_*.npz")):
+            ds = ck.stem[len(f"checkpoint_{tag}_"):]
+            if ds.startswith(DS_PREFIXES):
+                for (d, scen, arm), v in _rf_stats(np.load(ck, allow_pickle=True)["rows"], arms=ALL_ARMS).items():
+                    rf[split][f"{d}|24|{scen}|{arm}"] = v
+    for k_label in K_VALUES:
+        for tag in ("fg_rf", "fg_vader"):
+            for split, suf in (("random", ""), ("ordered", "_ordered")):
+                for rws in _rows_by_tag_ds(f"{tag}_k{k_label}{suf}").values():
+                    for (d, scen, arm), v in _rf_stats(rws).items():
+                        rf[split][f"{d}|{k_label}|{scen}|{arm}"] = v
+    return rf
+
+
+def load_b50_map() -> dict[str, dict]:
+    """DR/RR/CF (B=50) power per ``"{dataset}|{k}|{scenario}|{arm}|{test}"`` from every
+    ``fg_{drrr,cf,dr,rr}_k*`` tag, npz and shard jsonl merged and deduplicated by key."""
+    out: dict[str, dict] = {}
+    for k_label in K_VALUES:
+        for tag in (f"fg_drrr_k{k_label}", f"fg_cf_k{k_label}", f"fg_dr_k{k_label}", f"fg_rr_k{k_label}"):
+            for rws in _rows_by_tag_ds(tag).values():
+                for (d, scen, arm, t), v in _test_stats(rws).items():
+                    out[f"{d}|{k_label}|{scen}|{arm}|{t}"] = v
     return out
 
 
-def _spec_for_ds(ds: str) -> str:
-    return "cross" if ds.startswith("amazon-cross_") else "gift"
-
-
-def _enc_for_ds(ds: str) -> str:
-    return ds.split("_", 1)[1]
+def merge_shard_files(sources: list[Path]) -> None:
+    """Copy ``fullgrid_shard*.jsonl`` from other machines' directories into FULLGRID_DIR.
+    A file is replaced only when the source has more rows; duplicates across files are
+    harmless because every reader deduplicates by (dataset, scenario, arm, b)."""
+    FULLGRID_DIR.mkdir(parents=True, exist_ok=True)
+    for src in sources:
+        for jl in sorted(Path(src).glob("fullgrid_shard*.jsonl")):
+            dst = FULLGRID_DIR / jl.name
+            n_src = sum(1 for _ in jl.open())
+            n_dst = sum(1 for _ in dst.open()) if dst.is_file() else -1
+            if n_src > n_dst:
+                dst.write_bytes(jl.read_bytes())
+            print(f"{jl}: {n_src} rows -> {dst.name} ({'copied' if n_src > n_dst else 'kept existing ' + str(n_dst)})")
 
 
 def summarize_all() -> dict[str, Any]:
     FULLGRID_DIR.mkdir(parents=True, exist_ok=True)
     diag_path = FULLGRID_DIR / "fullgrid_diagnostics.json"
     diag = json.loads(diag_path.read_text(encoding="utf-8")) if diag_path.is_file() else {"cells": {}}
-
-    rf_data: dict[str, dict[str, dict]] = {"random": {}, "ordered": {}}
-    # 1. Read-only reuse of k=24 RFPerm B=150 from parent results/amazon/
-    for split, tag in (("random", "amazon_rf_b150"), ("ordered", "amazon_rf_b150_ordered")):
-        for ck in sorted(OUT_DIR.glob(f"checkpoint_{tag}_*.npz")):
-            ds = ck.stem[len(f"checkpoint_{tag}_"):]
-            if not ds.startswith(("amazon_", "amazon-cross_")):
-                continue
-            for (d, scen, arm), val in _extract_rf_from_ckpt(ck).items():
-                rf_data[split][f"{d}|24|{scen}|{arm}"] = val
-
-    # 2. Fullgrid RF checkpoints
-    for k_label in ("64", "128", "full"):
-        for split, suf in (("random", ""), ("ordered", "_ordered")):
-            tag = f"fg_rf_k{k_label}{suf}"
-            for ds, rws in _rows_by_tag_ds(tag).items():
-                for (d, scen, arm), val in _extract_rf_from_rows(rws).items():
-                    rf_data[split][f"{d}|{k_label}|{scen}|{arm}"] = val
-
-    # 3. Fullgrid DR/RR/CF checkpoints
-    b50_data: dict[str, dict] = {}
-    for k_label in K_VALUES:
-        for tag in (f"fg_drrr_k{k_label}", f"fg_cf_k{k_label}", f"fg_dr_k{k_label}", f"fg_rr_k{k_label}"):
-            for ds, rws in _rows_by_tag_ds(tag).items():
-                for (d, scen, arm, t), val in _extract_tests_from_rows(rws).items():
-                    b50_data[f"{d}|{k_label}|{scen}|{arm}|{t}"] = val
-
-    summary = {"rf_b150": rf_data, "b50": b50_data, "diagnostics": diag}
+    summary = {"rf_b150": load_rf_map(), "b50": load_b50_map(), "diagnostics": diag}
     (FULLGRID_DIR / "fullgrid_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-
-    # Render Markdown tables
     _write_rf_md(summary)
     _write_power_md(summary)
+    _write_core_b50_md(summary)
     return summary
 
 
@@ -384,7 +384,7 @@ def _write_power_md(summary: dict[str, Any]) -> str:
         "| 编码器 | k | 场景 | 检验 | w/o | meta | Δmeta | spacy | Δspacy | vader4 | Δvader4 | meta_dec | Δm_dec | y_AUC (Z/M/S/V4/Md) | AUC_W (Z/M/S/V4/Md) | VarRatio (M/S/V4/Md) |",
         "|---|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|---|---|---|",
     ]
-    show_arms = ("without_meta", "with_meta", "with_spacy", "with_vader4", "with_meta_decorr")
+    show_arms = CORE_ARMS
     for enc in ENCODERS:
         for k_label in K_VALUES:
             for spec in ("gift", "cross"):
@@ -415,6 +415,34 @@ def _write_power_md(summary: dict[str, Any]) -> str:
     return md
 
 
+def _write_core_b50_md(summary: dict[str, Any]) -> str:
+    """Five-core-arm DR/RR/CF (B=50) power for the no-PCA k=full grid, from merged, key-deduplicated rows."""
+    b50 = summary["b50"]
+    lines = ["# Amazon k=full DR / RR / CF (B=50, n_perm=150): five core arms", ""]
+    for enc in ENCODERS:
+        for t, tname in (("DRPerm", "DR"), ("RRPerm", "RR"), ("CFPerm", "CF")):
+            lines += [
+                f"## {enc} · {tname}",
+                "",
+                "| 数据 | 场景 | " + " | ".join(CORE_ARMS) + " | min n |",
+                "|---|---|" + "--:|" * (len(CORE_ARMS) + 1),
+            ]
+            for spec in ("gift", "cross"):
+                ds = f"{PREFIX[spec]}_{enc}"
+                for scen in SCENARIOS[spec]:
+                    cells = [b50.get(f"{ds}|full|{scen}|{a}|{t}") for a in CORE_ARMS]
+                    if all(c is None for c in cells):
+                        continue
+                    n_min = min((c["n_reps"] for c in cells if c), default=0) if all(cells) else 0
+                    lines.append(
+                        f"| {spec} | {scen} | " + " | ".join(_fmt(c and c["power"]) for c in cells) + f" | {n_min} |"
+                    )
+            lines.append("")
+    md = "\n".join(lines) + "\n"
+    (FULLGRID_DIR / "fullgrid_core_b50_tables.md").write_text(md, encoding="utf-8")
+    return md
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--diag", action="store_true")
@@ -430,6 +458,7 @@ def main() -> int:
     ap.add_argument("--arms", nargs="*", default=None)
     ap.add_argument("--b", type=int, default=50)
     ap.add_argument("--summarize", action="store_true")
+    ap.add_argument("--merge", nargs="+", type=Path, metavar="DIR", help="copy fullgrid_shard*.jsonl from DIR(s) into the fullgrid dir")
     ap.add_argument(
         "--shard",
         default=os.environ.get("POWER_SHARD"),
@@ -455,7 +484,9 @@ def main() -> int:
             B=args.b,
             shard=parse_shard(args.shard),
         )
-    elif args.summarize:
+    elif args.merge or args.summarize:
+        if args.merge:
+            merge_shard_files(args.merge)
         summarize_all()
         print("Summary written under", FULLGRID_DIR)
     else:
