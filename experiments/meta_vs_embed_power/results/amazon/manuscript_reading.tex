@@ -23,6 +23,8 @@ The DR residual variance $\mathrm{Var}(W-\hat e)$ drops to $.24$/$.21$ of its em
 (Table~\ref{tab:amazon_absorption}).
 The shift is then explained by the covariates, the conditional null is close to true, and the tests
 correctly lose power.
+The B=50 DR drops reproduce on Qwen3 (sentiment $1.00\to.14$, syntax $.46\to.16$, time $.44\to.20$), with the
+same residual-variance mechanism assumed; the Qwen3 absorption diagnostic has not been computed.
 The same mechanism produces the gender DRPerm drops ($.88\to.08$, $.60\to.12$) and RRPerm drops
 ($1.00\to.90$, $.74\to.32$).
 This is absorption, not evidence that $M$ is uninformative:
@@ -33,15 +35,20 @@ Nor is it caused by the $M$--$y$ correlation alone: that correlation is equally 
 domain scenarios, where adding $M$ leaves $\mathrm{Var}(W-\hat e)$ unchanged (ratio $.98$, $1.12$).
 
 \paragraph{CFPerm and the cross-domain shift: where $M$ helps the conditional tests.}
-CFPerm (leave-one-covariate-out on the meta block) gains from $M$ exactly where DRPerm and RRPerm lose
-(MiniLM, $B{=}50$): syntax $.58\to.94$ ($+.36$), time $.46\to.80$ ($+.34$), sentiment $.94\to1.00$
-($+.06$, near ceiling); on the domain shift CF is $.02$ for every arm.
+CFPerm (leave-one-covariate-out on the meta block) gains from $M$ exactly where DRPerm and RRPerm lose,
+and the pattern holds for both encoders at $B{=}50$.
+MiniLM: syntax $.58\to.94$ ($+.36$), time $.46\to.80$ ($+.34$), sentiment $.94\to1.00$ ($+.06$, near ceiling).
+Qwen3: syntax $.40\to.90$ ($+.50$), time $.50\to.76$ ($+.26$), sentiment $.76\to1.00$ ($+.24$).
 Both effects have one cause.
 When the selection variable is a coordinate of $M$, dropping the $M$ block removes it, which CF detects,
 whereas DR and RR condition on it and see no residual shift.
-On the domain shift, where $M$ does not predict $W$ (AUC$_W\approx.67$), there is no absorption and
-$M$ raises DR ($.36\to.56$, $+.20$) and RR ($.00\to.16$, $+.16$).
-The RR gain is small in absolute terms and a cell has standard error up to $.07$ at $B{=}50$.
+On the domain shift, where $M$ does not predict $W$ (AUC$_W\approx.67$), there is no absorption, and the
+effect of $M$ depends on the encoder.
+MiniLM: $M$ raises DR ($.36\to.56$, $+.20$) and RR ($.00\to.16$, $+.16$).
+Qwen3: DR falls ($.90\to.68$, $-.22$) and RR falls slightly ($.20\to.16$, $-.04$).
+On the domain shift, CF stays at or below $.16$ for w/o, $+M$ and $+S$ under both encoders
+(meta-only $.18$), so no CF claim is made there.
+The RR gains and losses are small in absolute terms, and a cell has standard error up to $.07$ at $B{=}50$.
 
 \paragraph{Decorrelation as a falsification of the mechanism.}
 To check that the DR drop is absorption and not loss of useful signal, we removed from $M$ and $S$
@@ -80,6 +87,14 @@ Its value is that it complements the embedding without directly encoding the win
 $M$ alone has the lowest RFPerm power in every Amazon shift ($.11$--$.49$).
 This is expected: the shifts live mostly in the embedding, and $M$ is a 32-dimensional summary that
 cannot replace the backbone.
+At $B{=}50$ the meta-only arm uses only $M$, so its numbers are identical for both encoders.
+DRPerm is low on sentiment ($.08$), syntax ($.04$) and time ($.16$).
+RRPerm is lower than w/o on syntax ($.12$ against $.88$) and time ($.56$ against $.78$), but on sentiment it
+stays at $1.00$, the same as w/o.
+The meta-only results on the domain shift do not match the expected pattern: DRPerm is $.48$ and RRPerm
+is $.20$, both higher than the w/o arm for MiniLM ($.36$ and $.00$).
+CFPerm for meta-only is leave-one-covariate-out within $M$ and is not comparable to the other columns;
+it is $1.00$, $.22$, $.60$ and $.18$ on sentiment, syntax, time and domain.
 
 \paragraph{Claim 2: higher-order interactions.}
 The claim that higher-order interactions matter only when each modality is extracted separately
