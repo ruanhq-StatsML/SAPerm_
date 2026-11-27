@@ -9,6 +9,24 @@
       {
         "dataset": "amazon-cross_MiniLM_L6",
         "scenario": "domain_shift",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.48,
+          "CFPerm": 0.18,
+          "RRPerm": 0.2
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.18304635761589405,
+          "CFPerm": 0.39788079470198684,
+          "RRPerm": 0.28688741721854305
+        }
+      },
+      {
+        "dataset": "amazon-cross_MiniLM_L6",
+        "scenario": "domain_shift",
         "feature_set": "with_meta",
         "B": 50,
         "power": {

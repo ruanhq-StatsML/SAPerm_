@@ -9,6 +9,24 @@
       {
         "dataset": "amazon_MiniLM_L6",
         "scenario": "syntax_meta",
+        "feature_set": "meta_only",
+        "B": 50,
+        "power": {
+          "RFPerm": null,
+          "DRPerm": 0.04,
+          "CFPerm": 0.22,
+          "RRPerm": 0.12
+        },
+        "mean_p": {
+          "RFPerm": null,
+          "DRPerm": 0.43801324503311256,
+          "CFPerm": 0.29668874172185433,
+          "RRPerm": 0.3582781456953642
+        }
+      },
+      {
+        "dataset": "amazon_MiniLM_L6",
+        "scenario": "syntax_meta",
         "feature_set": "with_meta",
         "B": 50,
         "power": {
